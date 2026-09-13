@@ -416,6 +416,12 @@ class SnapshotService
             if (is_dir($source)) {
                 File::copyDirectory($source, $destination);
             }
+
+            // The export skips .gitignore on purpose; put the repo's own back so
+            // the uploads folder stays ignored after a restore.
+            if (is_file($backup.'/.gitignore') && ! is_file($destination.'/.gitignore')) {
+                File::copy($backup.'/.gitignore', $destination.'/.gitignore');
+            }
         } catch (\Throwable $exception) {
             File::deleteDirectory($destination);
 

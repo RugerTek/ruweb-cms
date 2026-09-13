@@ -112,6 +112,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         ]);
         Storage::disk('public')->delete('media/origin.txt');
         Storage::disk('public')->put('media/old.txt', 'old');
+        Storage::disk('public')->put('.gitignore', "*\n!.gitignore\n");
 
         app(SnapshotService::class)->restore($archive);
 
@@ -120,6 +121,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         $this->assertDatabaseHas('media', ['path' => 'media/origin.txt']);
         Storage::disk('public')->assertExists('media/origin.txt');
         Storage::disk('public')->assertMissing('media/old.txt');
+        Storage::disk('public')->assertExists('.gitignore');
     }
 
     public function test_manifest_does_not_contain_schema_qualified_table_names(): void

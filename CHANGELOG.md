@@ -8,7 +8,11 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.37.3 - 2026-09-13
+## 0.37.4 - 2026-09-13
+
+- Restaurar un snapshot conserva el `.gitignore` de `storage/app/public`, que antes quedaba borrado al reemplazar los uploads.
+
+## 0.37.3 - 2026-09-13 (68c3818)
 
 - Se corrige un error 500 en la pantalla de revisión de snapshots cuando había riesgos que mostrar; el test del flujo de subida ahora renderiza al menos un riesgo.
 
