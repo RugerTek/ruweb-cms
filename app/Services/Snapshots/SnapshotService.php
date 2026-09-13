@@ -843,9 +843,17 @@ class SnapshotService
         }
     }
 
+    /** Base directory for every path the module writes, from `cms.snapshots.root`. */
+    public static function rootDirectory(): string
+    {
+        $root = (string) Config::get('cms.snapshots.root');
+
+        return rtrim($root !== '' ? $root : storage_path('app/private'), '/\\');
+    }
+
     public static function snapshotsDirectory(): string
     {
-        return storage_path('app/private/snapshots');
+        return self::rootDirectory().'/snapshots';
     }
 
     public static function pendingUploadsDirectory(): string
@@ -860,17 +868,17 @@ class SnapshotService
 
     public static function workDirectory(): string
     {
-        return storage_path('app/private/snapshot-work');
+        return self::rootDirectory().'/snapshot-work';
     }
 
     public static function restoreDirectory(): string
     {
-        return storage_path('app/private/snapshot-restore');
+        return self::rootDirectory().'/snapshot-restore';
     }
 
     public static function uploadsRollbackDirectory(): string
     {
-        return storage_path('app/private/uploads-restore-backup');
+        return self::rootDirectory().'/uploads-restore-backup';
     }
 
     protected function assertArchiveExists(string $archivePath): void
@@ -889,14 +897,14 @@ class SnapshotService
 
     protected function assertStorageWritable(): void
     {
-        $storage = storage_path('app/private');
+        $storage = self::rootDirectory();
         $public = Storage::disk('public')->path('');
 
         File::ensureDirectoryExists($storage);
         File::ensureDirectoryExists($public);
 
         if (! is_writable($storage) || ! is_writable($public)) {
-            throw new SnapshotException('Storage is not writable. Check storage/app and storage/app/public permissions.');
+            throw new SnapshotException('Storage is not writable. Check the snapshots root ('.$storage.') and storage/app/public permissions.');
         }
     }
 

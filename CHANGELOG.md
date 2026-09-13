@@ -8,7 +8,11 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.37.0 - 2026-09-13
+## 0.37.1 - 2026-09-13
+
+- La carpeta base del módulo de snapshots se configura con `cms.snapshots.root` (`CMS_SNAPSHOTS_ROOT`), y los tests la apuntan a un directorio temporal aislado. La suite ya no borra los snapshots reales de `storage/app/private/snapshots` del desarrollador.
+
+## 0.37.0 - 2026-09-13 (edb6070)
 
 - Cada cambio de contenido (páginas, posts, media, settings, menús, taxonomías, idiomas) deja una revisión con hash en la tabla `content_revisions`, sin payload, para poder comparar copias entre instalaciones.
 - Al inspeccionar un snapshot, el sistema dice si contiene todos los cambios del destino (avance limpio) o lista los cambios que se perderían y exige aceptar el riesgo; ya no hace falta comparar copias a mano.

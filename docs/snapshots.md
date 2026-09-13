@@ -203,6 +203,12 @@ php artisan snapshot:prune --stale-hours=1 --keep-pre-restore=1
 
 Named snapshots in `storage/app/private/snapshots` are never pruned. Delete them by hand.
 
+### Storage root
+
+Every path above hangs from `config('cms.snapshots.root')`, which defaults to `storage/app/private` and can be overridden with `CMS_SNAPSHOTS_ROOT` in `.env`. All path helpers on `SnapshotService` (`snapshotsDirectory()`, `pendingUploadsDirectory()`, `downloadsDirectory()`, `workDirectory()`, `restoreDirectory()`, `uploadsRollbackDirectory()`) derive from it; never build these paths by hand.
+
+The base `Tests\TestCase` points the root at a fresh temp directory per test and deletes it afterwards, so the suite never touches a developer's real snapshots.
+
 ## Extension Points
 
 - `App\Services\Snapshots\SnapshotService` — export, inspect, restore. Add new checks inside `buildReport()`.

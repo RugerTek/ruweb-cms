@@ -28,11 +28,8 @@ class DeveloperToolsSnapshotTest extends TestCase
     {
         parent::setUp();
 
+        // The snapshot root is an isolated temp directory set up by TestCase.
         Storage::fake('public');
-        File::deleteDirectory(storage_path('app/private/snapshots'));
-        File::deleteDirectory(storage_path('app/private/snapshot-work'));
-        File::deleteDirectory(storage_path('app/private/snapshot-restore'));
-        File::deleteDirectory(storage_path('app/private/uploads-restore-backup'));
     }
 
     public function test_admin_can_view_developer_tools(): void
@@ -64,7 +61,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         $exitCode = Artisan::call('snapshot:create', ['--name' => 'feature-test']);
 
         $this->assertSame(0, $exitCode);
-        $this->assertFileExists(storage_path('app/private/snapshots/feature-test.appbackup'));
+        $this->assertFileExists(SnapshotService::snapshotsDirectory().'/feature-test.appbackup');
     }
 
     public function test_download_uses_site_name_in_backup_filename(): void
@@ -527,6 +524,30 @@ class DeveloperToolsSnapshotTest extends TestCase
         $this->assertContains('unknown_history', array_map(fn ($r) => $r->key, $report->warnings()));
     }
 
+    public function test_snapshot_paths_stay_inside_the_configured_root(): void
+    {
+        $root = config('cms.snapshots.root');
+
+        $this->assertStringStartsWith(sys_get_temp_dir(), $root);
+
+        foreach ([
+            SnapshotService::snapshotsDirectory(),
+            SnapshotService::pendingUploadsDirectory(),
+            SnapshotService::downloadsDirectory(),
+            SnapshotService::workDirectory(),
+            SnapshotService::restoreDirectory(),
+            SnapshotService::uploadsRollbackDirectory(),
+        ] as $path) {
+            $this->assertStringStartsWith($root.'/', $path);
+        }
+
+        User::factory()->create(['role' => 'admin']);
+        app(SnapshotService::class)->create('inside-root');
+
+        $this->assertFileExists($root.'/snapshots/inside-root.appbackup');
+        $this->assertFileDoesNotExist(storage_path('app/private/snapshots/inside-root.appbackup'));
+    }
+
     protected function readJsonFromZip(string $archive, string $path): array
     {
         $zip = new ZipArchive;
@@ -541,8 +562,9 @@ class DeveloperToolsSnapshotTest extends TestCase
 
     protected function copyArchiveWithMutatedManifest(string $archive, callable $mutator): string
     {
-        $sourceDir = storage_path('app/private/test-mutate/'.uniqid('source-', true));
-        $target = storage_path('app/private/test-mutate/mutated-'.uniqid().'.appbackup');
+        File::ensureDirectoryExists(SnapshotService::rootDirectory().'/test-mutate');
+        $sourceDir = SnapshotService::rootDirectory().'/test-mutate/'.uniqid('source-', true);
+        $target = SnapshotService::rootDirectory().'/test-mutate/mutated-'.uniqid().'.appbackup';
         File::ensureDirectoryExists($sourceDir);
 
         $zip = new ZipArchive;

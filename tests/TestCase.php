@@ -6,16 +6,32 @@ use App\Models\Setting;
 use App\Support\AdminLoginPath;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Routing\RouteCollection;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 
 abstract class TestCase extends BaseTestCase
 {
+    /** Isolated snapshot root for this test, never the developer's real storage. */
+    protected ?string $snapshotsRoot = null;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         Setting::clearCache();
         AdminLoginPath::clearCache();
+
+        $this->snapshotsRoot = sys_get_temp_dir().'/ruweb-cms-tests/'.uniqid('snapshots-', true);
+        config(['cms.snapshots.root' => $this->snapshotsRoot]);
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->snapshotsRoot !== null && is_dir($this->snapshotsRoot)) {
+            File::deleteDirectory($this->snapshotsRoot);
+        }
+
+        parent::tearDown();
     }
 
     /**
