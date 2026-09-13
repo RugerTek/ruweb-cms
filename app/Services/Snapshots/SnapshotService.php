@@ -16,7 +16,19 @@ class SnapshotService
 {
     public const FORMAT_ID = 'ruweb-cms.appbackup';
 
-    public const FORMAT_VERSION = 1;
+    public const FORMAT_VERSION = 2;
+
+    /** Older formats that can still be restored, with a `legacy_format` warning. */
+    public const SUPPORTED_FORMAT_VERSIONS = [1, 2];
+
+    /**
+     * Tables that travel inside the archive for inspection but are never
+     * written into the destination. The destination keeps its own migration
+     * history so `php artisan migrate` stays truthful after a restore.
+     */
+    protected const RESTORE_SKIPPED_TABLES = [
+        'migrations',
+    ];
 
     protected const EXCLUDED_TABLES = [
         'cache',
@@ -53,12 +65,12 @@ class SnapshotService
         $this->assertZipAvailable();
         $this->assertStorageWritable();
 
-        $directory ??= storage_path('app/private/snapshots');
+        $directory ??= self::snapshotsDirectory();
         File::ensureDirectoryExists($directory);
 
         $safeName = $this->safeArchiveName($name ?: 'snapshot-'.now()->format('Ymd-His'));
         $archivePath = $directory.DIRECTORY_SEPARATOR.$safeName.'.appbackup';
-        $workDir = storage_path('app/private/snapshot-work/'.uniqid('snapshot-', true));
+        $workDir = self::workDirectory().'/'.uniqid('snapshot-', true);
 
         File::ensureDirectoryExists($workDir.'/database');
         File::ensureDirectoryExists($workDir.'/uploads');
@@ -100,28 +112,52 @@ class SnapshotService
         }
     }
 
-    public function restore(string $archivePath, bool $force = false): array
+    /**
+     * Inspect an archive against the current installation without changing
+     * anything. Structural problems (bad ZIP, checksum mismatch, unsafe paths)
+     * still throw; everything else is reported as a risk.
+     */
+    public function inspect(string $archivePath): SnapshotReport
+    {
+        $this->assertZipAvailable();
+        $this->assertArchiveExists($archivePath);
+
+        $extractDir = self::restoreDirectory().'/'.uniqid('inspect-', true);
+
+        try {
+            File::ensureDirectoryExists($extractDir);
+            $this->extractArchiveSafely($archivePath, $extractDir);
+
+            return $this->buildReport($extractDir);
+        } finally {
+            File::deleteDirectory($extractDir);
+        }
+    }
+
+    /**
+     * Restore an archive. Every warning in the inspection report must be
+     * listed in `$accepted` by key, and blocking risks can never be bypassed.
+     *
+     * @param  array<int, string>  $accepted  Risk keys the operator accepted.
+     */
+    public function restore(string $archivePath, array $accepted = []): array
     {
         $this->assertZipAvailable();
         $this->assertStorageWritable();
+        $this->assertArchiveExists($archivePath);
 
-        if (! is_file($archivePath)) {
-            throw new SnapshotException("Snapshot file not found: {$archivePath}");
-        }
-
-        $extractDir = storage_path('app/private/snapshot-restore/'.uniqid('restore-', true));
+        $extractDir = self::restoreDirectory().'/'.uniqid('restore-', true);
         $preRestore = null;
 
         try {
             File::ensureDirectoryExists($extractDir);
             $this->extractArchiveSafely($archivePath, $extractDir);
 
-            $manifest = $this->readManifest($extractDir);
-            $this->validateChecksums($extractDir);
-            $tables = $this->manifestTables($manifest);
-            $this->assertRestoreTablesAreSafe($tables);
-            $this->assertDestinationTablesExist($tables);
-            $this->assertCompatible($manifest, $force);
+            $report = $this->buildReport($extractDir);
+            $report->assertRestorable($accepted);
+
+            $manifest = $report->manifest;
+            $tables = $report->tables;
 
             $preRestore = $this->create('pre-restore-'.now()->format('Ymd-His'));
 
@@ -140,10 +176,76 @@ class SnapshotService
                 'pre_restore_backup' => $preRestore,
                 'tables' => count($tables),
                 'uploads_files' => (int) ($manifest['uploads']['files'] ?? 0),
+                'report' => $report,
             ];
         } finally {
             File::deleteDirectory($extractDir);
         }
+    }
+
+    /**
+     * Build the inspection report from an already extracted archive.
+     */
+    protected function buildReport(string $extractDir): SnapshotReport
+    {
+        $manifest = $this->readManifest($extractDir);
+        $this->validateChecksums($extractDir);
+
+        $allTables = $this->manifestTables($manifest);
+        $this->assertRestoreTablesAreSafe($allTables);
+
+        $tables = array_values(array_filter(
+            $allTables,
+            fn (array $table): bool => ! in_array($table['name'], self::RESTORE_SKIPPED_TABLES, true)
+        ));
+
+        $destination = [
+            'driver' => DB::connection()->getDriverName(),
+            'url' => Config::get('app.url'),
+            'laravel_version' => App::version(),
+        ];
+
+        $risks = [];
+
+        if ((int) $manifest['version'] < self::FORMAT_VERSION) {
+            $risks[] = SnapshotRisk::warning(
+                'legacy_format',
+                'The snapshot uses an older archive format, so some compatibility checks cannot run.',
+                ['snapshot' => (int) $manifest['version'], 'current' => self::FORMAT_VERSION]
+            );
+        }
+
+        $missing = $this->missingDestinationTables($tables);
+
+        if ($missing !== []) {
+            $risks[] = SnapshotRisk::blocking(
+                'missing_tables',
+                'Destination is missing required tables: '.implode(', ', $missing).'. Update the destination code and run migrations first.',
+                ['tables' => $missing]
+            );
+        }
+
+        $driver = $manifest['database']['driver'] ?? null;
+
+        if ($driver !== $destination['driver']) {
+            $risks[] = SnapshotRisk::warning(
+                'driver_mismatch',
+                "Database driver differs from snapshot ({$driver} → {$destination['driver']}).",
+                ['snapshot' => $driver, 'destination' => $destination['driver']]
+            );
+        }
+
+        $originUrl = $manifest['app']['url'] ?? null;
+
+        if ($originUrl && rtrim((string) $originUrl, '/') !== rtrim((string) $destination['url'], '/')) {
+            $risks[] = SnapshotRisk::info(
+                'origin_url_differs',
+                "Snapshot was taken from {$originUrl}; this installation runs at {$destination['url']}.",
+                ['snapshot' => $originUrl, 'destination' => $destination['url']]
+            );
+        }
+
+        return new SnapshotReport($manifest, $tables, $risks, $destination);
     }
 
     protected function exportDatabase(string $workDir): array
@@ -268,7 +370,7 @@ class SnapshotService
     protected function replaceUploads(string $source): void
     {
         $destination = rtrim(Storage::disk('public')->path(''), DIRECTORY_SEPARATOR);
-        $backup = storage_path('app/private/uploads-restore-backup/'.uniqid('uploads-', true));
+        $backup = self::uploadsRollbackDirectory().'/'.uniqid('uploads-', true);
 
         File::ensureDirectoryExists(dirname($backup));
 
@@ -333,7 +435,7 @@ class SnapshotService
             throw new SnapshotException('Snapshot manifest is invalid.');
         }
 
-        if ((int) ($manifest['version'] ?? 0) !== self::FORMAT_VERSION) {
+        if (! in_array((int) ($manifest['version'] ?? 0), self::SUPPORTED_FORMAT_VERSIONS, true)) {
             throw new SnapshotException('Unsupported snapshot format version.');
         }
 
@@ -391,31 +493,16 @@ class SnapshotService
         }
     }
 
-    protected function assertDestinationTablesExist(array $tables): void
+    /** @return array<int, string> */
+    protected function missingDestinationTables(array $tables): array
     {
         $existing = $this->currentTables();
-        $missing = collect($tables)
+
+        return collect($tables)
             ->pluck('name')
             ->reject(fn (string $table): bool => in_array($table, $existing, true))
             ->values()
             ->all();
-
-        if ($missing !== []) {
-            throw new SnapshotException('Destination is missing required tables: '.implode(', ', $missing));
-        }
-    }
-
-    protected function assertCompatible(array $manifest, bool $force): void
-    {
-        if ($force) {
-            return;
-        }
-
-        $driver = $manifest['database']['driver'] ?? null;
-
-        if ($driver !== DB::connection()->getDriverName()) {
-            throw new SnapshotException('Database driver differs from snapshot. Re-run with --force if this is intentional.');
-        }
     }
 
     protected function manifestTables(array $manifest): array
@@ -526,6 +613,43 @@ class SnapshotService
     {
         if ($path === null || $path === '' || str_starts_with($path, '/') || str_contains($path, '\\') || str_contains($path, '..')) {
             throw new SnapshotException("Unsafe archive path rejected: {$path}");
+        }
+    }
+
+    public static function snapshotsDirectory(): string
+    {
+        return storage_path('app/private/snapshots');
+    }
+
+    public static function pendingUploadsDirectory(): string
+    {
+        return self::snapshotsDirectory().'/uploads';
+    }
+
+    public static function downloadsDirectory(): string
+    {
+        return self::snapshotsDirectory().'/tmp';
+    }
+
+    public static function workDirectory(): string
+    {
+        return storage_path('app/private/snapshot-work');
+    }
+
+    public static function restoreDirectory(): string
+    {
+        return storage_path('app/private/snapshot-restore');
+    }
+
+    public static function uploadsRollbackDirectory(): string
+    {
+        return storage_path('app/private/uploads-restore-backup');
+    }
+
+    protected function assertArchiveExists(string $archivePath): void
+    {
+        if (! is_file($archivePath)) {
+            throw new SnapshotException("Snapshot file not found: {$archivePath}");
         }
     }
 

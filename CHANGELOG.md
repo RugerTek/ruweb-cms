@@ -8,7 +8,15 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.33.1 - 2026-09-13
+## 0.34.0 - 2026-09-13
+
+- Restaurar un snapshot ahora pasa por una inspección previa: el panel muestra un resumen y los riesgos detectados, y cada advertencia se acepta por separado antes de tocar nada.
+- Nuevo comando `snapshot:inspect` y `snapshot:restore` imprime el mismo reporte, pide confirmación por riesgo en modo interactivo y acepta `--accept=<clave>` o `--yes` para scripts.
+- Un snapshot ya no reemplaza la tabla `migrations` del destino, que antes quedaba desfasada al restaurar una copia más vieja.
+- Nuevo comando `snapshot:prune`, programado a diario y disponible como botón en Developer Tools, que borra subidas pendientes y carpetas de trabajo viejas y conserva solo los 3 pre-backups más recientes.
+- Documentación canónica del módulo en `docs/snapshots.md`.
+
+## 0.33.1 - 2026-09-13 (859e04c)
 
 - Se corrige el mensaje de confirmación al quitar un logo, que mostraba barras invertidas alrededor del nombre.
 

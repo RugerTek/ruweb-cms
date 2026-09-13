@@ -6,7 +6,9 @@ use App\Models\Media;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\Snapshots\SnapshotException;
+use App\Services\Snapshots\SnapshotHousekeeping;
 use App\Services\Snapshots\SnapshotService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -27,6 +29,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         File::deleteDirectory(storage_path('app/private/snapshots'));
         File::deleteDirectory(storage_path('app/private/snapshot-work'));
         File::deleteDirectory(storage_path('app/private/snapshot-restore'));
+        File::deleteDirectory(storage_path('app/private/uploads-restore-backup'));
     }
 
     public function test_admin_can_view_developer_tools(): void
@@ -110,7 +113,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         Storage::disk('public')->delete('media/origin.txt');
         Storage::disk('public')->put('media/old.txt', 'old');
 
-        app(SnapshotService::class)->restore($archive, true);
+        app(SnapshotService::class)->restore($archive);
 
         $this->assertDatabaseHas('users', ['email' => 'origin@example.com']);
         $this->assertDatabaseMissing('users', ['email' => 'destination@example.com']);
@@ -145,7 +148,166 @@ class DeveloperToolsSnapshotTest extends TestCase
         $this->expectException(SnapshotException::class);
         $this->expectExceptionMessage('schema-qualified');
 
-        app(SnapshotService::class)->restore($unsafeArchive, true);
+        app(SnapshotService::class)->restore($unsafeArchive);
+    }
+
+    public function test_restore_keeps_destination_migration_history(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('migrations-kept');
+
+        // Simulate a destination that already ran a newer migration.
+        \Illuminate\Support\Facades\DB::table('migrations')->insert([
+            'migration' => '2099_01_01_000000_future_migration',
+            'batch' => 99,
+        ]);
+
+        app(SnapshotService::class)->restore($archive);
+
+        $this->assertDatabaseHas('migrations', ['migration' => '2099_01_01_000000_future_migration']);
+    }
+
+    public function test_inspect_reports_legacy_format_as_warning_and_restore_requires_acceptance(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('legacy');
+        $legacy = $this->copyArchiveWithMutatedManifest($archive, function (array $manifest): array {
+            $manifest['version'] = 1;
+
+            return $manifest;
+        });
+
+        $report = app(SnapshotService::class)->inspect($legacy);
+
+        $this->assertSame(['legacy_format'], array_map(fn ($risk) => $risk->key, $report->warnings()));
+        $this->assertSame([], $report->blocking());
+        $this->assertFalse($report->isRestorable([]));
+        $this->assertTrue($report->isRestorable(['legacy_format']));
+
+        try {
+            app(SnapshotService::class)->restore($legacy);
+            $this->fail('Restore should refuse unaccepted warnings.');
+        } catch (SnapshotException $exception) {
+            $this->assertStringContainsString('legacy_format', $exception->getMessage());
+        }
+
+        $result = app(SnapshotService::class)->restore($legacy, ['legacy_format']);
+        $this->assertGreaterThan(0, $result['tables']);
+    }
+
+    public function test_inspect_blocks_when_destination_lacks_a_table(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('missing-table');
+        $mutated = $this->copyArchiveWithMutatedManifest($archive, function (array $manifest): array {
+            $manifest['database']['tables'][] = ['name' => 'not_here_yet', 'file' => 'database/users.jsonl', 'rows' => 0];
+
+            return $manifest;
+        });
+
+        $report = app(SnapshotService::class)->inspect($mutated);
+
+        $this->assertSame(['missing_tables'], array_map(fn ($risk) => $risk->key, $report->blocking()));
+
+        $this->expectException(SnapshotException::class);
+        $this->expectExceptionMessage('not_here_yet');
+        app(SnapshotService::class)->restore($mutated, ['missing_tables']);
+    }
+
+    public function test_restore_command_fails_on_unaccepted_warning_and_succeeds_with_yes(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('cli');
+        $legacy = $this->copyArchiveWithMutatedManifest($archive, fn (array $m): array => array_replace($m, ['version' => 1]));
+
+        $this->assertSame(1, Artisan::call('snapshot:restore', ['archive' => $legacy]));
+        $this->assertStringContainsString('legacy_format', Artisan::output());
+
+        $this->assertSame(0, Artisan::call('snapshot:restore', ['archive' => $legacy, '--yes' => true]));
+        $this->assertSame(0, Artisan::call('snapshot:inspect', ['archive' => $legacy, '--json' => true]));
+        $this->assertSame('legacy_format', json_decode(Artisan::output(), true)['risks'][0]['key']);
+    }
+
+    public function test_admin_upload_flow_reviews_then_restores(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'email' => 'origin@example.com']);
+        Storage::disk('public')->put('media/flow.txt', 'flow');
+        $archive = app(SnapshotService::class)->create('ui-flow');
+
+        Storage::disk('public')->delete('media/flow.txt');
+        User::query()->delete();
+        $admin = User::factory()->create(['role' => 'admin', 'email' => 'destination@example.com']);
+
+        $upload = new UploadedFile($archive, 'ui-flow.appbackup', 'application/octet-stream', null, true);
+        $response = $this->actingAs($admin)->post(route('admin.developer-tools.upload'), ['backup' => $upload]);
+
+        $response->assertRedirect();
+        $token = basename($response->headers->get('Location'));
+        $this->assertMatchesRegularExpression(SnapshotHousekeeping::PENDING_TOKEN_PATTERN, $token);
+
+        // Nothing restored yet.
+        $this->assertDatabaseHas('users', ['email' => 'destination@example.com']);
+        Storage::disk('public')->assertMissing('media/flow.txt');
+
+        $review = $this->actingAs($admin)->get(route('admin.developer-tools.review', ['token' => $token]));
+        $review->assertOk();
+        $review->assertSee('ui-flow.appbackup');
+
+        $index = $this->actingAs($admin)->get(route('admin.developer-tools.index', ['tab' => 'migration']));
+        $index->assertSee('ui-flow.appbackup');
+
+        $restore = $this->actingAs($admin)->post(route('admin.developer-tools.restore', ['token' => $token]));
+        $restore->assertRedirect(route('admin.developer-tools.index', ['tab' => 'migration']));
+        $restore->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', ['email' => 'origin@example.com']);
+        Storage::disk('public')->assertExists('media/flow.txt');
+        $this->assertNull(app(SnapshotHousekeeping::class)->pending($token));
+    }
+
+    public function test_review_rejects_unknown_or_malformed_tokens(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('admin.developer-tools.review', ['token' => str_repeat('a', 40)]))
+            ->assertRedirect(route('admin.developer-tools.index', ['tab' => 'migration']))
+            ->assertSessionHas('error');
+
+        // Malformed tokens never reach the controller.
+        $this->actingAs($admin)->get('/admin/developer-tools/review/not-a-valid-token')->assertNotFound();
+    }
+
+    public function test_prune_removes_stale_transients_and_keeps_newest_pre_restore_backups(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $service = app(SnapshotService::class);
+        $directory = SnapshotService::snapshotsDirectory();
+
+        foreach (['a', 'b', 'c', 'd', 'e'] as $index => $suffix) {
+            $path = $service->create('pre-restore-'.$suffix);
+            touch($path, time() - (10 - $index) * 60);
+        }
+        $service->create('keep-me');
+
+        $stale = SnapshotService::workDirectory().'/snapshot-stale';
+        File::ensureDirectoryExists($stale);
+        File::put($stale.'/x.jsonl', 'x');
+        touch($stale, time() - 48 * 3600);
+
+        $fresh = SnapshotService::workDirectory().'/snapshot-fresh';
+        File::ensureDirectoryExists($fresh);
+        File::put($fresh.'/x.jsonl', 'x');
+
+        $removed = app(SnapshotHousekeeping::class)->prune(24, 3);
+
+        $this->assertSame(2, $removed['pre_restore_backups']['files']);
+        $this->assertSame(1, $removed['work_dirs']['files']);
+        $this->assertFileExists($directory.'/pre-restore-e.appbackup');
+        $this->assertFileExists($directory.'/pre-restore-c.appbackup');
+        $this->assertFileDoesNotExist($directory.'/pre-restore-a.appbackup');
+        $this->assertFileExists($directory.'/keep-me.appbackup');
+        $this->assertDirectoryDoesNotExist($stale);
+        $this->assertDirectoryExists($fresh);
     }
 
     protected function readJsonFromZip(string $archive, string $path): array

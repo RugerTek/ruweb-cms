@@ -100,10 +100,11 @@ Move code with Git, Composer, and the build output. Move dynamic data with `.app
 php artisan snapshot:create --name=origin
 
 # Upload origin.appbackup to the destination account, then:
-php artisan snapshot:restore /home/ACCOUNT_NAME/origin.appbackup --force
+php artisan snapshot:inspect /home/ACCOUNT_NAME/origin.appbackup
+php artisan snapshot:restore /home/ACCOUNT_NAME/origin.appbackup
 ```
 
-Snapshots include only database data, public uploads, `manifest.json`, and `checksums.json`. They intentionally exclude source code, `vendor`, `.env`, keys, cache, sessions, and queue/runtime tables.
+`snapshot:restore` prints the inspection report and asks you to accept each warning by key. Use `--yes` only in scripts. See `docs/snapshots.md` for the archive format, the risk keys, and housekeeping.
 
 ### 8. Fix writable permissions
 

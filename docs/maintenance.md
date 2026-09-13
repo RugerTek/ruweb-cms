@@ -14,6 +14,7 @@ It should stay focused on maintenance workflows, not implementation history.
 - placeholder image seeding and repair
 - image optimization and variant generation
 - media health auditing
+- snapshot transient cleanup
 
 Initial project setup is handled by `php artisan cms:install`. This guide focuses on recurring operational commands after installation.
 
@@ -96,3 +97,11 @@ This document should not become:
 - a deployment guide
 - a troubleshooting log for one environment
 - a changelog of when commands were introduced
+
+## Prune Snapshot Transients
+
+```bash
+php artisan snapshot:prune
+```
+
+Removes pending snapshot uploads and work folders older than 24 hours, and keeps only the 3 newest automatic pre-restore backups. Scheduled daily; the same action is available from `Developer tools → Migration`. Named snapshots are never touched. See `docs/snapshots.md`.

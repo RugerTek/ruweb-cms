@@ -120,10 +120,11 @@ php artisan migrate --force
 php artisan snapshot:create --name=production-transfer
 
 # Copy storage/app/private/snapshots/production-transfer.appbackup to the destination, then:
-php artisan snapshot:restore /path/to/production-transfer.appbackup --force
+php artisan snapshot:inspect /path/to/production-transfer.appbackup
+php artisan snapshot:restore /path/to/production-transfer.appbackup
 ```
 
-Snapshots contain database table data, `storage/app/public` uploads, a manifest, and SHA-256 checksums. They do not contain source code, `vendor`, `.env`, keys, cache, sessions, or queue runtime tables.
+`snapshot:restore` prints the inspection report and asks you to accept each warning by key. Use `--yes` only in scripts. See `docs/snapshots.md` for the archive format, the risk keys, and housekeeping.
 
 ## 5. Set Permissions
 

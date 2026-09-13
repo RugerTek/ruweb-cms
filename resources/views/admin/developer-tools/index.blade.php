@@ -161,23 +161,80 @@
                     @error('backup')
                         <p class="text-sm text-red-400">{{ $message }}</p>
                     @enderror
-                    <label class="flex items-center gap-2 text-sm text-gray-400">
-                        <input type="checkbox" name="force" value="1" class="rounded border-white/[0.12] bg-[#0a0a0a]">
-                        {{ __('admin.snapshot_force') }}
-                    </label>
-                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors"
-                            onclick="return confirm('{{ __('admin.snapshot_restore_confirm') }}')">
+                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white text-sm font-medium rounded-md transition-colors">
                         {{ __('admin.snapshot_upload') }}
                     </button>
                 </form>
             </section>
         </div>
 
-        <div class="bg-[#111111] border border-white/[0.06] rounded-lg p-5">
-            <h2 class="text-sm font-semibold text-white">{{ __('admin.snapshot_cli_title') }}</h2>
-            <p class="text-sm text-gray-500 mt-1">{{ __('admin.snapshot_cli_help') }}</p>
-            <pre class="mt-4 overflow-x-auto rounded-md bg-black/40 p-4 text-xs text-gray-300"><code>php artisan snapshot:create --name=origin
-php artisan snapshot:restore /path/to/origin.appbackup --force</code></pre>
+        @if($pending !== [])
+            <section class="bg-[#111111] border border-white/[0.06] rounded-lg overflow-hidden">
+                <div class="px-5 py-4 border-b border-white/[0.06]">
+                    <h2 class="text-sm font-semibold text-white">{{ __('admin.snapshot_pending_title') }}</h2>
+                    <p class="text-sm text-gray-500 mt-1">{{ __('admin.snapshot_pending_help') }}</p>
+                </div>
+                <ul class="divide-y divide-white/[0.06]">
+                    @foreach($pending as $item)
+                        @php $summary = $item['report']->summary(); @endphp
+                        <li class="px-5 py-3 flex flex-wrap items-center gap-4 text-sm">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-gray-200 truncate">{{ $item['original_name'] ?? $item['token'] }}</p>
+                                <p class="text-gray-500 text-xs mt-0.5">
+                                    {{ $summary['origin_url'] ?? 'N/A' }} · {{ $summary['created_at'] ?? 'N/A' }} · {{ $formatBytes($item['size']) }}
+                                    · {{ count($item['report']->risks) }} {{ Str::lower(__('admin.snapshot_risks')) }}
+                                </p>
+                            </div>
+                            <a href="{{ route('admin.developer-tools.review', ['token' => $item['token']]) }}" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-medium rounded-md transition-colors">
+                                {{ __('admin.snapshot_pending_review') }}
+                            </a>
+                            <form method="POST" action="{{ route('admin.developer-tools.discard', ['token' => $item['token']]) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.1] text-gray-300 text-xs font-medium rounded-md transition-colors">
+                                    {{ __('admin.snapshot_discard') }}
+                                </button>
+                            </form>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        <div class="grid gap-4 lg:grid-cols-2">
+            <section class="bg-[#111111] border border-white/[0.06] rounded-lg p-5 space-y-4">
+                <div>
+                    <h2 class="text-sm font-semibold text-white">{{ __('admin.snapshot_housekeeping_title') }}</h2>
+                    <p class="text-sm text-gray-500 mt-1">{{ __('admin.snapshot_housekeeping_help') }}</p>
+                </div>
+                <dl class="divide-y divide-white/[0.06] border border-white/[0.06] rounded-md">
+                    @foreach($usage as $key => $stats)
+                        <div class="px-4 py-2.5 grid grid-cols-2 gap-4 text-sm">
+                            <dt class="text-gray-500">{{ __('admin.snapshot_housekeeping_'.$key) }}</dt>
+                            <dd class="text-gray-200 text-right">{{ $stats['files'] }} · {{ $formatBytes($stats['bytes']) }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+                <form method="POST" action="{{ route('admin.developer-tools.prune') }}"
+                      data-confirm="{{ __('admin.snapshot_prune_confirm') }}"
+                      data-confirm-title="{{ __('admin.snapshot_prune') }}"
+                      data-confirm-label="{{ __('admin.snapshot_prune') }}"
+                      data-confirm-tone="primary">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-sm font-medium rounded-md transition-colors">
+                        {{ __('admin.snapshot_prune') }}
+                    </button>
+                </form>
+            </section>
+
+            <section class="bg-[#111111] border border-white/[0.06] rounded-lg p-5">
+                <h2 class="text-sm font-semibold text-white">{{ __('admin.snapshot_cli_title') }}</h2>
+                <p class="text-sm text-gray-500 mt-1">{{ __('admin.snapshot_cli_help') }}</p>
+                <pre class="mt-4 overflow-x-auto rounded-md bg-black/40 p-4 text-xs text-gray-300"><code>php artisan snapshot:create --name=origin
+php artisan snapshot:inspect /path/to/origin.appbackup
+php artisan snapshot:restore /path/to/origin.appbackup
+php artisan snapshot:prune</code></pre>
+            </section>
         </div>
     @endif
 </div>

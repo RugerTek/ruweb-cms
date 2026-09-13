@@ -28,6 +28,7 @@ This index is the entry point for developers and LLM agents working on the start
 ## Integrations And Operations
 
 - `docs/mcp.md` — MCP authentication, endpoints, and extension points
+- `docs/snapshots.md` — `.appbackup` format, inspection risks, restore flow, and housekeeping
 - `docs/maintenance.md` — operational commands and maintenance workflows
 - `docs/deploy-cpanel.md` — generic cPanel deployment guide
 - `docs/deploy-droplet.md` — generic single-server droplet deployment guide

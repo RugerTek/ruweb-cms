@@ -75,6 +75,10 @@ Route::middleware(['auth', 'role:admin,editor', 'admin.locale'])->prefix('admin'
         Route::get('developer-tools', [DeveloperToolsController::class, 'index'])->name('developer-tools.index');
         Route::post('developer-tools/download', [DeveloperToolsController::class, 'download'])->name('developer-tools.download');
         Route::post('developer-tools/upload', [DeveloperToolsController::class, 'upload'])->name('developer-tools.upload');
+        Route::get('developer-tools/review/{token}', [DeveloperToolsController::class, 'review'])->name('developer-tools.review')->where('token', '[A-Za-z0-9]{40}');
+        Route::post('developer-tools/review/{token}/restore', [DeveloperToolsController::class, 'restore'])->name('developer-tools.restore')->where('token', '[A-Za-z0-9]{40}');
+        Route::delete('developer-tools/review/{token}', [DeveloperToolsController::class, 'discard'])->name('developer-tools.discard')->where('token', '[A-Za-z0-9]{40}');
+        Route::post('developer-tools/prune', [DeveloperToolsController::class, 'prune'])->name('developer-tools.prune');
         Route::get('email', [EmailController::class, 'index'])->name('email.index');
         Route::put('email', [EmailController::class, 'update'])->name('email.update');
         Route::post('email/test', [EmailController::class, 'sendTestEmail'])->name('email.test');
