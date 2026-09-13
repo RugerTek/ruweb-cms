@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.29.1 - 2026-09-13
+## 0.30.0 - 2026-09-13
+
+- La sección de features de la home suma un carrusel de logos en bucle infinito, responsive y con pausa al pasar el cursor.
+- El carrusel se administra con un repeater: cada logo es un acordeón propio con su imagen de la media library, su nombre, y controles para ordenar y quitar.
+- Quitar un logo pide confirmación en un modal compartido en lugar de borrarse de una, y el cambio se aplica al guardar la página.
+- La home de ejemplo llega con cuatro logos usando el placeholder cuadrado.
+
+## 0.29.1 - 2026-09-13 (6da34fe)
 
 - `docs/image-strategy.md` documenta los tres placeholders, con qué orientación corresponde a cada tipo de slot y cómo se siembran y reparan.
 - Las guías de páginas, contenido, plantillas, colecciones, blog, settings, multilenguaje, MCP y los skills apuntan a esa convención donde hablan de campos de imagen.

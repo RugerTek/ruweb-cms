@@ -54,6 +54,8 @@ return [
                 'sections.features.body' => ['type' => 'textarea', 'translatable' => true],
                 'sections.features.items.*.title' => ['type' => 'text', 'translatable' => true],
                 'sections.features.items.*.body' => ['type' => 'textarea', 'translatable' => true],
+                'sections.features.logos.*.image_id' => ['type' => 'media', 'localized_media' => true],
+                'sections.features.logos.*.label' => ['type' => 'text', 'translatable' => true],
                 'sections.cta.is_visible' => ['type' => 'boolean', 'preserve' => true],
                 'sections.cta.heading' => ['type' => 'text', 'translatable' => true],
                 'sections.cta.body' => ['type' => 'textarea', 'translatable' => true],

@@ -44,6 +44,9 @@
             'previous' => __('admin.previous'),
             'next' => __('admin.next'),
             'pageOf' => __('admin.page_of'),
+            'confirmRemoveLogo' => __('admin.confirm_remove_logo'),
+            'remove' => __('admin.remove'),
+            'logoItemFallbackLabel' => __('admin.logo_item_fallback_label'),
             'maxUploadKb' => $effectiveMaxKb,
         ];
     @endphp
@@ -141,6 +144,7 @@
 
     @include('admin.media._library-modal')
     @include('admin.media._upload-modal')
+    @include('admin.partials.confirm-modal')
 
     @stack('modals')
     @stack('scripts')

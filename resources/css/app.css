@@ -9,3 +9,68 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Infinite logo carousel.
+   The track holds the logos repeated end to end and is translated by exactly one
+   copy's width, so the loop restarts on an identical frame and reads as seamless. */
+.logo-marquee {
+    --logo-marquee-duration: 30s;
+    position: relative;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+.logo-marquee-track {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    gap: 2rem;
+    animation: logo-marquee var(--logo-marquee-duration) linear infinite;
+}
+
+.logo-marquee:hover .logo-marquee-track,
+.logo-marquee:focus-within .logo-marquee-track {
+    animation-play-state: paused;
+}
+
+.logo-marquee-item {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 6.5rem;
+    height: 3.5rem;
+}
+
+@media (min-width: 640px) {
+    .logo-marquee-track { gap: 3rem; }
+    .logo-marquee-item { width: 8rem; height: 4.5rem; }
+}
+
+@media (min-width: 1024px) {
+    .logo-marquee-track { gap: 4rem; }
+    .logo-marquee-item { width: 10rem; height: 5rem; }
+}
+
+@keyframes logo-marquee {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(calc(-100% / var(--logo-marquee-copies, 2)), 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .logo-marquee-track {
+        animation: none;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: center;
+    }
+    /* Without the animation the repeated copies are just duplicates on screen. */
+    .logo-marquee-item[aria-hidden='true'] {
+        display: none;
+    }
+    .logo-marquee {
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+}

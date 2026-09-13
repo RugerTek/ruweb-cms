@@ -10,6 +10,7 @@ const t = (key, fallback = '') => adminI18n[key] ?? fallback;
 const maxUploadKb = Number(adminI18n.maxUploadKb || 0);
 window.initEditorEngine = initEditorEngine;
 
+
 const selectors = Array.from(document.querySelectorAll('.media-selector'));
 const libraryModal = document.getElementById('media-library-modal');
 const libraryClose = document.getElementById('media-library-close');
@@ -329,6 +330,7 @@ function closeLibrary() {
     libraryModal.classList.add('hidden');
 }
 
+
 function renderLibraryItems(items) {
     if (!libraryGrid) {
         return;
@@ -477,7 +479,12 @@ async function loadLibrary(page = 1) {
     }
 }
 
-selectors.forEach((selector) => {
+function initMediaSelector(selector) {
+    if (!selector || selector.dataset.selectorReady === '1') {
+        return;
+    }
+    selector.dataset.selectorReady = '1';
+
     const { input, clear, button } = selectorNodes(selector);
 
     button?.addEventListener('click', () => openLibrary(selector));
@@ -492,7 +499,15 @@ selectors.forEach((selector) => {
             .then((media) => renderSelectorPreview(selector, media))
             .catch(() => renderSelectorPreview(selector, null));
     }
-});
+}
+
+selectors.forEach(initMediaSelector);
+
+// Repeaters clone rows at runtime, so their selectors are wired on demand.
+window.initMediaSelector = initMediaSelector;
+window.initMediaSelectorsWithin = (root) => {
+    root?.querySelectorAll?.('.media-selector').forEach(initMediaSelector);
+};
 
 libraryClose?.addEventListener('click', closeLibrary);
 
@@ -536,3 +551,199 @@ libraryGrid?.addEventListener('click', (event) => {
     notifySelectorChange(selector);
     closeLibrary();
 });
+
+// Shared confirmation modal for destructive actions.
+const confirmModal = document.getElementById('confirm-modal');
+
+const CONFIRM_TONES = {
+    danger: 'bg-red-600 hover:bg-red-700',
+    primary: 'bg-sky-600 hover:bg-sky-700',
+};
+
+window.confirmAction = (options) => {
+    const config = typeof options === 'string' ? { message: options } : (options || {});
+    const titleNode = document.getElementById('confirm-modal-title');
+    const messageNode = document.getElementById('confirm-modal-message');
+    const acceptButton = document.getElementById('confirm-modal-accept');
+    const cancelButton = document.getElementById('confirm-modal-cancel');
+
+    if (!confirmModal || !messageNode || !acceptButton || !cancelButton || !titleNode) {
+        return Promise.resolve(false);
+    }
+
+    titleNode.textContent = config.title || titleNode.dataset.default || '';
+    messageNode.textContent = config.message || '';
+    acceptButton.textContent = config.confirmLabel || acceptButton.dataset.default || '';
+    cancelButton.textContent = config.cancelLabel || cancelButton.dataset.default || '';
+
+    acceptButton.className = `px-3 py-2 text-white text-sm font-medium rounded-md transition-colors ${
+        CONFIRM_TONES[config.tone] || CONFIRM_TONES.danger
+    }`;
+
+    confirmModal.classList.remove('hidden');
+
+    const previouslyFocused = document.activeElement;
+    acceptButton.focus();
+
+    return new Promise((resolve) => {
+        const close = (result) => {
+            confirmModal.classList.add('hidden');
+            acceptButton.removeEventListener('click', onAccept);
+            cancelButton.removeEventListener('click', onCancel);
+            confirmModal.removeEventListener('click', onBackdrop);
+            document.removeEventListener('keydown', onKeydown);
+            previouslyFocused?.focus?.();
+            resolve(result);
+        };
+
+        const onAccept = () => close(true);
+        const onCancel = () => close(false);
+        const onBackdrop = (event) => {
+            if (event.target === confirmModal) close(false);
+        };
+        const onKeydown = (event) => {
+            if (event.key === 'Escape') close(false);
+        };
+
+        acceptButton.addEventListener('click', onAccept);
+        cancelButton.addEventListener('click', onCancel);
+        confirmModal.addEventListener('click', onBackdrop);
+        document.addEventListener('keydown', onKeydown);
+    });
+};
+
+// Administrable logo repeater: one nested accordion per item, with ordering,
+// dynamic labels and confirmed deletion.
+document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
+    const list = repeater.querySelector('[data-logo-list]');
+    const template = repeater.querySelector('[data-logo-template]');
+    const addButton = repeater.querySelector('[data-logo-add]');
+    const emptyMessage = repeater.querySelector('[data-logo-empty]');
+
+    if (!list || !template || !addButton) {
+        return;
+    }
+
+    const fallbackLabel = (position) =>
+        t('logoItemFallbackLabel', 'Logo :position').replace(':position', position);
+
+    const rows = () => Array.from(list.querySelectorAll('[data-logo-item]'));
+
+    const setAccordion = (row, open) => {
+        row.querySelector('[data-logo-accordion-body]')?.classList.toggle('hidden', !open);
+        row.querySelector('[data-logo-accordion-icon]')?.classList.toggle('rotate-180', open);
+        row.querySelector('[data-logo-accordion-toggle]')?.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    const syncRowLabel = (row, position) => {
+        const label = row.querySelector('[data-logo-item-label]');
+        const input = row.querySelector('[data-logo-label-input]');
+        if (!label) {
+            return;
+        }
+        label.textContent = input?.value.trim() || fallbackLabel(position);
+    };
+
+    // Rows must carry explicit, contiguous indexes: with `logos[][field]` PHP would
+    // build one entry per input instead of one entry per row.
+    const refreshRows = () => {
+        const items = rows();
+
+        items.forEach((row, index) => {
+            row.querySelectorAll('[name]').forEach((field) => {
+                field.name = field.name.replace(/\[logos\]\[[^\]]*\]/, `[logos][${index}]`);
+            });
+
+            const selector = row.querySelector('.media-selector');
+            const nameField = row.querySelector('[data-logo-label-input]');
+            if (selector && nameField) {
+                selector.dataset.name = nameField.name.replace('[label]', '[image_id]');
+            }
+
+            const up = row.querySelector('[data-logo-move-up]');
+            const down = row.querySelector('[data-logo-move-down]');
+            if (up) up.disabled = index === 0;
+            if (down) down.disabled = index === items.length - 1;
+
+            syncRowLabel(row, index + 1);
+        });
+
+        emptyMessage?.classList.toggle('hidden', items.length > 0);
+    };
+
+    // Adding, removing or reordering changes the payload without firing an input
+    // event, so the editor would not see the form as dirty and Save would stay off.
+    const notifyStructureChange = () => {
+        repeater.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    addButton.addEventListener('click', () => {
+        const row = template.content.firstElementChild.cloneNode(true);
+        list.appendChild(row);
+        refreshRows();
+        window.initMediaSelectorsWithin(row);
+        setAccordion(row, true);
+        notifyStructureChange();
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        row.querySelector('.media-selector-btn')?.focus();
+    });
+
+    list.addEventListener('click', async (event) => {
+        const row = event.target.closest('[data-logo-item]');
+        if (!row) {
+            return;
+        }
+
+        if (event.target.closest('[data-logo-accordion-toggle]')) {
+            const body = row.querySelector('[data-logo-accordion-body]');
+            setAccordion(row, body?.classList.contains('hidden') ?? false);
+            return;
+        }
+
+        if (event.target.closest('[data-logo-move-up]')) {
+            const previous = row.previousElementSibling;
+            if (previous) {
+                list.insertBefore(row, previous);
+                refreshRows();
+                notifyStructureChange();
+                row.querySelector('[data-logo-move-up]')?.focus();
+            }
+            return;
+        }
+
+        if (event.target.closest('[data-logo-move-down]')) {
+            const next = row.nextElementSibling;
+            if (next) {
+                list.insertBefore(next, row);
+                refreshRows();
+                notifyStructureChange();
+                row.querySelector('[data-logo-move-down]')?.focus();
+            }
+            return;
+        }
+
+        if (event.target.closest('[data-logo-remove]')) {
+            const label = row.querySelector('[data-logo-item-label]')?.textContent?.trim() || '';
+            const message = t('confirmRemoveLogo', 'This logo will be removed.').replace(':item', label);
+
+            if (await window.confirmAction({ message, confirmLabel: t('remove', 'Remove') })) {
+                row.remove();
+                refreshRows();
+                notifyStructureChange();
+            }
+        }
+    });
+
+    list.addEventListener('input', (event) => {
+        const input = event.target.closest('[data-logo-label-input]');
+        if (!input) {
+            return;
+        }
+
+        const row = input.closest('[data-logo-item]');
+        syncRowLabel(row, rows().indexOf(row) + 1);
+    });
+
+    refreshRows();
+});
+

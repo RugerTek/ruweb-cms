@@ -17,6 +17,16 @@ class HomepageSeeder extends Seeder
         // horizontal placeholder.
         $placeholder = Media::where('placeholder_key', 'horizontal')->first();
 
+        // Logos render inside square cells, so the carousel starts with four copies
+        // of the square placeholder for the client to replace one by one.
+        $logoPlaceholder = Media::where('placeholder_key', 'square')->first();
+        $logos = $logoPlaceholder
+            ? array_map(
+                fn (int $position) => ['image_id' => $logoPlaceholder->id, 'label' => 'Logo ' . $position],
+                range(1, 4)
+            )
+            : [];
+
         $page = Page::updateOrCreate(
             ['slug' => 'inicio', 'locale' => Locale::baseCode()],
             [
@@ -37,6 +47,7 @@ class HomepageSeeder extends Seeder
                             'is_visible' => true,
                             'heading' => 'Listo para editar',
                             'body' => 'Personalizá esta portada desde el panel de administración.',
+                            'logos' => $logos,
                         ],
                         'cta' => [
                             'is_visible' => true,
