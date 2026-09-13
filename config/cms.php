@@ -213,6 +213,16 @@ return [
         'password' => env('CMS_ADMIN_PASSWORD', 'password'),
     ],
 
+    // Map picker used by `map_point` settings (docs/layout-header-footer.md). Free OSM tiles;
+    // switch the URL and attribution here to use another provider.
+    'maps' => [
+        'tiles_url' => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'attribution' => '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        'default_center' => [-25.2867, -57.6470],
+        'default_zoom' => 12,
+        'pinned_zoom' => 16,
+    ],
+
     'menu_locations' => [
         'header' => 'Header Navigation',
         'footer' => 'Footer Navigation',
@@ -225,6 +235,12 @@ return [
             'site_description',
             'site_favicon',
             'admin_login_path',
+            'contact_phone',
+            'contact_whatsapp',
+            'contact_email',
+            'contact_address',
+            'footer_tagline',
+            'footer_copyright',
         ],
     ],
 ];

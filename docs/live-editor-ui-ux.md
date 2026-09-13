@@ -180,6 +180,8 @@ Requirements:
 15. Always include an `Open in a new tab` checkbox as part of the destination control, for both internal and custom destinations. Keep it visible without requiring `Custom`, leave it unchecked by default for new buttons, and restore its saved state when editing.
 16. Store the new-tab preference alongside the semantic destination as non-translatable behavior so it is configured once for every locale. When enabled, render the link with `target="_blank"` and the appropriate `rel="noopener noreferrer"` protection.
 
+Reference implementation: `resources/views/admin/partials/_link-destination.blade.php` with `App\Support\LinkDestination` (used by the header CTA, `docs/layout-header-footer.md`).
+
 This pattern controls destinations only. Button text remains a separate labeled content field, and whether the public component contains a button remains part of its code-owned layout unless the content contract explicitly says otherwise.
 
 ### Forms Are Code-Owned
@@ -306,6 +308,10 @@ When every item of an administrable repeater consists of exactly one editable fi
 - the red trash-can icon button, aligned to the right
 
 Add, reorder and delete behave exactly like accordion items, including the confirmation modal. As soon as an item gains a second field, switch back to the nested accordion layout.
+
+##### Typed Single-Value Items
+
+A narrow exception: when an item is one value plus a selector that only qualifies that value (a social network and its URL, a contact channel and its number), the pair still counts as one field and renders as a flat row: selector on the left, the value taking the remaining width, then the move and delete controls. Both parts must fit in one row on desktop; if the item needs any further input, use the accordion. Reference implementation: `resources/views/admin/settings/_social-link-item.blade.php`.
 
 #### Deleting An Item
 

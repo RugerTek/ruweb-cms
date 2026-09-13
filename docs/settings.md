@@ -33,6 +33,9 @@ This allows the starter to keep environment-like values, site-wide content, and 
 | `select` | select input | `string` | constrained choices stored in `options` |
 | `media` | media selector | media model or `null` | for logos, images, files |
 | `password` | masked input | decrypted `string` | should be stored encrypted |
+| `social_links` | administrable repeater (network + URL) | `list<array{network, url}>` | stored as a JSON array; see `docs/layout-header-footer.md` |
+| `rich_text` | TinyMCE `short-description` preset | sanitised HTML `string` or `null` | links may open in a new tab; render with `ContentHelper::richText()` (`docs/rich-text.md`) |
+| `map_point` | Leaflet map picker + lat/lng inputs | `array{lat: float, lng: float}` or `null` | stored as JSON; tiles and defaults in `config('cms.maps')` |
 
 A `media` setting that ships with a default should point at the placeholder matching how it
 is rendered: the global social image is `horizontal`, since every platform renders Open Graph
@@ -50,11 +53,15 @@ Common examples:
 - `email`
 - `analytics`
 - `security` (reCAPTCHA keys for public forms, see `docs/forms.md`)
+- `contact` (business phone, email, address, coordinates and social links, see `docs/layout-header-footer.md`)
+- `header` / `footer` (fields owned by the Header and Footer screens, hidden from the Settings tabs)
 - `integrations`
 
 The exact groups are project-defined, but the grouping model should remain stable and predictable.
 
-Some groups may be managed by dedicated admin screens instead of the general settings screen. For example, email or analytics settings can still be stored as settings while being edited through specialized controllers.
+Some groups may be managed by dedicated admin screens instead of the general settings screen. For example, email, analytics, header or footer settings can still be stored as settings while being edited through specialized controllers. The generic screen skips those groups through `SettingController::DEDICATED_GROUPS`.
+
+The same setting may be edited from several screens when that helps the client (the logo appears in Settings > General, Header and Footer). That is fine as long as every input writes the same row; never create a second setting for the same fact.
 
 ## Runtime Usage
 
@@ -79,10 +86,11 @@ Guidelines:
 
 Typical workflow:
 
-1. add the setting definition in the bootstrap source, such as a seeder
+1. add the setting definition in the bootstrap source, such as a seeder, plus a data migration so existing installs get the row (`Setting::set()` ignores unknown keys)
 2. assign the correct `type` and `group`
 3. add admin translations for its label and group
-4. read the value through the shared settings API
+4. add its validation rule where the group is saved (`PersistsSettings` for `contact`, `header` and `footer`)
+5. read the value through the shared settings API
 
 Example definition:
 
@@ -122,4 +130,4 @@ This document should not become:
 
 Global/default values stay in `settings.value`. Localized overrides live in `setting_translations` and are resolved with `Setting::getLocalized($key, $locale)`.
 
-Only user-facing public values should be localized, such as site name, site description, social image, optional logo, and footer text. Operational values such as analytics, mail, favicon, and admin locale remain global. Homepage is global by translation group (`homepage_translation_group_id`), not one setting per locale.
+Only user-facing public values should be localized, such as site name, site description, social image, optional logo, header button label, footer tagline and copyright line. Operational values such as analytics, mail, favicon, and admin locale remain global. Homepage is global by translation group (`homepage_translation_group_id`), not one setting per locale.

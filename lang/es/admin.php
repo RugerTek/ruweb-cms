@@ -377,6 +377,50 @@ return [
 
     // Settings
     'settings_saved' => 'Ajustes guardados correctamente.',
+
+    // Header / Footer screens and the public admin bar (docs/layout-header-footer.md)
+    'header' => 'Header',
+    'footer' => 'Footer',
+    'header_subtitle' => 'Todo lo editable del encabezado del sitio, en un solo lugar.',
+    'footer_subtitle' => 'Todo lo editable del pie de página del sitio, en un solo lugar.',
+    'header_saved' => 'Header guardado correctamente.',
+    'footer_saved' => 'Footer guardado correctamente.',
+    'layout_logo_label' => 'Logo',
+    'layout_logo_help' => 'Es el mismo logo de Ajustes > General: cambiarlo aquí lo cambia en todo el sitio.',
+    'layout_shortcuts_title' => 'Se edita en otro lugar',
+    'header_links_title' => 'Enlaces del header',
+    'header_links_description' => 'Los enlaces de navegación se administran desde Menús, en el menú asignado a la ubicación Header.',
+    'footer_links_title' => 'Enlaces del footer',
+    'footer_links_description' => 'Los enlaces del pie se administran desde Menús, en el menú asignado a la ubicación Footer.',
+    'layout_contact_title' => 'Datos de contacto',
+    'layout_contact_description' => 'Teléfono, WhatsApp, email y dirección viven en Ajustes > Contacto y se muestran aquí automáticamente.',
+    'footer_social_title' => 'Redes sociales',
+    'footer_social_description' => 'Los íconos de redes salen de la lista de Ajustes > Contacto.',
+    'layout_edit_menu' => 'Editar menú',
+    'layout_create_menu' => 'Ir a Menús',
+    'layout_edit_contact' => 'Editar contacto',
+    'layout_edit_social' => 'Editar redes',
+    'social_links_count' => '{1} :count red|[2,*] :count redes',
+    'edit_layout' => 'Editar layout',
+    'edit_header' => 'Editar header',
+    'edit_footer' => 'Editar footer',
+    'social_link_network' => 'Red social',
+    'social_link_url' => 'URL del perfil',
+    'social_link_fallback_label' => 'Red :position',
+    'social_links_empty' => 'Todavía no agregaste redes sociales.',
+    'btn_add_social_link' => 'Agregar red social',
+    'btn_remove_social_link' => 'Quitar red social',
+    'confirm_remove_social_link' => 'Se quitará la red ":item".',
+    'link_destination' => 'Destino del botón',
+    'link_destination_custom' => 'Personalizado',
+    'link_destination_custom_url' => 'Destino personalizado',
+    'link_destination_custom_ph' => 'https://... , /ruta, #ancla, mailto: o tel:',
+    'link_destination_custom_help' => 'Para destinos que no son una página del sitio: URL externa, ancla, email o teléfono.',
+    'link_open_new_tab' => 'Abrir en una pestaña nueva',
+    'map_point_hint' => 'Hacé clic en el mapa para colocar el pin, o arrastralo hasta la ubicación exacta. También podés escribir las coordenadas.',
+    'map_point_lat' => 'Latitud',
+    'map_point_lng' => 'Longitud',
+    'map_point_clear' => 'Quitar ubicación',
     'settings_subtitle' => 'Administra la configuración del sitio.',
     'btn_save_settings' => 'Guardar ajustes',
     'settings_groups' => [
@@ -384,6 +428,9 @@ return [
         'admin' => 'Administración',
         'email' => 'Email',
         'security' => 'Seguridad',
+        'contact' => 'Contacto',
+        'header' => 'Header',
+        'footer' => 'Footer',
     ],
     'settings_fields' => [
         'recaptcha_site_key' => [
@@ -444,6 +491,56 @@ return [
         'mail_from_name' => [
             'label' => 'Nombre remitente',
             'help' => 'Nombre visible en la bandeja de entrada del destinatario.',
+        ],
+        'contact_phone' => [
+            'label' => 'Teléfono',
+            'help' => 'Tal como querés mostrarlo. El enlace para llamar se genera solo. Ej.: +595 21 123 456',
+        ],
+        'contact_whatsapp' => [
+            'label' => 'WhatsApp',
+            'help' => 'Número con código de país y sin espacios ni signos. Ej.: 595981123456. Vacío, no se muestra.',
+        ],
+        'contact_email' => [
+            'label' => 'Email de contacto',
+        ],
+        'contact_address' => [
+            'label' => 'Dirección',
+            'help' => 'Dirección escrita, como aparece en el sitio. Podés usar varias líneas.',
+        ],
+        'contact_social_links' => [
+            'label' => 'Redes sociales',
+            'help' => 'Agregá solo las redes que tiene el negocio, en el orden en que querés mostrarlas.',
+        ],
+        'header_cta_label' => [
+            'label' => 'Botón del header: texto',
+            'help' => 'El texto del botón. Ej.: Pedir presupuesto',
+        ],
+        'footer_tagline' => [
+            'label' => 'Texto bajo el logo',
+            'help' => 'Una o dos frases sobre el negocio. Vacío, no se muestra.',
+        ],
+        'contact_location' => [
+            'label' => 'Ubicación en el mapa',
+            'help' => 'Se usa para el enlace "Ver en el mapa". Hacé clic en el mapa para soltar el pin o arrastralo.',
+        ],
+        'header_cta_enabled' => [
+            'label' => 'Mostrar botón en el header',
+            'help' => 'Un botón destacado a la derecha del menú, por ejemplo "Pedir presupuesto".',
+        ],
+        'header_cta_page' => [
+            'label' => 'Destino del botón',
+        ],
+        'footer_credit_enabled' => [
+            'label' => 'Mostrar crédito de desarrollo',
+            'help' => 'Una línea junto al copyright, por ejemplo "Desarrollado por Rüweb".',
+        ],
+        'footer_credit' => [
+            'label' => 'Texto del crédito',
+            'help' => 'Podés incluir un enlace. Desde el diálogo de enlace se puede elegir abrirlo en otra pestaña.',
+        ],
+        'footer_copyright' => [
+            'label' => 'Línea de copyright',
+            'help' => 'Podés usar {year} para el año actual y {site} para el nombre del sitio.',
         ],
     ],
     'settings_options' => [

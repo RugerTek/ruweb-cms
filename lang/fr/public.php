@@ -6,6 +6,15 @@ return [
     'blog_empty' => 'Aucun article publié pour le moment.',
     'read_article' => 'Lire l’article',
     'back_to_blog' => 'Retour au blog',
+    // Public header / footer (docs/layout-header-footer.md)
+    'layout' => [
+        'contact' => 'Contact',
+        'links' => 'Liens',
+        'follow_us' => 'Suivez-nous',
+        'call' => 'Appeler',
+        'whatsapp' => 'WhatsApp',
+        'view_map' => 'Voir sur la carte',
+    ],
 
     // Public forms (docs/forms.md). Fallbacks when the Live Editor labels are empty.
     'forms' => [

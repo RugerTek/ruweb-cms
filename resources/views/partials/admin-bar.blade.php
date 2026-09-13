@@ -81,6 +81,37 @@
         @if($isAdmin)
         <span class="text-gray-700 mx-1 flex-none select-none">|</span>
 
+        {{-- Edit layout: hover / focus dropdown to the Header and Footer screens (docs/layout-header-footer.md). CSS only, no JS on the public side. --}}
+        <div class="relative flex-none group">
+            <button type="button"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-gray-400 hover:text-white hover:bg-white/10 group-hover:text-white group-hover:bg-white/10 group-focus-within:text-white group-focus-within:bg-white/10 transition-colors text-[11px] flex-none cursor-default"
+                    aria-haspopup="true"
+                    title="{{ trans('admin.edit_layout', [], $adminLocale) }}">
+                <svg class="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/>
+                    <path stroke-linecap="round" d="M3 9h18M3 15h18"/>
+                </svg>
+                <span class="hidden sm:inline">{{ trans('admin.edit_layout', [], $adminLocale) }}</span>
+                <svg class="w-3 h-3 flex-none opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="absolute left-0 top-full pt-1 hidden group-hover:block group-focus-within:block z-[10000]" data-admin-bar-layout-menu>
+                <div class="min-w-[10rem] rounded-md bg-gray-900 ring-1 ring-white/10 shadow-lg py-1">
+                    <a href="{{ route('admin.header.index') }}"
+                       class="block px-3 py-1.5 text-[11px] text-gray-300 hover:text-white hover:bg-white/10 transition-colors">
+                        {{ trans('admin.edit_header', [], $adminLocale) }}
+                    </a>
+                    <a href="{{ route('admin.footer.index') }}"
+                       class="block px-3 py-1.5 text-[11px] text-gray-300 hover:text-white hover:bg-white/10 transition-colors">
+                        {{ trans('admin.edit_footer', [], $adminLocale) }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <span class="text-gray-700 mx-1 flex-none select-none">|</span>
+
         <form method="POST"
               action="{{ route('admin.cache.refresh') }}"
               class="flex-none"

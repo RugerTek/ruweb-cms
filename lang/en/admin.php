@@ -377,6 +377,50 @@ return [
 
     // Settings
     'settings_saved' => 'Settings saved successfully.',
+
+    // Header / Footer screens and the public admin bar (docs/layout-header-footer.md)
+    'header' => 'Header',
+    'footer' => 'Footer',
+    'header_subtitle' => 'Everything editable in the site header, in one place.',
+    'footer_subtitle' => 'Everything editable in the site footer, in one place.',
+    'header_saved' => 'Header saved successfully.',
+    'footer_saved' => 'Footer saved successfully.',
+    'layout_logo_label' => 'Logo',
+    'layout_logo_help' => 'Same logo as Settings > General: changing it here changes it site-wide.',
+    'layout_shortcuts_title' => 'Edited elsewhere',
+    'header_links_title' => 'Header links',
+    'header_links_description' => 'Navigation links are managed under Menus, in the menu assigned to the Header location.',
+    'footer_links_title' => 'Footer links',
+    'footer_links_description' => 'Footer links are managed under Menus, in the menu assigned to the Footer location.',
+    'layout_contact_title' => 'Contact details',
+    'layout_contact_description' => 'Phone, WhatsApp, email and address live in Settings > Contact and show up here automatically.',
+    'footer_social_title' => 'Social networks',
+    'footer_social_description' => 'Social icons come from the list in Settings > Contact.',
+    'layout_edit_menu' => 'Edit menu',
+    'layout_create_menu' => 'Go to Menus',
+    'layout_edit_contact' => 'Edit contact',
+    'layout_edit_social' => 'Edit networks',
+    'social_links_count' => '{1} :count network|[2,*] :count networks',
+    'edit_layout' => 'Edit layout',
+    'edit_header' => 'Edit header',
+    'edit_footer' => 'Edit footer',
+    'social_link_network' => 'Social network',
+    'social_link_url' => 'Profile URL',
+    'social_link_fallback_label' => 'Network :position',
+    'social_links_empty' => 'No social networks added yet.',
+    'btn_add_social_link' => 'Add social network',
+    'btn_remove_social_link' => 'Remove social network',
+    'confirm_remove_social_link' => 'The network ":item" will be removed.',
+    'link_destination' => 'Button destination',
+    'link_destination_custom' => 'Custom',
+    'link_destination_custom_url' => 'Custom destination',
+    'link_destination_custom_ph' => 'https://... , /path, #anchor, mailto: or tel:',
+    'link_destination_custom_help' => 'For destinations that are not a site page: external URL, anchor, email or phone.',
+    'link_open_new_tab' => 'Open in a new tab',
+    'map_point_hint' => 'Click the map to place the pin, or drag it to the exact location. You can also type the coordinates.',
+    'map_point_lat' => 'Latitude',
+    'map_point_lng' => 'Longitude',
+    'map_point_clear' => 'Clear location',
     'settings_subtitle' => 'Manage your site configuration.',
     'btn_save_settings' => 'Save Settings',
     'settings_groups' => [
@@ -384,6 +428,9 @@ return [
         'admin' => 'Administration',
         'email' => 'Email',
         'security' => 'Security',
+        'contact' => 'Contact',
+        'header' => 'Header',
+        'footer' => 'Footer',
     ],
     'settings_fields' => [
         'recaptcha_site_key' => [
@@ -444,6 +491,56 @@ return [
         'mail_from_name' => [
             'label' => 'From name',
             'help' => 'Name shown in the recipient\'s inbox.',
+        ],
+        'contact_phone' => [
+            'label' => 'Phone',
+            'help' => 'As you want it displayed. The call link is generated automatically. E.g. +595 21 123 456',
+        ],
+        'contact_whatsapp' => [
+            'label' => 'WhatsApp',
+            'help' => 'Number with country code, no spaces or symbols. E.g. 595981123456. Leave empty to hide it.',
+        ],
+        'contact_email' => [
+            'label' => 'Contact email',
+        ],
+        'contact_address' => [
+            'label' => 'Address',
+            'help' => 'Written address as shown on the site. Several lines are fine.',
+        ],
+        'contact_social_links' => [
+            'label' => 'Social networks',
+            'help' => 'Add only the networks the business has, in the order you want them displayed.',
+        ],
+        'header_cta_label' => [
+            'label' => 'Header button: text',
+            'help' => 'The button text. E.g. Get a quote',
+        ],
+        'footer_tagline' => [
+            'label' => 'Text under the logo',
+            'help' => 'One or two sentences about the business. Leave empty to hide it.',
+        ],
+        'contact_location' => [
+            'label' => 'Map location',
+            'help' => 'Used for the "View on map" link. Click the map to drop the pin or drag it.',
+        ],
+        'header_cta_enabled' => [
+            'label' => 'Show header button',
+            'help' => 'A highlighted button to the right of the menu, e.g. "Get a quote".',
+        ],
+        'header_cta_page' => [
+            'label' => 'Button destination',
+        ],
+        'footer_credit_enabled' => [
+            'label' => 'Show development credit',
+            'help' => 'A line next to the copyright, e.g. "Developed by Rüweb".',
+        ],
+        'footer_credit' => [
+            'label' => 'Credit text',
+            'help' => 'May include a link. The link dialog lets you open it in a new tab.',
+        ],
+        'footer_copyright' => [
+            'label' => 'Copyright line',
+            'help' => 'Use {year} for the current year and {site} for the site name.',
         ],
     ],
     'settings_options' => [

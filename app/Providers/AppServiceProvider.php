@@ -41,10 +41,19 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.public', function ($view) {
             $siteLogo = Setting::getLocalized('site_logo');
 
+            // Header / footer fields edited from their admin screens (docs/layout-header-footer.md).
             $view->with([
                 'siteName' => Setting::getLocalized('site_name') ?: config('app.name'),
                 'siteLogo' => $siteLogo?->url(),
                 'siteLogoMedia' => $siteLogo,
+                'headerCtaLabel' => Setting::get('header_cta_enabled') ? Setting::getLocalized('header_cta_label') : null,
+                'headerCtaUrl' => Setting::get('header_cta_enabled')
+                    ? \App\Support\LinkDestination::resolve(Setting::get('header_cta_page'), Setting::get('header_cta_url'))
+                    : null,
+                'headerCtaNewTab' => (bool) Setting::get('header_cta_new_tab'),
+                'footerTagline' => Setting::getLocalized('footer_tagline'),
+                'footerCopyright' => Setting::getLocalized('footer_copyright'),
+                'footerCredit' => Setting::get('footer_credit_enabled') ? Setting::getLocalized('footer_credit') : null,
             ]);
         });
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\PersistsSettings;
 use App\Http\Controllers\Controller;
 use App\Models\Locale;
 use App\Models\Page;
@@ -15,13 +16,18 @@ use Illuminate\View\View;
 
 class SettingController extends Controller
 {
+    use PersistsSettings;
+
+    /** Groups edited through dedicated screens instead of the Settings tabs. */
+    private const DEDICATED_GROUPS = ['analytics', 'email', 'header', 'footer'];
+
     public function index(): View
     {
         $this->ensureAdminLoginPathSettingExists();
 
-        $groupOrder = ['general', 'admin', 'security'];
+        $groupOrder = ['general', 'contact', 'admin', 'security'];
         $groups = Setting::allGrouped()
-            ->filter(fn ($v, $k) => ! in_array($k, ['analytics', 'email']))
+            ->filter(fn ($v, $k) => ! in_array($k, self::DEDICATED_GROUPS, true))
             ->sortBy(fn ($v, $k) => array_search($k, $groupOrder) !== false ? array_search($k, $groupOrder) : 99);
         $homepageOptions = Page::published()
             ->where('locale', Locale::baseCode())
@@ -56,6 +62,7 @@ class SettingController extends Controller
         $allowedHomepageGroups = array_values(array_unique(array_filter($allowedHomepageGroups)));
 
         $request->validate([
+            ...$this->contactSettingRules(),
             'settings.homepage_translation_group_id' => ['sometimes', 'string', Rule::in($allowedHomepageGroups)],
             'settings.admin_login_path' => [
                 'sometimes',
@@ -101,29 +108,18 @@ class SettingController extends Controller
             $settings['admin_login_path'] = AdminLoginPath::normalize($settings['admin_login_path']);
         }
 
-        foreach ($settings as $key => $value) {
-            // Don't overwrite password-type settings when field is left blank.
-            $existing = Setting::where('key', $key)->first();
-
-            if ($key === 'admin_login_path' && ! $existing) {
-                Setting::create([
-                    'key' => 'admin_login_path',
-                    'value' => $value,
-                    'type' => 'string',
-                    'group' => 'admin',
-                    'options' => null,
-                ]);
-
-                continue;
-            }
-
-            if ($existing && $existing->type === 'password' && ($value === null || $value === '')) {
-                continue;
-            }
-            Setting::set($key, $value);
+        if (array_key_exists('admin_login_path', $settings) && ! Setting::where('key', 'admin_login_path')->exists()) {
+            Setting::create([
+                'key' => 'admin_login_path',
+                'value' => $settings['admin_login_path'],
+                'type' => 'string',
+                'group' => 'admin',
+                'options' => null,
+            ]);
+            unset($settings['admin_login_path']);
         }
 
-        Setting::clearCache();
+        $this->persistSettings($settings);
 
         if (array_key_exists('admin_login_path', $settings)) {
             AdminLoginPath::clearCache();

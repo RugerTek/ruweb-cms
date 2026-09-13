@@ -15,6 +15,12 @@ if (document.querySelector('[data-rich-text]')) {
     import('./rich-text.js').then((module) => module.initRichText());
 }
 
+// Map picker for `map_point` settings (docs/layout-header-footer.md): Leaflet is
+// code-split like TinyMCE and fetched only when a picker is on the page.
+if (document.querySelector('[data-map-picker]')) {
+    import('./map-picker.js').then((module) => module.initMapPickers());
+}
+
 const selectors = Array.from(document.querySelectorAll('.media-selector'));
 const libraryModal = document.getElementById('media-library-modal');
 const libraryClose = document.getElementById('media-library-close');
@@ -897,6 +903,45 @@ document.querySelectorAll('[data-repeater]').forEach((repeater) => {
     });
 
     refreshRows();
+});
+
+// Social links repeater (Settings > Contacto): keep the row icon and URL placeholder
+// in sync with the selected network (docs/layout-header-footer.md).
+document.addEventListener('change', (event) => {
+    const select = event.target.closest('[data-social-network]');
+    if (!select) return;
+
+    const option = select.selectedOptions[0];
+    const row = select.closest('[data-repeater-item]');
+    const iconPath = row?.querySelector('[data-social-icon] path');
+    const urlInput = row?.querySelector('input[type="url"]');
+
+    if (iconPath && option?.dataset.icon) iconPath.setAttribute('d', option.dataset.icon);
+    if (urlInput && option?.dataset.placeholder) urlInput.placeholder = option.dataset.placeholder;
+});
+
+// Conditional field groups: a switch [data-toggle-controls="<id>"] shows or hides
+// every [data-toggle-target="<id>"] (e.g. the header CTA fields, the footer credit).
+document.querySelectorAll('[data-toggle-controls]').forEach((toggle) => {
+    const id = toggle.dataset.toggleControls;
+    const targets = document.querySelectorAll(`[data-toggle-target="${id}"]`);
+    const sync = () => targets.forEach((target) => target.classList.toggle('hidden', !toggle.checked));
+    toggle.addEventListener('change', sync);
+    sync();
+});
+
+// Button destination selector (docs/live-editor-ui-ux.md): the manual URL input is
+// shown only while "Custom" is selected; the typed value is kept while switching.
+document.querySelectorAll('[data-link-destination]').forEach((control) => {
+    const select = control.querySelector('[data-link-destination-page]');
+    const custom = control.querySelector('[data-link-destination-custom]');
+    if (!select || !custom) return;
+    const sync = () => custom.classList.toggle('hidden', select.value !== 'custom');
+    select.addEventListener('change', () => {
+        sync();
+        if (select.value === 'custom') custom.querySelector('input')?.focus();
+    });
+    sync();
 });
 
 // Any form carrying data-confirm is gated by the shared modal instead of window.confirm.

@@ -95,6 +95,8 @@ Locations are defined in `config/cms.php`:
 
 Add new locations here; they appear automatically in the admin location dropdown.
 
+The `header` and `footer` menus are rendered by the layout partials described in `docs/layout-header-footer.md`. The Header and Footer admin screens do not edit menu items; they link to the menu assigned to their location.
+
 ---
 
 ## Rendering menus in Blade

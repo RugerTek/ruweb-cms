@@ -88,6 +88,14 @@ class Setting extends Model
             if ($setting->type === 'password' && is_string($value) && $value !== '') {
                 $value = Crypt::encryptString($value);
             }
+            if ($setting->type === 'social_links' && is_array($value)) {
+                $value = json_encode(array_values($value), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+            if ($setting->type === 'map_point') {
+                $value = is_array($value) && isset($value['lat'], $value['lng'])
+                    ? json_encode(['lat' => (float) $value['lat'], 'lng' => (float) $value['lng']])
+                    : null;
+            }
             $setting->update(['value' => $value]);
         }
 
@@ -137,8 +145,36 @@ class Setting extends Model
             'integer' => (int) $value,
             'media' => $value ? Media::find((int) $value) : null,
             'password' => static::decryptPassword($value),
+            // Administrable list of {network, url} rows (docs/layout-header-footer.md).
+            'social_links' => static::decodeList($value),
+            // {lat, lng} picked on a map (docs/layout-header-footer.md).
+            'map_point' => static::decodePoint($value),
             default => $value,
         };
+    }
+
+    /** @return array{lat: float, lng: float}|null */
+    protected static function decodePoint(?string $value): ?array
+    {
+        $decoded = $value ? json_decode($value, true) : null;
+
+        if (! is_array($decoded) || ! isset($decoded['lat'], $decoded['lng']) || ! is_numeric($decoded['lat']) || ! is_numeric($decoded['lng'])) {
+            return null;
+        }
+
+        return ['lat' => (float) $decoded['lat'], 'lng' => (float) $decoded['lng']];
+    }
+
+    /** @return list<array<string, mixed>> */
+    protected static function decodeList(?string $value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? array_values(array_filter($decoded, 'is_array')) : [];
     }
 
     protected static function decryptPassword(?string $value): ?string

@@ -8,7 +8,21 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.38.1 - 2026-09-14
+## 0.39.0 - 2026-09-15
+
+- Nuevas pantallas **Header** y **Footer** en el admin (solo admins) que centralizan todo lo editable de cada región: el logo compartido, el botón de llamada a la acción del header, el texto y la línea de copyright del footer, y tarjetas de acceso directo hacia el menú de la ubicación correspondiente y hacia Ajustes > Contacto. El código de ambas regiones se versiona; el cliente edita solo datos.
+- Nueva pestaña **Contacto** en Ajustes con teléfono, WhatsApp, email, dirección, coordenadas y un repeater de redes sociales: el cliente agrega solo las redes que tiene, eligiéndolas de un catálogo central (`App\Support\SocialNetworks`) con íconos incluidos. Agregar una red nueva es una sola entrada en el catálogo.
+- Nuevo tipo de setting `social_links` y helper `App\Support\BusinessContact` como único punto de lectura de los datos del negocio (enlaces `tel:`, `mailto:`, `wa.me` y mapa derivados en un solo lugar), más el componente `<x-social-links>`.
+- El footer público muestra logo, texto, menú de la ubicación `footer`, datos de contacto, redes y copyright con `{year}` y `{site}`; el header muestra el botón opcional. Los bloques vacíos no se renderizan.
+- El botón del header es condicional (interruptor "Mostrar botón") y su destino usa el selector semántico de la guía UI/UX: páginas publicadas del sitio, opción Personalizado con URL manual, y "abrir en pestaña nueva". Partial reutilizable `admin.partials._link-destination` y resolutor `App\Support\LinkDestination`.
+- Footer: texto bajo el logo en texto enriquecido y crédito de desarrollo opcional (interruptor + texto enriquecido con enlace, que puede abrir en otra pestaña). Nuevo tipo de setting `rich_text`, sanitizado al guardar.
+- Ubicación del negocio con un mapa (Leaflet + OpenStreetMap, sin API key): el cliente suelta o arrastra el pin y las coordenadas se completan solas. Nuevo tipo de setting `map_point` y configuración en `cms.maps`.
+- El ítem Ajustes del sidebar abre siempre la pestaña General.
+- La admin bar pública suma el desplegable **Editar layout** con accesos a Header y Footer, solo CSS.
+- El renderizado de campos de settings se extrae a un partial compartido y el guardado a un trait común, para que un mismo setting se vea y valide igual en cualquier pantalla.
+- Documentación canónica nueva en `docs/layout-header-footer.md`, skill `docs/skills/create-layout-field.md` y ajustes en `docs/settings.md`, `docs/menu-guide.md`, `docs/live-editor-ui-ux.md` y `docs/index.md`.
+
+## 0.38.1 - 2026-09-14 (76da042)
 
 - Las opciones del motivo en el editor de contacto se listan como filas planas con el input, los controles de orden y el botón de borrar, sin acordeón por opción. La regla queda escrita en la guía de UI/UX del editor para los repeaters de un solo campo.
 

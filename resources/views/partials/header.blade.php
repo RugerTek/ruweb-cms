@@ -44,6 +44,15 @@
                 </div>
             @endif
 
+            {{-- Optional call-to-action from the Header screen (docs/layout-header-footer.md) --}}
+            @if(filled($headerCtaLabel ?? null) && filled($headerCtaUrl ?? null))
+                <a href="{{ $headerCtaUrl }}" data-header-cta
+                   @if($headerCtaNewTab ?? false) target="_blank" rel="noopener noreferrer" @endif
+                   class="hidden sm:inline-flex items-center px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors">
+                    {{ $headerCtaLabel }}
+                </a>
+            @endif
+
             {{-- Mobile hamburger --}}
             <button id="mobile-menu-toggle" class="sm:hidden text-gray-600 hover:text-gray-900">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,8 +62,15 @@
         </div>
 
         {{-- Mobile nav --}}
-        <x-menu-component slug="header" id="mobile-menu"
-            class="sm:hidden hidden pb-4 [&_a]:block [&_a]:py-2 [&_a]:text-sm [&_a]:text-gray-600 [&_a:hover]:text-gray-900 [&_a]:transition-colors [&_.sub-menu]:pl-4" />
+        <div id="mobile-menu" class="sm:hidden hidden pb-4">
+            <x-menu-component slug="header"
+                class="[&_a]:block [&_a]:py-2 [&_a]:text-sm [&_a]:text-gray-600 [&_a:hover]:text-gray-900 [&_a]:transition-colors [&_.sub-menu]:pl-4" />
+            @if(filled($headerCtaLabel ?? null) && filled($headerCtaUrl ?? null))
+                <a href="{{ $headerCtaUrl }}" @if($headerCtaNewTab ?? false) target="_blank" rel="noopener noreferrer" @endif class="mt-3 inline-flex items-center px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors">
+                    {{ $headerCtaLabel }}
+                </a>
+            @endif
+        </div>
     </div>
 </header>
 

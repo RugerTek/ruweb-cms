@@ -105,6 +105,35 @@
                     <span>{{ __('admin.menus') }}</span>
                 </a>
             </li>
+            @if(auth()->user()->isAdmin())
+            {{-- Header / Footer: one screen each centralising the editable parts of the layout (docs/layout-header-footer.md) --}}
+            <li>
+                <a href="{{ route('admin.header.index') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
+                          {{ request()->routeIs('admin.header.*')
+                              ? 'bg-sky-500/10 text-sky-400'
+                              : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="16" rx="2" stroke-width="2"/>
+                        <path stroke-linecap="round" stroke-width="2" d="M3 9h18"/>
+                    </svg>
+                    <span>{{ __('admin.header') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.footer.index') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
+                          {{ request()->routeIs('admin.footer.*')
+                              ? 'bg-sky-500/10 text-sky-400'
+                              : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="16" rx="2" stroke-width="2"/>
+                        <path stroke-linecap="round" stroke-width="2" d="M3 15h18"/>
+                    </svg>
+                    <span>{{ __('admin.footer') }}</span>
+                </a>
+            </li>
+            @endif
             <li>
                 <a href="{{ route('admin.editorial-control.index') }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
@@ -154,7 +183,7 @@
             </li>
             @if(auth()->user()->isAdmin())
             <li>
-                <a href="{{ route('admin.settings.index') }}"
+                <a href="{{ route('admin.settings.index', ['tab' => 'general']) }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
                           {{ request()->routeIs('admin.settings.*')
                               ? 'bg-sky-500/10 text-sky-400'

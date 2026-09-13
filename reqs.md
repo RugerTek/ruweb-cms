@@ -14,6 +14,9 @@ Documento actualizado contra el código del repositorio. La fuente de verdad es 
 - Filtro de blog por categoría vía query string `?category=...`.
 - Templates de páginas `default`, `home` y `home-alt`.
 - Menús renderizables desde el CMS para ubicaciones `header` y `footer`.
+- Header con logo, menú y botón de llamada a la acción opcional, editable desde la pantalla Header del admin.
+- Footer con logo, texto, menú de la ubicación `footer`, datos de contacto, íconos de redes sociales y línea de copyright con `{year}` y `{site}`.
+- Datos de contacto del negocio (teléfono, WhatsApp, email, dirección, coordenadas) y lista administrable de redes sociales en Ajustes > Contacto, consumidos vía `App\Support\BusinessContact`.
 
 ### SEO y analítica
 
@@ -43,6 +46,8 @@ Documento actualizado contra el código del repositorio. La fuente de verdad es 
 - Asociación de categorías a posts.
 - Gestión de menús con items anidados.
 - Settings generales desde panel.
+- Pantallas Header y Footer que centralizan lo editable de cada región con accesos directos a Menús y a Ajustes > Contacto.
+- Dropdown "Editar layout" en la admin bar pública con accesos a Header y Footer.
 - Configuración de analítica desde panel.
 - Configuración de email desde panel.
 - Pantalla admin para integración Claude/MCP.

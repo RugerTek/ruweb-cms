@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeveloperToolsController;
 use App\Http\Controllers\Admin\SubmissionController;
 use App\Http\Controllers\Admin\EmailController;
+use App\Http\Controllers\Admin\FooterController;
+use App\Http\Controllers\Admin\HeaderController;
 use App\Http\Controllers\Admin\EditorialControlController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediaHealthController;
@@ -90,6 +92,11 @@ Route::middleware(['auth', 'role:admin,editor', 'admin.locale'])->prefix('admin'
         Route::post('email/test', [EmailController::class, 'sendTestEmail'])->name('email.test');
         Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+        // Header and footer: one screen each centralising what the client can edit (docs/layout-header-footer.md).
+        Route::get('header', [HeaderController::class, 'index'])->name('header.index');
+        Route::put('header', [HeaderController::class, 'update'])->name('header.update');
+        Route::get('footer', [FooterController::class, 'index'])->name('footer.index');
+        Route::put('footer', [FooterController::class, 'update'])->name('footer.update');
         Route::get('languages', [LanguageController::class, 'index'])->name('languages.index');
         Route::post('languages', [LanguageController::class, 'store'])->name('languages.store');
         Route::put('languages', [LanguageController::class, 'update'])->name('languages.update');
