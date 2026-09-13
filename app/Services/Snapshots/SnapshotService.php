@@ -84,6 +84,7 @@ class SnapshotService
                 'version' => self::FORMAT_VERSION,
                 'created_at' => Carbon::now()->toIso8601String(),
                 'app' => [
+                    'version' => Config::get('cms.version'),
                     'laravel_version' => App::version(),
                     'env' => App::environment(),
                     'url' => Config::get('app.url'),
@@ -94,6 +95,8 @@ class SnapshotService
                     'driver' => DB::connection()->getDriverName(),
                     'tables' => $tableEntries,
                     'excluded_tables' => array_values(array_intersect(self::EXCLUDED_TABLES, $this->currentTables())),
+                    'migrations' => $this->ranMigrations(),
+                    'schema' => $this->schemaForTables(array_column($tableEntries, 'name')),
                 ],
                 'uploads' => [
                     'logical_root' => 'public',
@@ -200,6 +203,7 @@ class SnapshotService
         ));
 
         $destination = [
+            'version' => (string) Config::get('cms.version'),
             'driver' => DB::connection()->getDriverName(),
             'url' => Config::get('app.url'),
             'laravel_version' => App::version(),
@@ -223,6 +227,12 @@ class SnapshotService
                 'Destination is missing required tables: '.implode(', ', $missing).'. Update the destination code and run migrations first.',
                 ['tables' => $missing]
             );
+        }
+
+        array_push($risks, ...$this->versionRisks($manifest, $destination['version']));
+
+        if ($missing === []) {
+            array_push($risks, ...$this->schemaRisks($manifest, $tables));
         }
 
         $driver = $manifest['database']['driver'] ?? null;
@@ -491,6 +501,148 @@ class SnapshotService
 
             $this->assertSafePath((string) $table['file']);
         }
+    }
+
+    /**
+     * Compare the snapshot's application version and migration history with
+     * this installation.
+     *
+     * @return array<int, SnapshotRisk>
+     */
+    protected function versionRisks(array $manifest, string $destinationVersion): array
+    {
+        $risks = [];
+        $snapshotVersion = $manifest['app']['version'] ?? null;
+
+        if (! is_string($snapshotVersion) || $snapshotVersion === '') {
+            $risks[] = SnapshotRisk::warning(
+                'unknown_origin_version',
+                'The snapshot does not record the application version it was taken from, so version compatibility cannot be verified.',
+                ['destination' => $destinationVersion]
+            );
+        } elseif (version_compare($snapshotVersion, $destinationVersion, '>')) {
+            $risks[] = SnapshotRisk::blocking(
+                'newer_snapshot',
+                "The snapshot was taken on version {$snapshotVersion} but this installation runs {$destinationVersion}. Update the code to at least {$snapshotVersion} and run migrations first.",
+                ['snapshot' => $snapshotVersion, 'destination' => $destinationVersion]
+            );
+        }
+
+        $snapshotMigrations = $manifest['database']['migrations'] ?? null;
+
+        if (! is_array($snapshotMigrations)) {
+            return $risks;
+        }
+
+        $destinationMigrations = $this->ranMigrations();
+        $unknown = array_values(array_diff($snapshotMigrations, $destinationMigrations));
+        $behind = array_values(array_diff($destinationMigrations, $snapshotMigrations));
+
+        if ($unknown !== []) {
+            $risks[] = SnapshotRisk::blocking(
+                'unknown_migrations',
+                'The snapshot ran migrations this installation does not have: '.implode(', ', $unknown).'. Update the code first.',
+                ['migrations' => $unknown]
+            );
+        }
+
+        if ($behind !== []) {
+            $risks[] = SnapshotRisk::warning(
+                'older_snapshot',
+                'This installation ran '.count($behind).' migration(s) after the snapshot was taken. Data migrations among them will not re-run on the restored rows: '.implode(', ', $behind),
+                ['snapshot' => $snapshotVersion, 'destination' => $destinationVersion, 'migrations' => $behind]
+            );
+        }
+
+        return $risks;
+    }
+
+    /**
+     * Compare the snapshot's recorded columns with the destination tables.
+     *
+     * @return array<int, SnapshotRisk>
+     */
+    protected function schemaRisks(array $manifest, array $tables): array
+    {
+        $schema = $manifest['database']['schema'] ?? null;
+
+        if (! is_array($schema)) {
+            return [];
+        }
+
+        $missingColumns = [];
+        $requiredColumns = [];
+
+        foreach ($tables as $table) {
+            $name = (string) $table['name'];
+            $snapshotColumns = $schema[$name] ?? null;
+
+            if (! is_array($snapshotColumns)) {
+                continue;
+            }
+
+            $destinationColumns = Schema::getColumns($name);
+            $destinationNames = array_column($destinationColumns, 'name');
+
+            foreach (array_diff($snapshotColumns, $destinationNames) as $column) {
+                $missingColumns[] = "{$name}.{$column}";
+            }
+
+            foreach ($destinationColumns as $column) {
+                if (in_array($column['name'], $snapshotColumns, true)) {
+                    continue;
+                }
+
+                if (! $column['nullable'] && $column['default'] === null && ! ($column['auto_increment'] ?? false)) {
+                    $requiredColumns[] = "{$name}.{$column['name']}";
+                }
+            }
+        }
+
+        $risks = [];
+
+        if ($missingColumns !== []) {
+            $risks[] = SnapshotRisk::blocking(
+                'missing_columns',
+                'This installation lacks columns the snapshot rows contain: '.implode(', ', $missingColumns).'. Update the code and run migrations first.',
+                ['columns' => $missingColumns]
+            );
+        }
+
+        if ($requiredColumns !== []) {
+            $risks[] = SnapshotRisk::blocking(
+                'required_columns_missing',
+                'This installation requires columns the snapshot does not provide and that have no default: '.implode(', ', $requiredColumns).'.',
+                ['columns' => $requiredColumns]
+            );
+        }
+
+        return $risks;
+    }
+
+    /** @return array<int, string> */
+    protected function ranMigrations(): array
+    {
+        if (! Schema::hasTable('migrations')) {
+            return [];
+        }
+
+        return DB::table('migrations')->orderBy('migration')->pluck('migration')->map(fn ($m): string => (string) $m)->values()->all();
+    }
+
+    /**
+     * @param  array<int, string>  $tables
+     * @return array<string, array<int, string>>
+     */
+    protected function schemaForTables(array $tables): array
+    {
+        $schema = [];
+
+        foreach ($tables as $table) {
+            $schema[$table] = Schema::getColumnListing($table);
+        }
+
+        return $schema;
     }
 
     /** @return array<int, string> */

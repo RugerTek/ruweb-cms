@@ -42,6 +42,7 @@
         <dl class="divide-y divide-white/[0.06]">
             @foreach([
                 'original_name' => $original_name ?? $token,
+                'version' => ($summary['version'] ?? 'N/A').' → '.($report->destination['version'] ?? 'N/A'),
                 'format_version' => $summary['format_version'],
                 'created_at' => $summary['created_at'],
                 'origin_url' => $summary['origin_url'],

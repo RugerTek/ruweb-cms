@@ -39,7 +39,7 @@ class DeveloperToolsController extends Controller
     {
         try {
             $siteName = Setting::get('site_name') ?: config('app.name');
-            $archiveName = Str::slug($siteName).'-'.now()->format('Ymd-His');
+            $archiveName = Str::slug($siteName).'-'.config('cms.version').'-'.now()->format('Ymd-His');
             $path = $this->snapshots->create($archiveName, SnapshotService::downloadsDirectory());
         } catch (SnapshotException $exception) {
             return $this->backToMigration()->with('error', $exception->getMessage());

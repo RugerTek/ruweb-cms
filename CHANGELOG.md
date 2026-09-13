@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.34.0 - 2026-09-13
+## 0.35.0 - 2026-09-13
+
+- La versión de la aplicación vive en el archivo `VERSION` y se expone como `config('cms.version')`; el panel de sistema y el nombre del archivo descargado la muestran.
+- Cada snapshot guarda la versión, la lista de migraciones aplicadas y las columnas de cada tabla en su manifest.
+- Al inspeccionar, un snapshot de una versión más nueva, con migraciones desconocidas o con columnas que el destino no tiene se bloquea; uno más viejo se puede restaurar aceptando el riesgo y viendo qué migraciones se saltaría.
+- Un test verifica que `VERSION` coincide con la última entrada versionada del changelog.
+
+## 0.34.0 - 2026-09-13 (c362291)
 
 - Restaurar un snapshot ahora pasa por una inspección previa: el panel muestra un resumen y los riesgos detectados, y cada advertencia se acepta por separado antes de tocar nada.
 - Nuevo comando `snapshot:inspect` y `snapshot:restore` imprime el mismo reporte, pide confirmación por riesgo en modo interactivo y acepta `--accept=<clave>` o `--yes` para scripts.

@@ -51,6 +51,7 @@ class SnapshotInspectCommand extends Command
 
         $command->info('Snapshot');
         $command->table(['Field', 'Value'], [
+            ['App version', ($summary['version'] ?? 'unknown').' → '.($report->destination['version'] ?? 'unknown')],
             ['Format version', $summary['format_version']],
             ['Created at', $summary['created_at'] ?? 'unknown'],
             ['Origin URL', $summary['origin_url'] ?? 'unknown'],

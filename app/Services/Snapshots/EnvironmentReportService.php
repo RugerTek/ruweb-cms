@@ -26,6 +26,7 @@ class EnvironmentReportService
 
         return [
             'app' => [
+                'version' => Config::get('cms.version'),
                 'php_version' => PHP_VERSION,
                 'php_sapi' => PHP_SAPI,
                 'laravel_version' => App::version(),

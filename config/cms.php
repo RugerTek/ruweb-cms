@@ -1,6 +1,10 @@
 <?php
 
 return [
+    // Application version. Single source of truth is the VERSION file at the
+    // repository root, bumped together with CHANGELOG.md (see skills/changelog-version).
+    'version' => trim((string) @file_get_contents(base_path('VERSION'))) ?: '0.0.0',
+
     'upload' => [
         'allowed_image_mimes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
         'allowed_document_mimes' => ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],

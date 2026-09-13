@@ -35,8 +35,14 @@ uploads/<relative path under storage/app/public>
   "format": "ruweb-cms.appbackup",
   "version": 2,
   "created_at": "2026-09-13T17:18:39+00:00",
-  "app": { "laravel_version": "...", "env": "production", "url": "https://example.com", "commit": "abc123" },
-  "database": { "connection": "mysql", "driver": "mysql", "tables": [{ "name": "pages", "file": "database/pages.jsonl", "rows": 12, "checksum": "..." }], "excluded_tables": ["cache", "sessions"] },
+  "app": { "version": "0.35.0", "laravel_version": "...", "env": "production", "url": "https://example.com", "commit": "abc123" },
+  "database": {
+    "connection": "mysql", "driver": "mysql",
+    "tables": [{ "name": "pages", "file": "database/pages.jsonl", "rows": 12, "checksum": "..." }],
+    "excluded_tables": ["cache", "sessions"],
+    "migrations": ["0001_01_01_000000_create_users_table", "..."],
+    "schema": { "pages": ["id", "locale", "title", "..."] }
+  },
   "uploads": { "logical_root": "public", "files": 40, "bytes": 1048576 }
 }
 ```
@@ -65,6 +71,12 @@ Structural problems — invalid ZIP, missing or mismatched checksums, unsafe pat
 | Key | Severity | When |
 |-----|----------|------|
 | `missing_tables` | blocking | The snapshot lists tables the destination does not have. Update code and run migrations first. |
+| `newer_snapshot` | blocking | `app.version` in the snapshot is greater than `config('cms.version')` here. Update the code first. |
+| `unknown_migrations` | blocking | The snapshot ran migrations this installation has not. Its code is newer or from another branch. |
+| `missing_columns` | blocking | Snapshot rows carry columns a destination table lacks. |
+| `required_columns_missing` | blocking | The destination has NOT NULL columns without default that the snapshot rows do not provide. |
+| `older_snapshot` | warning | This installation ran migrations after the snapshot was taken. `details.migrations` lists them. Data migrations among them will not re-run on the restored rows. |
+| `unknown_origin_version` | warning | The manifest has no `app.version` (format 1 archives). |
 | `legacy_format` | warning | The archive uses an older format version, so newer checks cannot run. |
 | `driver_mismatch` | warning | The snapshot was taken on a different database driver. |
 | `origin_url_differs` | info | The snapshot's `app.url` differs from this installation's. |
@@ -74,6 +86,16 @@ New checks must be added as risks with a new key, a translation `admin.snapshot_
 ### Acceptance rule
 
 `SnapshotService::restore($archive, array $accepted)` refuses to run while any blocking risk exists, or while any warning key is missing from `$accepted`. There is no global bypass: each warning is accepted by its own key. The CLI `--yes` flag (and its older alias `--force`) accepts every warning the report contains, not future ones.
+
+## Application Version
+
+The application version is the single line in the `VERSION` file at the repository root, exposed as `config('cms.version')`. It is bumped together with `CHANGELOG.md` by the `changelog-version` skill, and `tests/Unit/VersionFileTest.php` fails when the two disagree.
+
+Version rules at restore time:
+
+- **Snapshot newer than destination**: blocked. Deploy the newer code and run `php artisan migrate`, then restore.
+- **Same version and same migration list**: normal restore.
+- **Snapshot older than destination**: allowed after accepting `older_snapshot`. The rows are inserted into the newer schema; columns the snapshot lacks take their defaults. Data migrations that ran after the snapshot are **not** replayed, so prefer restoring into a checkout of the snapshot's version and then updating code and migrating when those migrations matter.
 
 ## Operating It
 

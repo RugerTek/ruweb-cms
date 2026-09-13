@@ -82,6 +82,7 @@ final class SnapshotReport
     {
         return [
             'format_version' => (int) ($this->manifest['version'] ?? 0),
+            'version' => $this->manifest['app']['version'] ?? null,
             'created_at' => $this->manifest['created_at'] ?? null,
             'origin_url' => $this->manifest['app']['url'] ?? null,
             'origin_commit' => $this->manifest['app']['commit'] ?? null,

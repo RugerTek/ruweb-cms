@@ -8,6 +8,13 @@ Objetivo: mantener un changelog **por commit** usando **SemVer pre-1.0** (`0.MIN
 - **PATCH** (`0.x.(y+1)`) si el commit es fix, refactor sin impacto funcional, docs, chores, CI/deploy, estilos.
 - Si hay duda, preferir **PATCH**.
 
+## Archivo `VERSION`
+
+- La versión también vive en el archivo `VERSION` de la raíz del repo, una sola línea con el semver, sin `v`.
+- `config('cms.version')` lo lee en runtime y los snapshots `.appbackup` lo guardan en su manifest para validar compatibilidad al restaurar.
+- Cada vez que se cree una sección versionada nueva en el changelog, `VERSION` debe quedar con **esa misma** versión en el **mismo commit**.
+- El test `VersionFileTest` falla si `VERSION` no coincide con la última entrada versionada del changelog.
+
 ## Cómo actualizar `CHANGELOG.md`
 
 - Mantener `## Unreleased` arriba.
@@ -54,3 +61,4 @@ Objetivo: mantener un changelog **por commit** usando **SemVer pre-1.0** (`0.MIN
 - ¿Esto cambia lo que un usuario puede hacer? => MINOR
 - ¿Sólo corrige/mejora sin nuevas capacidades? => PATCH
 - ¿Docs/deploy/CI? => PATCH
+- ¿Actualicé `VERSION` con la misma versión que la sección nueva? => obligatorio

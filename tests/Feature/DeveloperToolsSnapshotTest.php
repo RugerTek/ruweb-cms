@@ -79,7 +79,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         $response = $this->actingAs($admin)->post(route('admin.developer-tools.download'));
 
         $response->assertOk();
-        $response->assertHeader('content-disposition', 'attachment; filename=mi-sitio-demo-20260504-171839.appbackup');
+        $response->assertHeader('content-disposition', 'attachment; filename=mi-sitio-demo-'.config('cms.version').'-20260504-171839.appbackup');
 
         Carbon::setTestNow();
     }
@@ -162,7 +162,8 @@ class DeveloperToolsSnapshotTest extends TestCase
             'batch' => 99,
         ]);
 
-        app(SnapshotService::class)->restore($archive);
+        // The destination is now ahead of the snapshot, which is a warning to accept.
+        app(SnapshotService::class)->restore($archive, ['older_snapshot']);
 
         $this->assertDatabaseHas('migrations', ['migration' => '2099_01_01_000000_future_migration']);
     }
@@ -308,6 +309,87 @@ class DeveloperToolsSnapshotTest extends TestCase
         $this->assertFileExists($directory.'/keep-me.appbackup');
         $this->assertDirectoryDoesNotExist($stale);
         $this->assertDirectoryExists($fresh);
+    }
+
+    public function test_manifest_records_version_migrations_and_schema(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+
+        $archive = app(SnapshotService::class)->create('versioned');
+        $manifest = $this->readJsonFromZip($archive, 'manifest.json');
+
+        $this->assertSame(config('cms.version'), $manifest['app']['version']);
+        $this->assertContains('0001_01_01_000000_create_users_table', $manifest['database']['migrations']);
+        $this->assertContains('email', $manifest['database']['schema']['users']);
+    }
+
+    public function test_newer_snapshot_is_blocking(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('newer');
+        $newer = $this->copyArchiveWithMutatedManifest($archive, function (array $m): array {
+            $m['app']['version'] = '99.0.0';
+
+            return $m;
+        });
+
+        $report = app(SnapshotService::class)->inspect($newer);
+
+        $this->assertSame(['newer_snapshot'], array_map(fn ($r) => $r->key, $report->blocking()));
+    }
+
+    public function test_older_snapshot_warns_and_lists_missing_migrations(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('older');
+        $older = $this->copyArchiveWithMutatedManifest($archive, function (array $m): array {
+            $m['app']['version'] = '0.1.0';
+            array_pop($m['database']['migrations']);
+
+            return $m;
+        });
+
+        $report = app(SnapshotService::class)->inspect($older);
+        $warnings = collect($report->warnings())->keyBy('key');
+
+        $this->assertSame([], $report->blocking());
+        $this->assertTrue($warnings->has('older_snapshot'));
+        $this->assertCount(1, $warnings['older_snapshot']->details['migrations']);
+        $this->assertFalse($report->isRestorable([]));
+        $this->assertTrue($report->isRestorable(['older_snapshot']));
+    }
+
+    public function test_snapshot_with_unknown_migrations_or_columns_is_blocking(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('unknown-schema');
+        $mutated = $this->copyArchiveWithMutatedManifest($archive, function (array $m): array {
+            $m['database']['migrations'][] = '2099_01_01_000000_from_the_future';
+            $m['database']['schema']['users'][] = 'column_not_here';
+
+            return $m;
+        });
+
+        $report = app(SnapshotService::class)->inspect($mutated);
+        $keys = array_map(fn ($r) => $r->key, $report->blocking());
+
+        $this->assertContains('unknown_migrations', $keys);
+        $this->assertContains('missing_columns', $keys);
+    }
+
+    public function test_snapshot_without_version_warns(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $archive = app(SnapshotService::class)->create('no-version');
+        $mutated = $this->copyArchiveWithMutatedManifest($archive, function (array $m): array {
+            unset($m['app']['version']);
+
+            return $m;
+        });
+
+        $report = app(SnapshotService::class)->inspect($mutated);
+
+        $this->assertContains('unknown_origin_version', array_map(fn ($r) => $r->key, $report->warnings()));
     }
 
     protected function readJsonFromZip(string $archive, string $path): array
