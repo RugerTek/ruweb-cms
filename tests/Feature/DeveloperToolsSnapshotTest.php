@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContentRevision;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Post;
@@ -465,6 +466,65 @@ class DeveloperToolsSnapshotTest extends TestCase
 
         $this->assertStringStartsWith('http://localhost:8000/storage/media/variants/a-240.webp 240w, ', $srcset);
         $this->assertStringEndsWith('/storage/media/variants/a-480.webp 480w', $srcset);
+    }
+
+    public function test_history_contained_is_reported_as_a_clean_fast_forward(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Page::query()->create(['locale' => 'es', 'title' => 'A', 'slug' => 'a', 'template_key' => 'default', 'content_json' => [], 'status' => 'draft', 'created_by' => $admin->id]);
+
+        // Snapshot taken after the destination's changes: it contains all of them.
+        $archive = app(SnapshotService::class)->create('ff');
+        $report = app(SnapshotService::class)->inspect($archive);
+
+        $this->assertSame([], $report->warnings());
+        $this->assertContains('history_contained', array_map(fn ($r) => $r->key, $report->info()));
+        $this->assertGreaterThan(0, $report->manifest['history']['count']);
+    }
+
+    public function test_diverged_history_warns_and_lists_the_changes_that_would_be_lost(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'email' => 'editor@example.com']);
+        $this->actingAs($admin);
+        Page::query()->create(['locale' => 'es', 'title' => 'Base', 'slug' => 'base', 'template_key' => 'default', 'content_json' => [], 'status' => 'draft', 'created_by' => $admin->id]);
+        $archive = app(SnapshotService::class)->create('base');
+
+        // Destination keeps editing after the snapshot was taken.
+        $page = Page::query()->create(['locale' => 'es', 'title' => 'Late', 'slug' => 'late', 'template_key' => 'default', 'content_json' => [], 'status' => 'draft', 'created_by' => $admin->id]);
+        $page->update(['title' => 'Later']);
+
+        $report = app(SnapshotService::class)->inspect($archive);
+        $risk = collect($report->warnings())->firstWhere('key', 'diverged_history');
+
+        $this->assertNotNull($risk);
+        $this->assertSame(2, $risk->details['diverged']);
+        $this->assertSame('updated', $risk->details['changes'][0]['action']);
+        $this->assertSame('Page#'.$page->id, $risk->details['changes'][0]['entity']);
+        $this->assertSame('editor@example.com', $risk->details['changes'][0]['user']);
+        $this->assertFalse($report->isRestorable([]));
+
+        app(SnapshotService::class)->restore($archive, ['diverged_history']);
+
+        // The destination adopted the snapshot's ledger, so a second inspect is clean.
+        $this->assertDatabaseMissing('pages', ['slug' => 'late']);
+        $this->assertContains('history_contained', array_map(fn ($r) => $r->key, app(SnapshotService::class)->inspect($archive)->info()));
+    }
+
+    public function test_snapshot_without_ledger_warns_about_unknown_history(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Page::query()->create(['locale' => 'es', 'title' => 'X', 'slug' => 'x', 'template_key' => 'default', 'content_json' => [], 'status' => 'draft', 'created_by' => $admin->id]);
+        $archive = app(SnapshotService::class)->create('no-ledger');
+        $mutated = $this->copyArchiveWithMutatedManifest($archive, function (array $m): array {
+            $m['database']['tables'] = array_values(array_filter($m['database']['tables'], fn ($t) => $t['name'] !== 'content_revisions'));
+            unset($m['database']['schema']['content_revisions']);
+
+            return $m;
+        });
+
+        $report = app(SnapshotService::class)->inspect($mutated);
+
+        $this->assertContains('unknown_history', array_map(fn ($r) => $r->key, $report->warnings()));
     }
 
     protected function readJsonFromZip(string $archive, string $path): array

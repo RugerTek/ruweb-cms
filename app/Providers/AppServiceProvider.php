@@ -18,7 +18,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // The ledger coalesces writes per request and can be muted for bulk
+        // imports, so every caller must share one instance.
+        $this->app->singleton(\App\Services\Revisions\ContentRevisionLedger::class);
     }
 
     public function boot(): void

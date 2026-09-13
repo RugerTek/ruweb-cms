@@ -92,6 +92,8 @@ final class SnapshotReport
             'rows' => array_sum(array_map(fn (array $table): int => (int) ($table['rows'] ?? 0), $this->tables)),
             'uploads_files' => (int) ($this->manifest['uploads']['files'] ?? 0),
             'uploads_bytes' => (int) ($this->manifest['uploads']['bytes'] ?? 0),
+            'history_head' => isset($this->manifest['history']['head']) ? substr((string) $this->manifest['history']['head'], 0, 12) : null,
+            'history_count' => $this->manifest['history']['count'] ?? null,
         ];
     }
 

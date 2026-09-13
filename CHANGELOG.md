@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.36.0 - 2026-09-13
+## 0.37.0 - 2026-09-13
+
+- Cada cambio de contenido (páginas, posts, media, settings, menús, taxonomías, idiomas) deja una revisión con hash en la tabla `content_revisions`, sin payload, para poder comparar copias entre instalaciones.
+- Al inspeccionar un snapshot, el sistema dice si contiene todos los cambios del destino (avance limpio) o lista los cambios que se perderían y exige aceptar el riesgo; ya no hace falta comparar copias a mano.
+- Las revisiones se podan solas: se conservan 90 días o al menos 10 mil filas, lo que sea mayor, desde `snapshot:prune`.
+- El panel de sistema muestra la cantidad de revisiones y la cabeza actual.
+
+## 0.36.0 - 2026-09-13 (6bd363d)
 
 - Los enlaces e imágenes del editor que apuntan al propio sitio se guardan como rutas relativas a la raíz, y las variantes responsive construyen su URL al renderizar; el contenido ya no queda atado al dominio donde se creó.
 - Al restaurar un snapshot de otro dominio, las URLs guardadas se reescriben al dominio de la instalación destino, tanto en texto como en columnas JSON. `snapshot:restore` acepta `--url-from` y `--url-to` para forzarlo.

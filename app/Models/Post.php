@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsContentRevisions;
 use App\Contracts\Editorial\Mediable;
 use App\Contracts\Editorial\Previewable;
 use App\Contracts\Editorial\Publishable;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Post extends Model implements Mediable, Previewable, Publishable, Seoable
 {
+    use RecordsContentRevisions;
+
     use HasMedia, HasPublicationState, HasTaxonomies, HasTranslations;
 
     protected $fillable = [

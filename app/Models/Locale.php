@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class Locale extends Model
 {
+    use RecordsContentRevisions;
+
     protected $fillable = [
         'code',
         'name',

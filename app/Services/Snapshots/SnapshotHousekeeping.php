@@ -2,6 +2,7 @@
 
 namespace App\Services\Snapshots;
 
+use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -20,7 +21,8 @@ class SnapshotHousekeeping
     public const PENDING_TOKEN_PATTERN = '/^[A-Za-z0-9]{40}$/';
 
     public function __construct(
-        protected SnapshotService $snapshots
+        protected SnapshotService $snapshots,
+        protected ContentRevisionLedger $revisions
     ) {}
 
     /**
@@ -126,6 +128,8 @@ class SnapshotHousekeeping
                 File::isDirectory(SnapshotService::restoreDirectory()) ? File::allFiles(SnapshotService::restoreDirectory()) : [],
                 File::isDirectory(SnapshotService::uploadsRollbackDirectory()) ? File::allFiles(SnapshotService::uploadsRollbackDirectory()) : [],
             )),
+            // Ledger rows are ~200 bytes each; "files" here means rows.
+            'content_revisions' => ['files' => $count = $this->revisions->count(), 'bytes' => $count * 200],
         ];
     }
 
@@ -136,7 +140,7 @@ class SnapshotHousekeeping
      *
      * @return array<string, array{files: int, bytes: int}> What was removed, per category.
      */
-    public function prune(int $staleHours = 24, int $keepPreRestore = 3): array
+    public function prune(int $staleHours = 24, int $keepPreRestore = 3, int $revisionDays = 90, int $revisionMin = 10000): array
     {
         $cutoff = Carbon::now()->subHours(max(0, $staleHours))->getTimestamp();
         $removed = [];
@@ -149,6 +153,8 @@ class SnapshotHousekeeping
             $this->removeStaleTree(SnapshotService::restoreDirectory(), $cutoff),
             $this->removeStaleTree(SnapshotService::uploadsRollbackDirectory(), $cutoff),
         ]);
+        $rows = $this->revisions->prune($revisionDays, $revisionMin);
+        $removed['content_revisions'] = ['files' => $rows, 'bytes' => $rows * 200];
 
         return $removed;
     }

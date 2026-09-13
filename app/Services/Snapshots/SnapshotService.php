@@ -2,6 +2,7 @@
 
 namespace App\Services\Snapshots;
 
+use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
@@ -57,7 +58,8 @@ class SnapshotService
     ];
 
     public function __construct(
-        protected EnvironmentReportService $environment
+        protected EnvironmentReportService $environment,
+        protected ContentRevisionLedger $revisions
     ) {}
 
     public function create(?string $name = null, ?string $directory = null): string
@@ -102,6 +104,10 @@ class SnapshotService
                     'logical_root' => 'public',
                     'files' => $uploadStats['files'],
                     'bytes' => $uploadStats['bytes'],
+                ],
+                'history' => [
+                    'head' => $this->revisions->head()?->hash,
+                    'count' => $this->revisions->count(),
                 ],
             ];
 
@@ -214,6 +220,7 @@ class SnapshotService
             'driver' => DB::connection()->getDriverName(),
             'url' => Config::get('app.url'),
             'laravel_version' => App::version(),
+            'revisions' => $this->revisions->count(),
         ];
 
         $risks = [];
@@ -237,6 +244,7 @@ class SnapshotService
         }
 
         array_push($risks, ...$this->versionRisks($manifest, $destination['version']));
+        array_push($risks, ...$this->historyRisks($extractDir, $tables));
 
         if ($missing === []) {
             array_push($risks, ...$this->schemaRisks($manifest, $tables));
@@ -651,6 +659,65 @@ class SnapshotService
         }
 
         return $schema;
+    }
+
+    /**
+     * Does this installation hold content changes the snapshot lacks?
+     *
+     * @return array<int, SnapshotRisk>
+     */
+    protected function historyRisks(string $extractDir, array $tables): array
+    {
+        $destinationCount = $this->revisions->count();
+
+        if ($destinationCount === 0) {
+            return [];
+        }
+
+        $entry = collect($tables)->firstWhere('name', ContentRevisionLedger::TABLE);
+
+        if ($entry === null || ! is_file($extractDir.'/'.$entry['file'])) {
+            return [SnapshotRisk::warning(
+                'unknown_history',
+                "The snapshot carries no revision ledger, so it cannot be verified that it contains the {$destinationCount} change(s) recorded here.",
+                ['destination_revisions' => $destinationCount]
+            )];
+        }
+
+        $hashes = [];
+        $handle = fopen($extractDir.'/'.$entry['file'], 'rb');
+
+        if ($handle === false) {
+            throw new SnapshotException('Unable to read the snapshot revision ledger.');
+        }
+
+        try {
+            while (($line = fgets($handle)) !== false) {
+                $row = json_decode(trim($line), true);
+
+                if (is_array($row) && isset($row['hash'])) {
+                    $hashes[(string) $row['hash']] = true;
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        $comparison = $this->revisions->compareWith($hashes);
+
+        if ($comparison['diverged'] > 0) {
+            return [SnapshotRisk::warning(
+                'diverged_history',
+                "This installation has {$comparison['diverged']} change(s) the snapshot does not contain. Restoring will discard them (the automatic pre-restore backup keeps a copy).",
+                $comparison
+            )];
+        }
+
+        return [SnapshotRisk::info(
+            'history_contained',
+            "All {$comparison['total']} change(s) recorded here are included in the snapshot. Restoring is a clean fast-forward.",
+            $comparison
+        )];
     }
 
     /** @return array<int, string> */

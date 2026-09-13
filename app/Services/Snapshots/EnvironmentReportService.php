@@ -3,6 +3,7 @@
 namespace App\Services\Snapshots;
 
 use App\Services\Media\MediaHealthService;
+use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,8 @@ use Symfony\Component\Process\Process;
 class EnvironmentReportService
 {
     public function __construct(
-        protected MediaHealthService $mediaHealth
+        protected MediaHealthService $mediaHealth,
+        protected ContentRevisionLedger $revisions
     ) {}
 
     public function report(): array
@@ -35,6 +37,7 @@ class EnvironmentReportService
                 'url' => Config::get('app.url'),
                 'timezone' => Config::get('app.timezone'),
                 'commit' => $this->gitCommit(),
+                'content_revisions' => $this->revisionsSummary(),
             ],
             'database' => [
                 'connection' => DB::getDefaultConnection(),
@@ -128,6 +131,17 @@ class EnvironmentReportService
             return $process->isSuccessful() ? trim($process->getOutput()) : null;
         } catch (\Throwable) {
             return null;
+        }
+    }
+
+    protected function revisionsSummary(): string
+    {
+        try {
+            $head = $this->revisions->head();
+
+            return $this->revisions->count().($head ? ' (head '.$head->shortHash().')' : '');
+        } catch (\Throwable) {
+            return 'unavailable';
         }
     }
 

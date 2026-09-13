@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 class Menu extends Model
 {
+    use RecordsContentRevisions;
+
     protected $fillable = ['locale', 'name', 'slug', 'location'];
 
     public function items(): HasMany

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsContentRevisions;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
+    use RecordsContentRevisions;
+
     protected $fillable = [
         'key',
         'value',

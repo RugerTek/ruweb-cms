@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class MenuItem extends Model
 {
+    use RecordsContentRevisions;
+
     protected $fillable = [
         'menu_id', 'parent_id', 'label', 'type',
         'linkable_type', 'linkable_id', 'url', 'target', 'translation_status', 'order',
@@ -52,5 +55,11 @@ class MenuItem extends Model
         }
 
         return '#';
+    }
+
+    /** @return array{0: string, 1: ?int} */
+    public function revisionSubject(): array
+    {
+        return [Menu::class, $this->menu_id];
     }
 }

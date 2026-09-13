@@ -51,6 +51,7 @@
                 'driver' => ($summary['driver'] ?? 'N/A').' → '.($report->destination['driver'] ?? 'N/A'),
                 'tables' => $summary['tables'].' / '.$summary['rows'],
                 'uploads' => $summary['uploads_files'].' · '.$formatBytes($summary['uploads_bytes']),
+                'history' => ($summary['history_count'] ?? 'N/A').(isset($summary['history_head']) ? ' (head '.$summary['history_head'].')' : '').' → '.($report->destination['revisions'] ?? 'N/A'),
             ] as $field => $value)
                 <div class="px-4 py-3 grid grid-cols-2 gap-4 text-sm">
                     <dt class="text-gray-500">{{ __('admin.snapshot_field_'.$field) }}</dt>
@@ -94,6 +95,18 @@
                     <span class="flex-1">
                         <span class="block text-amber-300">{{ $riskText($risk) }}</span>
                         <span class="block text-xs text-gray-500 mt-0.5 break-all">[{{ $risk->key }}] {{ $risk->message }}</span>
+
+                        @if(! empty($risk->details['changes']))
+                            <span class="block mt-2 text-xs text-gray-400">{{ __('admin.snapshot_changes_lost') }}</span>
+                            <ul class="mt-1 space-y-0.5 text-xs text-gray-400 font-mono">
+                                @foreach($risk->details['changes'] as $change)
+                                    <li>{{ $change['at'] }} · {{ $change['entity'] }} · {{ $change['action'] }}{{ $change['user'] ? ' · '.$change['user'] : '' }}</li>
+                                @endforeach
+                                @if(($risk->details['diverged'] ?? 0) > count($risk->details['changes']))
+                                    <li>{{ __('admin.snapshot_changes_more', ['count' => $risk->details['diverged'] - count($risk->details['changes'])]) }}</li>
+                                @endif
+                            </ul>
+                        @endif
                         <span class="block text-xs text-gray-400 mt-1">{{ __('admin.snapshot_warning_accept') }}</span>
                     </span>
                 </label>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsContentRevisions;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Taxonomy extends Model
 {
+    use RecordsContentRevisions;
+
     use HasTranslations;
 
     protected $fillable = [

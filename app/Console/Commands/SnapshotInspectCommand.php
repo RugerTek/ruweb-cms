@@ -59,6 +59,7 @@ class SnapshotInspectCommand extends Command
             ['Driver', $summary['driver'] ?? 'unknown'],
             ['Tables / rows', $summary['tables'].' / '.$summary['rows']],
             ['Upload files', $summary['uploads_files']],
+            ['Revisions', ($summary['history_count'] ?? 'unknown').' → '.($report->destination['revisions'] ?? 'unknown')],
         ]);
 
         if ($report->risks === []) {
@@ -75,6 +76,10 @@ class SnapshotInspectCommand extends Command
             };
 
             $command->line("{$label} [{$risk->key}] {$risk->message}");
+
+            foreach (array_slice($risk->details['changes'] ?? [], 0, 20) as $change) {
+                $command->line("           {$change['at']} · {$change['entity']} · {$change['action']}".($change['user'] ? " · {$change['user']}" : ''));
+            }
         }
     }
 }

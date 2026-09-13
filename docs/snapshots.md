@@ -43,7 +43,8 @@ uploads/<relative path under storage/app/public>
     "migrations": ["0001_01_01_000000_create_users_table", "..."],
     "schema": { "pages": ["id", "locale", "title", "..."] }
   },
-  "uploads": { "logical_root": "public", "files": 40, "bytes": 1048576 }
+  "uploads": { "logical_root": "public", "files": 40, "bytes": 1048576 },
+  "history": { "head": "<sha256 of the newest content revision>", "count": 1234 }
 }
 ```
 
@@ -77,6 +78,9 @@ Structural problems — invalid ZIP, missing or mismatched checksums, unsafe pat
 | `required_columns_missing` | blocking | The destination has NOT NULL columns without default that the snapshot rows do not provide. |
 | `older_snapshot` | warning | This installation ran migrations after the snapshot was taken. `details.migrations` lists them. Data migrations among them will not re-run on the restored rows. |
 | `unknown_origin_version` | warning | The manifest has no `app.version` (format 1 archives). |
+| `diverged_history` | warning | This installation recorded content changes the snapshot does not contain. `details.changes` lists up to 50 of them, `details.diverged` the total. |
+| `unknown_history` | warning | This installation has revisions but the snapshot carries no `content_revisions` table, so containment cannot be verified. |
+| `history_contained` | info | Every revision recorded here is present in the snapshot: a clean fast-forward. |
 | `legacy_format` | warning | The archive uses an older format version, so newer checks cannot run. |
 | `driver_mismatch` | warning | The snapshot was taken on a different database driver. |
 | `origin_url_differs` | info | The snapshot's `app.url` differs from this installation's. Stored URLs are rewritten during restore (see URLs And Domains). |
@@ -96,6 +100,35 @@ Version rules at restore time:
 - **Snapshot newer than destination**: blocked. Deploy the newer code and run `php artisan migrate`, then restore.
 - **Same version and same migration list**: normal restore.
 - **Snapshot older than destination**: allowed after accepting `older_snapshot`. The rows are inserted into the newer schema; columns the snapshot lacks take their defaults. Data migrations that ran after the snapshot are **not** replayed, so prefer restoring into a checkout of the snapshot's version and then updating code and migrating when those migrations matter.
+
+## Content Revisions
+
+Every create, update or delete on a tracked model appends one row to `content_revisions`: a unique `hash`, the previous head as `parent_hash`, the entity type and id, the action, the user and a timestamp. No payload, no diff. Tracked models carry the `RecordsContentRevisions` trait: `Page`, `Post`, `Media`, `Setting`, `SettingTranslation`, `Menu`, `MenuItem`, `Taxonomy`, `Locale`. Detail models coalesce into their parent (`MenuItem` → `Menu`, `SettingTranslation` → `Setting`), and repeated writes to the same subject within one request record once.
+
+Pivot rows (`mediables`, `taxables`) are not tracked on their own; they always change alongside a tracked parent save.
+
+### How containment is checked
+
+The whole table travels inside every snapshot. On inspection the destination streams the snapshot's hashes into a set and walks its own revisions:
+
+- every destination hash present in the set → `history_contained` (info). The snapshot has everything this installation has.
+- some destination hash missing → `diverged_history` (warning) with the list of those changes. Restoring discards them; the automatic pre-restore backup keeps a copy.
+- destination has revisions but the snapshot has no ledger → `unknown_history` (warning).
+- destination has no revisions (fresh install) → nothing to check.
+
+It is a set membership test, not a chain walk, so concurrent writes and pruning never produce false alarms. Because restoring replaces the table with the snapshot's, the next comparison is exact again.
+
+**Never add a marker row after a restore.** A row that exists only on the destination would make the next upload from the source look diverged.
+
+### Cost and retention
+
+One insert per tracked write, about 200 bytes per row. Nothing runs on the public read path. `snapshot:prune` removes rows older than 90 days while always keeping the newest 10,000 (`--revision-days`, `--revision-min`). If a destination is so far behind that its retained rows predate the snapshot's retained window, the comparison reports them as diverged; accept the risk knowingly or take a fresh snapshot.
+
+To bypass the ledger for bulk imports:
+
+```php
+app(\App\Services\Revisions\ContentRevisionLedger::class)->withoutRecording(fn () => $importer->run());
+```
 
 ## URLs And Domains
 
@@ -159,6 +192,7 @@ Everything the module writes to disk is transient except archives created by nam
 | Pre-restore backups | `storage/app/private/snapshots/pre-restore-*.appbackup` | Newest 3 |
 | Download temp files | `storage/app/private/snapshots/tmp` | 24 hours |
 | Work folders | `snapshot-work`, `snapshot-restore`, `uploads-restore-backup` under `storage/app/private` | 24 hours |
+| Content revisions | `content_revisions` table | 90 days, always keeping the newest 10,000 rows |
 
 ```bash
 php artisan snapshot:prune                       # defaults above

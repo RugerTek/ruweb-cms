@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
 {
+    use RecordsContentRevisions;
+
     protected $appends = [
         'url',
         'is_image',
