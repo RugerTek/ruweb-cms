@@ -8,7 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.27.0 - 2026-05-17
+## 0.28.0 - 2026-09-13
+
+- La media library suma un campo `Enlace` con botón para copiar la URL pública del archivo al portapapeles.
+- Nuevo filtro por fecha que lista solo los meses que tienen archivos y se combina con los filtros de tipo y búsqueda.
+- Cuando un filtro no devuelve resultados se muestra un estado propio con acción para limpiar filtros, en vez del mensaje de biblioteca vacía.
+
+## 0.27.0 - 2026-05-17 (b071d5b)
 
 - La URL de login del admin pasa a vivir en la raíz del sitio y se resuelve dinámicamente desde Settings.
 - El acceso no autenticado a `/admin` ahora devuelve una 404 pública sin exponer la ruta real de login.

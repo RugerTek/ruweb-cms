@@ -22,6 +22,12 @@
             <option value="image" {{ request('type') === 'image' ? 'selected' : '' }}>{{ __('admin.images') }}</option>
             <option value="application" {{ request('type') === 'application' ? 'selected' : '' }}>{{ __('admin.documents') }}</option>
         </select>
+        <select id="filter-month" name="month" class="bg-[#1a1a1a] border border-white/10 text-gray-400 text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50">
+            <option value="">{{ __('admin.all_dates') }}</option>
+            @foreach ($availableMonths as $month)
+                <option value="{{ $month['value'] }}" {{ request('month') === $month['value'] ? 'selected' : '' }}>{{ $month['label'] }}</option>
+            @endforeach
+        </select>
         <input
             id="filter-search"
             type="text"
@@ -36,14 +42,25 @@
 <!-- Media Grid -->
 @if ($media->isEmpty())
     <div class="text-center py-20 text-gray-600">
-        <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        <p class="text-sm font-medium text-gray-500">{{ __('admin.no_media_yet') }}</p>
-        <p class="text-sm text-gray-600 mt-1">{{ __('admin.no_media_hint') }}</p>
-        <button id="upload-btn-empty" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
-            {{ __('admin.upload_file') }}
-        </button>
+        @if ($hasActiveFilters)
+            <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+            </svg>
+            <p class="text-sm font-medium text-gray-500">{{ __('admin.no_media_results') }}</p>
+            <p class="text-sm text-gray-600 mt-1">{{ __('admin.no_media_results_hint') }}</p>
+            <a href="{{ route('admin.media.index') }}" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-[#1a1a1a] border border-white/10 hover:border-white/20 text-gray-300 text-sm font-medium rounded-md transition-colors">
+                {{ __('admin.clear_filters') }}
+            </a>
+        @else
+            <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p class="text-sm font-medium text-gray-500">{{ __('admin.no_media_yet') }}</p>
+            <p class="text-sm text-gray-600 mt-1">{{ __('admin.no_media_hint') }}</p>
+            <button id="upload-btn-empty" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
+                {{ __('admin.upload_file') }}
+            </button>
+        @endif
     </div>
 @else
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -95,17 +112,20 @@
 <script>
     // Reactive filters
     const filterType = document.getElementById('filter-type');
+    const filterMonth = document.getElementById('filter-month');
     const filterSearch = document.getElementById('filter-search');
 
     const submitFilter = (keepFocus = false) => {
         const params = new URLSearchParams();
         if (filterType.value) params.set('type', filterType.value);
+        if (filterMonth.value) params.set('month', filterMonth.value);
         if (filterSearch.value) params.set('search', filterSearch.value);
         if (keepFocus) params.set('focus', 'search');
         window.location.href = '?' + params.toString();
     };
 
     filterType.addEventListener('change', () => submitFilter(false));
+    filterMonth.addEventListener('change', () => submitFilter(false));
 
     let debounceTimer;
     filterSearch.addEventListener('input', () => {
@@ -164,6 +184,16 @@
         return { eligible: false, reason: '{{ __('admin.optimization_reason_format_not_supported') }}' };
     };
 
+    const copyIconDefault = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
+    const copyIconDone = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+    let copyResetTimer;
+
+    const resetCopyIcon = () => {
+        clearTimeout(copyResetTimer);
+        const svg = document.getElementById('detail-copy-url')?.querySelector('svg');
+        if (svg) svg.innerHTML = copyIconDefault;
+    };
+
     document.querySelectorAll('.media-item').forEach(item => {
         item.addEventListener('click', () => {
             if (activeItem) activeItem.classList.remove('ring-2', 'ring-sky-500/60');
@@ -176,6 +206,8 @@
 
             document.getElementById('detail-filename').textContent = item.dataset.filename;
             document.getElementById('detail-size').textContent = item.dataset.size;
+            document.getElementById('detail-url').value = item.dataset.url;
+            resetCopyIcon();
             document.getElementById('detail-alt').value = item.dataset.alt || '';
             document.getElementById('detail-title').value = item.dataset.title || '';
             detailPanel.dataset.mediaId = item.dataset.id;
@@ -230,6 +262,19 @@
             optimizationChevron?.classList.remove('rotate-180');
 
             detailPanel.classList.remove('hidden');
+        });
+    });
+
+    document.getElementById('detail-copy-url')?.addEventListener('click', (event) => {
+        const input = document.getElementById('detail-url');
+        const btn = event.currentTarget;
+        navigator.clipboard.writeText(input.value).then(() => {
+            btn.querySelector('svg').innerHTML = copyIconDone;
+            clearTimeout(copyResetTimer);
+            copyResetTimer = setTimeout(resetCopyIcon, 1500);
+        }).catch(() => {
+            input.focus();
+            input.select();
         });
     });
 

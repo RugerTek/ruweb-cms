@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMediaRequest;
 use App\Models\Media;
 use App\Services\Media\MediaImagePipeline;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -37,6 +38,10 @@ class MediaController extends Controller
             });
         }
 
+        if ($month = $this->normalizedMonthFilter($request->input('month'))) {
+            $query->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()]);
+        }
+
         $perPage = 24;
         if ($request->wantsJson()) {
             $perPage = min(max((int) $request->input('per_page', 20), 1), 100);
@@ -48,7 +53,56 @@ class MediaController extends Controller
             return response()->json($media);
         }
 
-        return view('admin.media.index', compact('media'));
+        return view('admin.media.index', [
+            'media' => $media,
+            'availableMonths' => $this->availableMonths(),
+            'hasActiveFilters' => $request->filled('type')
+                || $request->filled('search')
+                || $request->filled('month'),
+        ]);
+    }
+
+    /**
+     * Validate a `YYYY-MM` filter value and turn it into a date, or null when unusable.
+     */
+    protected function normalizedMonthFilter(mixed $month): ?CarbonImmutable
+    {
+        if (! is_string($month) || ! preg_match('/^\d{4}-\d{2}$/', $month)) {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::createFromFormat('Y-m-d', $month . '-01')->startOfDay();
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Months that actually contain media, newest first, labelled in the admin locale.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    protected function availableMonths(): array
+    {
+        $locale = app()->getLocale();
+
+        return Media::query()
+            ->selectRaw('substr(created_at, 1, 7) as media_month')
+            ->distinct()
+            ->orderByDesc('media_month')
+            ->pluck('media_month')
+            ->filter(fn ($value) => is_string($value) && preg_match('/^\d{4}-\d{2}$/', $value))
+            ->map(fn (string $value) => [
+                'value' => $value,
+                'label' => Str::ucfirst(
+                    CarbonImmutable::createFromFormat('Y-m-d', $value . '-01')
+                        ->locale($locale)
+                        ->isoFormat('MMMM YYYY')
+                ),
+            ])
+            ->values()
+            ->all();
     }
 
     public function store(StoreMediaRequest $request): JsonResponse
