@@ -24,7 +24,7 @@
     $blocking = $report->blocking();
     $warnings = $report->warnings();
     $info = $report->info();
-    $riskText = static fn ($risk): string => __()->has('admin.snapshot_risk_'.$risk->key) ? __('admin.snapshot_risk_'.$risk->key) : $risk->message;
+    $riskText = static fn ($risk): string => \Illuminate\Support\Facades\Lang::has('admin.snapshot_risk_'.$risk->key) ? __('admin.snapshot_risk_'.$risk->key) : $risk->message;
 @endphp
 
 @section('content')

@@ -8,7 +8,11 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.37.2 - 2026-09-13
+## 0.37.3 - 2026-09-13
+
+- Se corrige un error 500 en la pantalla de revisión de snapshots cuando había riesgos que mostrar; el test del flujo de subida ahora renderiza al menos un riesgo.
+
+## 0.37.2 - 2026-09-13 (423c581)
 
 - El modo mantenimiento durante un restore se controla con `cms.snapshots.maintenance_mode` y queda apagado en tests, que antes ponían el sitio local en 503 mientras corría la suite.
 

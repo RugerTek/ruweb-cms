@@ -233,6 +233,8 @@ class DeveloperToolsSnapshotTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin', 'email' => 'origin@example.com']);
         Storage::disk('public')->put('media/flow.txt', 'flow');
+        // A tracked write so the review screen has at least one risk to render.
+        Page::query()->create(['locale' => 'es', 'title' => 'Flow', 'slug' => 'flow', 'template_key' => 'default', 'content_json' => [], 'status' => 'draft', 'created_by' => $admin->id]);
         $archive = app(SnapshotService::class)->create('ui-flow');
 
         Storage::disk('public')->delete('media/flow.txt');
@@ -253,6 +255,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         $review = $this->actingAs($admin)->get(route('admin.developer-tools.review', ['token' => $token]));
         $review->assertOk();
         $review->assertSee('ui-flow.appbackup');
+        $review->assertSee(__('admin.snapshot_risk_history_contained'));
 
         $index = $this->actingAs($admin)->get(route('admin.developer-tools.index', ['tab' => 'migration']));
         $index->assertSee('ui-flow.appbackup');
