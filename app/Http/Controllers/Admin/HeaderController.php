@@ -16,7 +16,7 @@ use Illuminate\View\View;
 /**
  * Header screen: everything the client can change about the public header,
  * in one place. Fields the header owns are edited here; parts that live
- * elsewhere (menu, contact data) are shortcuts. See docs/layout-header-footer.md.
+ * elsewhere (menu, contact data) are shortcuts. See docs/admin/layout.md.
  */
 class HeaderController extends Controller
 {

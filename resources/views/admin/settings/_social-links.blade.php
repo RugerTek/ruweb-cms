@@ -1,9 +1,9 @@
 {{--
     Administrable list of social links for a `social_links` setting
-    (docs/layout-header-footer.md). Uses the generic repeater from
+    (docs/admin/layout.md). Uses the generic repeater from
     resources/js/admin.js. Each row is a network selector plus its URL, laid
     out flat because the pair is one link (see "Typed Single-Value Items" in
-    docs/live-editor-ui-ux.md). The client adds only the networks the business
+    docs/admin/live-editor-ui-ux.md). The client adds only the networks the business
     actually has; nothing is mandatory.
 --}}
 @php

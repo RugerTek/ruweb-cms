@@ -8,7 +8,7 @@ namespace App\Support;
  * Content moves between installations (local → staging → production) through
  * snapshots, so anything the system itself writes into the database must not
  * embed the current origin. Runtime code builds absolute URLs when it needs
- * them; storage keeps root-relative paths. See docs/snapshots.md.
+ * them; storage keeps root-relative paths. See docs/operations/snapshots.md.
  */
 final class SiteUrl
 {

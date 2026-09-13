@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One entry of the content revision ledger. See docs/snapshots.md.
+ * One entry of the content revision ledger. See docs/operations/snapshots.md.
  *
  * Rows are append-only and intentionally tiny: no payload, no diff. Their
  * purpose is to let two installations tell whether one contains the other's

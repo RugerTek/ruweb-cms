@@ -8,7 +8,7 @@ return [
     'snapshots' => [
         // Base directory for everything the snapshot module writes: named
         // archives, pending uploads, work folders and pre-restore backups.
-        // Tests point this at an isolated temp directory. See docs/snapshots.md.
+        // Tests point this at an isolated temp directory. See docs/operations/snapshots.md.
         'root' => env('CMS_SNAPSHOTS_ROOT') ?: storage_path('app/private'),
         // Put the site in maintenance mode while a restore runs. Tests turn
         // this off because `artisan down` writes to the real storage/framework.
@@ -139,7 +139,7 @@ return [
     ],
 
     // Public forms that store submissions. One entry per form; the admin
-    // renders a tab per key under Submissions. Forms are code-owned, see docs/forms.md.
+    // renders a tab per key under Submissions. Forms are code-owned, see docs/content/forms.md.
     'forms' => [
         'contact' => [
             'model' => \App\Models\ContactSubmission::class,
@@ -213,7 +213,7 @@ return [
         'password' => env('CMS_ADMIN_PASSWORD', 'password'),
     ],
 
-    // Map picker used by `map_point` settings (docs/layout-header-footer.md). Free OSM tiles;
+    // Map picker used by `map_point` settings (docs/admin/layout.md). Free OSM tiles;
     // switch the URL and attribution here to use another provider.
     'maps' => [
         'tiles_url' => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',

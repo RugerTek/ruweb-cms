@@ -22,7 +22,7 @@
     @csrf
     @method('PUT')
 
-    {{-- Logo: shared with the header and Settings > General (docs/layout-header-footer.md). --}}
+    {{-- Logo: shared with the header and Settings > General (docs/admin/layout.md). --}}
     @if ($logoSetting)
         @include('admin.settings._field', [
             'setting' => $logoSetting,

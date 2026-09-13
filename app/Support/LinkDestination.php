@@ -8,7 +8,7 @@ use App\Models\Page;
 /**
  * Resolves a semantic button destination stored as either an internal page
  * reference (translation group id) or a custom URI, following the "Button
- * Destination Selector" rules in docs/live-editor-ui-ux.md.
+ * Destination Selector" rules in docs/admin/live-editor-ui-ux.md.
  *
  * The admin partial `admin.partials._link-destination` produces the two
  * values; templates call `resolve()` at render time so one selection yields

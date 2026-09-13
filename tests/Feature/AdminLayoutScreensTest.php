@@ -14,7 +14,7 @@ use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** Header and Footer admin screens plus the public admin bar shortcut (docs/layout-header-footer.md). */
+/** Header and Footer admin screens plus the public admin bar shortcut (docs/admin/layout.md). */
 class AdminLayoutScreensTest extends TestCase
 {
     use RefreshDatabase;

@@ -378,7 +378,7 @@ return [
     // Settings
     'settings_saved' => 'Settings saved successfully.',
 
-    // Header / Footer screens and the public admin bar (docs/layout-header-footer.md)
+    // Header / Footer screens and the public admin bar (docs/admin/layout.md)
     'header' => 'Header',
     'footer' => 'Footer',
     'header_subtitle' => 'Everything editable in the site header, in one place.',
@@ -824,7 +824,7 @@ return [
     'invalid_credentials' => 'Invalid credentials.',
     'unauthorized' => 'Your account does not have access.',
 
-    // Forms and submissions (docs/forms.md)
+    // Forms and submissions (docs/content/forms.md)
     'submissions' => 'Submissions',
     'search_submissions_placeholder' => 'Search by name, email or message...',
     'submissions_subtitle' => 'Messages received through the public forms of the site.',

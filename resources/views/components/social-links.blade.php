@@ -1,5 +1,5 @@
 {{--
-    Social icons from Settings > Contacto (docs/layout-header-footer.md).
+    Social icons from Settings > Contacto (docs/admin/layout.md).
     Renders nothing when no network is configured. Icons inherit the text color.
 
     <x-social-links class="flex gap-3 text-gray-500" icon-class="w-5 h-5" />

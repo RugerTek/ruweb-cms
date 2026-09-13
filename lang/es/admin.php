@@ -378,7 +378,7 @@ return [
     // Settings
     'settings_saved' => 'Ajustes guardados correctamente.',
 
-    // Header / Footer screens and the public admin bar (docs/layout-header-footer.md)
+    // Header / Footer screens and the public admin bar (docs/admin/layout.md)
     'header' => 'Header',
     'footer' => 'Footer',
     'header_subtitle' => 'Todo lo editable del encabezado del sitio, en un solo lugar.',
@@ -824,7 +824,7 @@ return [
     'invalid_credentials' => 'Credenciales inválidas.',
     'unauthorized' => 'Tu cuenta no tiene acceso.',
 
-    // Formularios y envíos (docs/forms.md)
+    // Formularios y envíos (docs/content/forms.md)
     'submissions' => 'Envíos',
     'search_submissions_placeholder' => 'Buscar por nombre, email o mensaje...',
     'submissions_subtitle' => 'Mensajes recibidos desde los formularios públicos del sitio.',

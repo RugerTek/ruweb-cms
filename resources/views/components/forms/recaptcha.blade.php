@@ -1,5 +1,5 @@
 {{--
-    Google reCAPTCHA v3 for public forms (docs/forms.md). Renders nothing when
+    Google reCAPTCHA v3 for public forms (docs/content/forms.md). Renders nothing when
     the security settings have no keys, so local development works untouched.
     The token is requested on submit and validated by PublicFormRequest.
 --}}

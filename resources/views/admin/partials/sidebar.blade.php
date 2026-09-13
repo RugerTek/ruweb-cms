@@ -106,7 +106,7 @@
                 </a>
             </li>
             @if(auth()->user()->isAdmin())
-            {{-- Header / Footer: one screen each centralising the editable parts of the layout (docs/layout-header-footer.md) --}}
+            {{-- Header / Footer: one screen each centralising the editable parts of the layout (docs/admin/layout.md) --}}
             <li>
                 <a href="{{ route('admin.header.index') }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors

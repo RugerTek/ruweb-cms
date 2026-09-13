@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One submission of the code-owned contact form. See docs/forms.md.
+ * One submission of the code-owned contact form. See docs/content/forms.md.
  *
  * Submissions are records, not content: they are not tracked by the content
  * revision ledger and the client never edits them.

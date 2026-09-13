@@ -12,7 +12,7 @@ use Illuminate\Http\RedirectResponse;
 /**
  * Receives the starter contact form. The flow every public form follows:
  * validate (incl. reCAPTCHA) → drop honeypot hits silently → store →
- * notify → redirect back to the page with a success flag. See docs/forms.md.
+ * notify → redirect back to the page with a success flag. See docs/content/forms.md.
  */
 class ContactFormController extends Controller
 {

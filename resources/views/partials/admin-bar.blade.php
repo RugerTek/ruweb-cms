@@ -81,7 +81,7 @@
         @if($isAdmin)
         <span class="text-gray-700 mx-1 flex-none select-none">|</span>
 
-        {{-- Edit layout: hover / focus dropdown to the Header and Footer screens (docs/layout-header-footer.md). CSS only, no JS on the public side. --}}
+        {{-- Edit layout: hover / focus dropdown to the Header and Footer screens (docs/admin/layout.md). CSS only, no JS on the public side. --}}
         <div class="relative flex-none group">
             <button type="button"
                     class="flex items-center gap-1.5 px-2 py-1 rounded text-gray-400 hover:text-white hover:bg-white/10 group-hover:text-white group-hover:bg-white/10 group-focus-within:text-white group-focus-within:bg-white/10 transition-colors text-[11px] flex-none cursor-default"

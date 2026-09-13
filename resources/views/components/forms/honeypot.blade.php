@@ -1,5 +1,5 @@
 {{--
-    Anti-spam honeypot shared by every public form (docs/forms.md).
+    Anti-spam honeypot shared by every public form (docs/content/forms.md).
     Bots fill the hidden "website" field and submit instantly; humans never see it.
     The request base class (PublicFormRequest) reads both fields.
 --}}

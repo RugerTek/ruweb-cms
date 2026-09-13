@@ -1,7 +1,7 @@
 {{--
-    One administrable option of a select/radio field (docs/forms.md).
+    One administrable option of a select/radio field (docs/content/forms.md).
     Single-field items render as a flat row: the input inline, with move and
-    delete controls on the right. No accordion (docs/live-editor-ui-ux.md,
+    delete controls on the right. No accordion (docs/admin/live-editor-ui-ux.md,
     "Single-Field Items"). Used inside a generic [data-repeater]; `$field` is
     the repeater key, e.g. subject_options.
 --}}

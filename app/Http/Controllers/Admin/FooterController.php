@@ -14,7 +14,7 @@ use Illuminate\View\View;
 
 /**
  * Footer screen: the footer's own fields plus shortcuts to the data it
- * displays from other modules. See docs/layout-header-footer.md.
+ * displays from other modules. See docs/admin/layout.md.
  */
 class FooterController extends Controller
 {

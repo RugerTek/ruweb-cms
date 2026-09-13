@@ -1,6 +1,6 @@
 {{--
     One social link row: network selector + URL, flat, with move and delete
-    controls (docs/layout-header-footer.md). Inside a generic [data-repeater];
+    controls (docs/admin/layout.md). Inside a generic [data-repeater];
     `$key` is the setting key so names re-index as settings[<key>][<index>][...].
 --}}
 @php

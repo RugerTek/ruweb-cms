@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
  * Starter contact page: the reference implementation of a code-owned public
  * form. Labels, subject options and the notification settings live in the
  * `form` section so the client edits them from the Live Editor; fields and
- * behaviour live in code. See docs/forms.md.
+ * behaviour live in code. See docs/content/forms.md.
  */
 class ContactPageSeeder extends Seeder
 {

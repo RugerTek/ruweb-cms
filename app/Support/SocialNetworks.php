@@ -9,7 +9,7 @@ namespace App\Support;
  * catalog in its selector, `BusinessContact::socialLinks()` validates stored
  * rows against it and `<x-social-links>` renders the icon. Icons are the
  * 24x24 Simple Icons paths (CC0), drawn with `fill="currentColor"` so they
- * inherit the surrounding text color. See docs/layout-header-footer.md.
+ * inherit the surrounding text color. See docs/admin/layout.md.
  */
 class SocialNetworks
 {

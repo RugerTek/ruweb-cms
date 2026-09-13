@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Business contact data (Settings > Contacto) plus the fields owned by the
- * Header and Footer admin screens. See docs/layout-header-footer.md.
+ * Header and Footer admin screens. See docs/admin/layout.md.
  */
 return new class extends Migration
 {

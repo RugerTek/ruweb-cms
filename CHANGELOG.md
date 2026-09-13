@@ -8,7 +8,17 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.39.0 - 2026-09-15
+## 0.40.0 - 2026-09-13
+
+- La documentación pasa a estar escrita para agentes: `AGENTS.md` en la raíz (leído por Claude Code y Codex, con `CLAUDE.md` como symlink) reúne comandos, reglas duras del repo y una tabla de ruteo tarea → skill → doc, de modo que un clon nuevo no necesita que nadie le indique qué archivo leer.
+- Los `docs/` se reorganizan en `concepts/`, `content/`, `admin/` y `operations/`, con `docs/README.md` como mapa de qué decide cada documento. Contenido reescrito contra el código: se eliminan los bloques `Purpose` y `Scope Boundary`, las reglas quedan en forma verificable y la regla de placeholders, que estaba repetida en ocho archivos, vive sólo en `docs/content/images.md`.
+- Los prompts de `docs/skills/` y el skill suelto de changelog se convierten en 12 skills reales bajo `.agents/skills/` (symlinkeado a `.claude/skills/`), que ambos agentes activan solos por su descripción: `create-page`, `create-template`, `create-section`, `create-collection`, `create-form`, `create-config`, `create-layout-field`, `update-content`, `translate-content`, `check-translations`, `review-conventions` y `changelog-version`.
+- Nuevo comando `php artisan cms:check-conventions` con las reglas deterministas de la documentación: throttle y anti-spam en formularios, partials y traducción de cada formulario registrado, paridad `lang/es`↔`lang/en`, templates registrados sin vista, imágenes hardcodeadas en templates, URLs absolutas en seeders y sincronía entre `VERSION` y el changelog. Acepta `--staged` y `--since`.
+- Hooks versionados en `.githooks/` (`composer setup` los activa): **pre-commit** corre `php -l` sobre lo staged más `cms:check-conventions --staged`, y **post-commit** completa el SHA de la entrada de changelog que quedó sin él, dejando el cambio para el commit siguiente sin hacer `amend`.
+- Las descripciones de los skills se validaron con sesiones frías reales (`claude -p` en modo solo-lectura, pedidos naturales sin mencionar archivos): 21 de 22 corridas eligieron el skill correcto, incluidos dos controles negativos que no debían disparar ninguno. El único fallo, un label crudo del admin que se iba a `grep` en vez de a `check-translations`, se corrigió poniendo el síntoma al frente de la descripción y se reverificó con tres fraseos.
+- Nuevos tests `ConventionsTest` y `DocsReferencesTest`: el repo debe cumplir sus propias reglas, y todo link o ruta citada en la documentación y en los skills tiene que resolver.
+
+## 0.39.0 - 2026-09-15 (8c5303f)
 
 - Nuevas pantallas **Header** y **Footer** en el admin (solo admins) que centralizan todo lo editable de cada región: el logo compartido, el botón de llamada a la acción del header, el texto y la línea de copyright del footer, y tarjetas de acceso directo hacia el menú de la ubicación correspondiente y hacia Ajustes > Contacto. El código de ambas regiones se versiona; el cliente edita solo datos.
 - Nueva pestaña **Contacto** en Ajustes con teléfono, WhatsApp, email, dirección, coordenadas y un repeater de redes sociales: el cliente agrega solo las redes que tiene, eligiéndolas de un catálogo central (`App\Support\SocialNetworks`) con íconos incluidos. Agregar una red nueva es una sola entrada en el catálogo.

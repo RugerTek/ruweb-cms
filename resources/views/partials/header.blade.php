@@ -44,7 +44,7 @@
                 </div>
             @endif
 
-            {{-- Optional call-to-action from the Header screen (docs/layout-header-footer.md) --}}
+            {{-- Optional call-to-action from the Header screen (docs/admin/layout.md) --}}
             @if(filled($headerCtaLabel ?? null) && filled($headerCtaUrl ?? null))
                 <a href="{{ $headerCtaUrl }}" data-header-cta
                    @if($headerCtaNewTab ?? false) target="_blank" rel="noopener noreferrer" @endif

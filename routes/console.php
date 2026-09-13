@@ -9,5 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Snapshot transients (pending uploads, work folders, old pre-restore backups)
-// would otherwise grow unbounded. See docs/snapshots.md.
+// would otherwise grow unbounded. See docs/operations/snapshots.md.
 Schedule::command('snapshot:prune')->daily();

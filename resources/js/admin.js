@@ -15,7 +15,7 @@ if (document.querySelector('[data-rich-text]')) {
     import('./rich-text.js').then((module) => module.initRichText());
 }
 
-// Map picker for `map_point` settings (docs/layout-header-footer.md): Leaflet is
+// Map picker for `map_point` settings (docs/admin/layout.md): Leaflet is
 // code-split like TinyMCE and fetched only when a picker is on the page.
 if (document.querySelector('[data-map-picker]')) {
     import('./map-picker.js').then((module) => module.initMapPickers());
@@ -778,7 +778,7 @@ document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
     refreshRows();
 });
 
-// Generic administrable repeater (docs/live-editor-ui-ux.md, docs/forms.md).
+// Generic administrable repeater (docs/admin/live-editor-ui-ux.md, docs/content/forms.md).
 // Markup contract: [data-repeater data-repeater-key="<field>"] wrapping
 // [data-repeater-list] > [data-repeater-item]*, a <template data-repeater-template>,
 // [data-repeater-add] and optional [data-repeater-empty]. Items expose
@@ -906,7 +906,7 @@ document.querySelectorAll('[data-repeater]').forEach((repeater) => {
 });
 
 // Social links repeater (Settings > Contacto): keep the row icon and URL placeholder
-// in sync with the selected network (docs/layout-header-footer.md).
+// in sync with the selected network (docs/admin/layout.md).
 document.addEventListener('change', (event) => {
     const select = event.target.closest('[data-social-network]');
     if (!select) return;
@@ -930,7 +930,7 @@ document.querySelectorAll('[data-toggle-controls]').forEach((toggle) => {
     sync();
 });
 
-// Button destination selector (docs/live-editor-ui-ux.md): the manual URL input is
+// Button destination selector (docs/admin/live-editor-ui-ux.md): the manual URL input is
 // shown only while "Custom" is selected; the typed value is kept while switching.
 document.querySelectorAll('[data-link-destination]').forEach((control) => {
     const select = control.querySelector('[data-link-destination-page]');

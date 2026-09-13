@@ -6,7 +6,7 @@ return [
     'blog_empty' => 'Todavía no hay posts publicados.',
     'read_article' => 'Leer artículo',
     'back_to_blog' => 'Volver al blog',
-    // Public header / footer (docs/layout-header-footer.md)
+    // Public header / footer (docs/admin/layout.md)
     'layout' => [
         'contact' => 'Contacto',
         'links' => 'Enlaces',
@@ -16,7 +16,7 @@ return [
         'view_map' => 'Ver en el mapa',
     ],
 
-    // Public forms (docs/forms.md). Fallbacks when the Live Editor labels are empty.
+    // Public forms (docs/content/forms.md). Fallbacks when the Live Editor labels are empty.
     'forms' => [
         'required_note' => '* Campos obligatorios',
         'recaptcha_failed' => 'No pudimos verificar que eres una persona. Recargá la página e intentá de nuevo.',

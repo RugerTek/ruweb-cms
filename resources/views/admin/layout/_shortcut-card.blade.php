@@ -1,5 +1,5 @@
 {{--
-    Shortcut card for the Header / Footer screens (docs/layout-header-footer.md).
+    Shortcut card for the Header / Footer screens (docs/admin/layout.md).
     A part of the layout that is edited elsewhere gets one of these instead of
     a duplicated form: it says where the data lives and links straight there.
 

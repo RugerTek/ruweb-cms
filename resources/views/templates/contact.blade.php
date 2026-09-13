@@ -4,7 +4,7 @@
     Starter contact page: reference implementation of a code-owned public form.
     Fields and behaviour live here and in ContactFormController; the Live Editor
     only edits labels, subject options, success message and notifications.
-    See docs/forms.md before copying this for a new form.
+    See docs/content/forms.md before copying this for a new form.
 --}}
 
 @section('content')

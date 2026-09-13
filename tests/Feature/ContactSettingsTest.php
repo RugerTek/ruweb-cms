@@ -14,7 +14,7 @@ use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** Settings > Contacto and how the public layout consumes it (docs/layout-header-footer.md). */
+/** Settings > Contacto and how the public layout consumes it (docs/admin/layout.md). */
 class ContactSettingsTest extends TestCase
 {
     use RefreshDatabase;

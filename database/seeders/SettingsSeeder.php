@@ -32,7 +32,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'contact_address',        'value' => null,               'type' => 'text',   'group' => 'contact',  'options' => null],
             ['key' => 'contact_location',       'value' => null,               'type' => 'map_point', 'group' => 'contact', 'options' => null],
             ['key' => 'contact_social_links',   'value' => '[]',               'type' => 'social_links', 'group' => 'contact', 'options' => null],
-            // Header and footer screens (docs/layout-header-footer.md).
+            // Header and footer screens (docs/admin/layout.md).
             ['key' => 'header_cta_enabled',     'value' => '0',                'type' => 'boolean', 'group' => 'header',  'options' => null],
             ['key' => 'header_cta_label',       'value' => null,               'type' => 'string', 'group' => 'header',   'options' => null],
             ['key' => 'header_cta_page',        'value' => null,               'type' => 'string', 'group' => 'header',   'options' => null],

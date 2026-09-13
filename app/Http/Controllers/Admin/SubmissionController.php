@@ -11,7 +11,7 @@ use Illuminate\View\View;
 /**
  * Admin "Submissions": one tab per form registered in `config('cms.forms')`.
  * The controller is shared; each form brings its own column/row/detail
- * partials under `resources/views/admin/submissions/{form}/`. See docs/forms.md.
+ * partials under `resources/views/admin/submissions/{form}/`. See docs/content/forms.md.
  */
 class SubmissionController extends Controller
 {

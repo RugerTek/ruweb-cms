@@ -1,5 +1,5 @@
 {{--
-    Button destination selector (docs/live-editor-ui-ux.md, "Button Destination
+    Button destination selector (docs/admin/live-editor-ui-ux.md, "Button Destination
     Selector"). A select of internal pages with `Custom` last, a manual input
     revealed only for Custom, and an always-visible "open in a new tab" checkbox.
 

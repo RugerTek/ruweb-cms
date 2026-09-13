@@ -68,7 +68,12 @@ CMS_ADMIN_PASSWORD=password
 
 ## Documentation
 
-Start at `docs/index.md`.
+The docs are written for agents. `AGENTS.md` (also reachable as `CLAUDE.md`) is the entry point: repo-wide
+rules plus a task → skill → doc routing table. `docs/README.md` maps every doc to the decision it owns.
+
+Reusable workflows live in `.agents/skills/`, symlinked into `.claude/skills/`, so Claude Code and Codex both
+pick them up automatically: creating pages, templates, sections, collections, forms and settings, updating or
+translating content, checking translations, reviewing a change against the docs, and the changelog rules.
 
 Image optimization and responsive media strategy:
-- `docs/image-strategy.md`
+- `docs/content/images.md`

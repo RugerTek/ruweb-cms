@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
  * The code-owned list of public forms, read from `config('cms.forms')`.
  *
  * Every form that stores submissions registers here so the admin can show
- * one tab per form under "Submissions". See docs/forms.md.
+ * one tab per form under "Submissions". See docs/content/forms.md.
  */
 class FormRegistry
 {

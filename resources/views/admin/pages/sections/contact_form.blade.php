@@ -1,5 +1,5 @@
 {{--
-    Live Editor section for the code-owned contact form (docs/forms.md).
+    Live Editor section for the code-owned contact form (docs/content/forms.md).
     Editable surface: labels, button text, success message, subject options
     and the notification settings. Fields, validation and behaviour are code.
 --}}

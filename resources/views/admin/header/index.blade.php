@@ -22,7 +22,7 @@
     @csrf
     @method('PUT')
 
-    {{-- Logo: the same site_logo as Settings > General, edited from both places (docs/layout-header-footer.md). --}}
+    {{-- Logo: the same site_logo as Settings > General, edited from both places (docs/admin/layout.md). --}}
     @if ($logoSetting)
         @include('admin.settings._field', [
             'setting' => $logoSetting,

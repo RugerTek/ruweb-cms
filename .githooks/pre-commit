@@ -1,0 +1,16 @@
+#!/bin/sh
+# Fast, deterministic checks. Judgment-level review is the `review-conventions` skill.
+# Enable with: git config core.hooksPath .githooks   (composer setup does it)
+set -e
+
+staged_php=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.php$' || true)
+
+for file in $staged_php; do
+    [ -f "$file" ] || continue
+    php -l "$file" > /dev/null || {
+        echo "pre-commit: syntax error in $file"
+        exit 1
+    }
+done
+
+php artisan cms:check-conventions --staged

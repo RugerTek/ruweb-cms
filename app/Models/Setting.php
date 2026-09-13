@@ -145,9 +145,9 @@ class Setting extends Model
             'integer' => (int) $value,
             'media' => $value ? Media::find((int) $value) : null,
             'password' => static::decryptPassword($value),
-            // Administrable list of {network, url} rows (docs/layout-header-footer.md).
+            // Administrable list of {network, url} rows (docs/admin/layout.md).
             'social_links' => static::decodeList($value),
-            // {lat, lng} picked on a map (docs/layout-header-footer.md).
+            // {lat, lng} picked on a map (docs/admin/layout.md).
             'map_point' => static::decodePoint($value),
             default => $value,
         };

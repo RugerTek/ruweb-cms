@@ -10,8 +10,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * Shared save path for the screens that edit settings rows: the Settings
- * tabs plus the dedicated Header and Footer screens (docs/settings.md,
- * docs/layout-header-footer.md).
+ * tabs plus the dedicated Header and Footer screens (docs/admin/settings.md,
+ * docs/admin/layout.md).
  */
 trait PersistsSettings
 {
@@ -101,7 +101,7 @@ trait PersistsSettings
 
     /**
      * A destination selector submits both the page reference and the custom
-     * URI; only the selected mode is stored (docs/live-editor-ui-ux.md, rule 11).
+     * URI; only the selected mode is stored (docs/admin/live-editor-ui-ux.md, rule 11).
      *
      * @param  array<string, mixed>  $settings
      * @return array<string, mixed>
@@ -173,7 +173,7 @@ trait PersistsSettings
         return ['lat' => (float) $lat, 'lng' => (float) $lng];
     }
 
-    /** Rich text is sanitised on save so every reader gets the same markup (docs/rich-text.md). */
+    /** Rich text is sanitised on save so every reader gets the same markup (docs/admin/rich-text.md). */
     private function normalizeRichText(mixed $html): ?string
     {
         $clean = app(RichTextSanitizer::class)->sanitize(is_string($html) ? $html : null);

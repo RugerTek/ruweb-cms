@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Public forms: per-IP limit shared by every form route. See docs/forms.md.
+        // Public forms: per-IP limit shared by every form route. See docs/content/forms.md.
         \Illuminate\Support\Facades\RateLimiter::for('forms', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->ip()));
 
         Gate::policy(Menu::class, MenuPolicy::class);
@@ -41,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.public', function ($view) {
             $siteLogo = Setting::getLocalized('site_logo');
 
-            // Header / footer fields edited from their admin screens (docs/layout-header-footer.md).
+            // Header / footer fields edited from their admin screens (docs/admin/layout.md).
             $view->with([
                 'siteName' => Setting::getLocalized('site_name') ?: config('app.name'),
                 'siteLogo' => $siteLogo?->url(),

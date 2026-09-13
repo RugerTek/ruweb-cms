@@ -1,5 +1,5 @@
 {{--
-    Map picker for a `map_point` setting (docs/layout-header-footer.md). The
+    Map picker for a `map_point` setting (docs/admin/layout.md). The
     client drops or drags a pin; latitude and longitude stay visible as small
     inputs so coordinates can also be pasted. Leaflet loads lazily from
     resources/js/map-picker.js when [data-map-picker] is on the page.

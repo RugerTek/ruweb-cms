@@ -11,7 +11,7 @@ use App\Models\Setting;
  * address, coordinates and social links from here instead of resolving
  * settings inline, so the values stay consistent everywhere and the href
  * derivations (tel:, mailto:, wa.me, maps) live in one place.
- * See docs/layout-header-footer.md.
+ * See docs/admin/layout.md.
  */
 class BusinessContact
 {

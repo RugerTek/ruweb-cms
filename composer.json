@@ -3,7 +3,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
@@ -40,7 +43,8 @@
             "@php artisan storage:link",
             "@php artisan db:seed --force",
             "npm install --ignore-scripts",
-            "npm run build"
+            "npm run build",
+            "git config core.hooksPath .githooks"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -67,6 +71,12 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "hooks": [
+            "git config core.hooksPath .githooks"
+        ],
+        "check": [
+            "@php artisan cms:check-conventions"
         ]
     },
     "extra": {

@@ -92,7 +92,7 @@ Route::middleware(['auth', 'role:admin,editor', 'admin.locale'])->prefix('admin'
         Route::post('email/test', [EmailController::class, 'sendTestEmail'])->name('email.test');
         Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
-        // Header and footer: one screen each centralising what the client can edit (docs/layout-header-footer.md).
+        // Header and footer: one screen each centralising what the client can edit (docs/admin/layout.md).
         Route::get('header', [HeaderController::class, 'index'])->name('header.index');
         Route::put('header', [HeaderController::class, 'update'])->name('header.update');
         Route::get('footer', [FooterController::class, 'index'])->name('footer.index');

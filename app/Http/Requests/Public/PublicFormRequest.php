@@ -11,7 +11,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * reCAPTCHA v3 token validation, a honeypot field and a minimum fill time.
  *
  * Subclasses declare `formKey()` (the reCAPTCHA action and the key in
- * `config('cms.forms')`) and `fieldRules()` for their own fields. See docs/forms.md.
+ * `config('cms.forms')`) and `fieldRules()` for their own fields. See docs/content/forms.md.
  */
 abstract class PublicFormRequest extends FormRequest
 {

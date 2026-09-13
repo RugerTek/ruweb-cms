@@ -33,7 +33,7 @@ Route::middleware('public.locale')->group(function () use ($localePattern, $rese
     Route::get('/', [PageController::class, 'home'])->name('home');
     Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
     Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
-    // Public forms: POST only, registered before the page catch-all. See docs/forms.md.
+    // Public forms: POST only, registered before the page catch-all. See docs/content/forms.md.
     Route::post('/forms/contact', [ContactFormController::class, 'store'])->middleware('throttle:forms')->name('forms.contact.store');
 
     Route::prefix('{locale}')

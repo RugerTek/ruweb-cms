@@ -1,5 +1,5 @@
 {{--
-    Public footer (docs/layout-header-footer.md). The markup is code; the data
+    Public footer (docs/admin/layout.md). The markup is code; the data
     comes from three places the client edits:
       - Footer screen: logo (shared site_logo), tagline, copyright line
       - Menus: the menu assigned to the `footer` location

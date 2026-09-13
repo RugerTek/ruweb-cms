@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
  * Google reCAPTCHA v3 verification, driven by the `security` settings group.
  *
  * When no site key is configured the check is disabled, so local
- * environments and tests work without credentials. See docs/forms.md.
+ * environments and tests work without credentials. See docs/content/forms.md.
  */
 class Recaptcha
 {

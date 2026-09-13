@@ -1,5 +1,5 @@
 /**
- * Map picker for `map_point` settings (docs/layout-header-footer.md).
+ * Map picker for `map_point` settings (docs/admin/layout.md).
  *
  * Leaflet with OpenStreetMap tiles, no API key. Loaded lazily by admin.js when a
  * [data-map-picker] element is on the page. The two coordinate inputs stay the

@@ -1,0 +1,23 @@
+#!/bin/sh
+# Stamps the newest SHA-less changelog entry with the commit just created and leaves the
+# edit uncommitted, so it rides along in the next commit — the convention the
+# `changelog-version` skill describes. Never amends.
+set -e
+
+changelog="CHANGELOG.md"
+[ -f "$changelog" ] || exit 0
+
+sha=$(git rev-parse --short HEAD)
+
+# The newest versioned heading, only when it has no SHA yet.
+line=$(grep -n -m1 -E '^## [0-9]+\.[0-9]+\.[0-9]+ - [0-9]{4}-[0-9]{2}-[0-9]{2}$' "$changelog" | cut -d: -f1 || true)
+[ -n "$line" ] || exit 0
+
+# Only stamp it when this commit actually touched the changelog.
+git diff-tree --no-commit-id --name-only -r HEAD | grep -qx "$changelog" || exit 0
+
+tmp=$(mktemp)
+awk -v n="$line" -v sha="$sha" 'NR==n { print $0 " (" sha ")"; next } { print }' "$changelog" > "$tmp"
+mv "$tmp" "$changelog"
+
+echo "post-commit: changelog entry on line $line stamped with ($sha); commit it with your next change."

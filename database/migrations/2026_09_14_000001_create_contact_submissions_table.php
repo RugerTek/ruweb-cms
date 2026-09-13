@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('page_id')->nullable()->index();
             $table->string('locale', 10)->nullable();
-            // Form fields (code-owned, see docs/forms.md)
+            // Form fields (code-owned, see docs/content/forms.md)
             $table->string('name', 120);
             $table->string('email', 190);
             $table->string('phone', 60)->nullable();

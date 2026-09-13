@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Mail;
  * Sends the "new submission" email when the form section on the page has
  * notifications enabled. Uses the site's Brevo mailer when a key exists,
  * otherwise the default mailer. Failures are logged, never shown to the
- * visitor: the submission is already stored. See docs/forms.md.
+ * visitor: the submission is already stored. See docs/content/forms.md.
  */
 class SubmissionNotifier
 {
