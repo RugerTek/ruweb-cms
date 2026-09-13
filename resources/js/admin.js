@@ -747,3 +747,27 @@ document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
     refreshRows();
 });
 
+// Any form carrying data-confirm is gated by the shared modal instead of window.confirm.
+document.querySelectorAll('form[data-confirm]').forEach((form) => {
+    let confirmed = false;
+
+    form.addEventListener('submit', async (event) => {
+        if (confirmed) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const accepted = await window.confirmAction({
+            title: form.dataset.confirmTitle || undefined,
+            message: form.dataset.confirm,
+            confirmLabel: form.dataset.confirmLabel || undefined,
+            tone: form.dataset.confirmTone || 'danger',
+        });
+
+        if (accepted) {
+            confirmed = true;
+            form.submit();
+        }
+    });
+});

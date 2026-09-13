@@ -8,7 +8,12 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.31.0 - 2026-09-13
+## 0.32.0 - 2026-09-13
+
+- El botón de refrescar caché pasa a estar también dentro del panel de administración, además de la barra pública, visible solo para administradores.
+- Cualquier formulario marcado con `data-confirm` se confirma con el modal compartido en lugar del diálogo nativo del navegador.
+
+## 0.31.0 - 2026-09-13 (b4ddf20)
 
 - Salir del editor con cambios sin guardar ahora abre un aviso con `Seguir editando` y `Salir sin guardar`, en vez de dejar que se pierdan en silencio.
 - El modal compartido de confirmación pasa a aceptar título, mensaje, etiquetas y tono, así que sirve para cualquier acción que necesite confirmarse.
