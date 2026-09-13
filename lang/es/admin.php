@@ -328,7 +328,7 @@ return [
     'unsaved_changes_message' => 'Esta página tiene cambios que no guardaste. Si salís ahora, se pierden.',
     'btn_leave_without_saving' => 'Salir sin guardar',
     'btn_keep_editing' => 'Seguir editando',
-    'confirm_remove_logo' => 'Se quitará el logo \":item\" del carrusel. El cambio se aplica cuando guardes la página.',
+    'confirm_remove_logo' => 'Se quitará el logo ":item" del carrusel. El cambio se aplica cuando guardes la página.',
     'logo_item_fallback_label' => 'Logo :position',
     'btn_move_up' => 'Subir',
     'btn_move_down' => 'Bajar',

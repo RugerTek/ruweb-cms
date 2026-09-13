@@ -8,7 +8,11 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.33.0 - 2026-09-13
+## 0.33.1 - 2026-09-13
+
+- Se corrige el mensaje de confirmación al quitar un logo, que mostraba barras invertidas alrededor del nombre.
+
+## 0.33.0 - 2026-09-13 (aa32f13)
 
 - El contenido de los posts se edita con un editor WYSIWYG (TinyMCE) en lugar de un textarea plano, con títulos, listas, citas, enlaces, tablas y bloques de código.
 - Insertar una imagen abre directamente la media library: no se piden URLs ni se suben archivos pegados.

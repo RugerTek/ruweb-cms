@@ -328,7 +328,7 @@ return [
     'unsaved_changes_message' => 'This page has changes you have not saved. If you leave now, they will be lost.',
     'btn_leave_without_saving' => 'Leave without saving',
     'btn_keep_editing' => 'Keep editing',
-    'confirm_remove_logo' => 'The logo \":item\" will be removed from the carousel. The change applies when you save the page.',
+    'confirm_remove_logo' => 'The logo ":item" will be removed from the carousel. The change applies when you save the page.',
     'logo_item_fallback_label' => 'Logo :position',
     'btn_move_up' => 'Move up',
     'btn_move_down' => 'Move down',
