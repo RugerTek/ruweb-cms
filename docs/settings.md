@@ -34,6 +34,11 @@ This allows the starter to keep environment-like values, site-wide content, and 
 | `media` | media selector | media model or `null` | for logos, images, files |
 | `password` | masked input | decrypted `string` | should be stored encrypted |
 
+A `media` setting that ships with a default should point at the placeholder matching how it
+is rendered: the global social image is `horizontal`, since every platform renders Open Graph
+images letterboxed. A favicon or logo has no placeholder; leave it empty rather than seeding a
+sample image into branding. See `docs/image-strategy.md`.
+
 ## Groups
 
 Settings are typically organized by `group`. Groups usually map to admin tabs or sections.

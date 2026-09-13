@@ -111,6 +111,11 @@ For featured images:
 
 - use the shared media relationship instead of embedding them in the structured JSON payload
 
+When a media field has no real asset yet, point it at the placeholder whose aspect ratio
+matches the slot instead of leaving it empty: `horizontal` for heroes, featured and social
+images, `square` for grid and avatar slots, `vertical` for portrait slots. Resolve it by
+`placeholder_key`. See `docs/image-strategy.md`.
+
 ## Checklist
 
 - [ ] Confirmed the target entity and template.

@@ -6,6 +6,7 @@ This guide defines the shared image handling strategy for the starter:
 
 - upload-time optimization
 - responsive variant generation
+- placeholder images for fresh installs
 - traceability of optimization results
 - frontend rendering expectations
 - operational health checks
@@ -56,6 +57,44 @@ Typical fields include:
 - width and height
 - variant metadata
 - optimization timestamp
+
+## Placeholder Images
+
+A fresh install ships with three placeholder images in the media library. The uploads
+directory is not versioned, so they are seeded from stubs that travel with the
+repository and are processed through the normal upload pipeline: each one ends up
+optimized and with responsive variants, exactly like a real upload.
+
+They are identified by a stable `placeholder_key` on the media record, not by filename,
+so they survive renames and can be located from code, seeders, and templates.
+
+| `placeholder_key` | Aspect ratio | Size | Use it for |
+| --- | --- | --- | --- |
+| `horizontal` | 16:9 | 1920x1080 | full-width heroes and banners, featured images, social/OG images, wide listing cards, anything the layout renders letterboxed |
+| `square` | 1:1 | 1200x1200 | grid and gallery thumbnails, avatars, logos, team members, product tiles, any cell that crops to a square |
+| `vertical` | 9:16 | 1080x1920 | portrait cards, poster and cover art, mobile-first full-screen sections, side-by-side image columns taller than they are wide |
+
+Guidelines:
+
+- Choose the placeholder whose aspect ratio matches the slot the template will render.
+  A horizontal placeholder inside a square slot gets cropped and misrepresents the design.
+- Seed every media field of default content and starter templates with the matching
+  placeholder, so a brand-new install renders a complete page instead of empty frames.
+- Treat placeholders as sample content: they are meant to be replaced by the client, and
+  nothing should depend on a specific placeholder being present at runtime.
+- Do not add a fourth placeholder for a one-off ratio. Pick the closest of the three and
+  let the template's own cropping handle the difference.
+
+Operations:
+
+```bash
+php artisan cms:placeholders           # seed missing placeholders, restore missing files
+php artisan cms:placeholders --force   # rebuild them from the stubs
+```
+
+The seeder is idempotent and repairs itself: if the records exist but their files do not,
+as happens on a fresh clone where `storage/app/public` is empty, it restores the files and
+their variants while keeping the same media records, so existing references stay intact.
 
 ## Rendering Contract
 

@@ -117,6 +117,8 @@ Projects commonly expose tools for:
 - settings
 - menus
 
+When an agent sets an image field and has no real asset, it should select the placeholder matching the slot's aspect ratio — `horizontal`, `square` or `vertical` — by its `placeholder_key`, instead of inventing a URL or leaving the field empty. See `docs/image-strategy.md`.
+
 The exact tool list should be discoverable dynamically through `tools/list`. Avoid hardcoding assumptions in clients when discovery is available.
 
 ## REST API

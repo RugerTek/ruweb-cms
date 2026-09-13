@@ -36,7 +36,8 @@ If this file was referenced in the prompt:
 2. Treat all text after the reference to this file as the functional requirement.
 3. Define the model, persistence, admin CRUD, permissions, public routes, and public views only to the extent required by the request.
 4. Use shared taxonomies if the collection needs classification.
-5. Use shared media if the collection needs images or files.
+5. Use shared media if the collection needs images or files. Seed example records with the
+   placeholder matching how the collection renders them: `horizontal`, `square` or `vertical`.
 6. If the collection is public, respect publication, metadata, and sitemap requirements.
 7. If it needs editorial preview, use the shared editor instead of creating a parallel flow.
 8. Validate taxonomy IDs against the intended taxonomy type before syncing them.

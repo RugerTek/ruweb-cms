@@ -51,6 +51,9 @@ For page content:
 - featured images belong to the shared media relationship
 - section-level images should store a media identifier such as `image_id`
 - do not store content-managed images as hardcoded paths or raw URLs
+- starter and example pages should point every media field at the placeholder whose
+  aspect ratio matches the slot: `horizontal` for featured and hero images, `square` for
+  grid or avatar slots, `vertical` for portrait slots. See `docs/image-strategy.md`.
 
 ### 3. Featured image is separate from structured content
 

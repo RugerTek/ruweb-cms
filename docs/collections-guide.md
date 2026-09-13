@@ -34,6 +34,8 @@ Examples:
 
 Any collection that renders images or files should use the shared media relationship rather than storing raw file paths in columns or JSON.
 
+Seed example records with the placeholder image whose aspect ratio matches how the collection renders it: `horizontal` for wide cards and cover images, `square` for grid or avatar cells, `vertical` for portrait cards. Resolve it by `placeholder_key` rather than by filename or id. See `docs/image-strategy.md`.
+
 ### 2. Classification should use the shared taxonomy system
 
 If the collection needs categories, tags, regions, or similar labels, use the shared taxonomy subsystem instead of creating one-off taxonomy tables per collection.

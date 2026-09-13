@@ -77,6 +77,7 @@ Create the corresponding template file:
 - Templates should read data from structured content and first-class entity fields only.
 - Templates should not hardcode editable copy.
 - Templates should not hardcode media URLs or local asset paths for content-managed images.
+- Every media field a starter template exposes should be seeded with the placeholder matching its rendered aspect ratio, so a fresh install renders a complete page. See `docs/image-strategy.md`.
 - Templates should guard section output with `is_visible` and meaningful content checks.
 - Templates may define additional section-specific fields beyond `heading` and `body`.
 

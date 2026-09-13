@@ -11,7 +11,7 @@ Use this document when you want to inspect how a concrete collection maps the ge
 - a collection with first-class content fields such as `excerpt` and `content`
 - publication state through `status` and `published_at`
 - optional metadata for SEO
-- shared media usage for featured images
+- shared media usage for featured images, seeded with the `horizontal` placeholder, since post cards and cover images render wide (see `docs/image-strategy.md`)
 - shared taxonomy usage for categories
 - a public index route and a public detail route
 

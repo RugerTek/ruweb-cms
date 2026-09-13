@@ -8,7 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.29.0 - 2026-09-13
+## 0.29.1 - 2026-09-13
+
+- `docs/image-strategy.md` documenta los tres placeholders, con qué orientación corresponde a cada tipo de slot y cómo se siembran y reparan.
+- Las guías de páginas, contenido, plantillas, colecciones, blog, settings, multilenguaje, MCP y los skills apuntan a esa convención donde hablan de campos de imagen.
+- Se incorpora `docs/live-editor-ui-ux.md`, el contrato de UI/UX del Live Editor que hasta ahora existía sin versionar.
+
+## 0.29.0 - 2026-09-13 (893c81f)
 
 - Una instalación nueva siembra tres imágenes placeholder (horizontal, cuadrada y vertical) en la media library, con su versión WebP y sus variantes responsive.
 - Nuevo comando `cms:placeholders` que siembra los placeholders y restaura sus archivos cuando el registro existe pero el archivo no, como pasa al clonar el repo con `storage/app/public` vacío.

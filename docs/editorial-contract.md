@@ -45,6 +45,7 @@ Expected behavior:
 - media is attached through the shared polymorphic media relation
 - featured images use the `featured_image` collection
 - content-managed image fields store media identifiers rather than raw paths when possible
+- seeded and example records fill their image fields with the placeholder matching the rendered aspect ratio: `horizontal`, `square` or `vertical`, resolved by `placeholder_key` (see `docs/image-strategy.md`)
 
 ### Previewable
 

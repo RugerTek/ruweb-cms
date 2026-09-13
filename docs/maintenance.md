@@ -11,6 +11,7 @@ It should stay focused on maintenance workflows, not implementation history.
 - email delivery verification
 - credential recovery or password reset
 - orphaned media auditing
+- placeholder image seeding and repair
 - image optimization and variant generation
 - media health auditing
 
@@ -41,6 +42,20 @@ php artisan cms:media:audit-orphans
 Use this to find media records that are no longer referenced by the application.
 
 If the command supports deletion, review output carefully before using destructive flags such as `--delete`.
+
+## Placeholder Images
+
+```bash
+php artisan cms:placeholders
+php artisan cms:placeholders --force
+```
+
+Use this to seed the starter placeholder images, or to restore them when the media records
+exist but their files do not, as happens on a fresh clone where `storage/app/public` is
+empty. It is idempotent and keeps existing media records, so references stay intact.
+`--force` rebuilds them from the stubs.
+
+See `docs/image-strategy.md` for which placeholder belongs in which slot.
 
 ## Image Optimization Workflow
 

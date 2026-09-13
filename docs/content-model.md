@@ -63,6 +63,7 @@ Notes:
 - Open Graph and Twitter title/description reuse the same `meta.title` and `meta.description` values.
 - Featured or social images should be resolved through the media system. Store media identifiers, not raw URLs.
 - Entity-level featured images should stay in the shared media relationship. `meta.featured_image` is for an explicit social image override.
+- Social images are rendered letterboxed by every platform, so their placeholder is always the `horizontal` one. See `docs/image-strategy.md`.
 
 ## Sections Block
 
@@ -96,6 +97,7 @@ Rules:
 - Each section should include `is_visible`.
 - Additional keys are allowed inside a section when required by the template.
 - Media references inside sections should store media identifiers such as `image_id`, not file paths or external URLs.
+- Seeded or example sections should reference the placeholder matching the slot's aspect ratio (`horizontal`, `square` or `vertical`), resolved by `placeholder_key`. See `docs/image-strategy.md`.
 
 ## Visibility Contract
 

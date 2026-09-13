@@ -66,7 +66,9 @@ Field flags:
 - `translatable`: visible text that translators or agents should translate.
 - `preserve`: layout/config values copied as-is.
 - `remap`: internal references that must point to the equivalent translation.
-- `localized_media`: media references that may differ by locale.
+- `localized_media`: media references that may differ by locale. A translation that has no
+  asset of its own can keep the base locale's media, or fall back to the placeholder matching
+  the slot's aspect ratio (see `docs/image-strategy.md`).
 
 Examples:
 

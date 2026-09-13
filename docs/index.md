@@ -11,7 +11,7 @@ This index is the entry point for developers and LLM agents working on the start
 - `docs/editorial-contract.md` — shared contracts for publishable, SEO, media, and preview behavior
 - `docs/templates.md` — how template registration and rendering work
 - `docs/live-editor.md` — shared editor shell and preview contract
-- `docs/image-strategy.md` — upload, optimization, and frontend delivery rules
+- `docs/image-strategy.md` — upload, optimization, placeholder images, and frontend delivery rules
 - `docs/settings.md` — global settings model, grouping, and runtime access
 - `docs/admin-translations-guide.md` — admin-only translation conventions and checks
 

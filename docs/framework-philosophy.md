@@ -29,7 +29,8 @@ Content should be structured enough to be edited safely and rendered predictably
 Pages and collections may use different first-class fields, but shared concerns should use shared contracts:
 
 - publication state for public visibility
-- media relationships for content-managed files
+- media relationships for content-managed files, with starter content filling image slots
+  from the three placeholders rather than rendering empty frames
 - metadata shapes compatible with the SEO layer
 - taxonomy relationships for classification
 - menus for navigation instead of hardcoded links

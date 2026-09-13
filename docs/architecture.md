@@ -53,7 +53,7 @@ Typical responsibilities:
 ## Core Patterns
 
 - Structured content is stored separately from template code.
-- Content-managed media goes through the shared media subsystem.
+- Content-managed media goes through the shared media subsystem, including the three starter placeholder images a fresh install seeds for empty image slots (see `docs/image-strategy.md`).
 - Collections reuse shared concerns such as publication state, taxonomies, and SEO metadata.
 - Views stay focused on presentation; validation and persistence stay in request classes, models, and controllers.
 - Operational integrations such as MCP or deployment workflows are documented separately from the core architecture.

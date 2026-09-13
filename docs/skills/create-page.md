@@ -36,6 +36,9 @@ If this file was referenced in the prompt:
 6. Add a section editor partial when a section needs fields beyond the generic `heading` and `body` fallback.
 7. Do not hardcode editable content in Blade.
 8. For images, use media IDs or the media strategy required by the current architecture.
+   Fill every image field with the placeholder matching the slot's aspect ratio — `horizontal`
+   for heroes and featured images, `square` for grid or avatar slots, `vertical` for portrait
+   slots — resolved by `placeholder_key`, so the new page renders complete from the start.
 9. Keep the content aligned with the `meta` + `sections` contract.
 10. If the page needs to be ready for editing, respect the shared editor contract.
 11. If the request is ambiguous, make the smallest reasonable interpretation consistent with the existing architecture.
