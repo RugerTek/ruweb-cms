@@ -3,7 +3,10 @@
 .env
 .env.backup
 .env.production
-.claude/
+# Local Claude Code state stays out of the repo, except the skills symlink: it points at
+# .agents/skills so a fresh clone is discoverable by Claude Code and Codex alike.
+.claude/*
+!.claude/skills
 .obsidian/
 .phpactor.json
 .phpunit.result.cache

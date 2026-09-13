@@ -102,6 +102,25 @@ class DocsReferencesTest extends TestCase
         );
     }
 
+    public function test_both_agents_find_the_skills_in_a_fresh_clone(): void
+    {
+        $this->assertDirectoryExists(base_path('.agents/skills'), 'Codex reads .agents/skills.');
+
+        $link = base_path('.claude/skills');
+
+        $this->assertTrue(is_link($link) || is_dir($link), 'Claude Code reads .claude/skills.');
+        $this->assertSame(
+            realpath(base_path('.agents/skills')),
+            realpath($link),
+            '.claude/skills must resolve to .agents/skills so both agents read one source.'
+        );
+
+        // .claude/ is gitignored: without an explicit negation the symlink never reaches a clone.
+        exec('git ls-files --error-unmatch .claude/skills 2>/dev/null', $output, $status);
+
+        $this->assertSame(0, $status, '.claude/skills is not tracked, so a fresh clone would have no skills for Claude Code.');
+    }
+
     /** @return iterable<SplFileInfo> */
     private function markdownFiles(): iterable
     {

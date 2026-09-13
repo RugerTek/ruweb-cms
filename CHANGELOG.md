@@ -8,7 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.40.0 - 2026-09-13
+## 0.40.1 - 2026-09-13
+
+- `.gitignore` ignoraba `.claude/` entero, así que el symlink `.claude/skills` no viajaba en el repositorio: un clon nuevo dejaba a Codex con sus skills y a Claude Code sin ninguno. Ahora se ignora el contenido de `.claude/` salvo ese symlink.
+- `DocsReferencesTest` verifica que ambos agentes encuentren los skills en un clon limpio: que `.claude/skills` resuelva a `.agents/skills` y que esté trackeado por git.
+- La descripción de `check-translations` pone el síntoma al frente (una clave cruda visible en el admin, un label sin traducir), que es como se pide el arreglo en la práctica.
+
+## 0.40.0 - 2026-09-13 (3ffab81)
 
 - La documentación pasa a estar escrita para agentes: `AGENTS.md` en la raíz (leído por Claude Code y Codex, con `CLAUDE.md` como symlink) reúne comandos, reglas duras del repo y una tabla de ruteo tarea → skill → doc, de modo que un clon nuevo no necesita que nadie le indique qué archivo leer.
 - Los `docs/` se reorganizan en `concepts/`, `content/`, `admin/` y `operations/`, con `docs/README.md` como mapa de qué decide cada documento. Contenido reescrito contra el código: se eliminan los bloques `Purpose` y `Scope Boundary`, las reglas quedan en forma verificable y la regla de placeholders, que estaba repetida en ocho archivos, vive sólo en `docs/content/images.md`.
