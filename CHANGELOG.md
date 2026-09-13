@@ -8,7 +8,12 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.30.0 - 2026-09-13
+## 0.31.0 - 2026-09-13
+
+- Salir del editor con cambios sin guardar ahora abre un aviso con `Seguir editando` y `Salir sin guardar`, en vez de dejar que se pierdan en silencio.
+- El modal compartido de confirmación pasa a aceptar título, mensaje, etiquetas y tono, así que sirve para cualquier acción que necesite confirmarse.
+
+## 0.30.0 - 2026-09-13 (e64500d)
 
 - La sección de features de la home suma un carrusel de logos en bucle infinito, responsive y con pausa al pasar el cursor.
 - El carrusel se administra con un repeater: cada logo es un acordeón propio con su imagen de la media library, su nombre, y controles para ordenar y quitar.

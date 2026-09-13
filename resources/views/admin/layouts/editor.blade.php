@@ -46,6 +46,10 @@
             'pageOf' => __('admin.page_of'),
             'confirmRemoveLogo' => __('admin.confirm_remove_logo'),
             'remove' => __('admin.remove'),
+            'unsavedChangesTitle' => __('admin.unsaved_changes_title'),
+            'unsavedChangesMessage' => __('admin.unsaved_changes_message'),
+            'btnLeaveWithoutSaving' => __('admin.btn_leave_without_saving'),
+            'btnKeepEditing' => __('admin.btn_keep_editing'),
             'logoItemFallbackLabel' => __('admin.logo_item_fallback_label'),
             'maxUploadKb' => $effectiveMaxKb,
         ];

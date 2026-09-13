@@ -13,6 +13,10 @@ export function initEditorEngine(config = {}) {
     const previewUrl = config.previewUrl || null;
     const savedMsg = config.savedMsg || 'Saved';
     const errorMsg = config.errorMsg || 'Save error';
+    config.unsavedTitle = config.unsavedTitle || window.adminI18n?.unsavedChangesTitle || 'Unsaved changes';
+    config.unsavedMessage = config.unsavedMessage || window.adminI18n?.unsavedChangesMessage || 'You have unsaved changes.';
+    config.leaveLabel = config.leaveLabel || window.adminI18n?.btnLeaveWithoutSaving || 'Leave without saving';
+    config.keepEditingLabel = config.keepEditingLabel || window.adminI18n?.btnKeepEditing || 'Keep editing';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     let previewTimer = null;
@@ -172,9 +176,49 @@ export function initEditorEngine(config = {}) {
         return 'unsaved';
     }
 
+    // Leaving through a link inside the editor is the common case, and the browser's
+    // own beforeunload prompt is neither styled nor guaranteed to appear, so in-app
+    // navigation is confirmed with the shared modal instead.
+    async function onEditorLinkClick(event) {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+
+        const link = event.target.closest('a[href]');
+        if (!link || link.target === '_blank' || link.hasAttribute('download') || !isDirty()) {
+            return;
+        }
+
+        const destination = new URL(link.getAttribute('href'), window.location.href);
+        if (destination.origin !== window.location.origin) {
+            return;
+        }
+        if (destination.href === window.location.href) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const confirmLeave = window.confirmAction
+            ? await window.confirmAction({
+                title: config.unsavedTitle,
+                message: config.unsavedMessage,
+                confirmLabel: config.leaveLabel,
+                cancelLabel: config.keepEditingLabel,
+                tone: 'danger',
+            })
+            : window.confirm(config.unsavedMessage);
+
+        if (confirmLeave) {
+            window.removeEventListener('beforeunload', onBeforeUnload);
+            window.location.href = destination.href;
+        }
+    }
+
     form.addEventListener('input', onFormChange);
     form.addEventListener('change', onFormChange);
     window.addEventListener('beforeunload', onBeforeUnload);
+    document.addEventListener('click', onEditorLinkClick);
 
     if (updateBtn) updateBtn.addEventListener('click', () => save());
     if (saveDraftBtn) saveDraftBtn.addEventListener('click', () => save('draft'));
