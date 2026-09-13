@@ -112,6 +112,40 @@ return [
                 'sections.cta.button_url' => ['type' => 'url', 'preserve' => true],
             ],
         ],
+        'contact' => [
+            'name' => 'Contact',
+            'sections' => ['intro', 'form'],
+            'schema' => [
+                'meta.title' => ['type' => 'text', 'translatable' => true],
+                'meta.description' => ['type' => 'textarea', 'translatable' => true],
+                'meta.featured_image' => ['type' => 'media', 'localized_media' => true],
+                'sections.intro.is_visible' => ['type' => 'boolean', 'preserve' => true],
+                'sections.intro.heading' => ['type' => 'text', 'translatable' => true],
+                'sections.intro.body' => ['type' => 'textarea', 'translatable' => true],
+                'sections.form.is_visible' => ['type' => 'boolean', 'preserve' => true],
+                'sections.form.heading' => ['type' => 'text', 'translatable' => true],
+                'sections.form.labels.name' => ['type' => 'text', 'translatable' => true],
+                'sections.form.labels.email' => ['type' => 'text', 'translatable' => true],
+                'sections.form.labels.phone' => ['type' => 'text', 'translatable' => true],
+                'sections.form.labels.subject' => ['type' => 'text', 'translatable' => true],
+                'sections.form.labels.message' => ['type' => 'text', 'translatable' => true],
+                'sections.form.button_label' => ['type' => 'text', 'translatable' => true],
+                'sections.form.success_message' => ['type' => 'textarea', 'translatable' => true],
+                'sections.form.subject_options.*.label' => ['type' => 'text', 'translatable' => true],
+                'sections.form.notify_enabled' => ['type' => 'boolean', 'preserve' => true],
+                'sections.form.notify_email' => ['type' => 'text', 'preserve' => true],
+            ],
+        ],
+    ],
+
+    // Public forms that store submissions. One entry per form; the admin
+    // renders a tab per key under Submissions. Forms are code-owned, see docs/forms.md.
+    'forms' => [
+        'contact' => [
+            'model' => \App\Models\ContactSubmission::class,
+            'searchable' => ['name', 'email', 'phone', 'subject', 'message'],
+            'recaptcha_action' => 'contact',
+        ],
     ],
 
     'content_schemas' => [

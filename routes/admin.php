@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CacheController;
 use App\Http\Controllers\Admin\ClaudeMcpController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeveloperToolsController;
+use App\Http\Controllers\Admin\SubmissionController;
 use App\Http\Controllers\Admin\EmailController;
 use App\Http\Controllers\Admin\EditorialControlController;
 use App\Http\Controllers\Admin\MediaController;
@@ -62,6 +63,11 @@ Route::middleware(['auth', 'role:admin,editor', 'admin.locale'])->prefix('admin'
     Route::put('menus/{menu}/items', [MenuController::class, 'syncItems'])->name('menus.items.sync');
 
     Route::post('pages/{page}/preview', [PageController::class, 'previewRender'])->name('pages.preview');
+
+    // Form submissions (admins and editors). One tab per form in config('cms.forms').
+    Route::get('submissions/{form}', [SubmissionController::class, 'index'])->name('submissions.index')->where('form', '[a-z0-9-]+');
+    Route::get('submissions/{form}/{submission}', [SubmissionController::class, 'show'])->name('submissions.show')->where(['form' => '[a-z0-9-]+', 'submission' => '[0-9]+']);
+    Route::delete('submissions/{form}/{submission}', [SubmissionController::class, 'destroy'])->name('submissions.destroy')->where(['form' => '[a-z0-9-]+', 'submission' => '[0-9]+']);
     Route::post('posts/{post}/preview', [PostController::class, 'previewRender'])->name('posts.preview');
 
     // Settings (admin only)

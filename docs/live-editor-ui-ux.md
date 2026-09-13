@@ -184,7 +184,7 @@ This pattern controls destinations only. Button text remains a separate labeled 
 
 ### Forms Are Code-Owned
 
-The Live Editor is not a form builder. Public forms must be designed and implemented in code by default.
+The Live Editor is not a form builder. Public forms must be designed and implemented in code by default. The full implementation contract, the anti-spam layer and the checklist for adding a form live in `docs/forms.md`; the contact form is the reference implementation.
 
 The code-owned contract includes:
 

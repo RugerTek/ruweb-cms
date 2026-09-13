@@ -49,6 +49,7 @@ Common examples:
 - `admin`
 - `email`
 - `analytics`
+- `security` (reCAPTCHA keys for public forms, see `docs/forms.md`)
 - `integrations`
 
 The exact groups are project-defined, but the grouping model should remain stable and predictable.

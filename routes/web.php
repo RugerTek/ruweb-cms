@@ -3,6 +3,7 @@
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Public\ContactFormController;
 use App\Http\Controllers\SitemapController;
 use App\Models\Locale;
 use App\Support\AdminLoginPath;
@@ -32,6 +33,8 @@ Route::middleware('public.locale')->group(function () use ($localePattern, $rese
     Route::get('/', [PageController::class, 'home'])->name('home');
     Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
     Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+    // Public forms: POST only, registered before the page catch-all. See docs/forms.md.
+    Route::post('/forms/contact', [ContactFormController::class, 'store'])->middleware('throttle:forms')->name('forms.contact.store');
 
     Route::prefix('{locale}')
         ->where(['locale' => $localePattern])
@@ -39,6 +42,7 @@ Route::middleware('public.locale')->group(function () use ($localePattern, $rese
             Route::get('/', [PageController::class, 'home'])->name('localized.home');
             Route::get('/blog', [BlogController::class, 'index'])->name('localized.blog.index');
             Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('localized.blog.show');
+            Route::post('/forms/contact', [ContactFormController::class, 'store'])->middleware('throttle:forms')->name('localized.forms.contact.store');
             Route::get('/{slug}', [PageController::class, 'show'])
                 ->name('localized.page.show')
                 ->where('slug', '^(?!('.$reservedSlugs.'))[a-zA-Z0-9\-\/]+$');

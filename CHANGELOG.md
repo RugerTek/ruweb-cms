@@ -8,7 +8,16 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.37.4 - 2026-09-13
+## 0.38.0 - 2026-09-14
+
+- Módulo de formularios públicos con la página de contacto como implementación de referencia: los campos y el comportamiento viven en el código, y el Live Editor solo edita etiquetas, texto del botón, mensaje de éxito, opciones del motivo y notificaciones.
+- Nuevo menú Envíos en el admin con una pestaña por formulario, contador de no leídos, filtros por estado, búsqueda y rango de fechas, y una pantalla de detalle con los metadatos de cada envío.
+- Capa anti-spam compartida por todos los formularios: honeypot con tiempo mínimo de envío, límite por IP y Google reCAPTCHA v3 configurable desde la nueva sección Seguridad de los ajustes.
+- Notificación por email de cada envío, activable desde la sección del formulario en el editor, a través del sistema de correo existente con Brevo.
+- Repeater genérico para listas de opciones administrables en el editor.
+- Documentación canónica en `docs/forms.md` y skill `docs/skills/create-form.md` para crear formularios nuevos.
+
+## 0.37.4 - 2026-09-13 (06d828b)
 
 - Restaurar un snapshot conserva el `.gitignore` de `storage/app/public`, que antes quedaba borrado al reemplazar los uploads.
 

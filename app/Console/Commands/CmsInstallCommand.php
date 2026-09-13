@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Support\AdminLoginPath;
+use Database\Seeders\ContactPageSeeder;
 use Database\Seeders\HomepageSeeder;
 use Database\Seeders\LocaleSeeder;
 use Database\Seeders\SettingsSeeder;
@@ -156,6 +157,12 @@ class CmsInstallCommand extends Command
             '--force' => true,
         ]);
         $this->info('  ✓ Homepage seeded');
+
+        Artisan::call('db:seed', [
+            '--class' => ContactPageSeeder::class,
+            '--force' => true,
+        ]);
+        $this->info('  ✓ Contact page seeded');
 
         // Clear config
         Artisan::call('config:clear');

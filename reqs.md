@@ -93,7 +93,6 @@ Documento actualizado contra el código del repositorio. La fuente de verdad es 
 - Forzado de HTTPS a nivel aplicación.
 - Security headers explícitos: HSTS, CSP, `X-Frame-Options`, `X-Content-Type-Options`.
 - 2FA para el admin.
-- CAPTCHA en formularios públicos.
 - URL de login configurable u oculta.
 - Bloqueo/lista negra de IPs por intentos fallidos.
 - WAF o monitoreo de integridad de archivos.

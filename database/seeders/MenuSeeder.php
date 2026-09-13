@@ -43,6 +43,15 @@ class MenuSeeder extends Seeder
                 'target'  => '_self',
                 'order'   => 2,
             ]);
+
+            MenuItem::create([
+                'menu_id' => $header->id,
+                'label'   => 'Contacto',
+                'type'    => 'custom_link',
+                'url'     => '/contacto',
+                'target'  => '_self',
+                'order'   => 3,
+            ]);
         }
 
         Menu::updateOrCreate(

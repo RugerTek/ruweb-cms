@@ -772,6 +772,130 @@ document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
     refreshRows();
 });
 
+// Generic administrable repeater (docs/live-editor-ui-ux.md, docs/forms.md).
+// Markup contract: [data-repeater data-repeater-key="<field>"] wrapping
+// [data-repeater-list] > [data-repeater-item]*, a <template data-repeater-template>,
+// [data-repeater-add] and optional [data-repeater-empty]. Items expose
+// [data-repeater-toggle|body|icon], [data-repeater-item-label], [data-repeater-label-input],
+// [data-repeater-move-up|move-down|remove]. Input names use [<key>][<index>].
+document.querySelectorAll('[data-repeater]').forEach((repeater) => {
+    const key = repeater.dataset.repeaterKey;
+    const list = repeater.querySelector('[data-repeater-list]');
+    const template = repeater.querySelector('[data-repeater-template]');
+    const addButton = repeater.querySelector('[data-repeater-add]');
+    const emptyMessage = repeater.querySelector('[data-repeater-empty]');
+
+    if (!key || !list || !template || !addButton) {
+        return;
+    }
+
+    const fallbackLabel = (position) => (repeater.dataset.itemLabel || 'Item :position').replace(':position', position);
+    const rows = () => Array.from(list.querySelectorAll('[data-repeater-item]'));
+    const indexPattern = new RegExp(`\\[${key}\\]\\[[^\\]]*\\]`);
+
+    const setAccordion = (row, open) => {
+        row.querySelector('[data-repeater-body]')?.classList.toggle('hidden', !open);
+        row.querySelector('[data-repeater-icon]')?.classList.toggle('rotate-180', open);
+        row.querySelector('[data-repeater-toggle]')?.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    const syncRowLabel = (row, position) => {
+        const label = row.querySelector('[data-repeater-item-label]');
+        const input = row.querySelector('[data-repeater-label-input]');
+        if (label) {
+            label.textContent = input?.value.trim() || fallbackLabel(position);
+        }
+    };
+
+    const refreshRows = () => {
+        const items = rows();
+
+        items.forEach((row, index) => {
+            row.querySelectorAll('[name]').forEach((field) => {
+                field.name = field.name.replace(indexPattern, `[${key}][${index}]`);
+            });
+            row.querySelectorAll('.media-selector').forEach((selector) => {
+                const hidden = selector.querySelector('input[type="hidden"][name]');
+                if (hidden) selector.dataset.name = hidden.name;
+            });
+
+            const up = row.querySelector('[data-repeater-move-up]');
+            const down = row.querySelector('[data-repeater-move-down]');
+            if (up) up.disabled = index === 0;
+            if (down) down.disabled = index === items.length - 1;
+
+            syncRowLabel(row, index + 1);
+        });
+
+        emptyMessage?.classList.toggle('hidden', items.length > 0);
+    };
+
+    const notifyStructureChange = () => repeater.dispatchEvent(new Event('change', { bubbles: true }));
+
+    addButton.addEventListener('click', () => {
+        const row = template.content.firstElementChild.cloneNode(true);
+        list.appendChild(row);
+        refreshRows();
+        window.initMediaSelectorsWithin?.(row);
+        setAccordion(row, true);
+        notifyStructureChange();
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        row.querySelector('[data-repeater-label-input], input, select, textarea')?.focus();
+    });
+
+    list.addEventListener('click', async (event) => {
+        const row = event.target.closest('[data-repeater-item]');
+        if (!row) return;
+
+        if (event.target.closest('[data-repeater-toggle]')) {
+            setAccordion(row, row.querySelector('[data-repeater-body]')?.classList.contains('hidden') ?? false);
+            return;
+        }
+
+        if (event.target.closest('[data-repeater-move-up]')) {
+            const previous = row.previousElementSibling;
+            if (previous) {
+                list.insertBefore(row, previous);
+                refreshRows();
+                notifyStructureChange();
+                row.querySelector('[data-repeater-move-up]')?.focus();
+            }
+            return;
+        }
+
+        if (event.target.closest('[data-repeater-move-down]')) {
+            const next = row.nextElementSibling;
+            if (next) {
+                list.insertBefore(next, row);
+                refreshRows();
+                notifyStructureChange();
+                row.querySelector('[data-repeater-move-down]')?.focus();
+            }
+            return;
+        }
+
+        if (event.target.closest('[data-repeater-remove]')) {
+            const label = row.querySelector('[data-repeater-item-label]')?.textContent?.trim() || '';
+            const message = (repeater.dataset.confirmRemove || 'This item will be removed.').replace(':item', label);
+
+            if (await window.confirmAction({ message, confirmLabel: repeater.dataset.confirmLabel || t('remove', 'Remove') })) {
+                row.remove();
+                refreshRows();
+                notifyStructureChange();
+            }
+        }
+    });
+
+    list.addEventListener('input', (event) => {
+        const input = event.target.closest('[data-repeater-label-input]');
+        if (!input) return;
+        const row = input.closest('[data-repeater-item]');
+        syncRowLabel(row, rows().indexOf(row) + 1);
+    });
+
+    refreshRows();
+});
+
 // Any form carrying data-confirm is gated by the shared modal instead of window.confirm.
 document.querySelectorAll('form[data-confirm]').forEach((form) => {
     let confirmed = false;

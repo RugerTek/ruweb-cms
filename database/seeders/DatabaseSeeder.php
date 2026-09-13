@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             // Placeholders first: starter content references them by placeholder key.
             PlaceholderMediaSeeder::class,
             HomepageSeeder::class,
+            ContactPageSeeder::class,
             MenuSeeder::class,
         ]);
     }

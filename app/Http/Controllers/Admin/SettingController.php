@@ -19,7 +19,7 @@ class SettingController extends Controller
     {
         $this->ensureAdminLoginPathSettingExists();
 
-        $groupOrder = ['general', 'admin'];
+        $groupOrder = ['general', 'admin', 'security'];
         $groups = Setting::allGrouped()
             ->filter(fn ($v, $k) => ! in_array($k, ['analytics', 'email']))
             ->sortBy(fn ($v, $k) => array_search($k, $groupOrder) !== false ? array_search($k, $groupOrder) : 99);

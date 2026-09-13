@@ -21,10 +21,15 @@ class AppServiceProvider extends ServiceProvider
         // The ledger coalesces writes per request and can be muted for bulk
         // imports, so every caller must share one instance.
         $this->app->singleton(\App\Services\Revisions\ContentRevisionLedger::class);
+        // The reCAPTCHA rule stores the verified score for the submission that follows.
+        $this->app->singleton(\App\Services\Forms\Recaptcha::class);
     }
 
     public function boot(): void
     {
+        // Public forms: per-IP limit shared by every form route. See docs/forms.md.
+        \Illuminate\Support\Facades\RateLimiter::for('forms', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->ip()));
+
         Gate::policy(Menu::class, MenuPolicy::class);
         Gate::policy(Post::class, PostPolicy::class);
         Gate::policy(Taxonomy::class, TaxonomyPolicy::class);

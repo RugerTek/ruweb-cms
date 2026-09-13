@@ -24,6 +24,7 @@ This index is the entry point for developers and LLM agents working on the start
 - `docs/blog-collection.md` — optional example collection implementation
 - `docs/taxonomies.md` — shared taxonomy system used by collections
 - `docs/menu-guide.md` — navigational menus, locations, and rendering
+- `docs/forms.md` — code-owned public forms, anti-spam layer, submissions admin, and the checklist for new forms
 
 ## Integrations And Operations
 
@@ -39,6 +40,7 @@ This index is the entry point for developers and LLM agents working on the start
 - `docs/skills/create-page.md` — reusable prompt for creating or extending pages using the canonical docs
 - `docs/skills/create-collection.md` — reusable prompt for creating or extending collections using the canonical docs
 - `docs/skills/create-config.md` — reusable prompt for configuration and settings changes using the canonical docs
+- `docs/skills/create-form.md` — reusable prompt for adding a public form with submissions using the canonical docs
 
 ## Suggested Reading Order
 
@@ -49,3 +51,4 @@ This index is the entry point for developers and LLM agents working on the start
 5. If updating existing structured content, read `docs/update-fields.md`.
 6. If adding a collection, read `docs/collections-guide.md` and `docs/taxonomies.md`.
 7. Use `docs/blog-collection.md` only as an implementation example, not as the source of truth for collection rules.
+8. If adding a public form, read `docs/forms.md` and the "Forms Are Code-Owned" section of `docs/live-editor-ui-ux.md`.
