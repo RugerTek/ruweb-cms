@@ -94,9 +94,23 @@ class Media extends Model
 
         return collect($this->variants)
             ->sortBy('width')
-            ->filter(fn ($variant) => ! empty($variant['url']) && ! empty($variant['width']))
-            ->map(fn ($variant) => $variant['url'] . ' ' . $variant['width'] . 'w')
+            ->filter(fn ($variant) => ! empty($variant['width']) && $this->variantUrl($variant) !== null)
+            ->map(fn ($variant) => $this->variantUrl($variant) . ' ' . $variant['width'] . 'w')
             ->implode(', ');
+    }
+
+    /**
+     * Variants store a disk-relative `path`; the URL is built at render time so
+     * it always carries the current domain. Older rows that only kept `url`
+     * still resolve.
+     */
+    public function variantUrl(array $variant): ?string
+    {
+        if (! empty($variant['path'])) {
+            return Storage::disk($this->disk)->url($variant['path']);
+        }
+
+        return ! empty($variant['url']) ? (string) $variant['url'] : null;
     }
 
     public function hasResponsiveVariants(): bool

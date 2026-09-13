@@ -107,4 +107,24 @@ class RichTextSanitizerTest extends TestCase
         $this->assertNull($this->sanitize(null));
         $this->assertSame('', $this->sanitize('   '));
     }
+
+    public function test_it_stores_links_and_images_pointing_at_this_site_as_root_relative(): void
+    {
+        config(['app.url' => 'https://example.com']);
+
+        $result = $this->sanitize(
+            '<p><a href="HTTPS://example.com/blog/hello?x=1#top">in</a> '
+            . '<a href="https://example.com">home</a> '
+            . '<a href="https://example.org/page">out</a> '
+            . '<a href="https://example.com.evil.net/x">tricky</a></p>'
+            . '<img src="https://example.com/storage/media/a.webp" alt="">'
+        );
+
+        $this->assertStringContainsString('href="/blog/hello?x=1#top"', $result);
+        $this->assertStringContainsString('href="/"', $result);
+        $this->assertStringContainsString('href="https://example.org/page"', $result);
+        $this->assertStringContainsString('href="https://example.com.evil.net/x"', $result);
+        $this->assertStringContainsString('src="/storage/media/a.webp"', $result);
+        $this->assertStringNotContainsString('example.com/', $result);
+    }
 }

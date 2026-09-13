@@ -85,6 +85,7 @@ The sanitiser:
 - removes `script`, `style`, `form` and friends together with their contents
 - drops every attribute outside each element's allowlist, which removes `on*` handlers
 - accepts only `http`, `https`, `mailto` and `tel` URLs, plus relative and anchor links
+- rewrites `href` and `src` values that point at this installation (`config('app.url')`) to root-relative paths, so content survives a change of domain (see `docs/snapshots.md`)
 - keeps iframes only when the host matches `cms.rich_text.allowed_embed_hosts`
 - forces `rel="noopener noreferrer"` on links opening a new tab
 - forces `loading="lazy"`, `decoding="async"` and an `alt` on images

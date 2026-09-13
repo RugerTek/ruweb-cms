@@ -79,7 +79,7 @@ Structural problems — invalid ZIP, missing or mismatched checksums, unsafe pat
 | `unknown_origin_version` | warning | The manifest has no `app.version` (format 1 archives). |
 | `legacy_format` | warning | The archive uses an older format version, so newer checks cannot run. |
 | `driver_mismatch` | warning | The snapshot was taken on a different database driver. |
-| `origin_url_differs` | info | The snapshot's `app.url` differs from this installation's. |
+| `origin_url_differs` | info | The snapshot's `app.url` differs from this installation's. Stored URLs are rewritten during restore (see URLs And Domains). |
 
 New checks must be added as risks with a new key, a translation `admin.snapshot_risk_<key>` in `lang/*/admin.php`, and a row in this table.
 
@@ -96,6 +96,22 @@ Version rules at restore time:
 - **Snapshot newer than destination**: blocked. Deploy the newer code and run `php artisan migrate`, then restore.
 - **Same version and same migration list**: normal restore.
 - **Snapshot older than destination**: allowed after accepting `older_snapshot`. The rows are inserted into the newer schema; columns the snapshot lacks take their defaults. Data migrations that ran after the snapshot are **not** replayed, so prefer restoring into a checkout of the snapshot's version and then updating code and migrating when those migrations matter.
+
+## URLs And Domains
+
+Content moves between domains (`http://localhost:8000` → `https://example.com`), so two rules apply:
+
+1. **Storage is domain-neutral.** Anything the system writes itself must not embed the current origin. `App\Support\SiteUrl::toRelative()` turns a URL pointing at this installation into a root-relative path, and it is applied by `RichTextSanitizer` to every `href`/`src`, and by the menu controllers to custom links. Responsive variants store a disk-relative `path`; `Media::srcset()` builds the URL at render time. The public layout carries `<base href>`, so root-relative paths resolve. New code must follow the same rule: store ids or paths, build absolute URLs at render time.
+2. **Restore rewrites what slipped through.** Legacy rows and hand-pasted absolute links exist. When the manifest `app.url` differs from this installation's `app.url`, every string value of every restored row has the old origin replaced by the new one, in both the plain form (`http://host`) and the JSON-escaped form (`http:\/\/host`). Only the origin changes; paths are untouched. The `origin_url_differs` info risk announces it, and the restore result reports `url_rewritten`. Override with `--url-from` / `--url-to` on the CLI when a format 1 manifest lacks the origin.
+
+For a live database that changed domain without a snapshot:
+
+```bash
+php artisan cms:rewrite-url --from=http://localhost:8000 --to=https://example.com --dry-run
+php artisan cms:rewrite-url --from=http://localhost:8000 --to=https://example.com
+```
+
+The command skips runtime tables and `users`, and tables without an `id` column.
 
 ## Operating It
 

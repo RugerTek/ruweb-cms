@@ -638,7 +638,7 @@ return [
     'snapshot_risk_older_snapshot' => 'The snapshot is older than this installation. Later data migrations will not re-run on the restored rows.',
     'snapshot_risk_missing_columns' => 'This installation lacks columns the snapshot rows contain. Update the code and run migrations first.',
     'snapshot_risk_required_columns_missing' => 'This installation requires columns without defaults that the snapshot does not provide.',
-    'snapshot_risk_origin_url_differs' => 'The snapshot comes from a different domain.',
+    'snapshot_risk_origin_url_differs' => 'The snapshot comes from a different domain. Stored URLs will be rewritten to this installation\'s domain during restore.',
     'yes' => 'Yes',
     'no' => 'No',
 

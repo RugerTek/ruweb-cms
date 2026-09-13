@@ -142,8 +142,10 @@ class SnapshotService
      * listed in `$accepted` by key, and blocking risks can never be bypassed.
      *
      * @param  array<int, string>  $accepted  Risk keys the operator accepted.
+     * @param  array{url_from?: ?string, url_to?: ?string}  $options  Override the origin rewrite
+     *         (defaults: manifest `app.url` → this installation's `app.url`).
      */
-    public function restore(string $archivePath, array $accepted = []): array
+    public function restore(string $archivePath, array $accepted = [], array $options = []): array
     {
         $this->assertZipAvailable();
         $this->assertStorageWritable();
@@ -161,13 +163,17 @@ class SnapshotService
 
             $manifest = $report->manifest;
             $tables = $report->tables;
+            $rewriter = UrlRewriter::between(
+                $options['url_from'] ?? ($manifest['app']['url'] ?? null),
+                $options['url_to'] ?? Config::get('app.url')
+            );
 
             $preRestore = $this->create('pre-restore-'.now()->format('Ymd-His'));
 
             Artisan::call('down', ['--retry' => 60]);
 
             try {
-                $this->restoreDatabase($extractDir, $tables);
+                $this->restoreDatabase($extractDir, $tables, $rewriter);
                 $this->replaceUploads($extractDir.'/uploads');
                 Artisan::call('storage:link');
                 Artisan::call('optimize:clear');
@@ -179,6 +185,7 @@ class SnapshotService
                 'pre_restore_backup' => $preRestore,
                 'tables' => count($tables),
                 'uploads_files' => (int) ($manifest['uploads']['files'] ?? 0),
+                'url_rewritten' => $rewriter ? ['from' => $rewriter->from(), 'to' => $rewriter->to()] : null,
                 'report' => $report,
             ];
         } finally {
@@ -250,7 +257,7 @@ class SnapshotService
         if ($originUrl && rtrim((string) $originUrl, '/') !== rtrim((string) $destination['url'], '/')) {
             $risks[] = SnapshotRisk::info(
                 'origin_url_differs',
-                "Snapshot was taken from {$originUrl}; this installation runs at {$destination['url']}.",
+                "Snapshot was taken from {$originUrl}; this installation runs at {$destination['url']}. Stored URLs will be rewritten to the new origin during restore.",
                 ['snapshot' => $originUrl, 'destination' => $destination['url']]
             );
         }
@@ -320,7 +327,7 @@ class SnapshotService
         return ['files' => $files, 'bytes' => $bytes];
     }
 
-    protected function restoreDatabase(string $extractDir, array $tables): void
+    protected function restoreDatabase(string $extractDir, array $tables, ?UrlRewriter $rewriter = null): void
     {
         $this->setForeignKeyChecks(false);
         DB::beginTransaction();
@@ -331,7 +338,7 @@ class SnapshotService
             }
 
             foreach ($tables as $table) {
-                $this->importTable($extractDir.'/'.$table['file'], $table['name']);
+                $this->importTable($extractDir.'/'.$table['file'], $table['name'], $rewriter);
             }
 
             DB::commit();
@@ -343,7 +350,7 @@ class SnapshotService
         }
     }
 
-    protected function importTable(string $path, string $table): void
+    protected function importTable(string $path, string $table, ?UrlRewriter $rewriter = null): void
     {
         $handle = fopen($path, 'rb');
 
@@ -361,7 +368,8 @@ class SnapshotService
                     continue;
                 }
 
-                $batch[] = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+                $row = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+                $batch[] = $rewriter ? $rewriter->rewriteRow($row) : $row;
 
                 if (count($batch) >= 500) {
                     DB::table($table)->insert($batch);

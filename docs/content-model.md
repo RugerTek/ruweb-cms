@@ -97,6 +97,7 @@ Rules:
 - Each section should include `is_visible`.
 - Additional keys are allowed inside a section when required by the template.
 - Media references inside sections should store media identifiers such as `image_id`, not file paths or external URLs.
+- Never store an absolute URL of this site inside content. Use ids, or root-relative paths when a URL is unavoidable; build absolute URLs at render time. Content moves between domains through snapshots (`docs/snapshots.md`).
 - Seeded or example sections should reference the placeholder matching the slot's aspect ratio (`horizontal`, `square` or `vertical`), resolved by `placeholder_key`. See `docs/image-strategy.md`.
 
 ## Visibility Contract

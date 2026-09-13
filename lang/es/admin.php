@@ -638,7 +638,7 @@ return [
     'snapshot_risk_older_snapshot' => 'El snapshot es más viejo que esta instalación. Las migraciones de datos posteriores no se vuelven a ejecutar sobre las filas restauradas.',
     'snapshot_risk_missing_columns' => 'A esta instalación le faltan columnas que traen las filas del snapshot. Actualizá el código y corré las migraciones primero.',
     'snapshot_risk_required_columns_missing' => 'Esta instalación exige columnas sin valor por defecto que el snapshot no trae.',
-    'snapshot_risk_origin_url_differs' => 'El snapshot viene de otro dominio.',
+    'snapshot_risk_origin_url_differs' => 'El snapshot viene de otro dominio. Las URLs guardadas se reescriben al dominio de esta instalación durante el restore.',
     'yes' => 'Sí',
     'no' => 'No',
 

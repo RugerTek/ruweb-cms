@@ -100,7 +100,7 @@ their variants while keeping the same media records, so existing references stay
 
 Public templates should prefer a shared image component or helper that:
 
-- renders `srcset` when variants exist
+- renders `srcset` when variants exist; variants store a disk-relative `path` and the URL is built at render time, never stored
 - falls back to a standard `src` when variants do not exist
 - resolves alt text predictably
 

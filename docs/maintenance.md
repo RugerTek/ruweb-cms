@@ -105,3 +105,12 @@ php artisan snapshot:prune
 ```
 
 Removes pending snapshot uploads and work folders older than 24 hours, and keeps only the 3 newest automatic pre-restore backups. Scheduled daily; the same action is available from `Developer tools → Migration`. Named snapshots are never touched. See `docs/snapshots.md`.
+
+## Rewrite The Site Origin
+
+```bash
+php artisan cms:rewrite-url --from=http://old.example --to=https://new.example --dry-run
+php artisan cms:rewrite-url --from=http://old.example --to=https://new.example
+```
+
+Replaces one origin with another inside every stored text and JSON column, for installations that changed domain without going through a snapshot restore. Run the dry run first. See `docs/snapshots.md`.

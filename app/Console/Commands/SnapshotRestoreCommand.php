@@ -12,7 +12,9 @@ class SnapshotRestoreCommand extends Command
     protected $signature = 'snapshot:restore {archive}
         {--accept=* : Risk key to accept (repeatable), e.g. --accept=driver_mismatch}
         {--yes : Accept every warning without asking}
-        {--force : Alias of --yes, kept for older scripts}';
+        {--force : Alias of --yes, kept for older scripts}
+        {--url-from= : Origin to rewrite (defaults to the snapshot app.url)}
+        {--url-to= : Origin to rewrite to (defaults to this installation app.url)}';
 
     protected $description = 'Restore a portable .appbackup snapshot into the current database and public uploads.';
 
@@ -74,7 +76,10 @@ class SnapshotRestoreCommand extends Command
         }
 
         try {
-            $result = $this->snapshots->restore($archive, $accepted);
+            $result = $this->snapshots->restore($archive, $accepted, [
+                'url_from' => $this->option('url-from') ?: null,
+                'url_to' => $this->option('url-to') ?: null,
+            ]);
         } catch (SnapshotException $exception) {
             $this->error($exception->getMessage());
 
@@ -85,6 +90,10 @@ class SnapshotRestoreCommand extends Command
         $this->line('Pre-restore backup: '.$result['pre_restore_backup']);
         $this->line('Tables restored: '.$result['tables']);
         $this->line('Upload files restored: '.$result['uploads_files']);
+
+        if ($result['url_rewritten']) {
+            $this->line('URLs rewritten: '.$result['url_rewritten']['from'].' → '.$result['url_rewritten']['to']);
+        }
 
         return Command::SUCCESS;
     }

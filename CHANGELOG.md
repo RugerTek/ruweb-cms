@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.35.0 - 2026-09-13
+## 0.36.0 - 2026-09-13
+
+- Los enlaces e imágenes del editor que apuntan al propio sitio se guardan como rutas relativas a la raíz, y las variantes responsive construyen su URL al renderizar; el contenido ya no queda atado al dominio donde se creó.
+- Al restaurar un snapshot de otro dominio, las URLs guardadas se reescriben al dominio de la instalación destino, tanto en texto como en columnas JSON. `snapshot:restore` acepta `--url-from` y `--url-to` para forzarlo.
+- Nuevo comando `cms:rewrite-url --from --to` para reescribir el dominio en una base viva, con `--dry-run`.
+- Los enlaces personalizados del menú también se normalizan a relativos si apuntan al propio sitio.
+
+## 0.35.0 - 2026-09-13 (01a383a)
 
 - La versión de la aplicación vive en el archivo `VERSION` y se expone como `config('cms.version')`; el panel de sistema y el nombre del archivo descargado la muestran.
 - Cada snapshot guarda la versión, la lista de migraciones aplicadas y las columnas de cada tabla en su manifest.

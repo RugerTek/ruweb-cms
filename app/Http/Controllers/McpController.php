@@ -486,7 +486,7 @@ class McpController extends Controller
                     'type'          => $itemData['type'],
                     'linkable_type' => $this->resolveLinkableType($itemData['type']),
                     'linkable_id'   => $itemData['type'] !== 'custom_link' ? ($itemData['linkable_id'] ?? null) : null,
-                    'url'           => $itemData['type'] === 'custom_link' ? ($itemData['url'] ?? null) : null,
+                    'url'           => $itemData['type'] === 'custom_link' ? \App\Support\SiteUrl::toRelative($itemData['url'] ?? null) : null,
                     'target'        => $itemData['target'],
                     'order'         => $itemData['order'],
                 ]);

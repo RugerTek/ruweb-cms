@@ -202,8 +202,16 @@ class RichTextSanitizer
                 continue;
             }
 
-            if (in_array($name, ['href', 'src'], true) && ! $this->isSafeUrl($attribute->nodeValue)) {
-                $node->removeAttribute($attribute->nodeName);
+            if (in_array($name, ['href', 'src'], true)) {
+                if (! $this->isSafeUrl($attribute->nodeValue)) {
+                    $node->removeAttribute($attribute->nodeName);
+
+                    continue;
+                }
+
+                // Links and images pointing at this very site are stored
+                // root-relative so content survives a change of domain.
+                $node->setAttribute($attribute->nodeName, (string) SiteUrl::toRelative($attribute->nodeValue));
             }
         }
 

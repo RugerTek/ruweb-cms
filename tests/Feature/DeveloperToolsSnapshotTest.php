@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Media;
+use App\Models\Page;
+use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\Snapshots\SnapshotException;
@@ -390,6 +392,79 @@ class DeveloperToolsSnapshotTest extends TestCase
         $report = app(SnapshotService::class)->inspect($mutated);
 
         $this->assertContains('unknown_origin_version', array_map(fn ($r) => $r->key, $report->warnings()));
+    }
+
+    public function test_restore_rewrites_origin_urls_in_text_and_json_columns(): void
+    {
+        config(['app.url' => 'http://localhost:8000']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $post = Post::query()->create([
+            'locale' => 'es',
+            'title' => 'Hola',
+            'slug' => 'hola',
+            'content' => '<p><a href="https://external.test/x">out</a></p>',
+            'status' => 'draft',
+            'created_by' => $admin->id,
+        ]);
+        // Bypass the sanitizer so the row really carries an absolute origin, as legacy data does.
+        \Illuminate\Support\Facades\DB::table('posts')->where('id', $post->id)->update([
+            'content' => '<p><img src="http://localhost:8000/storage/media/a.webp"><a href="https://external.test/x">out</a></p>',
+        ]);
+        Page::query()->create([
+            'locale' => 'es',
+            'title' => 'Inicio',
+            'slug' => 'inicio',
+            'template_key' => 'default',
+            'content_json' => ['sections' => ['content' => ['is_visible' => 1, 'body' => 'See http://localhost:8000/blog now']]],
+            'status' => 'draft',
+            'created_by' => $admin->id,
+        ]);
+        $this->assertStringContainsString('http:\\/\\/localhost:8000', (string) \Illuminate\Support\Facades\DB::table('pages')->value('content_json'));
+
+        $archive = app(SnapshotService::class)->create('urls');
+
+        config(['app.url' => 'https://proyecto.com']);
+        $result = app(SnapshotService::class)->restore($archive);
+
+        $this->assertSame(['from' => 'http://localhost:8000', 'to' => 'https://proyecto.com'], $result['url_rewritten']);
+        $content = (string) \Illuminate\Support\Facades\DB::table('posts')->value('content');
+        $this->assertStringContainsString('https://proyecto.com/storage/media/a.webp', $content);
+        $this->assertStringContainsString('https://external.test/x', $content);
+        $this->assertStringNotContainsString('localhost:8000', $content);
+        $this->assertSame('See https://proyecto.com/blog now', Page::query()->first()->content_json['sections']['content']['body']);
+    }
+
+    public function test_rewrite_url_command_updates_live_rows(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $post = Post::query()->create([
+            'locale' => 'es', 'title' => 'A', 'slug' => 'a', 'content' => 'plain', 'status' => 'draft', 'created_by' => $admin->id,
+        ]);
+        \Illuminate\Support\Facades\DB::table('posts')->where('id', $post->id)->update(['content' => 'see http://old.test/p']);
+
+        $this->assertSame(0, Artisan::call('cms:rewrite-url', ['--from' => 'http://old.test', '--to' => 'https://new.test', '--dry-run' => true]));
+        $this->assertSame('see http://old.test/p', \Illuminate\Support\Facades\DB::table('posts')->value('content'));
+
+        $this->assertSame(0, Artisan::call('cms:rewrite-url', ['--from' => 'http://old.test', '--to' => 'https://new.test']));
+        $this->assertSame('see https://new.test/p', \Illuminate\Support\Facades\DB::table('posts')->value('content'));
+    }
+
+    public function test_srcset_builds_variant_urls_from_paths_at_render_time(): void
+    {
+        // The public disk is faked in setUp, so its URLs are root-relative here.
+        $media = new Media([
+            'disk' => 'public', 'path' => 'media/a.webp', 'mime_type' => 'image/webp',
+            'variants' => [
+                ['width' => 480, 'path' => 'media/variants/a-480.webp'],
+                ['width' => 240, 'url' => 'http://localhost:8000/storage/media/variants/a-240.webp'],
+            ],
+        ]);
+
+        $srcset = $media->srcset();
+
+        $this->assertStringStartsWith('http://localhost:8000/storage/media/variants/a-240.webp 240w, ', $srcset);
+        $this->assertStringEndsWith('/storage/media/variants/a-480.webp 480w', $srcset);
     }
 
     protected function readJsonFromZip(string $archive, string $path): array

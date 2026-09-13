@@ -190,14 +190,13 @@ class MediaImagePipeline
             $force
         );
 
-        $serialized = collect($variants)->map(function (array $variant) use ($variantsRelativeDir, $media, $disk) {
+        $serialized = collect($variants)->map(function (array $variant) use ($variantsRelativeDir, $media) {
             $relativePath = trim($variantsRelativeDir . '/' . $variant['filename'], '/');
             return [
                 'width' => (int) $variant['width'],
                 'height' => (int) $variant['height'],
                 'size' => (int) $variant['size'],
                 'path' => $relativePath,
-                'url' => $disk->url($relativePath),
                 'media_id' => $media->id,
             ];
         })->values()->all();
