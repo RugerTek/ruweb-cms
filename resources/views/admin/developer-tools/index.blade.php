@@ -39,6 +39,14 @@
            class="px-3 py-2 text-sm border-b-2 transition-colors {{ $activeTab === 'migration' ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
             {{ __('admin.developer_tools_migration') }}
         </a>
+        <a href="{{ route('admin.developer-tools.index', ['tab' => 'redirects']) }}"
+           class="px-3 py-2 text-sm border-b-2 transition-colors {{ $activeTab === 'redirects' ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
+            {{ __('admin.redirects') }}
+        </a>
+        <a href="{{ route('admin.developer-tools.index', ['tab' => 'not-found']) }}"
+           class="px-3 py-2 text-sm border-b-2 transition-colors {{ $activeTab === 'not-found' ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
+            {{ __('admin.not_found_monitor') }}
+        </a>
     </div>
 
     @if($activeTab === 'system')
@@ -135,7 +143,7 @@
                 </dl>
             </section>
         </div>
-    @else
+    @elseif($activeTab === 'migration')
         <div class="grid gap-4 lg:grid-cols-2">
             <section class="bg-[#111111] border border-white/[0.06] rounded-lg p-5 space-y-4">
                 <div>
@@ -236,6 +244,14 @@ php artisan snapshot:restore /path/to/origin.appbackup
 php artisan snapshot:prune</code></pre>
             </section>
         </div>
+    @endif
+
+    @if($activeTab === 'redirects')
+        @include('admin.developer-tools._redirects')
+    @endif
+
+    @if($activeTab === 'not-found')
+        @include('admin.developer-tools._not-found')
     @endif
 </div>
 @endsection

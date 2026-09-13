@@ -30,6 +30,12 @@ Priorities in the view:
 | Detail page | 0.5 | monthly |
 | Archived | 0.3 | yearly |
 
+## Old URLs
+
+Paths inherited from a previous site are redirected from `Admin > Redirects`, not from the webserver
+configuration: [../operations/redirects.md](../operations/redirects.md) owns the rules, the 404 monitor and the
+CSV import.
+
 ## Metadata
 
 `<x-seo-meta>` renders title, description, canonical, Open Graph and Twitter tags from the entity's `meta()`

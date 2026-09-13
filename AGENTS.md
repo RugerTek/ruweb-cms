@@ -32,6 +32,7 @@ App at `http://localhost:8000`, admin at `/admin`. The login path is the `admin_
 | New setting or config value | `create-config` | [docs/admin/settings.md](docs/admin/settings.md) |
 | Translate content to another locale | `translate-content` | [docs/concepts/multilanguage.md](docs/concepts/multilanguage.md) |
 | Admin labels, `lang/` parity | `check-translations` | [docs/admin/translations.md](docs/admin/translations.md) |
+| Redirect an old URL, review 404s (Developer tools) | — | [docs/operations/redirects.md](docs/operations/redirects.md) |
 | Review a change against the docs | `review-conventions` | [docs/README.md](docs/README.md) |
 | Changelog and `VERSION` | `changelog-version` | — |
 

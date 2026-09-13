@@ -44,6 +44,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 |---|---|
 | [operations/snapshots.md](operations/snapshots.md) | `.appbackup` format, risks, restore, housekeeping |
 | [operations/maintenance.md](operations/maintenance.md) | Operational commands |
+| [operations/redirects.md](operations/redirects.md) | 301/302 rules for old paths, the 404 monitor, CSV import |
 | [operations/mcp.md](operations/mcp.md) | MCP auth, protocol, tools, REST, extension points |
 | [operations/deploy-cpanel.md](operations/deploy-cpanel.md) | cPanel deployment |
 | [operations/deploy-droplet.md](operations/deploy-droplet.md) | Single-server deployment |

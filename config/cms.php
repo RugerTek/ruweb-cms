@@ -223,6 +223,26 @@ return [
         'pinned_zoom' => 16,
     ],
 
+    // 301/302 rules and the 404 monitor behind them (docs/operations/redirects.md).
+    'redirects' => [
+        'status_codes' => [301, 302],
+        'monitor_not_found' => env('CMS_MONITOR_NOT_FOUND', true),
+        // Paths never redirected and never counted as a 404: the panel, machine endpoints and assets.
+        'ignore_paths' => [
+            'admin',
+            'admin/*',
+            'mcp',
+            'mcp/*',
+            'authorize',
+            'token',
+            '.well-known/*',
+            'storage/*',
+            'build/*',
+            'up',
+        ],
+        'per_page' => 25,
+    ],
+
     'menu_locations' => [
         'header' => 'Header Navigation',
         'footer' => 'Footer Navigation',

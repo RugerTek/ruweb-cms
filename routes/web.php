@@ -29,7 +29,8 @@ $reservedLocaleSlugs = implode('|', array_map(
     $catalogLocales
 ));
 
-Route::middleware('public.locale')->group(function () use ($localePattern, $reservedSlugs, $reservedLocaleSlugs) {
+// `redirects` runs first so a rule wins over a live page: see docs/operations/redirects.md.
+Route::middleware(['redirects', 'public.locale'])->group(function () use ($localePattern, $reservedSlugs, $reservedLocaleSlugs) {
     Route::get('/', [PageController::class, 'home'])->name('home');
     Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
     Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');

@@ -8,7 +8,20 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.40.1 - 2026-09-13
+## 0.41.0 - 2026-09-13
+
+- Nuevas pestañas **Redirecciones** y **Monitor 404** en Developer tools (solo admins) con las reglas 301/302 del sitio y los 404 que las alimentan. Un sitio que reemplaza a otro hereda sus enlaces: los marcadores, los backlinks y las URLs indexadas del sitio viejo tienen que aterrizar en la URL nueva y no en un 404. Va en Developer tools y no en el menú principal porque es una herramienta de migración, no contenido del día a día. Las reglas y el monitor son pestañas separadas: una se edita, la otra se consulta.
+- La importación CSV queda plegada en un acordeón —se usa una sola vez, al migrar— para que el alta manual, que es el caso frecuente, ocupe el ancho completo. El acordeón se abre solo si la subida vuelve con error.
+- Las reglas se resuelven en un único punto (`App\Support\RedirectResolver`) desde dos entradas: el middleware `redirects` sobre las rutas públicas —para que una regla gane sobre una URL que todavía resuelve— y el render de `NotFoundHttpException` en `bootstrap/app.php` para las rutas que ya no existen. Sólo `GET`/`HEAD`, sólo reglas activas, y las rutas de `cms.redirects.ignore_paths` (panel, `mcp`, OAuth, `storage`, `build`, `/up`) quedan fuera.
+- `source_path` se guarda siempre normalizado (barra inicial, sin barra final, sin query ni fragmento), así que pegar la URL absoluta del sitio viejo crea la misma regla que escribir la ruta. La query string entrante se arrastra al destino cuando la regla no trae una propia, para no perder los parámetros de campaña en el 301.
+- Se rechazan las reglas que hacen bucle: origen igual al destino, y destino cuya ruta ya redirige de vuelta al origen. La portada no se redirige desde esta pantalla.
+- Monitor 404: una fila por ruta inexistente con contador, referencia y última visita, y una acción **Redirigir** que precarga el formulario con esa ruta. Ese es el flujo previsto tras una migración: publicar, esperar tráfico y redirigir lo que efectivamente lo recibe. Se apaga con `CMS_MONITOR_NOT_FOUND=false`.
+- Importación masiva por CSV (`source_path`, `target_url`, `status_code`, `is_active`), con detección de delimitador, actualización de las filas existentes y resumen de creadas/actualizadas/omitidas en vez de abortar ante una fila inválida. Incluye descarga del CSV de ejemplo.
+- Nuevo bloque `cms.redirects` en el registro (`status_codes`, `monitor_not_found`, `ignore_paths`, `per_page`): agregar un código de estado o excluir un prefijo de ruta es una sola línea de configuración.
+- El bloque de Migración de Developer tools estaba en un `@else`, así que se renderizaba en cualquier pestaña que no fuera Sistema. Pasa a `@elseif` y cada pestaña muestra sólo lo suyo.
+- Documentación canónica nueva en `docs/operations/redirects.md`, enlazada desde `docs/README.md`, `docs/content/seo.md` y la tabla de ruteo de `AGENTS.md`. Tests en `RedirectsTest`: resolución, normalización, precedencia sobre una página publicada, exclusión del panel, bucles rechazados, importación CSV, separación de pestañas y precarga del formulario desde un 404.
+
+## 0.40.1 - 2026-09-13 (2bc173d)
 
 - `.gitignore` ignoraba `.claude/` entero, así que el symlink `.claude/skills` no viajaba en el repositorio: un clon nuevo dejaba a Codex con sus skills y a Claude Code sin ninguno. Ahora se ignora el contenido de `.claude/` salvo ese symlink.
 - `DocsReferencesTest` verifica que ambos agentes encuentren los skills en un clon limpio: que `.claude/skills` resuelva a `.agents/skills` y que esté trackeado por git.

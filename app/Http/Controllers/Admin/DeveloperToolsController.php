@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\NotFoundHit;
+use App\Models\Redirect as RedirectRule;
 use App\Models\Setting;
 use App\Services\Snapshots\EnvironmentReportService;
 use App\Services\Snapshots\SnapshotException;
@@ -23,15 +25,26 @@ class DeveloperToolsController extends Controller
         protected SnapshotHousekeeping $housekeeping
     ) {}
 
+    /** Tabs of the screen; anything else falls back to the first one. */
+    private const TABS = ['system', 'migration', 'redirects', 'not-found'];
+
     public function index(Request $request): View
     {
-        $activeTab = $request->query('tab', 'system') === 'migration' ? 'migration' : 'system';
+        $activeTab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'system';
+        $perPage = (int) config('cms.redirects.per_page', 25);
 
         return view('admin.developer-tools.index', [
             'report' => $this->environment->report(),
             'activeTab' => $activeTab,
             'pending' => $activeTab === 'migration' ? $this->housekeeping->pendingList() : [],
             'usage' => $activeTab === 'migration' ? $this->housekeeping->usage() : [],
+            'redirects' => $activeTab === 'redirects'
+                ? RedirectRule::query()->orderByDesc('hit_count')->orderByDesc('id')->paginate($perPage, ['*'], 'redirects')->withQueryString()
+                : null,
+            'notFoundHits' => $activeTab === 'not-found'
+                ? NotFoundHit::query()->orderByDesc('last_seen_at')->paginate($perPage, ['*'], 'not_found')->withQueryString()
+                : null,
+            'prefillSource' => $request->string('source')->toString(),
         ]);
     }
 

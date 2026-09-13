@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\RedirectController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TaxonomyController;
 use App\Http\Controllers\Admin\UserController;
@@ -97,6 +98,16 @@ Route::middleware(['auth', 'role:admin,editor', 'admin.locale'])->prefix('admin'
         Route::put('header', [HeaderController::class, 'update'])->name('header.update');
         Route::get('footer', [FooterController::class, 'index'])->name('footer.index');
         Route::put('footer', [FooterController::class, 'update'])->name('footer.update');
+        // Redirects and the 404 monitor. The screen is a Developer Tools tab; these are the
+        // write actions behind it (docs/operations/redirects.md).
+        Route::get('redirects/sample-csv', [RedirectController::class, 'sampleCsv'])->name('redirects.sample-csv');
+        Route::post('redirects/import', [RedirectController::class, 'import'])->name('redirects.import');
+        Route::post('redirects', [RedirectController::class, 'store'])->name('redirects.store');
+        Route::put('redirects/{redirect}', [RedirectController::class, 'update'])->name('redirects.update');
+        Route::delete('redirects/{redirect}', [RedirectController::class, 'destroy'])->name('redirects.destroy');
+        Route::delete('redirects/not-found/all', [RedirectController::class, 'clearNotFound'])->name('redirects.not-found.clear');
+        Route::delete('redirects/not-found/{notFoundHit}', [RedirectController::class, 'destroyNotFound'])->name('redirects.not-found.destroy');
+
         Route::get('languages', [LanguageController::class, 'index'])->name('languages.index');
         Route::post('languages', [LanguageController::class, 'store'])->name('languages.store');
         Route::put('languages', [LanguageController::class, 'update'])->name('languages.update');
