@@ -8,7 +8,15 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.32.0 - 2026-09-13
+## 0.33.0 - 2026-09-13
+
+- El contenido de los posts se edita con un editor WYSIWYG (TinyMCE) en lugar de un textarea plano, con títulos, listas, citas, enlaces, tablas y bloques de código.
+- Insertar una imagen abre directamente la media library: no se piden URLs ni se suben archivos pegados.
+- El HTML se sanea en el servidor con una allowlist antes de guardarse, venga del formulario, de la API MCP o de un seeder.
+- El blog público pasa a renderizar el HTML del post; el contenido plano anterior se sigue mostrando igual que antes.
+- Se instala el plugin de tipografía de Tailwind, que las vistas ya asumían al usar `prose` sin que estuviera presente.
+
+## 0.32.0 - 2026-09-13 (08ca037)
 
 - El botón de refrescar caché pasa a estar también dentro del panel de administración, además de la barra pública, visible solo para administradores.
 - Cualquier formulario marcado con `data-confirm` se confirma con el modal compartido en lugar del diálogo nativo del navegador.

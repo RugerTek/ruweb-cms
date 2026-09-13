@@ -33,7 +33,7 @@
 
         @if($post->content)
             <div class="prose prose-gray max-w-none mt-8">
-                {!! nl2br(e($post->content)) !!}
+                {!! \App\Helpers\ContentHelper::richText($post->content) !!}
             </div>
         @endif
     </div>

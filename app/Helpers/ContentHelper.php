@@ -7,6 +7,26 @@ use App\Models\Setting;
 
 class ContentHelper
 {
+    /**
+     * Render stored rich text for the public page.
+     *
+     * Content written before the rich-text editor is plain text, so it still gets
+     * the escape-and-linebreak treatment; HTML is already sanitised on save and is
+     * emitted as-is.
+     */
+    public static function richText(?string $value): string
+    {
+        if ($value === null || trim($value) === '') {
+            return '';
+        }
+
+        if (! preg_match('/<[a-z!\/][^>]*>/i', $value)) {
+            return nl2br(e($value));
+        }
+
+        return app(\App\Support\RichTextSanitizer::class)->sanitize($value) ?? '';
+    }
+
     public static function metaTitle(array $meta, ?string $default = null): string
     {
         $siteName = Setting::getLocalized('site_name') ?: config('app.name');

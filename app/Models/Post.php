@@ -34,6 +34,15 @@ class Post extends Model implements Mediable, Previewable, Publishable, Seoable
         'updated_by',
     ];
 
+    /**
+     * Rich text is sanitised on the way in, so every writer — admin form, MCP API,
+     * seeders — stores the same allowlisted markup.
+     */
+    protected function setContentAttribute(?string $value): void
+    {
+        $this->attributes['content'] = app(\App\Support\RichTextSanitizer::class)->sanitize($value);
+    }
+
     protected function casts(): array
     {
         return [

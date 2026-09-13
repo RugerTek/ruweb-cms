@@ -10,6 +10,10 @@ const t = (key, fallback = '') => adminI18n[key] ?? fallback;
 const maxUploadKb = Number(adminI18n.maxUploadKb || 0);
 window.initEditorEngine = initEditorEngine;
 
+// TinyMCE is heavy, so its chunk is only fetched on screens that actually use it.
+if (document.querySelector('[data-rich-text]')) {
+    import('./rich-text.js').then((module) => module.initRichText());
+}
 
 const selectors = Array.from(document.querySelectorAll('.media-selector'));
 const libraryModal = document.getElementById('media-library-modal');
@@ -21,6 +25,7 @@ const libraryStatus = document.getElementById('media-library-status');
 const libraryPagination = document.getElementById('media-library-pagination');
 
 let activeSelector = null;
+let activeLibraryCallback = null;
 let searchTimer = null;
 const LIBRARY_PAGE_SIZE = 20;
 const libraryItemsById = new Map();
@@ -199,10 +204,14 @@ uploadForm?.addEventListener('submit', async (e) => {
                 ? payload.data
                 : (payload ? [payload] : []);
 
-            if (uploadFromLibrary && activeSelector) {
+            if (uploadFromLibrary && (activeSelector || activeLibraryCallback)) {
                 closeUpload();
 
-                if (uploadedItems.length === 1) {
+                if (uploadedItems.length === 1 && activeLibraryCallback) {
+                    const { onSelect } = activeLibraryCallback;
+                    closeLibrary();
+                    onSelect(uploadedItems[0]);
+                } else if (uploadedItems.length === 1) {
                     renderSelectorPreview(activeSelector, uploadedItems[0]);
                     notifySelectorChange(activeSelector);
                     closeLibrary();
@@ -309,8 +318,14 @@ async function fetchMediaItem(id) {
     return response.json();
 }
 
-function openLibrary(selector) {
-    activeSelector = selector;
+function openLibrary(target) {
+    if (typeof target?.onSelect === 'function') {
+        activeSelector = null;
+        activeLibraryCallback = target;
+    } else {
+        activeSelector = target;
+        activeLibraryCallback = null;
+    }
 
     if (!libraryModal) {
         return;
@@ -322,6 +337,7 @@ function openLibrary(selector) {
 
 function closeLibrary() {
     activeSelector = null;
+    activeLibraryCallback = null;
 
     if (!libraryModal) {
         return;
@@ -330,6 +346,8 @@ function closeLibrary() {
     libraryModal.classList.add('hidden');
 }
 
+// Lets any feature reuse the shared media library, e.g. TinyMCE image insertion.
+window.openMediaLibrary = (options) => openLibrary(options);
 
 function renderLibraryItems(items) {
     if (!libraryGrid) {
@@ -408,7 +426,7 @@ function renderLibraryPagination(currentPage, lastPage) {
 function currentLibraryFilters() {
     return {
         search: librarySearch?.value?.trim() || '',
-        type: activeSelector?.dataset?.type || '',
+        type: activeSelector?.dataset?.type || activeLibraryCallback?.type || '',
     };
 }
 
@@ -537,12 +555,19 @@ libraryPagination?.addEventListener('click', (event) => {
 
 libraryGrid?.addEventListener('click', (event) => {
     const button = event.target.closest('.media-library-item');
-    if (!button || !activeSelector) {
+    if (!button || (!activeSelector && !activeLibraryCallback)) {
         return;
     }
 
     const selected = libraryItemsById.get(String(button.dataset.id));
     if (!selected) {
+        return;
+    }
+
+    if (activeLibraryCallback) {
+        const { onSelect } = activeLibraryCallback;
+        closeLibrary();
+        onSelect(selected);
         return;
     }
 

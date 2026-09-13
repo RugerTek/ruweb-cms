@@ -16,6 +16,18 @@ return [
         'keep_original' => env('CMS_IMAGE_OPTIMIZATION_KEEP_ORIGINAL', false),
     ],
 
+    'rich_text' => [
+        // Hosts whose iframes survive sanitisation, for video and map embeds.
+        'allowed_embed_hosts' => [
+            'youtube.com',
+            'youtube-nocookie.com',
+            'youtu.be',
+            'vimeo.com',
+            'player.vimeo.com',
+            'google.com',
+        ],
+    ],
+
     'responsive_images' => [
         'enabled' => env('CMS_RESPONSIVE_IMAGES_ENABLED', true),
         'widths' => [240, 480, 768, 1024, 1536],
