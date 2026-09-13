@@ -12,6 +12,8 @@ class DatabaseSeeder extends Seeder
             LocaleSeeder::class,
             AdminUserSeeder::class,
             SettingsSeeder::class,
+            // Placeholders first: starter content references them by placeholder key.
+            PlaceholderMediaSeeder::class,
             HomepageSeeder::class,
             MenuSeeder::class,
         ]);

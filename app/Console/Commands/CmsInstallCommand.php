@@ -115,12 +115,6 @@ class CmsInstallCommand extends Command
         ]);
         $this->info('  ✓ Default settings seeded');
 
-        Artisan::call('db:seed', [
-            '--class' => HomepageSeeder::class,
-            '--force' => true,
-        ]);
-        $this->info('  ✓ Homepage seeded');
-
         // Create admin user
         $this->info('');
         $this->info('  Admin User');
@@ -153,8 +147,23 @@ class CmsInstallCommand extends Command
         }
         $this->info('  ✓ Media directory ready');
 
+        // Placeholder images (needs the storage link and media directory above)
+        Artisan::call('cms:placeholders', [], $this->output);
+        $this->info('  ✓ Placeholder images ready');
+
+        Artisan::call('db:seed', [
+            '--class' => HomepageSeeder::class,
+            '--force' => true,
+        ]);
+        $this->info('  ✓ Homepage seeded');
+
         // Clear config
         Artisan::call('config:clear');
+
+        $assetsBuilt = $this->frontendAssetsAreBuilt();
+        if ($assetsBuilt) {
+            $this->info('  ✓ Frontend assets built');
+        }
 
         $this->info('');
         $this->info('  ════════════════════════════════');
@@ -165,7 +174,30 @@ class CmsInstallCommand extends Command
         $this->info('  ════════════════════════════════');
         $this->info('');
 
+        if (! $assetsBuilt) {
+            $this->warn('  ⚠  Frontend assets are not built yet.');
+            $this->warn('     Every page will fail until they are, because the layouts');
+            $this->warn('     resolve their CSS and JS through the Vite manifest.');
+            $this->line('');
+            $this->line('     Build them where Node is available:');
+            $this->line('');
+            $this->line('       npm install');
+            $this->line('       npm run build');
+            $this->line('');
+            $this->line('     On hosts without Node, build them elsewhere and upload public/build/.');
+            $this->line('');
+        }
+
         return Command::SUCCESS;
+    }
+
+    /**
+     * Vite writes this manifest on build; the layouts cannot resolve any asset without it.
+     */
+    public function frontendAssetsAreBuilt(): bool
+    {
+        return file_exists(public_path('build/manifest.json'))
+            || file_exists(public_path('build/.vite/manifest.json'));
     }
 
     private function updateEnv(array $values): void

@@ -8,7 +8,15 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.28.0 - 2026-09-13
+## 0.29.0 - 2026-09-13
+
+- Una instalación nueva siembra tres imágenes placeholder (horizontal, cuadrada y vertical) en la media library, con su versión WebP y sus variantes responsive.
+- Nuevo comando `cms:placeholders` que siembra los placeholders y restaura sus archivos cuando el registro existe pero el archivo no, como pasa al clonar el repo con `storage/app/public` vacío.
+- La home de ejemplo llega con su imagen destacada y su hero completos, en vez de marcos vacíos.
+- `composer setup` ahora corre `storage:link` y `db:seed`, así que un clon queda usable sin pasos manuales.
+- `cms:install` avisa al terminar si faltan los assets compilados, que hasta ahora dejaban el sitio devolviendo 500 sin explicación.
+
+## 0.28.0 - 2026-09-13 (5bb8038)
 
 - La media library suma un campo `Enlace` con botón para copiar la URL pública del archivo al portapapeles.
 - Nuevo filtro por fecha que lista solo los meses que tienen archivos y se combina con los filtros de tipo y búsqueda.

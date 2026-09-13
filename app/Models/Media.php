@@ -35,6 +35,7 @@ class Media extends Model
         'optimized_at',
         'alt',
         'title',
+        'placeholder_key',
         'disk',
         'uploaded_by',
     ];
