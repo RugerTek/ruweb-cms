@@ -22,7 +22,7 @@ abstract class TestCase extends BaseTestCase
         AdminLoginPath::clearCache();
 
         $this->snapshotsRoot = sys_get_temp_dir().'/ruweb-cms-tests/'.uniqid('snapshots-', true);
-        config(['cms.snapshots.root' => $this->snapshotsRoot]);
+        config(['cms.snapshots.root' => $this->snapshotsRoot, 'cms.snapshots.maintenance_mode' => false]);
     }
 
     protected function tearDown(): void

@@ -207,7 +207,9 @@ Named snapshots in `storage/app/private/snapshots` are never pruned. Delete them
 
 Every path above hangs from `config('cms.snapshots.root')`, which defaults to `storage/app/private` and can be overridden with `CMS_SNAPSHOTS_ROOT` in `.env`. All path helpers on `SnapshotService` (`snapshotsDirectory()`, `pendingUploadsDirectory()`, `downloadsDirectory()`, `workDirectory()`, `restoreDirectory()`, `uploadsRollbackDirectory()`) derive from it; never build these paths by hand.
 
-The base `Tests\TestCase` points the root at a fresh temp directory per test and deletes it afterwards, so the suite never touches a developer's real snapshots.
+`cms.snapshots.maintenance_mode` (`CMS_SNAPSHOTS_MAINTENANCE_MODE`, default `true`) controls whether a restore wraps itself in `artisan down` / `up`.
+
+The base `Tests\TestCase` points the root at a fresh temp directory per test, deletes it afterwards, and disables maintenance mode, so the suite never touches a developer's real snapshots nor takes the local site down while it runs.
 
 ## Extension Points
 

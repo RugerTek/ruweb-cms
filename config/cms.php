@@ -10,6 +10,9 @@ return [
         // archives, pending uploads, work folders and pre-restore backups.
         // Tests point this at an isolated temp directory. See docs/snapshots.md.
         'root' => env('CMS_SNAPSHOTS_ROOT') ?: storage_path('app/private'),
+        // Put the site in maintenance mode while a restore runs. Tests turn
+        // this off because `artisan down` writes to the real storage/framework.
+        'maintenance_mode' => env('CMS_SNAPSHOTS_MAINTENANCE_MODE', true),
     ],
 
     'upload' => [

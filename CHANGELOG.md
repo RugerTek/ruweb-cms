@@ -8,7 +8,11 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.37.1 - 2026-09-13
+## 0.37.2 - 2026-09-13
+
+- El modo mantenimiento durante un restore se controla con `cms.snapshots.maintenance_mode` y queda apagado en tests, que antes ponían el sitio local en 503 mientras corría la suite.
+
+## 0.37.1 - 2026-09-13 (bd8f225)
 
 - La carpeta base del módulo de snapshots se configura con `cms.snapshots.root` (`CMS_SNAPSHOTS_ROOT`), y los tests la apuntan a un directorio temporal aislado. La suite ya no borra los snapshots reales de `storage/app/private/snapshots` del desarrollador.
 

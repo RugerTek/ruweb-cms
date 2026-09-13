@@ -176,7 +176,11 @@ class SnapshotService
 
             $preRestore = $this->create('pre-restore-'.now()->format('Ymd-His'));
 
-            Artisan::call('down', ['--retry' => 60]);
+            $maintenance = (bool) Config::get('cms.snapshots.maintenance_mode', true);
+
+            if ($maintenance) {
+                Artisan::call('down', ['--retry' => 60]);
+            }
 
             try {
                 $this->restoreDatabase($extractDir, $tables, $rewriter);
@@ -184,7 +188,9 @@ class SnapshotService
                 Artisan::call('storage:link');
                 Artisan::call('optimize:clear');
             } finally {
-                Artisan::call('up');
+                if ($maintenance) {
+                    Artisan::call('up');
+                }
             }
 
             return [
