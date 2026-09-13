@@ -117,7 +117,7 @@ Option values: the starter stores the option **label** as the submitted value (`
 </div>
 ```
 
-Each item is `[data-repeater-item]` with `[data-repeater-toggle]`, `[data-repeater-body]`, `[data-repeater-icon]`, `[data-repeater-item-label]`, `[data-repeater-label-input]`, `[data-repeater-move-up]`, `[data-repeater-move-down]`, `[data-repeater-remove]`. Input names must contain `[<key>][<index>]`; the script re-indexes them on add, move and remove, and fires a `change` event so the editor's dirty state and Save button react. Reuse `_option-repeater-item.blade.php` by passing `sectionKey`, `field`, `index`, `option`.
+Each item is `[data-repeater-item]` with `[data-repeater-label-input]`, `[data-repeater-move-up]`, `[data-repeater-move-down]` and `[data-repeater-remove]`. Single-field items (option lists) render as flat rows, per the "Single-Field Items" rule in `docs/live-editor-ui-ux.md`; items with several fields add the accordion hooks `[data-repeater-toggle]`, `[data-repeater-body]`, `[data-repeater-icon]` and `[data-repeater-item-label]`. Input names must contain `[<key>][<index>]`; the script re-indexes them on add, move and remove, and fires a `change` event so the editor's dirty state and Save button react. Reuse `_option-repeater-item.blade.php` for option lists by passing `sectionKey`, `field`, `index`, `option`.
 
 ## Admin: Submissions
 

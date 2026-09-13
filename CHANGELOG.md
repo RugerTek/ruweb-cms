@@ -8,7 +8,11 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.38.0 - 2026-09-14
+## 0.38.1 - 2026-09-14
+
+- Las opciones del motivo en el editor de contacto se listan como filas planas con el input, los controles de orden y el botón de borrar, sin acordeón por opción. La regla queda escrita en la guía de UI/UX del editor para los repeaters de un solo campo.
+
+## 0.38.0 - 2026-09-14 (4093739)
 
 - Módulo de formularios públicos con la página de contacto como implementación de referencia: los campos y el comportamiento viven en el código, y el Live Editor solo edita etiquetas, texto del botón, mensaje de éxito, opciones del motivo y notificaciones.
 - Nuevo menú Envíos en el admin con una pestaña por formulario, contador de no leídos, filtros por estado, búsqueda y rango de fechas, y una pantalla de detalle con los metadatos de cada envío.

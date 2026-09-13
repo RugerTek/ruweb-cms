@@ -297,6 +297,16 @@ Each item is represented by a nested accordion whose header contains, in one row
 
 The delete control must remain visible while the item accordion is collapsed. It must be independent from the accordion trigger, so activating it never opens or closes the item.
 
+#### Single-Field Items
+
+When every item of an administrable repeater consists of exactly one editable field, such as the options of a select or radio field, do not wrap each item in an accordion. Render each item as one flat row:
+
+- the field itself, inline, taking the available width
+- move up and move down controls
+- the red trash-can icon button, aligned to the right
+
+Add, reorder and delete behave exactly like accordion items, including the confirmation modal. As soon as an item gains a second field, switch back to the nested accordion layout.
+
 #### Deleting An Item
 
 Deletion is destructive and must never happen immediately.

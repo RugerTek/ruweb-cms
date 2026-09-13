@@ -776,8 +776,9 @@ document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
 // Markup contract: [data-repeater data-repeater-key="<field>"] wrapping
 // [data-repeater-list] > [data-repeater-item]*, a <template data-repeater-template>,
 // [data-repeater-add] and optional [data-repeater-empty]. Items expose
-// [data-repeater-toggle|body|icon], [data-repeater-item-label], [data-repeater-label-input],
-// [data-repeater-move-up|move-down|remove]. Input names use [<key>][<index>].
+// [data-repeater-move-up|move-down|remove] and [data-repeater-label-input]; multi-field
+// items add the accordion hooks [data-repeater-toggle|body|icon] and [data-repeater-item-label],
+// single-field items render as flat rows without them. Input names use [<key>][<index>].
 document.querySelectorAll('[data-repeater]').forEach((repeater) => {
     const key = repeater.dataset.repeaterKey;
     const list = repeater.querySelector('[data-repeater-list]');
@@ -875,7 +876,9 @@ document.querySelectorAll('[data-repeater]').forEach((repeater) => {
         }
 
         if (event.target.closest('[data-repeater-remove]')) {
-            const label = row.querySelector('[data-repeater-item-label]')?.textContent?.trim() || '';
+            const label = row.querySelector('[data-repeater-item-label]')?.textContent?.trim()
+                || row.querySelector('[data-repeater-label-input]')?.value.trim()
+                || fallbackLabel(rows().indexOf(row) + 1);
             const message = (repeater.dataset.confirmRemove || 'This item will be removed.').replace(':item', label);
 
             if (await window.confirmAction({ message, confirmLabel: repeater.dataset.confirmLabel || t('remove', 'Remove') })) {
