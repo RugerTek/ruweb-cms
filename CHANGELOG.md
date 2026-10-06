@@ -8,7 +8,15 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.42.0 - 2026-10-05
+## 0.43.0 - 2026-10-05
+
+- Los cuatro templates usan panel redimensionable, acordeones accesibles, confirmaciones con foco retenido y «Ver en vivo» en móvil. Los ítems repetidos mantienen identificadores únicos, etiquetas y avisos después de reordenarse.
+- Los errores aparecen junto al campo y abren su pestaña y acordeones. «Sin cambios» habilita guardar una traducción revisada; el reordenado y la normalización inicial de TinyMCE no dan por revisado texto pendiente ni producen avisos falsos.
+- Títulos con resaltado por selección y párrafos con presets mínimos de TinyMCE, sanitizados al guardar y renderizar. Las imágenes vacías muestran su placeholder sin asignarlo como contenido; se corrigen controles sin efecto y etiquetas sin traducir.
+- Los CTA de portada incluyen destino semántico y apertura en otra pestaña. El selector compartido de enlaces incorpora búsqueda por título, insensible a acentos, navegación por teclado y estado sin resultados; la regla queda documentada para futuros editores.
+- Se conserva el origen al cambiar de idioma o crear traducciones, se guardan correctamente los repetidores vacíos y se preservan las secciones inactivas y los datos hermanos al actualizar contenido.
+
+## 0.42.0 - 2026-10-05 (faed2ee)
 
 - El preview del Live Editor oculta el admin bar y su espacio superior; bloquea enlaces, ventanas nuevas y envíos de formularios sin interferir con acordeones o sliders. Se evita abrir otro editor dentro del preview y se permite refrescar `about:srcdoc`.
 - Páginas y posts reservan el contenido en la base de datos mientras se editan, con renovación, liberación al salir y expiración a los dos minutos sin conexión. Otra sesión recibe un aviso con el nombre del editor; guardar o eliminar exige el token vigente.

@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePageRequest;
 use App\Http\Requests\Admin\UpdatePageRequest;
-use App\Models\Page;
 use App\Models\Locale;
+use App\Models\Page;
 use App\Services\Content\ContentSchemaRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -59,7 +59,7 @@ class PageController extends Controller
         }
 
         $featuredImage = $data['featured_image'] ?? null;
-        unset($data['featured_image'], $data['acknowledged_fields']);
+        unset($data['featured_image'], $data['acknowledged_fields'], $data['editor_field_origins']);
 
         $page = Page::create($data);
         $page->source_fingerprint = $page->translatableFingerprint();
@@ -71,7 +71,7 @@ class PageController extends Controller
         }
 
         return redirect()
-            ->route('admin.pages.edit', $page)
+            ->route('admin.pages.edit', ['page' => $page, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
             ->with('success', __('admin.page_created'));
     }
 
@@ -97,8 +97,20 @@ class PageController extends Controller
         }
 
         $featuredImage = $data['featured_image'] ?? null;
-        unset($data['featured_image'], $data['acknowledged_fields']);
+        unset($data['featured_image'], $data['acknowledged_fields'], $data['editor_field_origins']);
 
+        if (isset($data['content_json'])) {
+            $existing = $page->content_json ?? [];
+            $submitted = $data['content_json'];
+            foreach ($submitted['sections'] ?? [] as $key => $section) {
+                $submitted['sections'][$key] = array_replace($existing['sections'][$key] ?? [], $section);
+            }
+            if (isset($submitted['meta'])) {
+                $submitted['meta'] = array_replace($existing['meta'] ?? [], $submitted['meta']);
+            }
+            $submitted['sections'] = array_replace($existing['sections'] ?? [], $submitted['sections'] ?? []);
+            $data['content_json'] = array_replace($existing, $submitted);
+        }
         $page->update($data);
         if ($page->isBaseLocale()) {
             $page->source_fingerprint = $page->translatableFingerprint();
@@ -118,7 +130,7 @@ class PageController extends Controller
         }
 
         return redirect()
-            ->route('admin.pages.edit', $page)
+            ->route('admin.pages.edit', ['page' => $page, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
             ->with('success', __('admin.page_updated'));
     }
 
@@ -151,7 +163,7 @@ class PageController extends Controller
 
         $existing = $page->translations()->where('locale', $locale)->first();
         if ($existing) {
-            return redirect()->route('admin.pages.edit', $existing);
+            return redirect()->route('admin.pages.edit', ['page' => $existing, 'return' => $this->normalizeReturnUrl($request->input('return'))]);
         }
 
         $base = $page->baseTranslation() ?: $page;
@@ -171,7 +183,7 @@ class PageController extends Controller
         }
 
         return redirect()
-            ->route('admin.pages.edit', $translation)
+            ->route('admin.pages.edit', ['page' => $translation, 'return' => $this->normalizeReturnUrl($request->input('return'))])
             ->with('success', __('admin.page_created'));
     }
 
@@ -193,16 +205,18 @@ class PageController extends Controller
      */
     private function resolveEditorBackLink(Request $request, string $defaultRoute, string $defaultTitle): array
     {
-        $returnUrl = $this->normalizeReturnUrl($request->query('return'));
+        $returnUrl = $this->normalizeReturnUrl($request->input('return', $request->query('return')));
 
         if ($returnUrl !== null) {
             return [
+                'editorReturn' => $returnUrl,
                 'editorBackHref' => $returnUrl,
                 'editorBackTitle' => __('admin.back_to_previous_page'),
             ];
         }
 
         return [
+            'editorReturn' => route($defaultRoute),
             'editorBackHref' => route($defaultRoute),
             'editorBackTitle' => $defaultTitle,
         ];
@@ -210,7 +224,7 @@ class PageController extends Controller
 
     private function normalizeReturnUrl(mixed $returnUrl): ?string
     {
-        if (! is_string($returnUrl) || $returnUrl === '') {
+        if (! is_string($returnUrl) || $returnUrl === '' || preg_match('/[\\\\\x00-\x1f]/', $returnUrl)) {
             return null;
         }
 

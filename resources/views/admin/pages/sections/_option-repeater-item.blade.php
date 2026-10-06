@@ -6,12 +6,12 @@
     the repeater key, e.g. subject_options.
 --}}
 <div class="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#141414] pl-3 pr-2 py-1.5" data-repeater-item>
-    <label class="sr-only" for="option-{{ $field }}-{{ $index }}">{{ __('admin.field_option_label') }}</label>
+    <label class="text-xs text-gray-500 shrink-0" for="option-{{ $field }}-{{ $index }}">{{ __('admin.field_option_label') }}</label>
     <input type="text" data-repeater-label-input
            id="option-{{ $field }}-{{ $index }}"
            name="content_json[sections][{{ $sectionKey }}][{{ $field }}][{{ $index }}][label]"
            value="{{ $option['label'] ?? '' }}"
-           class="min-w-0 flex-1 bg-transparent border-0 text-white text-sm px-0 py-1 placeholder-gray-600 focus:outline-none focus:ring-0"
+           class="min-w-0 flex-1 bg-transparent border-0 text-white text-sm px-0 py-1 placeholder-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-sky-400"
            placeholder="{{ __('admin.field_option_label_ph') }}">
     <div class="flex items-center gap-0.5 shrink-0">
         <button type="button" data-repeater-move-up title="{{ __('admin.btn_move_up') }}" aria-label="{{ __('admin.btn_move_up') }}"

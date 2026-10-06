@@ -75,3 +75,5 @@
         mask-image: none;
     }
 }
+
+.editorial-highlight { font-style: italic; text-decoration: underline; text-underline-offset: .15em; }

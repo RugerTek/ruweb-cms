@@ -1,4 +1,5 @@
 @php
+    $itemUid = 'logo-'.\Illuminate\Support\Str::uuid();
     $itemLabel = filled($logo['label'] ?? null)
         ? $logo['label']
         : __('admin.logo_item_fallback_label', ['position' => is_numeric($index) ? $index + 1 : 1]);
@@ -8,7 +9,7 @@
     <div class="flex items-center gap-1 px-3 py-2">
         <button type="button"
                 data-logo-accordion-toggle
-                aria-expanded="false"
+                aria-expanded="false" aria-controls="{{ $itemUid }}-body"
                 class="flex items-center gap-2 min-w-0 flex-1 text-left">
             <svg data-logo-accordion-icon class="w-4 h-4 shrink-0 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -44,7 +45,7 @@
         </div>
     </div>
 
-    <div data-logo-accordion-body class="hidden border-t border-white/[0.08] p-3 space-y-3">
+    <div id="{{ $itemUid }}-body" data-logo-accordion-body class="hidden border-t border-white/[0.08] p-3 space-y-3">
         @include('admin.media._selector', [
             'name'  => "content_json[sections][{$sectionKey}][logos][{$index}][image_id]",
             'value' => $logo['image_id'] ?? null,

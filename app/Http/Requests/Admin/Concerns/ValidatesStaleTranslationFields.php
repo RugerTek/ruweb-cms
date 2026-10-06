@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin\Concerns;
 
 use App\Models\Page;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Support\SectionRichText;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Validator;
 
@@ -33,7 +34,7 @@ trait ValidatesStaleTranslationFields
                     continue;
                 }
 
-                $validator->errors()->add($this->requestDotPath($entity, $path), __('admin.save_blocked_outdated'));
+                $validator->errors()->add($this->submittedFieldPath($entity, $path), __('admin.save_blocked_outdated'));
             }
         });
     }
@@ -42,10 +43,33 @@ trait ValidatesStaleTranslationFields
 
     private function staleFieldWasModified(Model $entity, string $path): bool
     {
-        $requestPath = $this->requestDotPath($entity, $path);
+        $requestPath = $this->submittedFieldPath($entity, $path);
+        $submitted = data_get($this->all(), $requestPath);
+        $current = $this->currentEntityValue($entity, $path);
+        $preset = app(ContentSchemaRegistry::class)->forEntity($entity)[$path]['rich_text'] ?? null;
+        if ($preset && is_string($submitted) && is_string($current)) {
+            return SectionRichText::comparisonValue($submitted, $preset)
+                !== SectionRichText::comparisonValue($current, $preset);
+        }
 
-        return $this->normalizedValue(data_get($this->all(), $requestPath))
-            !== $this->normalizedValue($this->currentEntityValue($entity, $path));
+        return $this->normalizedValue($submitted) !== $this->normalizedValue($current);
+    }
+
+    private function submittedFieldPath(Model $entity, string $path): string
+    {
+        $original = app(ContentSchemaRegistry::class)->formNameFor($entity, $path);
+        foreach ((array) $this->input('editor_field_origins', []) as $encoded) {
+            $origin = is_string($encoded) ? json_decode($encoded, true) : null;
+            if (($origin['original'] ?? null) !== $original || ! is_string($origin['current'] ?? null)) {
+                continue;
+            }
+            $pattern = static fn (string $name): string => preg_replace('/\[\d+\]/', '[*]', $name);
+            if ($pattern($origin['current']) === $pattern($original)) {
+                return str_replace(['[', ']'], ['.', ''], $origin['current']);
+            }
+        }
+
+        return $this->requestDotPath($entity, $path);
     }
 
     private function requestDotPath(Model $entity, string $path): string

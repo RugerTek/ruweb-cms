@@ -5,6 +5,7 @@ namespace App\Services\Content;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Taxonomy;
+use App\Support\SectionRichText;
 use Illuminate\Database\Eloquent\Model;
 
 class ContentSchemaRegistry
@@ -57,6 +58,16 @@ class ContentSchemaRegistry
             $this->extractPath($data, explode('.', $path), $values, []);
         }
 
+        // Wrapping a legacy paragraph in <p> is initialization, not an editorial change.
+        if ($flag === 'translatable') {
+            $schema = $this->forEntity($entity) ?? [];
+            foreach ($values as $path => $value) {
+                $preset = $schema[$path]['rich_text'] ?? null;
+                if ($preset && is_string($value)) {
+                    $values[$path] = SectionRichText::comparisonValue($value, $preset);
+                }
+            }
+        }
         ksort($values);
 
         return $values;
@@ -133,6 +144,7 @@ class ContentSchemaRegistry
     {
         if ($segments === []) {
             $values[implode('.', $resolved)] = $current;
+
             return;
         }
 

@@ -14,6 +14,7 @@
     $pages = $pages ?? [];
     $pageValue = old(str_replace(['[', ']'], ['.', ''], $pageName), $pageValue ?? null);
     $urlValue = old(str_replace(['[', ']'], ['.', ''], $urlName), $urlValue ?? null);
+    if (! filled($pageValue)) $pageValue = \App\Support\LinkDestination::referenceForUrl($urlValue);
     $isCustom = ! filled($pageValue) || ! array_key_exists($pageValue, $pages);
     $selected = $isCustom ? \App\Support\LinkDestination::CUSTOM : $pageValue;
     $inputClass = 'w-full bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50';
@@ -30,7 +31,7 @@
     </select>
 
     <div data-link-destination-custom class="mt-2 {{ $isCustom ? '' : 'hidden' }}">
-        <label for="{{ $uid }}-url" class="sr-only">{{ __('admin.link_destination_custom_url') }}</label>
+        <label for="{{ $uid }}-url" class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.link_destination_custom_url') }}</label>
         <input type="text" id="{{ $uid }}-url" name="{{ $urlName }}" value="{{ $urlValue }}"
                placeholder="{{ __('admin.link_destination_custom_ph') }}" class="{{ $inputClass }}">
         <p class="text-xs text-gray-600 mt-1">{{ __('admin.link_destination_custom_help') }}</p>

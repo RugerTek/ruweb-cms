@@ -20,26 +20,26 @@
 @endphp
 
 <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">{{ $meta['title'] ?? $page->title }}</h1>
+    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">{!! \App\Support\EditorialTitle::render($meta['title'] ?? $page->title) !!}</h1>
 
     @if(($intro['is_visible'] ?? 1))
         @if($intro['heading'] ?? null)
-            <h2 class="text-2xl font-semibold text-gray-900 mb-3">{{ $intro['heading'] }}</h2>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-3">{!! \App\Support\EditorialTitle::render($intro['heading']) !!}</h2>
         @endif
         @if($intro['body'] ?? null)
-            <p class="text-lg text-gray-600 mb-10">{{ $intro['body'] }}</p>
+            <div class="text-lg text-gray-600 mb-10">{!! \App\Support\SectionRichText::render($intro['body'], 'short-description') !!}</div>
         @endif
     @endif
 
     @if(($form['is_visible'] ?? 1))
         <section id="contact-form" class="bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
             @if($form['heading'] ?? null)
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $form['heading'] }}</h2>
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">{!! \App\Support\EditorialTitle::render($form['heading']) !!}</h2>
             @endif
 
             @if($sent)
                 <div role="status" class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-                    {{ $form['success_message'] ?? __('public.forms.contact.success') }}
+                    {!! \App\Support\SectionRichText::render($form['success_message'] ?? __('public.forms.contact.success'), 'short-description') !!}
                 </div>
             @endif
 

@@ -51,6 +51,14 @@
             'btnLeaveWithoutSaving' => __('admin.btn_leave_without_saving'),
             'btnKeepEditing' => __('admin.btn_keep_editing'),
             'logoItemFallbackLabel' => __('admin.logo_item_fallback_label'),
+            'linkSearch' => __('admin.link_search'),
+            'linkShowOptions' => __('admin.link_show_options'),
+            'linkNoResults' => __('admin.link_no_results'),
+            'validationErrors' => __('admin.validation_errors'),
+            'fieldOutdated' => __('admin.field_outdated'),
+            'fieldOutdatedHint' => __('admin.field_outdated_hint'),
+            'markNoChanges' => __('admin.mark_no_changes'),
+            'richTextLabels' => __('admin.rich_text_labels'),
             'maxUploadKb' => $effectiveMaxKb,
         ];
     @endphp

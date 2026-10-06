@@ -52,6 +52,14 @@
             'btnLeaveWithoutSaving' => __('admin.btn_leave_without_saving'),
             'btnKeepEditing' => __('admin.btn_keep_editing'),
             'logoItemFallbackLabel' => __('admin.logo_item_fallback_label'),
+            'linkSearch' => __('admin.link_search'),
+            'linkShowOptions' => __('admin.link_show_options'),
+            'linkNoResults' => __('admin.link_no_results'),
+            'validationErrors' => __('admin.validation_errors'),
+            'fieldOutdated' => __('admin.field_outdated'),
+            'fieldOutdatedHint' => __('admin.field_outdated_hint'),
+            'markNoChanges' => __('admin.mark_no_changes'),
+            'richTextLabels' => __('admin.rich_text_labels'),
             'maxUploadKb' => $effectiveMaxKb,
         ];
     @endphp
@@ -71,7 +79,7 @@
 
     {{-- Top bar --}}
     <header class="flex-none flex items-center justify-between px-4 h-12 bg-[#111111] border-b border-white/[0.06]">
-        <div class="flex items-center gap-3 min-w-0">
+        <div class="flex items-center gap-3 min-w-0 flex-1">
             <a href="{{ $editorBackHref ?? route('admin.pages.index') }}"
                class="text-gray-500 hover:text-gray-300 transition-colors flex-none"
                title="{{ $editorBackTitle ?? __('admin.back_to_pages') }}">
@@ -82,7 +90,7 @@
             <span class="text-sm font-medium text-white truncate">@yield('editor-title', __('admin.editor_title'))</span>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 flex-none">
             @yield('editor-actions')
             <button type="button" id="save-btn" disabled
                     class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-md transition-colors">
@@ -112,11 +120,11 @@
     @endif
 
     {{-- Body --}}
-    <div class="flex-1 flex overflow-hidden">
+    <div id="editor-workspace" class="flex-1 flex overflow-hidden">
 
         {{-- Edit panel --}}
         <aside id="panel-edit"
-               class="w-full {{ ($showPreview ?? true) ? 'lg:w-96 lg:flex-none' : '' }} bg-[#111111] {{ ($showPreview ?? true) ? 'border-r border-white/[0.06]' : '' }} flex flex-col">
+               class="w-full {{ ($showPreview ?? true) ? 'editor-resizable-panel lg:flex-none' : '' }} bg-[#111111] {{ ($showPreview ?? true) ? 'border-r border-white/[0.06]' : '' }} flex flex-col">
             <div class="flex-1 overflow-y-auto p-5 editor-scroll">
                 @include('admin.partials.alerts')
                 @yield('editor-form')
@@ -124,6 +132,11 @@
             @yield('editor-footer')
         </aside>
 
+        @if($showPreview ?? true)
+        <div id="editor-divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="{{ __('admin.editor_resize') }}"
+             aria-controls="panel-edit panel-preview" aria-valuemin="384" aria-valuenow="384" aria-valuemax="384"
+             class="hidden lg:block flex-none w-2 bg-white/5 hover:bg-sky-500/30 focus-visible:bg-sky-500/40 cursor-col-resize touch-none"></div>
+        @endif
         {{-- Preview panel --}}
         @if($showPreview ?? true)
         <section id="panel-preview"

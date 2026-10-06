@@ -43,6 +43,7 @@
         <input type="hidden" name="_editor_lock" value="{{ $editorLease['token'] }}">
     @endif
     @if($isEdit) @method('PUT') @endif
+    <input type="hidden" name="return" value="{{ $editorReturn ?? request()->query('return') }}">
     <input type="hidden" name="locale" value="{{ old('locale', $page?->locale ?? \App\Models\Locale::baseCode()) }}">
     @include('admin.partials.stale-fields', ['staleFieldNames' => $staleFieldNames ?? []])
 
@@ -95,7 +96,7 @@
             <select name="template_key" id="template_key"
                     class="w-full bg-[#1a1a1a] border border-white/10 text-gray-400 text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50">
                 @foreach ($templates as $key => $tmpl)
-                    <option value="{{ $key }}" {{ $currentTemplate === $key ? 'selected' : '' }}>{{ $tmpl['name'] }}</option>
+                    <option value="{{ $key }}" {{ $currentTemplate === $key ? 'selected' : '' }}>{{ __('admin.template_'.$key) }}</option>
                 @endforeach
             </select>
             @error('template_key')
@@ -127,18 +128,14 @@
 
                 <div class="template-section rounded-xl border border-white/[0.08] bg-[#101013] overflow-hidden"
                      data-templates="{{ $sectionTemplates }}">
-                    <div class="section-accordion-header flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-white/[0.02] transition-colors"
-                         data-accordion-toggle
-                         aria-expanded="false"
-                         aria-controls="{{ $sectionBodyId }}">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <svg data-accordion-icon class="section-chevron w-4 h-4 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="section-accordion-header flex items-center justify-between gap-2 px-4 py-3">
+                        <button type="button" class="flex items-center gap-2 min-w-0 flex-1 text-left rounded focus-visible:ring-2 focus-visible:ring-sky-400"
+                                data-accordion-toggle aria-expanded="false" aria-controls="{{ $sectionBodyId }}">
+                            <svg data-accordion-icon class="section-chevron w-4 h-4 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
-                            <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
-                                {{ str_replace('_', ' ', $section) }}
-                            </h3>
-                        </div>
+                            <h3 class="text-xs font-medium text-gray-400 truncate">{{ __('admin.section_'.$section) }}</h3>
+                        </button>
 
                         <label class="relative inline-flex items-center gap-2 cursor-pointer shrink-0" data-visibility-toggle>
                             <input type="hidden" name="content_json[sections][{{ $section }}][is_visible]" value="0">
@@ -147,7 +144,7 @@
                                    value="1"
                                    class="sr-only peer"
                                    {{ $isVisible ? 'checked' : '' }}>
-                            <div class="w-9 h-5 bg-gray-700 peer-checked:bg-sky-500 rounded-full transition-colors relative
+                            <div class="w-9 h-5 bg-gray-700 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 peer-checked:bg-sky-500 rounded-full transition-colors relative
                                         after:content-[''] after:absolute after:top-0.5 after:left-0.5
                                         after:bg-white after:rounded-full after:h-4 after:w-4
                                         after:transition-transform peer-checked:after:translate-x-4"></div>
@@ -164,20 +161,7 @@
                                 'templateKey' => $sectionConfig['partialSourceTemplate'],
                             ])
                         @else
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_section_heading') }}</label>
-                                <input type="text" name="content_json[sections][{{ $section }}][heading]"
-                                       value="{{ $contentJson['sections'][$section]['heading'] ?? '' }}"
-                                       class="w-full bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50"
-                                       placeholder="{{ __('admin.field_section_heading_ph') }}">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_section_body') }}</label>
-                                <textarea name="content_json[sections][{{ $section }}][body]" rows="4"
-                                          class="w-full bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50"
-                                          placeholder="{{ __('admin.field_section_body_ph') }}">{{ $contentJson['sections'][$section]['body'] ?? '' }}</textarea>
-                            </div>
+                            @include('admin.partials._section-copy', ['sectionKey' => $section, 'preset' => $section === 'intro' ? 'short-description' : 'section-body'])
                         @endif
                     </div>
                 </div>
@@ -196,7 +180,7 @@
                         class="w-full bg-[#1a1a1a] border border-white/10 text-gray-400 text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50">
                     @foreach (config('cms.statuses') as $s)
                         <option value="{{ $s }}" {{ old('status', $page?->status ?? 'draft') === $s ? 'selected' : '' }}>
-                            {{ ucfirst($s) }}
+                            {{ __('admin.badge_'.$s) }}
                         </option>
                     @endforeach
                 </select>
@@ -294,6 +278,12 @@
                 .filter(Boolean);
             const shouldShow = templates.includes(templateSelect.value);
             block.style.display = shouldShow ? '' : 'none';
+            block.querySelectorAll('input, select, textarea').forEach(field => field.disabled = !shouldShow);
+            block.querySelectorAll('[data-template-only]').forEach(group => {
+                const enabled = shouldShow && group.dataset.templateOnly.split(',').includes(templateSelect.value);
+                group.hidden = !enabled;
+                group.querySelectorAll('input, select, textarea').forEach(field => field.disabled = !enabled);
+            });
         });
     }
 
@@ -348,8 +338,8 @@
     // Delete button -> hidden form
     const deleteBtn = document.getElementById('delete-page-btn');
     if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => {
-            if (confirm('{{ __('admin.confirm_delete_page') }}')) {
+        deleteBtn.addEventListener('click', async () => {
+            if (await window.confirmAction({ message: @json(__('admin.confirm_delete_page')) })) {
                 document.getElementById('delete-form').submit();
             }
         });

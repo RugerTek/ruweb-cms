@@ -188,6 +188,7 @@ export function initEditorEngine(config = {}) {
                 savedSnapshot = statusOverride
                     ? JSON.stringify(submittedEntries.map(([key, value]) => [key, key === 'status' ? nextStatus : value]))
                     : submittedSnapshot;
+                form.dispatchEvent(new CustomEvent('editor:saved'));
                 showToast(savedMsg);
 
                 if (reloadAfterSave && !isDirty()) {
@@ -219,6 +220,7 @@ export function initEditorEngine(config = {}) {
 
         try {
             const payload = await response.json();
+            if (payload?.errors) window.editorFeedback?.showErrors(payload.errors);
             const firstError = payload?.errors
                 ? Object.values(payload.errors).flat()[0]
                 : null;
@@ -281,6 +283,12 @@ export function initEditorEngine(config = {}) {
         }
     }
 
+    form.addEventListener('editor:field-ready', event => {
+        const { field, previousValue } = event.detail;
+        savedSnapshot = JSON.stringify(JSON.parse(savedSnapshot).map(([key, value]) => [key, key === field.name && value === previousValue ? field.value : value]));
+        clearTimeout(previewTimer); previewTimer = setTimeout(refreshPreview, 600);
+        updateDirtyState();
+    });
     form.addEventListener('input', onFormChange);
     form.addEventListener('change', onFormChange);
     form.addEventListener('submit', event => {

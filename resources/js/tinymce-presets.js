@@ -10,7 +10,7 @@
 const shortDescription = {
     toolbar: 'bold italic link | removeformat',
     plugins: 'link autolink',
-    valid_elements: 'strong/b,em/i,a[href|title|target|rel],br',
+    valid_elements: 'p,strong/b,em/i,a[href|title|target|rel],br',
     block_formats: 'Paragraph=p',
     height: 160,
     statusbar: false,
@@ -47,6 +47,12 @@ const postBody = {
 export const TINYMCE_PRESETS = {
     'short-description': shortDescription,
     'post-body': postBody,
+    'section-body': {
+        toolbar: 'bold italic link | bullist numlist | removeformat',
+        plugins: 'link lists',
+        valid_elements: 'p,strong/b,em/i,br,a[href|title|target|rel],ul,ol,li',
+        height: 220, statusbar: false, toolbar_mode: 'sliding',
+    },
 };
 
 export function resolvePreset(name) {

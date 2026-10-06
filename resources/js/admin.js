@@ -1,5 +1,7 @@
 import '../css/admin.css';
 import { initEditorEngine } from './editor-engine.js';
+import { initTitleEditors, initLinkComboboxes, initEditorResize } from './editor-controls.js';
+import { initEditorFeedback } from './editor-feedback.js';
 
 const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 if (token) {
@@ -8,7 +10,24 @@ if (token) {
 const adminI18n = window.adminI18n || {};
 const t = (key, fallback = '') => adminI18n[key] ?? fallback;
 const maxUploadKb = Number(adminI18n.maxUploadKb || 0);
-window.initEditorEngine = initEditorEngine;
+window.initEditorEngine = (config) => {
+    window.editorFeedback ||= initEditorFeedback(document.getElementById('editor-form'));
+    initEditorEngine(config);
+};
+initTitleEditors();
+initLinkComboboxes();
+initEditorResize();
+if (document.getElementById('editor-form') && !document.getElementById('preview-frame')) {
+    window.editorFeedback = initEditorFeedback(document.getElementById('editor-form'));
+}
+// Associate the legacy plain labels with their controls as well.
+document.querySelectorAll('label:not([for])').forEach(label => {
+    if (label.querySelector('input, select, textarea')) return;
+    const field = label.parentElement.querySelector('input:not([type=hidden]), select, textarea');
+    if (!field) return;
+    field.id ||= `field-${crypto.randomUUID()}`; label.htmlFor = field.id;
+    label.id ||= `${field.id}-label`;
+});
 
 // TinyMCE is heavy, so its chunk is only fetched on screens that actually use it.
 if (document.querySelector('[data-rich-text]')) {
@@ -282,7 +301,7 @@ function renderSelectorPreview(selector, media) {
     }
 
     if (!media) {
-        preview.innerHTML = '';
+        preview.replaceChildren(selector.querySelector('[data-media-placeholder]')?.content.cloneNode(true) || document.createTextNode(''));
         input.value = '';
         clear.classList.add('hidden');
         button.textContent = defaultLabel;
@@ -518,6 +537,7 @@ function initMediaSelector(selector) {
         notifySelectorChange(selector);
     });
 
+    if (!input?.value) renderSelectorPreview(selector, null);
     if (input?.value) {
         fetchMediaItem(input.value)
             .then((media) => renderSelectorPreview(selector, media))
@@ -614,6 +634,9 @@ window.confirmAction = (options) => {
     confirmModal.classList.remove('hidden');
 
     const previouslyFocused = document.activeElement;
+    const background = Array.from(document.body.children).filter(node => node !== confirmModal);
+    const inertState = background.map(node => node.inert);
+    background.forEach(node => node.inert = true);
     acceptButton.focus();
 
     return new Promise((resolve) => {
@@ -623,6 +646,7 @@ window.confirmAction = (options) => {
             cancelButton.removeEventListener('click', onCancel);
             confirmModal.removeEventListener('click', onBackdrop);
             document.removeEventListener('keydown', onKeydown);
+            background.forEach((node, index) => node.inert = inertState[index]);
             previouslyFocused?.focus?.();
             resolve(result);
         };
@@ -633,7 +657,13 @@ window.confirmAction = (options) => {
             if (event.target === confirmModal) close(false);
         };
         const onKeydown = (event) => {
-            if (event.key === 'Escape') close(false);
+            if (event.key === 'Escape') { event.preventDefault(); close(false); }
+            if (event.key === 'Tab') {
+                const buttons = [cancelButton, acceptButton];
+                const current = buttons.indexOf(document.activeElement);
+                event.preventDefault();
+                buttons[(current + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+            }
         };
 
         acceptButton.addEventListener('click', onAccept);
@@ -645,6 +675,21 @@ window.confirmAction = (options) => {
 
 // Administrable logo repeater: one nested accordion per item, with ordering,
 // dynamic labels and confirmed deletion.
+function ensureRepeaterIds(row) {
+    if (row.dataset.accessibleIdsReady) return;
+    row.dataset.accessibleIdsReady = '1';
+    const prefix = `item-${crypto.randomUUID()}`;
+    const ids = new Map();
+    row.querySelectorAll('[id]').forEach((node, index) => {
+        const old = node.id; node.id = `${prefix}-${index}`; ids.set(old, node.id);
+    });
+    row.querySelectorAll('[for], [aria-controls]').forEach(node => {
+        for (const attr of ['for', 'aria-controls']) {
+            const value = node.getAttribute(attr); if (ids.has(value)) node.setAttribute(attr, ids.get(value));
+        }
+    });
+}
+
 document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
     const list = repeater.querySelector('[data-logo-list]');
     const template = repeater.querySelector('[data-logo-template]');
@@ -681,6 +726,7 @@ document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
         const items = rows();
 
         items.forEach((row, index) => {
+            ensureRepeaterIds(row);
             row.querySelectorAll('[name]').forEach((field) => {
                 field.name = field.name.replace(/\[logos\]\[[^\]]*\]/, `[logos][${index}]`);
             });
@@ -818,6 +864,7 @@ document.querySelectorAll('[data-repeater]').forEach((repeater) => {
         const items = rows();
 
         items.forEach((row, index) => {
+            ensureRepeaterIds(row);
             row.querySelectorAll('[name]').forEach((field) => {
                 field.name = field.name.replace(indexPattern, `[${key}][${index}]`);
             });
@@ -927,20 +974,6 @@ document.querySelectorAll('[data-toggle-controls]').forEach((toggle) => {
     const targets = document.querySelectorAll(`[data-toggle-target="${id}"]`);
     const sync = () => targets.forEach((target) => target.classList.toggle('hidden', !toggle.checked));
     toggle.addEventListener('change', sync);
-    sync();
-});
-
-// Button destination selector (docs/admin/live-editor-ui-ux.md): the manual URL input is
-// shown only while "Custom" is selected; the typed value is kept while switching.
-document.querySelectorAll('[data-link-destination]').forEach((control) => {
-    const select = control.querySelector('[data-link-destination-page]');
-    const custom = control.querySelector('[data-link-destination-custom]');
-    if (!select || !custom) return;
-    const sync = () => custom.classList.toggle('hidden', select.value !== 'custom');
-    select.addEventListener('change', () => {
-        sync();
-        if (select.value === 'custom') custom.querySelector('input')?.focus();
-    });
     sync();
 });
 

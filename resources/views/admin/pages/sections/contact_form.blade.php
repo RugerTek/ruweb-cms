@@ -16,10 +16,7 @@
     {{ __('admin.form_section_code_owned_note') }}
 </p>
 
-<div>
-    <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_section_heading') }}</label>
-    <input type="text" name="content_json[sections][{{ $sectionKey }}][heading]" value="{{ $sectionData['heading'] ?? '' }}" class="{{ $inputClass }}">
-</div>
+@include('admin.partials._editorial-title', ['name' => "content_json[sections][{$sectionKey}][heading]", 'value' => $sectionData['heading'] ?? ''])
 
 <div class="border-t border-white/[0.08] pt-4">
     <h4 class="text-xs font-semibold text-white uppercase tracking-wide mb-3">{{ __('admin.form_section_labels') }}</h4>
@@ -28,16 +25,16 @@
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.form_field_label_for', ['field' => __('admin.submission_field_'.$fieldKey)]) }}</label>
                 <input type="text" name="content_json[sections][{{ $sectionKey }}][labels][{{ $fieldKey }}]" value="{{ $labels[$fieldKey] ?? '' }}"
-                       class="{{ $inputClass }}" placeholder="{{ __('public.forms.contact.'.$fieldKey) }}">
+                       class="{{ $inputClass }}" placeholder="{{ __('admin.submission_field_'.$fieldKey) }}">
             </div>
         @endforeach
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_button_label') }}</label>
-            <input type="text" name="content_json[sections][{{ $sectionKey }}][button_label]" value="{{ $sectionData['button_label'] ?? '' }}" class="{{ $inputClass }}" placeholder="{{ __('public.forms.contact.send') }}">
+            <input type="text" name="content_json[sections][{{ $sectionKey }}][button_label]" value="{{ $sectionData['button_label'] ?? '' }}" class="{{ $inputClass }}" placeholder="{{ __('admin.contact_button_example') }}">
         </div>
         <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_success_message') }}</label>
-            <textarea name="content_json[sections][{{ $sectionKey }}][success_message]" rows="2" class="{{ $inputClass }}" placeholder="{{ __('public.forms.contact.success') }}">{{ $sectionData['success_message'] ?? '' }}</textarea>
+            <textarea name="content_json[sections][{{ $sectionKey }}][success_message]" rows="2" data-rich-text="short-description" class="{{ $inputClass }}" placeholder="{{ __('admin.contact_success_example') }}">{{ $sectionData['success_message'] ?? '' }}</textarea>
         </div>
     </div>
 </div>
@@ -54,6 +51,7 @@
         <p class="text-xs text-gray-600 mt-0.5">{{ __('admin.form_section_subject_options_help') }}</p>
     </div>
 
+    <input type="hidden" name="content_json[sections][{{ $sectionKey }}][subject_options]" value="" data-empty-repeater>
     <div data-repeater-list class="space-y-2">
         @foreach($options as $index => $option)
             @include('admin.pages.sections._option-repeater-item', ['sectionKey' => $sectionKey, 'field' => 'subject_options', 'index' => $index, 'option' => $option])
@@ -84,7 +82,7 @@
 
     <div>
         <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_notify_email') }}</label>
-        <input type="email" name="content_json[sections][{{ $sectionKey }}][notify_email]" value="{{ $sectionData['notify_email'] ?? '' }}" class="{{ $inputClass }}" placeholder="nombre@dominio.com">
+        <input type="email" name="content_json[sections][{{ $sectionKey }}][notify_email]" value="{{ $sectionData['notify_email'] ?? '' }}" class="{{ $inputClass }}" placeholder="{{ __('admin.notify_email_example') }}">
         <p class="text-xs text-gray-600 mt-1">{{ __('admin.field_notify_email_help') }}</p>
     </div>
 

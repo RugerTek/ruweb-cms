@@ -124,3 +124,22 @@ view so the admin bar and its body padding are omitted. Editor responses forbid 
 `LiveEditorSafetyTest` covers exclusive ownership, expiry, renewal, token rotation, release, preview rendering
 and framing restrictions for pages and posts. Run `php artisan test --filter=LiveEditorSafetyTest` for those
 flows and `npm test` for preview navigation, lease loss, pending edits and out-of-order preview responses.
+
+## Shared controls and feedback
+
+`editor-controls.js` owns the keyboard/pointer resize divider, token-backed visual titles and searchable
+link combobox. Use `admin.partials._editorial-title`, `_section-copy` and `_link-destination`; do not copy
+these controls into template-specific implementations. A combobox search is UI state only: the native
+selection holds the semantic reference, and only selecting a result changes content.
+
+Section running-text fields declare a `rich_text` preset in their schema and the same `data-rich-text`
+preset in the form. `SectionRichText` sanitizes page writes and public rendering with that preset's
+allowlist. Plain legacy content keeps its line breaks. TinyMCE initial normalization emits
+`editor:field-ready`, so opening a document alone never makes it dirty or acknowledges translation warnings.
+
+`editor-feedback.js` tracks stale fields by DOM identity, propagates badges through tabs and every nested
+accordion, and opens/scrolls/focuses the full path on a blocked save. Structural repeaters must dispatch a
+bubbling `change` after add/remove/reorder and keep contiguous names. Feedback serializes
+`editor_field_origins[]` to map moved fields back to their original translation paths; the backend validates
+those paths before checking changes. Successful saves emit `editor:saved`; failed JSON saves pass the
+complete `errors` map to feedback. Empty repeater markers explicitly persist an empty list.

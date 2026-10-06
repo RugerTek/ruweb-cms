@@ -78,7 +78,7 @@
                 @foreach ($pages as $page)
                     <tr class="hover:bg-white/[0.02] transition-colors">
                         <td class="px-4 py-3">
-                            <a href="{{ route('admin.pages.edit', $page) }}" class="text-sm text-white hover:text-sky-400 transition-colors">
+                            <a href="{{ route('admin.pages.edit', ['page' => $page, 'return' => request()->fullUrl()]) }}" class="text-sm text-white hover:text-sky-400 transition-colors">
                                 {{ $page->title }}
                             </a>
                         </td>
@@ -96,7 +96,7 @@
                                             : ($state === 'missing' ? 'bg-white/[0.04] text-gray-600' : 'bg-yellow-500/10 text-yellow-400');
                                     @endphp
                                     @if($translation)
-                                        <a href="{{ route('admin.pages.edit', $translation) }}"
+                                        <a href="{{ route('admin.pages.edit', ['page' => $translation, 'return' => request()->fullUrl()]) }}"
                                            title="{{ __('admin.edit_translation', ['lang' => $locale->name]) }}"
                                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors hover:ring-1 hover:ring-white/20 {{ $badgeColor }}">
                                             {{ strtoupper($locale->code) }}
@@ -104,6 +104,7 @@
                                     @elseif($page->isTranslationSchemaReady())
                                         <form method="POST" action="{{ route('admin.pages.translate', [$page, $locale->code]) }}" class="inline-flex">
                                             @csrf
+                                            <input type="hidden" name="return" value="{{ request()->fullUrl() }}">
                                             <button type="submit"
                                                     title="{{ __('admin.create_translation', ['lang' => $locale->name]) }}"
                                                     class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors hover:bg-white/[0.08] hover:text-gray-300 {{ $badgeColor }}">
@@ -120,7 +121,7 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 hidden md:table-cell">
-                            <span class="text-xs text-gray-500">{{ config('cms.templates.' . $page->template_key . '.name', $page->template_key) }}</span>
+                            <span class="text-xs text-gray-500">{{ __('admin.template_'.$page->template_key) }}</span>
                         </td>
                         <td class="px-4 py-3">
                             @if ($page->status === 'published')
@@ -138,7 +139,7 @@
                                         </svg>
                                     </a>
                                 @endif
-                                <a href="{{ route('admin.pages.edit', $page) }}" class="text-gray-600 hover:text-gray-400 transition-colors" title="{{ __('admin.action_edit') }}">
+                                <a href="{{ route('admin.pages.edit', ['page' => $page, 'return' => request()->fullUrl()]) }}" class="text-gray-600 hover:text-gray-400 transition-colors" title="{{ __('admin.action_edit') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>

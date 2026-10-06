@@ -41,7 +41,7 @@
 <script>
     function submitWithStatus(status) {
         document.getElementById('status').value = status;
-        document.getElementById('editor-form').submit();
+        document.getElementById('editor-form').requestSubmit();
     }
     ['publish-btn', 'publish-btn-mobile'].forEach(id => {
         document.getElementById(id).addEventListener('click', () => submitWithStatus('published'));

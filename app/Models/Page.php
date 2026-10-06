@@ -2,23 +2,25 @@
 
 namespace App\Models;
 
-use App\Traits\RecordsContentRevisions;
 use App\Contracts\Editorial\Mediable;
 use App\Contracts\Editorial\Previewable;
 use App\Contracts\Editorial\Publishable;
 use App\Contracts\Editorial\Seoable;
+use App\Support\LinkDestination;
+use App\Support\SectionRichText;
+use App\Support\SiteUrl;
 use App\Traits\HasMedia;
 use App\Traits\HasPublicationState;
 use App\Traits\HasTranslations;
+use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\View;
 
 class Page extends Model implements Mediable, Previewable, Publishable, Seoable
 {
-    use RecordsContentRevisions;
-
     use HasMedia, HasPublicationState, HasTranslations;
+    use RecordsContentRevisions;
 
     protected $fillable = [
         'locale',
@@ -43,6 +45,35 @@ class Page extends Model implements Mediable, Previewable, Publishable, Seoable
             'source_field_hashes' => 'array',
             'published_at' => 'datetime',
         ];
+    }
+
+    protected function setContentJsonAttribute(mixed $value): void
+    {
+        $content = is_string($value) ? json_decode($value, true) : $value;
+        if (! is_array($content)) {
+            $this->attributes['content_json'] = json_encode($content);
+
+            return;
+        }
+
+        $schema = config('cms.templates.'.($this->template_key ?: 'default').'.schema', []);
+        foreach ($schema as $path => $field) {
+            if (isset($field['rich_text']) && is_string(data_get($content, $path))) {
+                data_set($content, $path, (new SectionRichText($field['rich_text']))->sanitize(data_get($content, $path)));
+            }
+        }
+        if (isset($content['sections']['cta'])) {
+            $cta = &$content['sections']['cta'];
+            if (($cta['button_page'] ?? null) === LinkDestination::CUSTOM) {
+                $cta['button_page'] = null;
+            }
+            if (! empty($cta['button_page'])) {
+                $cta['button_url'] = null;
+            } elseif (isset($cta['button_url'])) {
+                $cta['button_url'] = SiteUrl::toRelative(trim((string) $cta['button_url']));
+            }
+        }
+        $this->attributes['content_json'] = json_encode($content);
     }
 
     public function creator(): BelongsTo

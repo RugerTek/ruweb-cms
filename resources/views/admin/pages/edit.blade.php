@@ -12,7 +12,7 @@
 
     @if ($page->isPublished())
         <a href="{{ $page->url() }}" target="_blank"
-           class="text-xs text-gray-500 hover:text-gray-300 transition-colors hidden sm:inline">
+           class="text-xs text-gray-500 hover:text-gray-300 transition-colors">
             {{ __('admin.view_live') }}
         </a>
     @endif

@@ -58,6 +58,7 @@ const EDITOR_BODY_CSS = `
         color: #e5e7eb;
         font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         font-size: 15px;
+        font-weight: 400;
         line-height: 1.7;
         padding: 1.25rem 1.5rem;
         max-width: 46rem;
@@ -122,6 +123,8 @@ export function initRichText(root = document) {
     }
 
     injectSkin();
+    const locale = document.documentElement.lang?.split('-')[0] || 'en';
+    if (window.adminI18n?.richTextLabels) tinymce.addI18n(locale, window.adminI18n.richTextLabels);
 
     fields.forEach((field) => {
         if (field.dataset.richTextReady === '1') {
@@ -129,10 +132,14 @@ export function initRichText(root = document) {
         }
         field.dataset.richTextReady = '1';
 
+        const previousValue = field.value;
         const preset = resolvePreset(field.dataset.richText);
 
         tinymce.init({
             target: field,
+            language: locale,
+            language_url: '',
+            entity_encoding: 'raw',
             // Self-hosted open-source build: no cloud account involved.
             license_key: 'gpl',
             skin: false,
@@ -193,12 +200,25 @@ export function initRichText(root = document) {
 
                 // Keep the textarea authoritative so dirty state, preview refresh,
                 // autosave and validation behave exactly as with a native control.
+                let initialized = false;
                 const sync = () => {
+                    if (!initialized) return;
                     editor.save();
                     field.dispatchEvent(new Event('input', { bubbles: true }));
                     field.dispatchEvent(new Event('change', { bubbles: true }));
                 };
 
+                editor.on('init', () => {
+                    editor.save(); initialized = true;
+                    const label = field.parentElement.querySelector('label');
+                    if (label) {
+                        label.id ||= `${field.id}-label`;
+                        editor.getContainer().setAttribute('aria-labelledby', label.id);
+                        editor.getContentAreaContainer().querySelector('iframe')?.setAttribute('title', label.textContent.trim());
+                    }
+                    field.dispatchEvent(new CustomEvent('editor:field-ready', { bubbles: true, detail: { field, previousValue } }));
+                });
+                field.addEventListener('editor:focus-field', () => editor.focus());
                 editor.on('Change KeyUp Undo Redo SetContent ExecCommand', sync);
                 editor.on('blur', sync);
             },

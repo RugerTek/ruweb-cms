@@ -6,7 +6,6 @@ use DOMAttr;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
-use DOMXPath;
 
 /**
  * Server-side allowlist for rich text produced by the admin editors.
@@ -83,7 +82,7 @@ class RichTextSanitizer
         $previous = libxml_use_internal_errors(true);
 
         $document->loadHTML(
-            '<?xml encoding="UTF-8"><div id="rich-text-root">' . $html . '</div>',
+            '<?xml encoding="UTF-8"><div id="rich-text-root">'.$html.'</div>',
             LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
         );
 
@@ -103,6 +102,11 @@ class RichTextSanitizer
         }
 
         return trim($output);
+    }
+
+    protected function allowedElements(): array
+    {
+        return self::ALLOWED;
     }
 
     protected function looksLikeHtml(string $value): bool
@@ -129,7 +133,7 @@ class RichTextSanitizer
                 return;
             }
 
-            if (! array_key_exists($tag, self::ALLOWED)) {
+            if (! array_key_exists($tag, $this->allowedElements())) {
                 $this->unwrap($node);
 
                 return;
@@ -163,7 +167,7 @@ class RichTextSanitizer
 
         foreach ((array) config('cms.rich_text.allowed_embed_hosts', []) as $allowed) {
             $allowed = strtolower(trim((string) $allowed));
-            if ($allowed !== '' && ($host === $allowed || str_ends_with($host, '.' . $allowed))) {
+            if ($allowed !== '' && ($host === $allowed || str_ends_with($host, '.'.$allowed))) {
                 return true;
             }
         }
@@ -190,7 +194,7 @@ class RichTextSanitizer
 
     protected function cleanAttributes(DOMElement $node, string $tag): void
     {
-        $allowed = self::ALLOWED[$tag];
+        $allowed = $this->allowedElements()[$tag];
 
         foreach (iterator_to_array($node->attributes) as $attribute) {
             /** @var DOMAttr $attribute */

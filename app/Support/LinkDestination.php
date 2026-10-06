@@ -65,6 +65,18 @@ class LinkDestination
      *
      * @return array<string, string>
      */
+    public static function referenceForUrl(?string $url): ?string
+    {
+        $url = SiteUrl::toRelative($url);
+        foreach (Page::whereNotNull('translation_group_id')->get() as $page) {
+            if ($url === $page->url()) {
+                return $page->translation_group_id;
+            }
+        }
+
+        return null;
+    }
+
     public static function pageOptions(): array
     {
         return Page::published()

@@ -242,8 +242,8 @@
     // Delete button → hidden form
     const deletePostBtn = document.getElementById('delete-post-btn');
     if (deletePostBtn) {
-        deletePostBtn.addEventListener('click', () => {
-            if (confirm('{{ __('admin.confirm_delete_post') }}')) {
+        deletePostBtn.addEventListener('click', async () => {
+            if (await window.confirmAction({ message: @json(__('admin.confirm_delete_post')) })) {
                 document.getElementById('delete-post-form').submit();
             }
         });

@@ -173,7 +173,7 @@ Every editable button destination must use a semantic page selector by default. 
 Requirements:
 
 1. Label the control according to its purpose, such as `Button destination`.
-2. Populate a select with the website's available internal pages, using their client-facing titles rather than database IDs, slugs, route names, or raw URLs.
+2. Populate a searchable combobox with the website's available internal pages, using their client-facing titles rather than database IDs, slugs, route names, or raw URLs. Filter by title as the client types, ignoring case and accents. Expose a clearly labelled search field and an explicit no-results state. Support Arrow keys, Enter to select, Escape to dismiss, and normal Tab navigation; expose the list and active option with the combobox/listbox ARIA pattern. Searching alone must not change the saved destination, dirty state, or preview. Preserve the current selection when dismissing or clearing the search.
 3. Store an internal selection as a stable semantic page reference, not as the page's current literal URL. The reference belongs to the translation family or logical page identity rather than to one localized record.
 4. Place `Custom` as the final select option.
 5. Reveal a manual destination input only while `Custom` is selected; keep it hidden for internal-page selections.
@@ -530,7 +530,7 @@ Use this as the review instrument; each group maps to a section above.
   serialized safely, rendered through an allowlist and never shown as raw syntax.
 - Running text uses TinyMCE with a minimal named preset matching its public component, synchronized with the
   editor lifecycle and sanitized server-side against the same allowlist.
-- Every editable button destination uses the page selector first, `Custom` last with a conditional manual
+- Every editable button destination uses a searchable, keyboard-accessible page combobox first, `Custom` last with a conditional manual
   field, an `Open in a new tab` checkbox, a stable internal reference that resolves per locale, and
   server-side validation of custom values.
 - Media fields with no asset preview the placeholder matching the slot's aspect ratio.

@@ -1,28 +1,12 @@
+@include('admin.partials._section-copy', ['preset' => 'section-body'])
 @php
     $sectionData = $contentJson['sections'][$sectionKey] ?? [];
-    $logos = array_values(array_filter(
-        $sectionData['logos'] ?? [],
-        fn ($logo) => filled($logo['image_id'] ?? null) || filled($logo['label'] ?? null)
-    ));
+    $logos = array_values(array_filter($sectionData['logos'] ?? [], fn ($logo) => filled($logo['image_id'] ?? null) || filled($logo['label'] ?? null)));
 @endphp
-
-<div>
-    <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_section_heading') }}</label>
-    <input type="text" name="content_json[sections][{{ $sectionKey }}][heading]"
-           value="{{ $sectionData['heading'] ?? '' }}"
-           class="w-full bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50"
-           placeholder="{{ __('admin.field_section_heading_ph') }}">
-</div>
-
-<div>
-    <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.field_section_body') }}</label>
-    <textarea name="content_json[sections][{{ $sectionKey }}][body]" rows="3"
-              class="w-full bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50"
-              placeholder="{{ __('admin.field_section_body_ph') }}">{{ $sectionData['body'] ?? '' }}</textarea>
-</div>
 
 {{-- Logo carousel: administrable repeater, one nested accordion per item --}}
 <div class="logo-repeater border-t border-white/[0.08] pt-4"
+     data-template-only="home"
      data-logo-repeater
      data-item-label="{{ __('admin.logo_item_fallback_label') }}">
     <div class="min-w-0 mb-3">
@@ -30,6 +14,7 @@
         <p class="text-xs text-gray-600 mt-0.5">{{ __('admin.field_section_logos_help') }}</p>
     </div>
 
+    <input type="hidden" name="content_json[sections][{{ $sectionKey }}][logos]" value="" data-empty-repeater>
     <div data-logo-list class="space-y-2">
         @foreach ($logos as $index => $logo)
             @include('admin.pages.sections._logo-repeater-item', [

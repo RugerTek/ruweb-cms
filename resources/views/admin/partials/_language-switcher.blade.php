@@ -16,10 +16,10 @@
                     $state = $translation ? $model->derivedTranslationState($locale->code) : 'missing';
                 @endphp
                 <option value="{{ $locale->code }}"
-                        data-url="{{ $translation ? route($editRoute, $translation) : '' }}"
+                        data-url="{{ $translation ? route($editRoute, array_merge([$translation], filled($editorReturn ?? null) ? ['return' => $editorReturn] : [])) : '' }}"
                         data-create-url="{{ $translation ? '' : route($translateRoute, [$model, $locale->code]) }}"
                         {{ $model->locale === $locale->code ? 'selected' : '' }}>
-                    {{ strtoupper($locale->code) }} · {{ $state }}
+                    {{ strtoupper($locale->code) }} · {{ __('admin.editorial_translation_state_'.$state) }}
                 </option>
             @endforeach
         </select>
@@ -54,6 +54,8 @@
                 token.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
                 form.appendChild(token);
+                const returnInput = document.querySelector('#editor-form [name="return"]');
+                if (returnInput) form.appendChild(returnInput.cloneNode(true));
                 document.body.appendChild(form);
                 form.submit();
             });
