@@ -8,7 +8,7 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.46.0 - 2026-10-06
+## 0.46.0 - 2026-10-06 (e7103ed)
 
 - Alt y título traducibles por idioma para un mismo archivo: textos base compatibles con los medios existentes, traducciones por campo con fallback y sin duplicar imágenes.
 - La librería incorpora un selector de idioma, conserva borradores al cambiar de idioma y guarda todas las traducciones juntas. Los errores mantienen los cambios y se confirma antes de descartarlos.
