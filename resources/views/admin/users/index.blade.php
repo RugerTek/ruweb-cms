@@ -61,6 +61,9 @@
                             <a href="{{ route('admin.users.edit', $user) }}" class="text-sm text-white hover:text-sky-400 transition-colors">
                                 {{ $user->name }}
                             </a>
+                            @if($user->username)
+                                <p class="text-xs text-gray-500 mt-0.5">{{ $user->username }}</p>
+                            @endif
                         </td>
                         <td class="px-4 py-3 hidden sm:table-cell">
                             <span class="text-sm text-gray-400">{{ $user->email }}</span>

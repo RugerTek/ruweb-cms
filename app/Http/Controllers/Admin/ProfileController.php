@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\Username;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,13 +22,21 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        if ($request->has('username')) {
+            $request->merge(['username' => Username::normalize($request->input('username'))]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'username' => Username::rules($user->id),
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
         ]);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        if (array_key_exists('username', $validated)) {
+            $user->username = $validated['username'];
+        }
         $user->save();
 
         return redirect()

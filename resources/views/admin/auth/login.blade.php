@@ -17,17 +17,20 @@
         @csrf
 
         <div class="mb-4">
-            <label for="email" class="block text-xs font-medium text-gray-400 mb-1.5">{{ __('admin.email') }}</label>
+            <label for="login" class="block text-xs font-medium text-gray-400 mb-1.5">{{ __('admin.login_identity') }}</label>
             <input
-                type="email"
-                id="email"
-                name="email"
-                value="{{ old('email') }}"
+                type="text"
+                id="login"
+                name="login"
+                value="{{ old('login', old('email')) }}"
                 required
                 autofocus
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
                 class="w-full px-3 py-2 bg-[#1a1a1a] border border-white/10 rounded-md text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition-colors"
             >
-            @error('email')
+            @error('login')
                 <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
             @enderror
         </div>
@@ -37,6 +40,7 @@
             <input
                 type="password"
                 id="password"
+                autocomplete="current-password"
                 name="password"
                 required
                 class="w-full px-3 py-2 bg-[#1a1a1a] border border-white/10 rounded-md text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition-colors"

@@ -9,6 +9,9 @@ return [
     'editor_nested_blocked' => 'Abre el Live Editor en una ventana propia.',
 
     // Auth
+    'login_identity' => 'Usuario o email',
+    'field_username' => 'Nombre de usuario',
+    'username_help' => 'Opcional. De 3 a 32 caracteres: letras sin acentos, números, punto, guion y guion bajo. Se guarda en minúsculas.',
     'sign_in' => 'Iniciar sesión',
     'sign_in_subtitle' => 'Ingresa tus credenciales para continuar',
     'email' => 'Email',
@@ -156,7 +159,7 @@ return [
     'btn_update_user' => 'Actualizar usuario',
     'btn_delete_user' => 'Eliminar usuario',
     'confirm_delete_user' => '¿Eliminar este usuario permanentemente?',
-    'search_user_placeholder' => 'Buscar por nombre o email...',
+    'search_user_placeholder' => 'Buscar por nombre, usuario o email...',
     'col_role' => 'Rol',
     'total_users' => 'Usuarios totales',
     'user_password_optional' => 'Déjalo vacío si no deseas cambiarla.',

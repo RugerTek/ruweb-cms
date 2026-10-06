@@ -2,22 +2,29 @@
 
 namespace App\Models;
 
+use App\Support\Username;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role'])]
 #[Hidden(['password', 'remember_token', 'mcp_api_key_hash'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    protected function username(): Attribute
+    {
+        return Attribute::make(set: fn ($value) => Username::normalize($value));
+    }
 
     protected function casts(): array
     {
@@ -31,7 +38,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function generateMcpApiKey(): string
     {
-        $plainApiKey = 'ruweb_mcp_' . Str::random(48);
+        $plainApiKey = 'ruweb_mcp_'.Str::random(48);
 
         $this->forceFill([
             'mcp_api_key_hash' => hash('sha256', $plainApiKey),

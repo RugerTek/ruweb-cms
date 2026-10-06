@@ -9,6 +9,9 @@ return [
     'editor_nested_blocked' => 'Open the Live Editor in its own window.',
 
     // Auth
+    'login_identity' => 'Username or email',
+    'field_username' => 'Username',
+    'username_help' => 'Optional. 3–32 characters: unaccented letters, numbers, period, hyphen and underscore. Stored in lowercase.',
     'sign_in' => 'Sign in',
     'sign_in_subtitle' => 'Enter your credentials to continue',
     'email' => 'Email',
@@ -156,7 +159,7 @@ return [
     'btn_update_user' => 'Update user',
     'btn_delete_user' => 'Delete user',
     'confirm_delete_user' => 'Delete this user permanently?',
-    'search_user_placeholder' => 'Search by name or email...',
+    'search_user_placeholder' => 'Search by name, username or email...',
     'col_role' => 'Role',
     'total_users' => 'Total users',
     'user_password_optional' => 'Leave blank if you don\'t want to change it.',

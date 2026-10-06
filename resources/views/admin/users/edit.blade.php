@@ -25,6 +25,8 @@
                 @error('name') <p class="text-xs text-red-400 mt-1">{{ $message }}</p> @enderror
             </div>
 
+            @include('admin.users._username-field', ['user' => $user ?? null])
+
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-300 mb-1">{{ __('admin.field_email') }}</label>
                 <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" required

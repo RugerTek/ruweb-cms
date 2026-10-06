@@ -72,3 +72,14 @@ editor shell and a `previewRender` POST route; everything else is a plain contro
 | A runtime-editable value | A setting in a group ([../admin/settings.md](../admin/settings.md)) |
 | A build-time value | `config/cms.php` |
 | Business data reused across the site | A `contact` setting read through `App\Support\BusinessContact` |
+
+## Admin sign-in identities
+
+Accounts may set an optional, unique `username` from Profile or the administrator-only Users screens.
+Usernames are normalized to lowercase and contain 3–32 ASCII letters, digits, periods, hyphens or
+underscores; `@` is excluded so email and username identities cannot overlap. Existing accounts keep
+working with their email and no username is guessed during migration.
+
+The login form accepts username or email in the same `login` field; legacy `email` submissions remain
+compatible. Both aliases share the same per-account/IP attempt limit. Passwords, remember-me and
+email-based password recovery keep their existing behaviour.

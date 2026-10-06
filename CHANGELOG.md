@@ -8,7 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.43.0 - 2026-10-05
+## 0.44.0 - 2026-10-05
+
+- El login acepta nombre de usuario o email en un solo campo, con autocompletado de credenciales. Los envíos anteriores por email siguen funcionando y ambos identificadores comparten el límite de intentos por cuenta e IP.
+- Username opcional y único, editable desde Perfil y desde Usuarios, normalizado a minúsculas. Las cuentas existentes conservan el acceso por email; el listado de usuarios muestra y busca también el username.
+- Se mantienen contraseña, recordar sesión y recuperación por email. Se documentan los identificadores admitidos y se prueban acceso, validación, duplicados y bloqueo de intentos alternando ambos alias.
+
+## 0.43.0 - 2026-10-05 (f6a4ebd)
 
 - Los cuatro templates usan panel redimensionable, acordeones accesibles, confirmaciones con foco retenido y «Ver en vivo» en móvil. Los ítems repetidos mantienen identificadores únicos, etiquetas y avisos después de reordenarse.
 - Los errores aparecen junto al campo y abren su pestaña y acordeones. «Sin cambios» habilita guardar una traducción revisada; el reordenado y la normalización inicial de TinyMCE no dan por revisado texto pendiente ni producen avisos falsos.
