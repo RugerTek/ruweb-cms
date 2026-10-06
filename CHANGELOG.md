@@ -8,7 +8,7 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.45.0 - 2026-10-05
+## 0.45.0 - 2026-10-05 (ea594c6)
 
 - El admin bar del frontend incorpora «Crear nuevo…» con Página y Post. El desplegable funciona con clic, táctil y teclado; cierra con Escape, clic fuera o al salir el foco, sin cargar el bundle del admin.
 - Las colecciones se registran en `cms.collections` con modelo, etiqueta traducida y ruta de creación. El menú muestra solo rutas existentes y colecciones permitidas por la policy del usuario; el starter incluye únicamente el blog.
