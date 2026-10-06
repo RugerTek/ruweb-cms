@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePostRequest;
 use App\Http\Requests\Admin\UpdatePostRequest;
-use App\Models\Post;
 use App\Models\Locale;
+use App\Models\Post;
 use App\Models\Taxonomy;
 use App\Services\Content\ContentSchemaRegistry;
 use Illuminate\Http\JsonResponse;
@@ -69,7 +69,7 @@ class PostController extends Controller
         }
 
         $featuredImage = $data['featured_image'] ?? null;
-        $categories    = $data['categories'] ?? [];
+        $categories = $data['categories'] ?? [];
         unset($data['featured_image'], $data['categories'], $data['acknowledged_fields']);
 
         $post = Post::create($data);
@@ -93,9 +93,10 @@ class PostController extends Controller
         $this->authorize('update', $post);
 
         return view('admin.posts.edit', [
-            'post'       => $post,
+            'editorLease' => $request->attributes->get('editorLease'),
+            'post' => $post,
             'categories' => Taxonomy::ofType('category')->where('locale', $post->locale)->ordered()->get(),
-            'locales'    => Locale::where('is_active', true)->orderBy('sort_order')->get(),
+            'locales' => Locale::where('is_active', true)->orderBy('sort_order')->get(),
             'staleFieldNames' => app(ContentSchemaRegistry::class)->formNamesFor($post, $post->staleTranslatableFields()),
         ] + $this->resolveEditorBackLink($request, 'admin.posts.index', __('admin.back_to_posts')));
     }
@@ -113,7 +114,7 @@ class PostController extends Controller
         }
 
         $featuredImage = $data['featured_image'] ?? null;
-        $categories    = $data['categories'] ?? [];
+        $categories = $data['categories'] ?? [];
         unset($data['featured_image'], $data['categories']);
 
         $post->update($data);
@@ -148,7 +149,7 @@ class PostController extends Controller
         $post->content = $request->input('content', $post->content);
         app()->setLocale($post->locale);
 
-        $html = view($post->previewView(), $post->previewData())->render();
+        $html = view($post->previewView(), $post->previewData() + ['isEditorPreview' => true])->render();
 
         return response($html)->header('Content-Type', 'text/html');
     }

@@ -34,6 +34,7 @@ class SnapshotService
     protected const EXCLUDED_TABLES = [
         'cache',
         'cache_locks',
+        'content_edit_locks',
         'failed_jobs',
         'job_batches',
         'jobs',

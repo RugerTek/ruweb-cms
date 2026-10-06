@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.41.0 - 2026-09-13
+## 0.42.0 - 2026-10-05
+
+- El preview del Live Editor oculta el admin bar y su espacio superior; bloquea enlaces, ventanas nuevas y envíos de formularios sin interferir con acordeones o sliders. Se evita abrir otro editor dentro del preview y se permite refrescar `about:srcdoc`.
+- Páginas y posts reservan el contenido en la base de datos mientras se editan, con renovación, liberación al salir y expiración a los dos minutos sin conexión. Otra sesión recibe un aviso con el nombre del editor; guardar o eliminar exige el token vigente.
+- Si se pierde el bloqueo, se deshabilita guardar y se conservan los cambios locales y el aviso al salir. Las respuestas antiguas del preview no sustituyen la más reciente y los cambios hechos durante un guardado siguen pendientes.
+- Los bloqueos temporales quedan fuera de los snapshots. Se documenta el contrato compartido y se agregan pruebas de exclusividad, expiración, navegación y recuperación del editor.
+
+## 0.41.0 - 2026-09-13 (5c96887)
 
 - Nuevas pestañas **Redirecciones** y **Monitor 404** en Developer tools (solo admins) con las reglas 301/302 del sitio y los 404 que las alimentan. Un sitio que reemplaza a otro hereda sus enlaces: los marcadores, los backlinks y las URLs indexadas del sitio viejo tienen que aterrizar en la URL nueva y no en un 404. Va en Developer tools y no en el menú principal porque es una herramienta de migración, no contenido del día a día. Las reglas y el monitor son pestañas separadas: una se edita, la otra se consulta.
 - La importación CSV queda plegada en un acordeón —se usa una sola vez, al migrar— para que el alta manual, que es el caso frecuente, ocupe el ancho completo. El acordeón se abre solo si la subida vuelve con error.

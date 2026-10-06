@@ -39,6 +39,9 @@
       action="{{ $isEdit ? route('admin.pages.update', $page) : route('admin.pages.store') }}"
       class="flex flex-col h-full">
     @csrf
+    @if(isset($editorLease))
+        <input type="hidden" name="_editor_lock" value="{{ $editorLease['token'] }}">
+    @endif
     @if($isEdit) @method('PUT') @endif
     <input type="hidden" name="locale" value="{{ old('locale', $page?->locale ?? \App\Models\Locale::baseCode()) }}">
     @include('admin.partials.stale-fields', ['staleFieldNames' => $staleFieldNames ?? []])
@@ -243,6 +246,7 @@
     <form method="POST" action="{{ route('admin.pages.destroy', $page) }}" id="delete-form" class="hidden">
         @csrf
         @method('DELETE')
+        @if(isset($editorLease))<input type="hidden" name="_editor_lock" value="{{ $editorLease['token'] }}">@endif
     </form>
 @endif
 

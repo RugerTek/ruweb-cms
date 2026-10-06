@@ -8,7 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
-<body class="min-h-screen flex flex-col bg-white text-gray-900 font-sans antialiased {{ auth()->check() ? 'pt-9' : '' }}">
+<body class="min-h-screen flex flex-col bg-white text-gray-900 font-sans antialiased {{ auth()->check() && ! ($isEditorPreview ?? false) ? 'pt-9' : '' }}">
     @php($metaPixelId = \App\Models\Setting::get('meta_pixel_id'))
 
     @if($metaPixelId)

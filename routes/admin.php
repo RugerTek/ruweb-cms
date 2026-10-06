@@ -8,22 +8,24 @@ use App\Http\Controllers\Admin\CacheController;
 use App\Http\Controllers\Admin\ClaudeMcpController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeveloperToolsController;
-use App\Http\Controllers\Admin\SubmissionController;
+use App\Http\Controllers\Admin\EditorialControlController;
+use App\Http\Controllers\Admin\EditorLockController;
 use App\Http\Controllers\Admin\EmailController;
 use App\Http\Controllers\Admin\FooterController;
 use App\Http\Controllers\Admin\HeaderController;
-use App\Http\Controllers\Admin\EditorialControlController;
+use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediaHealthController;
-use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RedirectController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SubmissionController;
 use App\Http\Controllers\Admin\TaxonomyController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Middleware\ProtectLiveEditor;
 use Illuminate\Support\Facades\Route;
 
 // Authenticated admin routes
@@ -44,12 +46,19 @@ Route::middleware(['auth', 'role:admin,editor', 'admin.locale'])->prefix('admin'
     Route::get('media-health', [MediaHealthController::class, 'index'])->name('media.health');
 
     Route::resource('pages', PageController::class)
-        ->except(['show']);
+        ->except(['show'])
+        ->middlewareFor(['edit', 'update', 'destroy'], ProtectLiveEditor::class);
     Route::post('pages/{page}/translations/{locale}', [PageController::class, 'translate'])->name('pages.translate');
 
     Route::resource('posts', PostController::class)
-        ->except(['show']);
+        ->except(['show'])
+        ->middlewareFor(['edit', 'update', 'destroy'], ProtectLiveEditor::class);
     Route::post('posts/{post}/translations/{locale}', [PostController::class, 'translate'])->name('posts.translate');
+
+    Route::post('editor-locks/{type}/{id}/heartbeat', [EditorLockController::class, 'heartbeat'])
+        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.heartbeat');
+    Route::post('editor-locks/{type}/{id}/release', [EditorLockController::class, 'release'])
+        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.release');
 
     Route::prefix('taxonomies/{type}')->name('taxonomies.')->group(function () {
         Route::get('/', [TaxonomyController::class, 'index'])->name('index');

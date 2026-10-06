@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'editor_locked_title' => 'Content is being edited',
+    'editor_locked_by' => ':name is editing this content.',
+    'editor_locked_help' => 'You can open the editor when they finish. If they closed the window or lost their connection, the lock is released within two minutes.',
+    'editor_retry' => 'Try again',
+    'editor_lock_lost' => 'The editing lock was lost. Your changes are still in this window, but cannot be saved. Copy any pending changes and reopen the editor to continue.',
+    'editor_nested_blocked' => 'Open the Live Editor in its own window.',
 
     // Auth
     'sign_in' => 'Sign in',

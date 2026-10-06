@@ -1,3 +1,4 @@
+@unless($isEditorPreview ?? false)
 @auth
 @php
     $currentUrl = url()->full();
@@ -139,3 +140,5 @@
 
 </nav>
 @endauth
+
+@endunless

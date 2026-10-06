@@ -2,6 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
 <head>
     <meta charset="UTF-8">
+    <script>if (window.self !== window.top) document.documentElement.hidden = true;</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('editor-title', __('admin.editor_title')) — {{ $siteName }}</title>
@@ -90,6 +91,14 @@
         </div>
     </header>
 
+    <div id="editor-lock-notice" role="alert" hidden
+         class="flex-none px-4 py-3 text-sm text-amber-200 bg-amber-500/10 border-b border-amber-500/20">
+        {{ __('admin.editor_lock_lost') }}
+    </div>
+    @if(isset($editorLease))
+        <script>window.editorLease = {{ Illuminate\Support\Js::from($editorLease) }};</script>
+    @endif
+
     {{-- Mobile tabs (only when preview is enabled) --}}
     @if($showPreview ?? true)
     <div class="lg:hidden flex-none flex bg-[#111111] border-b border-white/[0.06]">
@@ -134,7 +143,7 @@
                  class="flex-1 flex items-start justify-center overflow-auto bg-[#0d0d0d] editor-scroll">
                 <iframe id="preview-frame"
                         class="w-full h-full border-0 bg-white"
-                        sandbox="allow-same-origin allow-scripts allow-forms"></iframe>
+                        sandbox="allow-same-origin allow-scripts"></iframe>
             </div>
         </section>
         @endif

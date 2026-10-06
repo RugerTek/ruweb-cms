@@ -78,6 +78,7 @@ class PageController extends Controller
     public function edit(Request $request, Page $page): View
     {
         return view('admin.pages.edit', [
+            'editorLease' => $request->attributes->get('editorLease'),
             'page' => $page,
             'templates' => config('cms.templates'),
             'locales' => Locale::where('is_active', true)->orderBy('sort_order')->get(),
@@ -128,7 +129,7 @@ class PageController extends Controller
         $page->content_json = $request->input('content_json', $page->content_json ?? []);
         app()->setLocale($page->locale);
 
-        $html = view($page->previewView(), $page->previewData())->render();
+        $html = view($page->previewView(), $page->previewData() + ['isEditorPreview' => true])->render();
 
         return response($html)->header('Content-Type', 'text/html');
     }

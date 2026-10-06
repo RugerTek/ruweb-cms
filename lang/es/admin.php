@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'editor_locked_title' => 'Contenido en edición',
+    'editor_locked_by' => ':name está editando este contenido.',
+    'editor_locked_help' => 'Podrás abrir el editor cuando termine. Si cerró la ventana o perdió la conexión, el bloqueo se libera en un máximo de dos minutos.',
+    'editor_retry' => 'Volver a intentar',
+    'editor_lock_lost' => 'Se perdió el bloqueo de edición. Tus cambios siguen en esta ventana, pero no se pueden guardar. Copia los cambios pendientes y vuelve a abrir el editor para continuar.',
+    'editor_nested_blocked' => 'Abre el Live Editor en una ventana propia.',
 
     // Auth
     'sign_in' => 'Iniciar sesión',

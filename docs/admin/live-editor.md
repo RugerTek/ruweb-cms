@@ -37,6 +37,8 @@ Behavior:
 5. Supports draft and publish actions when configured.
 6. Preserves preview scroll position during refresh.
 7. Warns before leaving a dirty form.
+8. Installs the preview navigation guard before public scripts run, on every refresh.
+9. Renews the content editing lease and disables saving if ownership is lost, keeping local edits visible.
 
 The current engine does not persist unsaved local drafts to `localStorage`. Draft state is represented by the model status and saved through the normal form endpoint.
 
@@ -92,3 +94,33 @@ Each content type using live preview should provide:
 For multilingual content, preview must render using the locale of the model being edited, not the admin UI locale. The preview controller should call `app()->setLocale($model->locale)` before rendering the model's `previewView()` / `previewData()`.
 
 The async save request posts the form with `Accept: application/json`. Forms should include Laravel method spoofing when the route expects `PUT` or `PATCH`.
+
+## Exclusive Editing
+
+Page and post `edit`, `update` and `destroy` routes use `ProtectLiveEditor`. Opening the editor reserves that
+record in `content_edit_locks` for 120 seconds; the shared engine renews it every 30 seconds and releases it
+with a CSRF-protected beacon on `pagehide`. If a browser disappears, expiry permits another editor to enter.
+The lease is shared through the database, survives cache refreshes and is excluded from snapshots.
+
+Another user or browser session receives HTTP 423 with the owner's name and a retry action. Reopening in
+the same authenticated session rotates the token, allowing reloads while invalidating the earlier document.
+Lease acquisition, renewal, release and saves serialize against the content row in a database transaction.
+Old tokens cannot release a replacement lease or save after expiry, even when nobody has taken over yet.
+The engine keeps pending edits visible and gives a persistent warning when a lease is lost. Returning from
+the browser's back/forward cache also disables saving; reopening fetches the current persisted content.
+
+The editor controller passes `editorLease` to the shared layout and form. The form sends `_editor_lock` on
+every save, while the layout provides `window.editorLease` to the engine. Non-editor admin submissions
+without a token remain compatible only while there is no active editor lease. These guards apply to the
+admin editing flow; programmatic writes through MCP or imports do not acquire a Live Editor lease.
+
+New collection editors should register the same middleware on their editing routes and extend the allowed
+content types in `EditorLockController`. Preview renderers pass `isEditorPreview => true` to their public
+view so the admin bar and its body padding are omitted. Editor responses forbid framing via both
+`X-Frame-Options: DENY` and CSP `frame-ancestors 'none'`; iframe requests are rejected before acquiring a lock.
+
+## Verification
+
+`LiveEditorSafetyTest` covers exclusive ownership, expiry, renewal, token rotation, release, preview rendering
+and framing restrictions for pages and posts. Run `php artisan test --filter=LiveEditorSafetyTest` for those
+flows and `npm test` for preview navigation, lease loss, pending edits and out-of-order preview responses.

@@ -1,3 +1,5 @@
+import { prepareEditorPreview } from './editor-preview.js';
+
 export function initEditorEngine(config = {}) {
     const form = document.getElementById('editor-form');
     const iframe = document.getElementById('preview-frame');
@@ -18,22 +20,30 @@ export function initEditorEngine(config = {}) {
     config.leaveLabel = config.leaveLabel || window.adminI18n?.btnLeaveWithoutSaving || 'Leave without saving';
     config.keepEditingLabel = config.keepEditingLabel || window.adminI18n?.btnKeepEditing || 'Keep editing';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const lease = config.lease || window.editorLease;
 
     let previewTimer = null;
+    let previewSequence = 0;
+    let saving = false;
+    let reloadAfterSave = false;
+    let lockLost = false;
+    let heartbeatPending = false;
+    let lockDeadline = lease ? Date.now() + lease.ttlSeconds * 1000 : 0;
+    let heartbeatTimer = null;
     let savedSnapshot = formSnapshot();
     let savedStatus = currentStatus();
 
-    function formSnapshot() {
-        const data = new FormData(form);
+    function formSnapshot(data = new FormData(form)) {
         data.delete('_token');
         data.delete('_method');
+        data.delete('_editor_lock');
 
         const entries = [];
         for (const [key, value] of data.entries()) {
-            entries.push(`${key}=${value}`);
+            entries.push([key, String(value)]);
         }
 
-        return entries.join('&');
+        return JSON.stringify(entries);
     }
 
     function isDirty() {
@@ -41,10 +51,50 @@ export function initEditorEngine(config = {}) {
     }
 
     function updateDirtyState() {
-        const dirty = isDirty();
+        const dirty = isDirty() && !saving && !lockLost;
         if (updateBtn) updateBtn.disabled = !dirty;
         if (saveDraftBtn) saveDraftBtn.disabled = !dirty;
         headerSaveBtn.disabled = !dirty;
+        if (publishBtn) publishBtn.disabled = saving || lockLost;
+    }
+
+    function loseLock() {
+        lockLost = true;
+        clearInterval(heartbeatTimer);
+        const notice = document.getElementById('editor-lock-notice');
+        if (notice) {
+            notice.textContent = lease.lostMessage;
+            notice.hidden = false;
+        }
+        updateDirtyState();
+    }
+
+    async function heartbeat() {
+        if (!lease || lockLost || heartbeatPending) return;
+        if (Date.now() >= lockDeadline) {
+            loseLock();
+            return;
+        }
+        heartbeatPending = true;
+        try {
+            const response = await fetch(lease.heartbeatUrl, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ _editor_lock: lease.token }),
+                signal: AbortSignal.timeout(10000),
+            });
+            if (response.ok) {
+                await response.json();
+                lockDeadline = Date.now() + lease.ttlSeconds * 1000;
+            } else if ([401, 403, 419, 423].includes(response.status)) {
+                loseLock();
+            }
+        } catch (_) {
+            // A brief network interruption is safe while the server lease is alive.
+        } finally {
+            heartbeatPending = false;
+            if (Date.now() >= lockDeadline) loseLock();
+        }
     }
 
     function currentStatus() {
@@ -56,6 +106,7 @@ export function initEditorEngine(config = {}) {
             return;
         }
 
+        const sequence = ++previewSequence;
         const previewData = new FormData(form);
         previewData.delete('_method');
 
@@ -77,7 +128,7 @@ export function initEditorEngine(config = {}) {
                 return res.text();
             })
             .then((html) => {
-                if (typeof html !== 'string') {
+                if (sequence !== previewSequence || typeof html !== 'string') {
                     return;
                 }
 
@@ -88,12 +139,17 @@ export function initEditorEngine(config = {}) {
                 };
 
                 iframe.addEventListener('load', restoreScroll, { once: true });
-                iframe.srcdoc = html;
+                iframe.srcdoc = prepareEditorPreview(html);
             })
             .catch(() => {});
     }
 
     async function save(statusOverride) {
+        if (saving || lockLost) return;
+        if (lease && Date.now() >= lockDeadline) {
+            loseLock();
+            return;
+        }
         const beforeSave = new CustomEvent('editor:before-save', { cancelable: true });
         form.dispatchEvent(beforeSave);
 
@@ -102,15 +158,15 @@ export function initEditorEngine(config = {}) {
             return;
         }
 
-        if (updateBtn) updateBtn.disabled = true;
-        if (saveDraftBtn) saveDraftBtn.disabled = true;
-        headerSaveBtn.disabled = true;
+        saving = true;
+        updateDirtyState();
 
         try {
             const requestData = new FormData(form);
             if (statusOverride) {
                 requestData.set('status', statusOverride);
             }
+            const submittedSnapshot = formSnapshot(new FormData(form));
 
             const response = await fetch(form.action, {
                 method: 'POST',
@@ -123,10 +179,18 @@ export function initEditorEngine(config = {}) {
 
             if (response.ok) {
                 const nextStatus = requestData.get('status') || null;
-                savedSnapshot = formSnapshot();
+                const statusInput = form.querySelector('[name="status"]');
+                if (statusOverride && statusInput) statusInput.value = nextStatus;
+                reloadAfterSave ||= Boolean(nextStatus && savedStatus && nextStatus !== savedStatus);
+                // A publish action changes the submitted status, while edits made
+                // during the request must remain dirty until their own save.
+                const submittedEntries = JSON.parse(submittedSnapshot);
+                savedSnapshot = statusOverride
+                    ? JSON.stringify(submittedEntries.map(([key, value]) => [key, key === 'status' ? nextStatus : value]))
+                    : submittedSnapshot;
                 showToast(savedMsg);
 
-                if (nextStatus && savedStatus && nextStatus !== savedStatus) {
+                if (reloadAfterSave && !isDirty()) {
                     window.removeEventListener('beforeunload', onBeforeUnload);
                     window.location.reload();
                     return;
@@ -134,12 +198,14 @@ export function initEditorEngine(config = {}) {
 
                 savedStatus = nextStatus || savedStatus;
             } else {
+                if (lease && [401, 403, 419, 423].includes(response.status)) loseLock();
                 const message = await responseErrorMessage(response);
                 showToast(message || errorMsg, 'error');
             }
         } catch (_) {
             showToast(errorMsg, 'error');
         } finally {
+            saving = false;
             updateDirtyState();
         }
     }
@@ -217,6 +283,10 @@ export function initEditorEngine(config = {}) {
 
     form.addEventListener('input', onFormChange);
     form.addEventListener('change', onFormChange);
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        save();
+    });
     window.addEventListener('beforeunload', onBeforeUnload);
     document.addEventListener('click', onEditorLinkClick);
 
@@ -224,6 +294,23 @@ export function initEditorEngine(config = {}) {
     if (saveDraftBtn) saveDraftBtn.addEventListener('click', () => save('draft'));
     if (publishBtn) publishBtn.addEventListener('click', () => save('published'));
     headerSaveBtn.addEventListener('click', () => save());
+
+    if (lease) {
+        heartbeatTimer = setInterval(heartbeat, lease.heartbeatSeconds * 1000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') heartbeat();
+        });
+        window.addEventListener('pagehide', () => {
+            clearInterval(heartbeatTimer);
+            const data = new FormData();
+            data.set('_token', csrfToken);
+            data.set('_editor_lock', lease.token);
+            navigator.sendBeacon(lease.releaseUrl, data);
+        });
+        window.addEventListener('pageshow', event => {
+            if (event.persisted) loseLock();
+        });
+    }
 
     updateDirtyState();
     refreshPreview();

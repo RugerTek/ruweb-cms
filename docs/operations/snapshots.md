@@ -24,7 +24,7 @@ A snapshot contains:
 - `manifest.json` describing the origin and the table list
 - `checksums.json` with a SHA-256 per file
 
-A snapshot never contains source code, `vendor`, `.env`, application keys, cache, sessions, queue tables, OAuth tokens or password reset tokens.
+A snapshot never contains source code, `vendor`, `.env`, application keys, cache, sessions, Live Editor leases, queue tables, OAuth tokens or password reset tokens.
 
 The `migrations` table is exported for inspection but is **never written into the destination**. The destination keeps its own migration history so `php artisan migrate` stays truthful after a restore.
 
