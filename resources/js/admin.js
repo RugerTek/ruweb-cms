@@ -1,7 +1,10 @@
 import '../css/admin.css';
+import { initMediaMetadata } from './media-metadata.js';
 import { initEditorEngine } from './editor-engine.js';
 import { initTitleEditors, initLinkComboboxes, initEditorResize } from './editor-controls.js';
 import { initEditorFeedback } from './editor-feedback.js';
+
+initMediaMetadata();
 
 const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 if (token) {
@@ -317,19 +320,26 @@ function renderSelectorPreview(selector, media) {
         <div class="flex items-center gap-3 rounded-lg border border-white/10 bg-[#141414] p-3">
             <div class="w-16 h-16 rounded-md overflow-hidden bg-[#1a1a1a] flex items-center justify-center shrink-0">
                 ${isImage
-                    ? `<img src="${escapeHtml(media.url)}" alt="${escapeHtml(media.alt || media.title || media.original_filename)}" class="w-full h-full object-cover">`
+                    ? `<img src="${escapeHtml(media.url)}" alt="${escapeHtml(media.localized_alt || media.localized_title || media.original_filename)}" class="w-full h-full object-cover">`
                     : `<svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`}
             </div>
             <div class="min-w-0">
-                <p class="text-sm text-white truncate">${escapeHtml(media.title || media.original_filename)}</p>
+                <p class="text-sm text-white truncate">${escapeHtml(media.localized_title || media.original_filename)}</p>
                 <p class="text-xs text-gray-500 truncate">${escapeHtml(media.original_filename || '')}</p>
             </div>
         </div>
     `;
 }
 
+function mediaLocaleParams() {
+    const params = new URLSearchParams();
+    const locale = document.querySelector('#editor-form [name="locale"]')?.value;
+    if (locale) params.set('locale', locale);
+    return params;
+}
+
 async function fetchMediaItem(id) {
-    const response = await fetch(`/admin/media/${id}`, {
+    const response = await fetch(`/admin/media/${id}?${mediaLocaleParams()}`, {
         headers: {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
@@ -394,11 +404,11 @@ function renderLibraryItems(items) {
             <button type="button" class="media-library-item text-left bg-[#111111] border border-white/10 rounded-lg overflow-hidden hover:border-sky-500/50 transition-colors" data-id="${item.id}">
                 <div class="aspect-square bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
                     ${isImage
-                        ? `<img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.alt || item.title || item.original_filename)}" class="w-full h-full object-contain">`
+                        ? `<img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.localized_alt || item.localized_title || item.original_filename)}" class="w-full h-full object-contain">`
                         : `<svg class="w-10 h-10 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`}
                 </div>
                 <div class="p-3">
-                    <p class="text-sm text-white truncate">${escapeHtml(item.title || item.original_filename)}</p>
+                    <p class="text-sm text-white truncate">${escapeHtml(item.localized_title || item.original_filename)}</p>
                     <p class="text-xs text-gray-500 truncate">${escapeHtml(item.original_filename || '')}</p>
                 </div>
             </button>
@@ -476,7 +486,7 @@ async function loadLibrary(page = 1) {
     libraryStatus.textContent = t('loadingMedia');
     libraryStatus.classList.remove('hidden');
 
-    const params = new URLSearchParams();
+    const params = mediaLocaleParams();
     if (libraryState.search) {
         params.set('search', libraryState.search);
     }

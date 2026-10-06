@@ -124,6 +124,32 @@ class DeveloperToolsSnapshotTest extends TestCase
         Storage::disk('public')->assertExists('.gitignore');
     }
 
+    public function test_snapshot_without_media_translations_clears_destination_overrides(): void
+    {
+        User::factory()->create(['role' => 'admin']);
+        $media = Media::create([
+            'filename' => 'shared.svg', 'original_filename' => 'shared.svg', 'path' => 'media/shared.svg',
+            'mime_type' => 'image/svg+xml', 'extension' => 'svg', 'size' => 11, 'disk' => 'public',
+            'alt' => 'Original base',
+        ]);
+        Storage::disk('public')->put($media->path, '<svg></svg>');
+        $archive = app(SnapshotService::class)->create('before-media-translations');
+        $legacyArchive = $this->copyArchiveWithMutatedManifest($archive, function (array $manifest): array {
+            $manifest['database']['tables'] = array_values(array_filter(
+                $manifest['database']['tables'], fn ($table) => $table['name'] !== 'media_translations'
+            ));
+            unset($manifest['database']['schema']['media_translations']);
+
+            return $manifest;
+        });
+        $media->translations()->create(['locale' => 'en', 'alt' => 'Destination-only override']);
+
+        app(SnapshotService::class)->restore($legacyArchive);
+
+        $this->assertDatabaseCount('media_translations', 0);
+        $this->assertSame('Original base', $media->fresh()->localizedAlt('en'));
+    }
+
     public function test_manifest_does_not_contain_schema_qualified_table_names(): void
     {
         User::factory()->create(['role' => 'admin']);

@@ -10,7 +10,7 @@
 
 @if($media)
     @php
-        $resolvedAlt = filled($alt) ? $alt : ($media->alt ?: $fallbackAlt);
+        $resolvedAlt = filled($alt) ? $alt : ($media->localizedAlt() ?: $fallbackAlt);
     @endphp
     <img
         src="{{ $media->url() }}"
@@ -26,4 +26,3 @@
         @if($media->height) height="{{ $media->height }}" @endif
     >
 @endif
-

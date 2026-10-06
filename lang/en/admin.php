@@ -1039,4 +1039,11 @@ return [
         'Same tab' => 'Same tab',
         'New tab' => 'New tab',
     ],
+    'close' => 'Close',
+    'media_metadata_language' => 'Text language',
+    'media_metadata_base' => 'Base text',
+    'media_metadata_help' => 'The file is the same in every language. Leave a translation empty to use the base text. Save applies changes in all languages.',
+    'media_metadata_saved' => 'Texts saved.',
+    'media_metadata_error' => 'Unable to save texts. Your changes are still here.',
+    'media_metadata_invalid' => 'Select active languages and use only alt and title.',
 ];

@@ -10,6 +10,7 @@
 - Editorial schema: field types and flags
 - Fingerprints
 - Localized settings and menus
+- Media metadata
 - Translation workflow (what an agent must do)
 
 ## Locales
@@ -69,6 +70,15 @@ Paths look like `sections.hero.heading`, `sections.faq.items.*.question`, `title
 
 A template or content type without a complete schema still renders and edits, but is not translation-ready and
 the admin MUST disable `+ Create translation` for it.
+
+## Media Metadata
+
+`localized_media` permits a different media id per translated content record. A shared id can also have its
+own localized `alt` and `title`: edit them with the text-language selector in the media library. Base text lives
+in `media`, overrides in `media_translations`, and empty overrides fall back per field. Public images resolve
+alt using the request locale; explicit content labels take precedence. See
+[../content/images.md — Localized Metadata](../content/images.md#localized-metadata) for the rendering and API
+contract. This does not change page fingerprints or automatically translate image text.
 
 ## Fingerprints
 

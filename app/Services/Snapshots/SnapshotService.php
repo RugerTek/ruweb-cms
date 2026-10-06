@@ -51,6 +51,7 @@ class SnapshotService
         'pages',
         'posts',
         'media',
+        'media_translations',
         'taxonomies',
         'menus',
         'menu_items',
@@ -348,6 +349,13 @@ class SnapshotService
         DB::beginTransaction();
 
         try {
+            $tableNames = array_column($tables, 'name');
+            // Older snapshots contain media but predate localized metadata. Do not let
+            // destination overrides attach themselves to restored, potentially reused ids.
+            if (in_array('media', $tableNames, true) && ! in_array('media_translations', $tableNames, true)
+                && Schema::hasTable('media_translations')) {
+                DB::table('media_translations')->delete();
+            }
             foreach (array_reverse($tables) as $table) {
                 DB::table($table['name'])->delete();
             }

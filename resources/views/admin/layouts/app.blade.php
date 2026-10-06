@@ -38,6 +38,8 @@
             'validationFileUploaded' => __('admin.validation_file_uploaded'),
             'chooseFile' => __('admin.choose_file'),
             'noMediaFound' => __('admin.no_media_found'),
+            'mediaMetadataSaved' => __('admin.media_metadata_saved'),
+            'mediaMetadataError' => __('admin.media_metadata_error'),
             'loadingMedia' => __('admin.loading_media'),
             'unableToLoadMediaItem' => __('admin.unable_to_load_media_item'),
             'unableToLoadMediaLibrary' => __('admin.unable_to_load_media_library'),

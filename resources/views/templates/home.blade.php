@@ -67,7 +67,7 @@
                             <x-responsive-img
                                 :media="$logo['media']"
                                 sizes="(max-width: 640px) 40vw, (max-width: 1024px) 22vw, 160px"
-                                :alt="$logo['label'] ?: ($logo['media']->alt ?? '')"
+                                :alt="$logo['label'] ?: null"
                                 class="h-full w-full object-contain"
                             />
                         </div>

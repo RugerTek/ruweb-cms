@@ -1039,4 +1039,11 @@ return [
         'Same tab' => 'Misma pestaña',
         'New tab' => 'Pestaña nueva',
     ],
+    'close' => 'Cerrar',
+    'media_metadata_language' => 'Idioma del texto',
+    'media_metadata_base' => 'Texto base',
+    'media_metadata_help' => 'El archivo es el mismo en todos los idiomas. Deja una traducción vacía para usar el texto base. Guardar aplica los cambios de todos los idiomas.',
+    'media_metadata_saved' => 'Textos guardados.',
+    'media_metadata_error' => 'No se pudieron guardar los textos. Tus cambios siguen aquí.',
+    'media_metadata_invalid' => 'Selecciona idiomas activos y usa solamente alt y título.',
 ];

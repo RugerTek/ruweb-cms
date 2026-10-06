@@ -8,6 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
+## 0.46.0 - 2026-10-06
+
+- Alt y título traducibles por idioma para un mismo archivo: textos base compatibles con los medios existentes, traducciones por campo con fallback y sin duplicar imágenes.
+- La librería incorpora un selector de idioma, conserva borradores al cambiar de idioma y guarda todas las traducciones juntas. Los errores mantienen los cambios y se confirma antes de descartarlos.
+- Las imágenes públicas resuelven el alt por idioma y los selectores del Live Editor muestran los metadatos del idioma del contenido. La búsqueda incluye textos traducidos; las traducciones viajan en snapshots y registran revisiones del medio.
+- Se documenta la diferencia entre elegir otra imagen por idioma y traducir sus metadatos, con pruebas de backend, restauración y borradores del editor.
+
 ## 0.45.1 - 2026-10-06 (ac57e53)
 
 - Activar el correo sin una clave Brevo efectiva conserva el transporte configurado en `MAIL_MAILER`, evitando forzar Brevo con credenciales vacías. Se respeta la prioridad de la clave de Ajustes sobre la configuración del entorno y se ignoran claves que solo contienen espacios.

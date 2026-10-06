@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
@@ -19,6 +20,9 @@ class Media extends Model
         'optimization_ratio',
         'has_responsive_variants',
         'is_optimized_raster',
+        'localized_alt',
+        'localized_title',
+        'metadata',
     ];
 
     protected $fillable = [
@@ -56,6 +60,50 @@ class Media extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    public function translations(): HasMany
+    {
+        return $this->hasMany(MediaTranslation::class);
+    }
+
+    public function localizedAlt(?string $locale = null): ?string
+    {
+        return $this->localizedMetadata('alt', $locale);
+    }
+
+    public function localizedTitle(?string $locale = null): ?string
+    {
+        return $this->localizedMetadata('title', $locale);
+    }
+
+    protected function localizedMetadata(string $field, ?string $locale): ?string
+    {
+        $locale ??= app()->getLocale();
+        if ($locale !== Locale::baseCode()) {
+            $value = $this->translations->firstWhere('locale', $locale)?->{$field};
+            if (filled($value)) {
+                return $value;
+            }
+        }
+
+        return $this->getAttribute($field);
+    }
+
+    public function getLocalizedAltAttribute(): ?string
+    {
+        return $this->localizedAlt();
+    }
+
+    public function getLocalizedTitleAttribute(): ?string
+    {
+        return $this->localizedTitle();
+    }
+
+    public function getMetadataAttribute(): array
+    {
+        return [Locale::baseCode() => ['alt' => $this->alt, 'title' => $this->title]]
+            + $this->translations->mapWithKeys(fn ($translation) => [$translation->locale => $translation->only('alt', 'title')])->all();
+    }
+
     public function url(): string
     {
         return Storage::disk($this->disk)->url($this->path);
@@ -79,9 +127,14 @@ class Media extends Model
     public function formattedSize(): string
     {
         $bytes = $this->size;
-        if ($bytes >= 1048576) return round($bytes / 1048576, 1) . ' MB';
-        if ($bytes >= 1024) return round($bytes / 1024, 1) . ' KB';
-        return $bytes . ' B';
+        if ($bytes >= 1048576) {
+            return round($bytes / 1048576, 1).' MB';
+        }
+        if ($bytes >= 1024) {
+            return round($bytes / 1024, 1).' KB';
+        }
+
+        return $bytes.' B';
     }
 
     public function getFormattedSizeAttribute(): string
@@ -98,7 +151,7 @@ class Media extends Model
         return collect($this->variants)
             ->sortBy('width')
             ->filter(fn ($variant) => ! empty($variant['width']) && $this->variantUrl($variant) !== null)
-            ->map(fn ($variant) => $this->variantUrl($variant) . ' ' . $variant['width'] . 'w')
+            ->map(fn ($variant) => $this->variantUrl($variant).' '.$variant['width'].'w')
             ->implode(', ');
     }
 

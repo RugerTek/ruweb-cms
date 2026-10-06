@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMediaRequest;
+use App\Models\Locale;
 use App\Models\Media;
 use App\Services\Media\MediaImagePipeline;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 
@@ -18,23 +21,24 @@ class MediaController extends Controller
 {
     public function __construct(
         protected MediaImagePipeline $imagePipeline
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View|JsonResponse
     {
-        $query = Media::query()->latest();
+        $query = Media::query()->with('translations')->latest();
 
         if ($request->filled('type')) {
-            $query->where('mime_type', 'like', $request->input('type') . '/%');
+            $query->where('mime_type', 'like', $request->input('type').'/%');
         }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('original_filename', 'like', "%{$search}%")
-                  ->orWhere('title', 'like', "%{$search}%")
-                  ->orWhere('alt', 'like', "%{$search}%");
+                    ->orWhere('title', 'like', "%{$search}%")
+                    ->orWhere('alt', 'like', "%{$search}%")
+                    ->orWhereHas('translations', fn ($translations) => $translations
+                        ->where('title', 'like', "%{$search}%")->orWhere('alt', 'like', "%{$search}%"));
             });
         }
 
@@ -50,11 +54,15 @@ class MediaController extends Controller
         $media = $query->paginate($perPage)->withQueryString();
 
         if ($request->wantsJson()) {
+            $this->useMetadataLocale($request);
+
             return response()->json($media);
         }
 
         return view('admin.media.index', [
             'media' => $media,
+            'mediaLocales' => Locale::where('is_active', true)->orderByDesc('is_base')->orderBy('sort_order')->get(),
+            'mediaBaseLocale' => Locale::baseCode(),
             'availableMonths' => $this->availableMonths(),
             'hasActiveFilters' => $request->filled('type')
                 || $request->filled('search')
@@ -72,7 +80,7 @@ class MediaController extends Controller
         }
 
         try {
-            return CarbonImmutable::createFromFormat('Y-m-d', $month . '-01')->startOfDay();
+            return CarbonImmutable::createFromFormat('Y-m-d', $month.'-01')->startOfDay();
         } catch (Throwable) {
             return null;
         }
@@ -96,7 +104,7 @@ class MediaController extends Controller
             ->map(fn (string $value) => [
                 'value' => $value,
                 'label' => Str::ucfirst(
-                    CarbonImmutable::createFromFormat('Y-m-d', $value . '-01')
+                    CarbonImmutable::createFromFormat('Y-m-d', $value.'-01')
                         ->locale($locale)
                         ->isoFormat('MMMM YYYY')
                 ),
@@ -123,8 +131,8 @@ class MediaController extends Controller
         foreach ($uploadedFiles as $file) {
             $extension = strtolower($file->getClientOriginalExtension());
 
-            $filename = Str::uuid() . '.' . $extension;
-            $directory = 'media/' . now()->format('Y/m');
+            $filename = Str::uuid().'.'.$extension;
+            $directory = 'media/'.now()->format('Y/m');
             $path = $file->storeAs($directory, $filename, 'public');
 
             $createdMedia[] = Media::create([
@@ -174,21 +182,67 @@ class MediaController extends Controller
         return null;
     }
 
-    public function show(Media $media): JsonResponse
+    public function show(Request $request, Media $media): JsonResponse
     {
-        return response()->json($media);
+        $this->useMetadataLocale($request);
+
+        return response()->json($media->load('translations'));
     }
 
     public function update(Request $request, Media $media): JsonResponse
     {
         $validated = $request->validate([
-            'alt' => ['nullable', 'string', 'max:255'],
-            'title' => ['nullable', 'string', 'max:255'],
+            'alt' => [Rule::prohibitedIf($request->has('metadata')), 'nullable', 'string', 'max:255'],
+            'title' => [Rule::prohibitedIf($request->has('metadata')), 'nullable', 'string', 'max:255'],
+            'metadata' => ['sometimes', 'array:'.implode(',', $this->metadataLocales())],
+            'metadata.*' => ['array:alt,title'],
+            'metadata.*.alt' => ['nullable', 'string', 'max:255'],
+            'metadata.*.title' => ['nullable', 'string', 'max:255'],
+        ], [
+            'max.string' => __('admin.editor_validation_max_string'),
+            'string' => __('admin.editor_validation_string'),
+            'array' => __('admin.media_metadata_invalid'),
         ]);
 
-        $media->update($validated);
+        DB::transaction(function () use ($media, $validated) {
+            if (! array_key_exists('metadata', $validated)) {
+                $media->update($validated);
 
-        return response()->json($media);
+                return;
+            }
+            foreach ($validated['metadata'] as $locale => $fields) {
+                $fields = array_map(fn ($value) => filled($value) ? $value : null, $fields);
+                if ($locale === Locale::baseCode()) {
+                    $media->update($fields);
+
+                    continue;
+                }
+                $translation = $media->translations()->firstOrNew(['locale' => $locale]);
+                $translation->fill($fields);
+                if (blank($translation->alt) && blank($translation->title)) {
+                    if ($translation->exists) {
+                        $translation->delete();
+                    }
+                } else {
+                    $translation->save();
+                }
+            }
+        });
+
+        return response()->json($media->refresh()->load('translations'));
+    }
+
+    protected function metadataLocales(): array
+    {
+        return array_values(array_unique([Locale::baseCode(), ...Locale::where('is_active', true)->pluck('code')->all()]));
+    }
+
+    protected function useMetadataLocale(Request $request): void
+    {
+        $locales = $this->metadataLocales();
+        $validated = $request->validate(['locale' => ['sometimes', 'string', Rule::in($locales)]]);
+        $locale = $validated['locale'] ?? app()->getLocale();
+        app()->setLocale(in_array($locale, $locales, true) ? $locale : Locale::baseCode());
     }
 
     public function destroy(Media $media): JsonResponse

@@ -70,6 +70,7 @@
                  data-url="{{ $item->url() }}"
                  data-title="{{ $item->title }}"
                  data-alt="{{ $item->alt }}"
+                 data-metadata='@json($item->metadata)'
                  data-size="{{ $item->formattedSize() }}"
                  data-size-bytes="{{ $item->size }}"
                  data-mime="{{ $item->mime_type }}"
@@ -86,7 +87,7 @@
                  data-variants='@json($item->variants ?? [])'>
                 <div class="aspect-square flex items-center justify-center bg-[#1a1a1a]">
                     @if ($item->isImage())
-                        <img src="{{ $item->url() }}" alt="{{ $item->alt }}" class="w-full h-full object-contain">
+                        <img src="{{ $item->url() }}" alt="{{ $item->localizedAlt() }}" class="w-full h-full object-contain">
                     @else
                         <svg class="w-10 h-10 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
@@ -195,21 +196,27 @@
     };
 
     document.querySelectorAll('.media-item').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', async () => {
+            if (!await window.mediaMetadata.open(item)) return;
             if (activeItem) activeItem.classList.remove('ring-2', 'ring-sky-500/60');
             activeItem = item;
             item.classList.add('ring-2', 'ring-sky-500/60');
 
             document.getElementById('detail-preview').innerHTML = item.dataset.mime.startsWith('image/')
-                ? `<img src="${item.dataset.url}" alt="${item.dataset.alt}" class="max-w-full max-h-56 rounded object-contain">`
+                ? ''
                 : `<div class="text-gray-700 text-center py-8"><svg class="w-14 h-14 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>`;
 
+            if (item.dataset.mime.startsWith('image/')) {
+                const image = document.createElement('img');
+                image.src = item.dataset.url;
+                image.alt = item.dataset.alt || '';
+                image.className = 'max-w-full max-h-56 rounded object-contain';
+                document.getElementById('detail-preview').replaceChildren(image);
+            }
             document.getElementById('detail-filename').textContent = item.dataset.filename;
             document.getElementById('detail-size').textContent = item.dataset.size;
             document.getElementById('detail-url').value = item.dataset.url;
             resetCopyIcon();
-            document.getElementById('detail-alt').value = item.dataset.alt || '';
-            document.getElementById('detail-title').value = item.dataset.title || '';
             detailPanel.dataset.mediaId = item.dataset.id;
 
             const eligibility = optimizationEligibility(item);
@@ -284,23 +291,12 @@
         optimizationChevron?.classList.toggle('rotate-180', isHidden);
     });
 
-    detailClose?.addEventListener('click', () => {
+    detailClose?.addEventListener('click', async () => {
+        if (!await window.mediaMetadata.canLeave()) return;
+        window.mediaMetadata.reset();
         if (activeItem) activeItem.classList.remove('ring-2', 'ring-sky-500/60');
         activeItem = null;
         detailPanel.classList.add('hidden');
-    });
-
-    document.getElementById('detail-save')?.addEventListener('click', async () => {
-        const id = detailPanel.dataset.mediaId;
-        const response = await fetch(`/admin/media/${id}`, {
-            method: 'PUT',
-            headers: { 'X-CSRF-TOKEN': window.csrfToken, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                alt: document.getElementById('detail-alt').value,
-                title: document.getElementById('detail-title').value,
-            }),
-        });
-        if (response.ok) window.location.reload();
     });
 
     document.getElementById('detail-delete')?.addEventListener('click', async () => {
