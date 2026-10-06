@@ -145,7 +145,7 @@ Each item is `[data-repeater-item]` with `[data-repeater-label-input]`, `[data-r
 
 1. Reads `notify_enabled` and `notify_email` from the page's form section. Either missing → no email.
 2. Requires the global `mail_enabled` setting. Off → logs and skips.
-3. Sends the Mailable through the `brevo` mailer when `brevo_api_key` is set, otherwise the default mailer, with the `mail_from_*` settings as sender and the visitor as reply-to.
+3. Sends the Mailable through the `brevo` mailer when an effective key exists: the nonblank `brevo_api_key` setting takes precedence over `mail.mailers.brevo.key` (loaded from `BREVO_API_KEY`). Empty or whitespace-only keys do not select Brevo. With mail enabled and no effective key, the provider preserves the configured default (`MAIL_MAILER`); the notifier uses that mailer, with the `mail_from_*` settings as sender and the visitor as reply-to.
 4. Stamps `notified_at`. Any exception is logged; the visitor still sees success because the row is already stored.
 
 Test with `Mail::fake()`; the Mailable renders `emails/contact-submission.blade.php` and links to the admin detail view.

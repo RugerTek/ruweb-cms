@@ -46,6 +46,6 @@ class SubmissionNotifier
 
     public function mailer(): string
     {
-        return Setting::get('brevo_api_key') ? 'brevo' : (string) config('mail.default');
+        return filled(Setting::get('brevo_api_key')) ? 'brevo' : (string) config('mail.default');
     }
 }

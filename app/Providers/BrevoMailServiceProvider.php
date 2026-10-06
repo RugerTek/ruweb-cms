@@ -34,7 +34,7 @@ class BrevoMailServiceProvider extends ServiceProvider
             }
 
             $enabled = Setting::get('mail_enabled');
-            if ($enabled) {
+            if ($enabled && filled($this->resolveApiKey(config('mail.mailers.brevo', [])))) {
                 config(['mail.default' => 'brevo']);
             }
 
@@ -56,7 +56,7 @@ class BrevoMailServiceProvider extends ServiceProvider
         try {
             if (Schema::hasTable('settings')) {
                 $key = Setting::get('brevo_api_key');
-                if ($key) {
+                if (filled($key)) {
                     return $key;
                 }
             }

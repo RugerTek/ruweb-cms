@@ -8,6 +8,11 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
+## 0.45.1 - 2026-10-06
+
+- Activar el correo sin una clave Brevo efectiva conserva el transporte configurado en `MAIL_MAILER`, evitando forzar Brevo con credenciales vacías. Se respeta la prioridad de la clave de Ajustes sobre la configuración del entorno y se ignoran claves que solo contienen espacios.
+- Pruebas de selección de transporte y notificaciones sin `Mail::fake()` verifican el fallback local, la prioridad de claves y el registro de fallos sin marcar como notificado un envío fallido. Se actualiza el contrato de notificaciones.
+
 ## 0.45.0 - 2026-10-05 (ea594c6)
 
 - El admin bar del frontend incorpora «Crear nuevo…» con Página y Post. El desplegable funciona con clic, táctil y teclado; cierra con Escape, clic fuera o al salir el foco, sin cargar el bundle del admin.
