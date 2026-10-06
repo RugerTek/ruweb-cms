@@ -40,11 +40,11 @@ class PageController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         return view('admin.pages.create', [
             'templates' => config('cms.templates'),
-        ]);
+        ] + $this->resolveEditorBackLink($request, 'admin.pages.index', __('admin.back_to_pages')));
     }
 
     public function store(StorePageRequest $request): RedirectResponse

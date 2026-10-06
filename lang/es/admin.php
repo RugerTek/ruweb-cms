@@ -947,6 +947,9 @@ return [
     'not_found_disabled' => 'El monitor 404 está desactivado en la configuración (cms.redirects.monitor_not_found).',
 
     // Shared Live Editor controls.
+    'create_new_content' => 'Crear nuevo…',
+    'content_type_page' => 'Página',
+    'content_type_post' => 'Post',
     'title_highlight' => 'Resaltar',
     'title_highlight_help' => 'Seleccioná un fragmento y pulsá Resaltar.',
     'editor_resize' => 'Ajustar ancho del editor',

@@ -46,13 +46,13 @@ class PostController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $this->authorize('create', Post::class);
 
         return view('admin.posts.create', [
             'categories' => Taxonomy::ofType('category')->where('locale', Locale::baseCode())->ordered()->get(),
-        ]);
+        ] + $this->resolveEditorBackLink($request, 'admin.posts.index', __('admin.back_to_posts')));
     }
 
     public function store(StorePostRequest $request): RedirectResponse
@@ -84,7 +84,7 @@ class PostController extends Controller
         $post->syncTaxonomies($categories, 'category');
 
         return redirect()
-            ->route('admin.posts.edit', $post)
+            ->route('admin.posts.edit', ['post' => $post, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
             ->with('success', __('admin.post_created'));
     }
 
@@ -138,7 +138,7 @@ class PostController extends Controller
         }
 
         return redirect()
-            ->route('admin.posts.edit', $post)
+            ->route('admin.posts.edit', ['post' => $post, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
             ->with('success', __('admin.post_updated'));
     }
 
@@ -173,7 +173,7 @@ class PostController extends Controller
 
         $existing = $post->translations()->where('locale', $locale)->first();
         if ($existing) {
-            return redirect()->route('admin.posts.edit', $existing);
+            return redirect()->route('admin.posts.edit', ['post' => $existing, 'return' => $this->normalizeReturnUrl($request->input('return'))]);
         }
 
         $base = $post->baseTranslation() ?: $post;
@@ -195,7 +195,7 @@ class PostController extends Controller
         $translation->syncTaxonomies($this->translatedTaxonomyIds($base, 'category', $locale), 'category');
 
         return redirect()
-            ->route('admin.posts.edit', $translation)
+            ->route('admin.posts.edit', ['post' => $translation, 'return' => $this->normalizeReturnUrl($request->input('return'))])
             ->with('success', __('admin.post_created'));
     }
 
@@ -228,16 +228,18 @@ class PostController extends Controller
      */
     private function resolveEditorBackLink(Request $request, string $defaultRoute, string $defaultTitle): array
     {
-        $returnUrl = $this->normalizeReturnUrl($request->query('return'));
+        $returnUrl = $this->normalizeReturnUrl($request->input('return', $request->query('return')));
 
         if ($returnUrl !== null) {
             return [
+                'editorReturn' => $returnUrl,
                 'editorBackHref' => $returnUrl,
                 'editorBackTitle' => __('admin.back_to_previous_page'),
             ];
         }
 
         return [
+            'editorReturn' => route($defaultRoute),
             'editorBackHref' => route($defaultRoute),
             'editorBackTitle' => $defaultTitle,
         ];
@@ -245,7 +247,7 @@ class PostController extends Controller
 
     private function normalizeReturnUrl(mixed $returnUrl): ?string
     {
-        if (! is_string($returnUrl) || $returnUrl === '') {
+        if (! is_string($returnUrl) || $returnUrl === '' || preg_match('/[\\\\\x00-\x1f]/', $returnUrl)) {
             return null;
         }
 

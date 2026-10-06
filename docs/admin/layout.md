@@ -62,6 +62,7 @@ Nothing is required. Empty values simply hide the corresponding element in the p
 ### Sidebar and admin bar
 
 - Sidebar: **Header** and **Footer** appear right after **Menús**, for admins only.
+- Public admin bar: **Crear nuevo…** opens a click/touch/keyboard dropdown with Page and the collections registered in `cms.collections`, filtered by their creation policies. Native `details` provides opening; the small public `admin-bar.js` helper closes on Escape, outside click or focus leaving. Creation links preserve the current public URL as their return origin.
 - Public admin bar: an **Editar layout** control opens a hover / focus dropdown with **Editar header** and **Editar footer**. It is CSS only (`group-hover`, `group-focus-within`), because the public bundle does not load `admin.js`.
 
 ## Public Read Path

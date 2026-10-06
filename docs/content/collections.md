@@ -44,3 +44,14 @@ a page-compatible object for SEO.
 9. Sitemap entry and metadata if public.
 10. Tests for publishing, public visibility and authorization boundaries.
 11. A doc of its own only if it introduces behaviour no existing doc covers.
+
+## Public creation shortcuts
+
+Register each collection in `config('cms.collections')` with its `model`, a singular `label` translation
+key in both admin locales, and `create_route`. The public admin bar's **Create new…** dropdown always lists
+Page first, then registered collections in configuration order (Post in the starter). It hides routes that
+do not exist and collections the signed-in user's `create` policy denies.
+
+Creation links carry the exact public URL in `return`. Create screens, the subsequent editor and language
+switches must preserve that origin using same-site return validation. The menu creates content through the
+normal admin flow; the Menus screen remains the owner of navigation items.

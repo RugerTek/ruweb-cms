@@ -24,6 +24,7 @@ stays generic and project-specific business logic stays in the fork.
 | Key | Declares |
 |---|---|
 | `templates` | Page templates and the section keys each one owns ([../content/templates.md](../content/templates.md)) |
+| `collections` | Public admin bar creation shortcuts: model, translated singular label and named create route ([../content/collections.md](../content/collections.md)) |
 | `content_schemas` | Editorial schema for posts and taxonomies; pages carry theirs inside `templates.<key>.schema` ([multilanguage.md](multilanguage.md)) |
 | `forms` | Public forms, their model, searchable columns and reCAPTCHA action ([../content/forms.md](../content/forms.md)) |
 | `locales` | Installable locale catalog ([multilanguage.md](multilanguage.md)) |

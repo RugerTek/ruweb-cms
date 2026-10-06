@@ -15,6 +15,7 @@
         <input type="hidden" name="_editor_lock" value="{{ $editorLease['token'] }}">
     @endif
     @if($isEdit) @method('PUT') @endif
+    <input type="hidden" name="return" value="{{ $editorReturn ?? request()->query('return') }}">
     <input type="hidden" name="locale" value="{{ old('locale', $post?->locale ?? \App\Models\Locale::baseCode()) }}">
     @include('admin.partials.stale-fields', ['staleFieldNames' => $staleFieldNames ?? []])
 

@@ -4,6 +4,7 @@
     $currentUrl = url()->full();
     $isAdmin = auth()->user()?->isAdmin();
     $adminLocale = \App\Models\Setting::get('admin_locale', 'es');
+    $createLinks = \App\Support\AdminBar::createLinks(auth()->user(), $adminLocale, $currentUrl);
     $editHref = null;
     $editLabel = null;
     $editTitle = null;
@@ -78,6 +79,31 @@
             </svg>
             <span class="hidden sm:inline">{{ trans('admin.menus', [], $adminLocale) }}</span>
         </a>
+
+        @if($createLinks)
+        <span class="text-gray-700 mx-1 flex-none select-none">|</span>
+        <details class="relative flex-none" data-admin-bar-create>
+            <summary class="list-none [&::-webkit-details-marker]:hidden flex items-center gap-1.5 px-2 py-1 rounded text-gray-400 hover:text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-sky-400 transition-colors text-[11px] cursor-pointer">
+                <svg class="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>{{ trans('admin.create_new_content', [], $adminLocale) }}</span>
+                <svg class="w-3 h-3 flex-none opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </summary>
+            <div class="absolute left-0 top-full pt-1 z-[10000]" data-admin-bar-create-menu>
+                <div class="min-w-[10rem] rounded-md bg-gray-900 ring-1 ring-white/10 shadow-lg py-1">
+                    @foreach($createLinks as $link)
+                        <a href="{{ $link['href'] }}"
+                           class="block px-3 py-1.5 text-[11px] text-gray-300 hover:text-white hover:bg-white/10 focus-visible:text-white focus-visible:bg-white/10 transition-colors">
+                            {{ $link['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        </details>
+        @endif
 
         @if($isAdmin)
         <span class="text-gray-700 mx-1 flex-none select-none">|</span>

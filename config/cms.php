@@ -51,6 +51,15 @@ return [
 
     'statuses' => ['draft', 'published'],
 
+    // Collection creation shortcuts in the public admin bar. Pages are always offered separately.
+    'collections' => [
+        'posts' => [
+            'model' => \App\Models\Post::class,
+            'label' => 'admin.content_type_post',
+            'create_route' => 'admin.posts.create',
+        ],
+    ],
+
     'templates' => [
         'default' => [
             'name' => 'Default Page',

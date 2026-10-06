@@ -947,6 +947,9 @@ return [
     'not_found_disabled' => 'The 404 monitor is disabled in configuration (cms.redirects.monitor_not_found).',
 
     // Shared Live Editor controls.
+    'create_new_content' => 'Create new…',
+    'content_type_page' => 'Page',
+    'content_type_post' => 'Post',
     'title_highlight' => 'Highlight',
     'title_highlight_help' => 'Select a phrase and press Highlight.',
     'editor_resize' => 'Resize editor panel',

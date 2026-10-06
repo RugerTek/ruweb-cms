@@ -8,7 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.44.0 - 2026-10-05
+## 0.45.0 - 2026-10-05
+
+- El admin bar del frontend incorpora «Crear nuevo…» con Página y Post. El desplegable funciona con clic, táctil y teclado; cierra con Escape, clic fuera o al salir el foco, sin cargar el bundle del admin.
+- Las colecciones se registran en `cms.collections` con modelo, etiqueta traducida y ruta de creación. El menú muestra solo rutas existentes y colecciones permitidas por la policy del usuario; el starter incluye únicamente el blog.
+- Crear contenido desde el frontend conserva la URL de origen en el formulario, el editor y los cambios de idioma. Se mantienen las validaciones de retorno al mismo sitio y el admin bar sigue oculto en el preview.
+
+## 0.44.0 - 2026-10-05 (164f7af)
 
 - El login acepta nombre de usuario o email en un solo campo, con autocompletado de credenciales. Los envíos anteriores por email siguen funcionando y ambos identificadores comparten el límite de intentos por cuenta e IP.
 - Username opcional y único, editable desde Perfil y desde Usuarios, normalizado a minúsculas. Las cuentas existentes conservan el acceso por email; el listado de usuarios muestra y busca también el username.
