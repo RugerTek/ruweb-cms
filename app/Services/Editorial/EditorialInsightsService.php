@@ -174,11 +174,13 @@ class EditorialInsightsService
 
                 if ($state === 'published') {
                     $published++;
+
                     continue;
                 }
 
                 if (in_array($state, ['missing', 'draft', 'needs_review'], true)) {
                     $pending->push($this->translationItem($record, $locale->code, $state));
+
                     continue;
                 }
 

@@ -2,10 +2,25 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Arr;
 use Tests\TestCase;
 
 class AdminTranslationsTest extends TestCase
 {
+    public function test_all_spanish_and_english_namespaces_have_identical_keys(): void
+    {
+        $spanish = glob(lang_path('es/*.php'));
+        $english = glob(lang_path('en/*.php'));
+        $this->assertSame(array_map('basename', $spanish), array_map('basename', $english));
+        foreach ($spanish as $file) {
+            $es = array_keys(Arr::dot(require $file));
+            $en = array_keys(Arr::dot(require lang_path('en/'.basename($file))));
+            sort($es);
+            sort($en);
+            $this->assertSame($es, $en, basename($file));
+        }
+    }
+
     public function test_homepage_settings_translation_keys_exist_in_spanish_and_english(): void
     {
         $keys = [

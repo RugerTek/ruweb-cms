@@ -11,13 +11,14 @@ use Throwable;
 class MediaImagePipeline
 {
     public const OPTIMIZABLE_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+
     public const RASTER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+
     public const VARIANT_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
 
     public function __construct(
         protected ImageOptimizer $optimizer
-    ) {
-    }
+    ) {}
 
     public function processUploadedMedia(Media $media): void
     {
@@ -27,6 +28,7 @@ class MediaImagePipeline
 
         if (! $this->supportsLocalPath($media->disk)) {
             $this->warn("Media optimization skipped for media #{$media->id}: disk [{$media->disk}] does not support local paths.");
+
             return;
         }
 
@@ -63,7 +65,7 @@ class MediaImagePipeline
         $absoluteSource = $disk->path($media->path);
         $dirname = trim(pathinfo($media->path, PATHINFO_DIRNAME), '.');
         $basename = pathinfo($media->filename, PATHINFO_FILENAME);
-        $newRelativePath = ($dirname ? $dirname . '/' : '') . $basename . '.webp';
+        $newRelativePath = ($dirname ? $dirname.'/' : '').$basename.'.webp';
         $absoluteTarget = $disk->path($newRelativePath);
 
         $result = $this->optimizer->optimizeToWebp(
@@ -82,9 +84,9 @@ class MediaImagePipeline
         $storedOriginalPath = null;
 
         if ($keepOriginal) {
-            $origDir = ($dirname ? $dirname . '/' : '') . 'originals';
-            $origFilename = Str::uuid() . '.' . $originalExtension;
-            $storedOriginalPath = $origDir . '/' . $origFilename;
+            $origDir = ($dirname ? $dirname.'/' : '').'originals';
+            $origFilename = Str::uuid().'.'.$originalExtension;
+            $storedOriginalPath = $origDir.'/'.$origFilename;
             $disk->move($originalPath, $storedOriginalPath);
         } else {
             $disk->delete($originalPath);
@@ -177,7 +179,7 @@ class MediaImagePipeline
         }
 
         $dirname = trim(pathinfo($media->path, PATHINFO_DIRNAME), '.');
-        $variantsRelativeDir = ($dirname ? $dirname . '/' : '') . 'variants';
+        $variantsRelativeDir = ($dirname ? $dirname.'/' : '').'variants';
         $variantsAbsoluteDir = $disk->path($variantsRelativeDir);
         $baseName = pathinfo($media->filename, PATHINFO_FILENAME);
 
@@ -191,7 +193,8 @@ class MediaImagePipeline
         );
 
         $serialized = collect($variants)->map(function (array $variant) use ($variantsRelativeDir, $media) {
-            $relativePath = trim($variantsRelativeDir . '/' . $variant['filename'], '/');
+            $relativePath = trim($variantsRelativeDir.'/'.$variant['filename'], '/');
+
             return [
                 'width' => (int) $variant['width'],
                 'height' => (int) $variant['height'],
@@ -221,7 +224,9 @@ class MediaImagePipeline
             }
         }
 
-        $media->forceFill(['variants' => null])->save();
+        if ($media->exists) {
+            $media->forceFill(['variants' => null])->save();
+        }
     }
 
     public function deleteRelatedFiles(Media $media): void
@@ -240,6 +245,7 @@ class MediaImagePipeline
     {
         try {
             Storage::disk($disk)->path('/');
+
             return true;
         } catch (Throwable) {
             return false;

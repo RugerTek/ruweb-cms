@@ -18,10 +18,12 @@ the same keys.
 ## Rules
 
 1. **No visible literal in an admin Blade.** Labels, placeholders, help text, buttons, confirmations and empty
-   states go through `__('admin.<key>')`.
+   states go through `__('admin.<key>')` or a dedicated admin feature namespace (`security`, `editorial`,
+   `submissions`, `media_safety`). Dedicated namespaces keep the same key-for-key parity in Spanish and English.
 2. **No visible literal in admin JS.** `resources/js/admin.js` reads from `window.adminI18n`, built in
    `resources/views/admin/layouts/app.blade.php` and accessed with `t('key', 'fallback')`. Add the string to
-   the `$adminI18n` array there, and to both locale files.
+   the `$adminI18n` array there, and to both locale files. Feature modules may receive their own translated
+   configuration. Inline Blade scripts encode translated strings with `@json` or `Js::from`.
 3. **Controllers, requests and JSON responses** use translation keys for any message a user can see.
 4. **Dynamic labels have a deterministic fallback** when the key is missing — never render a raw key.
 5. **Public templates never read `admin.*`**, and admin screens never read `public.*`.

@@ -18,6 +18,8 @@
         </form>
     </div>
 
+    @include("admin.submissions._workflow")
+
     <div class="grid gap-4 lg:grid-cols-3">
         <section class="lg:col-span-2 bg-[#111111] border border-white/[0.06] rounded-lg overflow-hidden">
             <div class="px-4 py-3 border-b border-white/[0.06]"><h2 class="text-sm font-semibold text-white">{{ __('admin.submission_fields') }}</h2></div>

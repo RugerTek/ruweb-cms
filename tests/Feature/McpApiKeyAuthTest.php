@@ -18,12 +18,14 @@ class McpApiKeyAuthTest extends TestCase
         $generateResponse = $this->actingAs($user)->post(route('admin.claude-mcp.api-key.generate'));
 
         $generateResponse->assertRedirect(route('admin.claude-mcp.index'));
-        $this->assertNotNull($user->fresh()->mcp_api_key_hash);
+        $this->assertSame(1, $user->mcpApiKeys()->whereNull('revoked_at')->count());
+        $this->assertNull($user->fresh()->mcp_api_key_hash);
 
         $revokeResponse = $this->actingAs($user)->delete(route('admin.claude-mcp.api-key.revoke'));
 
         $revokeResponse->assertRedirect(route('admin.claude-mcp.index'));
         $this->assertNull($user->fresh()->mcp_api_key_hash);
+        $this->assertSame(0, $user->mcpApiKeys()->whereNull('revoked_at')->count());
     }
 
     public function test_mcp_endpoint_requires_valid_api_key(): void

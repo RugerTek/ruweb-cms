@@ -20,7 +20,7 @@ class Recaptcha
 
     public function enabled(): bool
     {
-        return $this->siteKey() !== '' && (string) Setting::get('recaptcha_secret_key') !== '';
+        return $this->siteKey() !== '' && trim((string) Setting::get('recaptcha_secret_key')) !== '';
     }
 
     public function siteKey(): string
@@ -30,7 +30,8 @@ class Recaptcha
 
     public function minScore(): float
     {
-        $score = (float) (Setting::get('recaptcha_min_score') ?: 0.5);
+        $value = Setting::get('recaptcha_min_score');
+        $score = is_numeric($value) ? (float) $value : 0.5;
 
         return max(0.0, min(1.0, $score));
     }
@@ -40,7 +41,7 @@ class Recaptcha
      * Network failures count as a failed check; the honeypot and rate limit
      * still protect the form, and the visitor gets a clear retry message.
      */
-    public function verify(?string $token, ?string $ip, string $expectedAction): bool
+    public function verify(?string $token, ?string $ip, string $expectedAction, ?string $expectedHostname = null): bool
     {
         $this->lastScore = null;
 
@@ -64,17 +65,19 @@ class Recaptcha
             return false;
         }
 
-        if (! is_array($response) || ! ($response['success'] ?? false)) {
+        $hostname = $expectedHostname ?? parse_url((string) config('app.url'), PHP_URL_HOST);
+        $score = $response['score'] ?? null;
+        if (! is_array($response) || ($response['success'] ?? null) !== true
+            || ($response['action'] ?? null) !== $expectedAction
+            || ! is_string($response['hostname'] ?? null)
+            || ! is_string($hostname) || strcasecmp($response['hostname'], $hostname) !== 0
+            || (! is_int($score) && ! is_float($score)) || ! is_finite((float) $score)
+            || $score < 0 || $score > 1 || $score < $this->minScore()) {
             return false;
         }
+        $this->lastScore = (float) $score;
 
-        if (isset($response['action']) && $response['action'] !== $expectedAction) {
-            return false;
-        }
-
-        $this->lastScore = isset($response['score']) ? (float) $response['score'] : null;
-
-        return $this->lastScore === null || $this->lastScore >= $this->minScore();
+        return true;
     }
 
     public function lastScore(): ?float

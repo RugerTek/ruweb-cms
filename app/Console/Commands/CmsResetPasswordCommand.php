@@ -31,9 +31,11 @@ class CmsResetPasswordCommand extends Command
             return Command::FAILURE;
         }
 
-        $user->update([
+        $user->fill([
             'password' => Hash::make($password),
         ]);
+
+        app(\App\Services\Security\RevokeCredentials::class)->all($user);
 
         $this->info("Password updated for {$user->email}.");
 

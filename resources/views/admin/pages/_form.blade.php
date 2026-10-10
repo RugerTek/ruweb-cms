@@ -223,6 +223,10 @@
 
     </div>
 
+    @if(auth()->user()->isAdmin())
+    <div class="p-4 space-y-2"><label class="block">{{ __('editorial.publish_at') }}<input type="datetime-local" name="published_at" value="{{ old('published_at', $page?->published_at?->format('Y-m-d\TH:i')) }}" class="block w-full"></label>
+    <label class="block">{{ __('editorial.expires_at') }}<input type="datetime-local" name="expires_at" value="{{ old('expires_at', $page?->expires_at?->format('Y-m-d\TH:i')) }}" class="block w-full"></label></div>
+    @endif
 </form>
 
 {{-- Delete form — outside editor-form to avoid nesting --}}

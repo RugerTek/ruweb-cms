@@ -2,9 +2,10 @@
 
 namespace App\Traits;
 
+use App\Models\Post;
 use App\Models\Taxonomy;
+use App\Services\Editorial\EditorialHistory;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Illuminate\Support\Collection;
 
 trait HasTaxonomies
 {
@@ -34,6 +35,9 @@ trait HasTaxonomies
 
         if (! empty($ids)) {
             $this->taxonomies()->attach($ids);
+        }
+        if ($this instanceof Post) {
+            app(EditorialHistory::class)->capture($this);
         }
     }
 }

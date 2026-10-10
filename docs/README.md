@@ -31,8 +31,10 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 
 | Doc | Owns |
 |---|---|
+| [admin/editorial-workflow.md](admin/editorial-workflow.md) | Full versions, recovery drafts, reviews, calendar, shared preview links and granular source review |
 | [admin/live-editor.md](admin/live-editor.md) | Editor shell, `initEditorEngine`, DOM and backend contract |
 | [admin/live-editor-ui-ux.md](admin/live-editor-ui-ux.md) | What the client may edit, how it must look and behave, acceptance checklist |
+| [admin/account-security.md](admin/account-security.md) | Profile identity verification, password recovery, two-factor authentication, session and connection revocation |
 | [admin/settings.md](admin/settings.md) | Settings model, types, groups, adding a setting |
 | [admin/layout.md](admin/layout.md) | Header, footer, business contact data, ownership map |
 | [admin/rich-text.md](admin/rich-text.md) | TinyMCE presets, sanitisation, public rendering |

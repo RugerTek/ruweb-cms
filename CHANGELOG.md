@@ -8,7 +8,16 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.46.1 - 2026-10-10
+## 0.47.0 - 2026-10-10
+
+- **Seguridad de cuentas y acceso:** intercambio OAuth atómico y limitado, recuperación sin enumeración, confirmación del nuevo email y revocación de credenciales al cambiar identidad. Se incorporan segundo factor TOTP, códigos de recuperación, gestión de sesiones y claves MCP con nombre, permisos, vencimiento y revocación individual.
+- **Formularios y seguimiento:** reCAPTCHA valida acción, puntuación y dominio; el token firmado vincula tiempo, formulario, página publicada e idioma. Las notificaciones salen por cola con reintentos y estados visibles; la bandeja añade responsables, estados, notas internas, filtros y reenvío manual.
+- **Medios protegidos:** los SVG se validan estructuralmente antes de almacenarse y se bloquea la eliminación de archivos referenciados por contenido, ajustes traducidos, versiones o borradores recuperables. La biblioteca muestra sus usos y la limpieza de huérfanos comparte esas protecciones.
+- **Historial y revisión editorial:** páginas y posts conservan versiones completas restaurables, diferencias y borradores de recuperación local y remota. Los editores proponen cambios sin alterar publicaciones; un administrador asignado revisa la versión exacta, con comentarios y protección frente a conflictos, también en MCP.
+- **Programación y traducciones:** calendario y vencimiento de publicaciones, enlaces de vista previa revocables y temporales para versiones concretas, y comparación de cambios del idioma base con aprobación por campo, incluidas eliminaciones en listas.
+- **Integración y operación:** snapshots conservan el historial y limpian credenciales, enlaces, borradores y entregas interrumpidas; se actualizan contratos, interfaz y etiquetas ES/EN, con pruebas de concurrencia OAuth, permisos, recuperación y flujos completos.
+
+## 0.46.1 - 2026-10-10 (f0b5fab)
 
 - Corregido el binding de modelos en las rutas MCP REST de medios, páginas, posts y menús: se autentica el token antes de resolver el registro y los IDs inexistentes devuelven 404. GET/PATCH de medios y las herramientas RPC admiten metadatos por `locale`, con fallback al texto base; las policies usan al propietario del token. Se añaden pruebas REST con token real para lectura, actualización, idiomas y permisos.
 

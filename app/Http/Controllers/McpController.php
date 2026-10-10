@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Media;
 use App\Models\Locale;
+use App\Models\Media;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Setting;
 use App\Models\Taxonomy;
+use App\Services\Editorial\EditorialHistory;
+use App\Support\SiteUrl;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -35,7 +39,7 @@ class McpController extends Controller
         }
 
         if (! empty($validated['search'])) {
-            $query->where('title', 'like', '%' . $validated['search'] . '%');
+            $query->where('title', 'like', '%'.$validated['search'].'%');
         }
 
         $pages = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20));
@@ -95,6 +99,9 @@ class McpController extends Controller
 
     public function pagesUpdateDraft(Request $request, Page $page): JsonResponse
     {
+        if ($request->user()?->isEditor() && $page->status === 'published') {
+            throw new AuthorizationException(__('editorial.publish_forbidden'));
+        }
         $this->authorizeCmsEditor($request);
 
         $validated = Validator::make($request->all(), [
@@ -123,6 +130,8 @@ class McpController extends Controller
             }
         }
 
+        app(EditorialHistory::class)->capture($page->fresh());
+
         return response()->json([
             'data' => $this->serializePage($page->fresh()),
         ]);
@@ -130,6 +139,9 @@ class McpController extends Controller
 
     public function pagesPublish(Request $request, Page $page): JsonResponse
     {
+        if (! $request->user()?->isAdmin()) {
+            throw new AuthorizationException(__('editorial.publish_forbidden'));
+        }
         $this->authorizeCmsEditor($request);
 
         $page->update([
@@ -161,8 +173,8 @@ class McpController extends Controller
 
         if (! empty($validated['search'])) {
             $query->where(function ($q) use ($validated) {
-                $q->where('title', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('slug', 'like', '%' . $validated['search'] . '%');
+                $q->where('title', 'like', '%'.$validated['search'].'%')
+                    ->orWhere('slug', 'like', '%'.$validated['search'].'%');
             });
         }
 
@@ -224,6 +236,9 @@ class McpController extends Controller
 
     public function postsUpdateDraft(Request $request, Post $post): JsonResponse
     {
+        if ($request->user()?->isEditor() && $post->status === 'published') {
+            throw new AuthorizationException(__('editorial.publish_forbidden'));
+        }
         $this->authorizeForUser($request->user(), 'update', $post);
 
         $validated = Validator::make($request->all(), [
@@ -253,6 +268,8 @@ class McpController extends Controller
             }
         }
 
+        app(EditorialHistory::class)->capture($post->fresh());
+
         return response()->json([
             'data' => $this->serializePost($post->fresh()),
         ]);
@@ -260,6 +277,9 @@ class McpController extends Controller
 
     public function postsPublish(Request $request, Post $post): JsonResponse
     {
+        if (! $request->user()?->isAdmin()) {
+            throw new AuthorizationException(__('editorial.publish_forbidden'));
+        }
         $this->authorizeForUser($request->user(), 'update', $post);
 
         $post->update([
@@ -287,14 +307,14 @@ class McpController extends Controller
         $query = Media::query()->with('translations')->latest();
 
         if (! empty($validated['type'])) {
-            $query->where('mime_type', 'like', $validated['type'] . '/%');
+            $query->where('mime_type', 'like', $validated['type'].'/%');
         }
 
         if (! empty($validated['search'])) {
             $query->where(function ($q) use ($validated) {
-                $q->where('original_filename', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('title', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('alt', 'like', '%' . $validated['search'] . '%')
+                $q->where('original_filename', 'like', '%'.$validated['search'].'%')
+                    ->orWhere('title', 'like', '%'.$validated['search'].'%')
+                    ->orWhere('alt', 'like', '%'.$validated['search'].'%')
                     ->orWhereHas('translations', fn ($translations) => $translations
                         ->where('title', 'like', '%'.$validated['search'].'%')
                         ->orWhere('alt', 'like', '%'.$validated['search'].'%'));
@@ -440,9 +460,9 @@ class McpController extends Controller
         $this->authorizeForUser($request->user(), 'create', Menu::class);
 
         $validated = Validator::make($request->all(), [
-            'name'     => ['required', 'string', 'max:255'],
-            'locale'   => ['nullable', 'string', Rule::in(Locale::installedCodes())],
-            'slug'     => ['required', 'string', 'max:255', Rule::unique('menus', 'slug')->where('locale', $request->input('locale', Locale::baseCode()))],
+            'name' => ['required', 'string', 'max:255'],
+            'locale' => ['nullable', 'string', Rule::in(Locale::installedCodes())],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('menus', 'slug')->where('locale', $request->input('locale', Locale::baseCode()))],
             'location' => ['nullable', 'string', 'max:255', Rule::unique('menus', 'location')->where('locale', $request->input('locale', Locale::baseCode()))],
         ])->validate();
 
@@ -460,9 +480,9 @@ class McpController extends Controller
         $this->authorizeForUser($request->user(), 'update', $menu);
 
         $validated = Validator::make($request->all(), [
-            'name'     => ['sometimes', 'string', 'max:255'],
-            'locale'   => ['sometimes', 'string', Rule::in(Locale::installedCodes())],
-            'slug'     => ['sometimes', 'string', 'max:255', Rule::unique('menus', 'slug')->where('locale', $request->input('locale', $menu->locale))->ignore($menu->id)],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'locale' => ['sometimes', 'string', Rule::in(Locale::installedCodes())],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('menus', 'slug')->where('locale', $request->input('locale', $menu->locale))->ignore($menu->id)],
             'location' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('menus', 'location')->where('locale', $request->input('locale', $menu->locale))->ignore($menu->id)],
         ])->validate();
 
@@ -478,33 +498,33 @@ class McpController extends Controller
         $this->authorizeForUser($request->user(), 'update', $menu);
 
         $validated = Validator::make($request->all(), [
-            'items'               => ['present', 'array'],
-            'items.*.id'          => ['nullable', 'integer'],
-            'items.*.parent_id'   => ['nullable', 'integer'],
-            'items.*.label'       => ['required', 'string', 'max:255'],
-            'items.*.type'        => ['required', 'string', 'in:custom_link,page,post,taxonomy'],
+            'items' => ['present', 'array'],
+            'items.*.id' => ['nullable', 'integer'],
+            'items.*.parent_id' => ['nullable', 'integer'],
+            'items.*.label' => ['required', 'string', 'max:255'],
+            'items.*.type' => ['required', 'string', 'in:custom_link,page,post,taxonomy'],
             'items.*.linkable_id' => ['nullable', 'integer'],
-            'items.*.url'         => ['nullable', 'string', 'max:2048'],
-            'items.*.target'      => ['required', 'string', 'in:_self,_blank'],
-            'items.*.order'       => ['required', 'integer', 'min:0'],
+            'items.*.url' => ['nullable', 'string', 'max:2048'],
+            'items.*.target' => ['required', 'string', 'in:_self,_blank'],
+            'items.*.order' => ['required', 'integer', 'min:0'],
         ])->validate();
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $menu) {
+        DB::transaction(function () use ($validated, $menu) {
             $menu->items()->delete();
 
             $idMap = [];
 
             foreach ($validated['items'] as $itemData) {
                 $menuItem = MenuItem::create([
-                    'menu_id'       => $menu->id,
-                    'parent_id'     => null,
-                    'label'         => $itemData['label'],
-                    'type'          => $itemData['type'],
+                    'menu_id' => $menu->id,
+                    'parent_id' => null,
+                    'label' => $itemData['label'],
+                    'type' => $itemData['type'],
                     'linkable_type' => $this->resolveLinkableType($itemData['type']),
-                    'linkable_id'   => $itemData['type'] !== 'custom_link' ? ($itemData['linkable_id'] ?? null) : null,
-                    'url'           => $itemData['type'] === 'custom_link' ? \App\Support\SiteUrl::toRelative($itemData['url'] ?? null) : null,
-                    'target'        => $itemData['target'],
-                    'order'         => $itemData['order'],
+                    'linkable_id' => $itemData['type'] !== 'custom_link' ? ($itemData['linkable_id'] ?? null) : null,
+                    'url' => $itemData['type'] === 'custom_link' ? SiteUrl::toRelative($itemData['url'] ?? null) : null,
+                    'target' => $itemData['target'],
+                    'order' => $itemData['order'],
                 ]);
 
                 if (isset($itemData['id'])) {
@@ -584,6 +604,7 @@ class McpController extends Controller
     protected function serializeMedia(Media $media, ?string $locale = null): array
     {
         $locale ??= Locale::baseCode();
+
         return [
             'id' => $media->id,
             'filename' => $media->filename,
@@ -617,11 +638,11 @@ class McpController extends Controller
     protected function serializeMenu(Menu $menu, bool $withTree = false): array
     {
         $data = [
-            'id'         => $menu->id,
-            'name'       => $menu->name,
-            'slug'       => $menu->slug,
-            'locale'     => $menu->locale,
-            'location'   => $menu->location,
+            'id' => $menu->id,
+            'name' => $menu->name,
+            'slug' => $menu->slug,
+            'locale' => $menu->locale,
+            'location' => $menu->location,
             'items_count' => $menu->items_count ?? $menu->items()->count(),
             'created_at' => $menu->created_at?->toISOString(),
             'updated_at' => $menu->updated_at?->toISOString(),
@@ -634,29 +655,29 @@ class McpController extends Controller
         return $data;
     }
 
-    protected function serializeMenuTree(\Illuminate\Support\Collection $items): array
+    protected function serializeMenuTree(Collection $items): array
     {
         return $items->map(fn (MenuItem $item) => [
-            'id'           => $item->id,
-            'label'        => $item->label,
-            'type'         => $item->type,
-            'url'          => $item->resolveUrl(),
-            'raw_url'      => $item->url,
-            'linkable_id'  => $item->linkable_id,
+            'id' => $item->id,
+            'label' => $item->label,
+            'type' => $item->type,
+            'url' => $item->resolveUrl(),
+            'raw_url' => $item->url,
+            'linkable_id' => $item->linkable_id,
             'linkable_type' => $item->linkable_type,
-            'target'       => $item->target,
-            'order'        => $item->order,
-            'children'     => $this->serializeMenuTree($item->children ?? collect()),
+            'target' => $item->target,
+            'order' => $item->order,
+            'children' => $this->serializeMenuTree($item->children ?? collect()),
         ])->values()->all();
     }
 
     protected function resolveLinkableType(string $type): ?string
     {
         return match ($type) {
-            'page'     => Page::class,
-            'post'     => Post::class,
+            'page' => Page::class,
+            'post' => Post::class,
             'taxonomy' => Taxonomy::class,
-            default    => null,
+            default => null,
         };
     }
 }

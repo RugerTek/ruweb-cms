@@ -269,6 +269,23 @@
             optimizationChevron?.classList.remove('rotate-180');
 
             detailPanel.classList.remove('hidden');
+            const usage = document.getElementById('detail-usage');
+            usage.textContent = @json(__('media_safety.loading'));
+            try {
+                const response = await fetch(`/admin/media/${item.dataset.id}`, { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error();
+                const payload = await response.json();
+                if (activeItem !== item) return;
+                usage.replaceChildren();
+                if (!payload.usage?.length) usage.textContent = @json(__('media_safety.unused'));
+                for (const reference of payload.usage || []) {
+                    const row = document.createElement('li');
+                    row.textContent = `${reference.label} — ${reference.field}`;
+                    usage.appendChild(row);
+                }
+            } catch (_) {
+                if (activeItem === item) usage.textContent = @json(__('media_safety.error'));
+            }
         });
     });
 
@@ -302,11 +319,19 @@
     document.getElementById('detail-delete')?.addEventListener('click', async () => {
         if (!confirm('{{ __('admin.confirm_delete_media') }}')) return;
         const id = detailPanel.dataset.mediaId;
-        const response = await fetch(`/admin/media/${id}`, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': window.csrfToken },
-        });
-        if (response.ok) window.location.reload();
+        const error = document.getElementById('detail-metadata-error');
+        try {
+            const response = await fetch(`/admin/media/${id}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': window.csrfToken, Accept: 'application/json' },
+            });
+            if (response.ok) { window.location.reload(); return; }
+            const payload = await response.json();
+            error.textContent = Object.values(payload.errors || {}).flat()[0] || @json(__('media_safety.error'));
+        } catch (_) {
+            error.textContent = @json(__('media_safety.error'));
+        }
+        error.classList.remove('hidden');
     });
 </script>
 @endpush

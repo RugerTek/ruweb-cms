@@ -7,6 +7,8 @@ use App\Http\Requests\Admin\StoreMediaRequest;
 use App\Models\Locale;
 use App\Models\Media;
 use App\Services\Media\MediaImagePipeline;
+use App\Services\Media\MediaUsage;
+use App\Services\Media\SvgSanitizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -174,8 +176,12 @@ class MediaController extends Controller
             return null;
         }
 
-        $content = file_get_contents($file->getRealPath());
-        if ($content !== false && preg_match('/<script|on\w+\s*=/i', $content)) {
+        try {
+            $content = app(SvgSanitizer::class)->sanitize((string) file_get_contents($file->getRealPath()));
+            if (file_put_contents($file->getRealPath(), $content) === false) {
+                return __('admin.media_error_svg_malicious');
+            }
+        } catch (\InvalidArgumentException $exception) {
             return __('admin.media_error_svg_malicious');
         }
 
@@ -186,7 +192,9 @@ class MediaController extends Controller
     {
         $this->useMetadataLocale($request);
 
-        return response()->json($media->load('translations'));
+        return response()->json($media->load('translations')->toArray() + [
+            'usage' => app(MediaUsage::class)->references($media),
+        ]);
     }
 
     public function update(Request $request, Media $media): JsonResponse
@@ -233,7 +241,6 @@ class MediaController extends Controller
 
     public function destroy(Media $media): JsonResponse
     {
-        $this->imagePipeline->deleteRelatedFiles($media);
         $media->delete();
 
         return response()->json(['message' => __('admin.media_deleted')]);

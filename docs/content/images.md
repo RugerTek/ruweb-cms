@@ -63,6 +63,11 @@ All of them read from `env()`, so a deployment can turn optimization off without
 SVGs and documents bypass raster optimization and variants. GIF dimensions are read, but GIFs are neither
 converted nor variant-generated.
 
+SVG uploads are parsed with networking disabled and validated against an inert geometry/attribute allowlist.
+Scripts, event handlers, foreign documents, animation, CSS, external resources, entities and processing
+instructions are rejected; local gradient/clip references (`url(#id)`) remain available. Accepted documents
+are serialized before storage. Unsupported design features must be flattened/exported as paths or rasterized.
+
 Per asset the pipeline stores final size, original size and format, preserved original path when applicable,
 width, height, variant metadata and the optimization timestamp — so coverage stays measurable.
 
@@ -103,6 +108,13 @@ base), `alt`/`title` keys and strings up to 255 characters are accepted. Omitted
 independent from translating the metadata of the same asset; it does not trigger automatic image translation.
 
 ## Operations
+
+Media deletion checks `MediaUsage` before touching files. It covers media pivots, page/post schema media
+slots (including repeaters and drafts), rich-text URLs and base/localized media settings. The detail panel
+lists references; replace/unlink the file there before deleting it. The orphan cleanup command uses the
+same read path. Successful deletion cleans the primary file, preserved original and responsive variants.
+Retained editorial versions/proposals and unexpired recovery drafts also keep their media alive, so a
+later restore does not silently lose its images. The usage list identifies those historical references.
 
 ```bash
 php artisan media:convert-webp        # run before variant generation

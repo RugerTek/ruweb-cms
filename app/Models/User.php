@@ -15,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'username', 'email', 'password', 'role'])]
-#[Hidden(['password', 'remember_token', 'mcp_api_key_hash'])]
+#[Hidden(['password', 'remember_token', 'mcp_api_key_hash', 'pending_email_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
@@ -30,6 +30,11 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'pending_email_expires_at' => 'datetime',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
+            'security_version' => 'integer',
             'password' => 'hashed',
             'mcp_api_key_generated_at' => 'datetime',
             'mcp_api_key_last_used_at' => 'datetime',
@@ -38,6 +43,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function generateMcpApiKey(): string
     {
+        if ($this->mcp_api_key_hash) $this->mcpApiKeys()->where('key_hash', $this->mcp_api_key_hash)->update(['revoked_at' => now()]);
         $plainApiKey = 'ruweb_mcp_'.Str::random(48);
 
         $this->forceFill([
@@ -46,11 +52,13 @@ class User extends Authenticatable implements MustVerifyEmail
             'mcp_api_key_last_used_at' => null,
         ])->save();
 
+        $this->mcpApiKeys()->create(['name' => __('security.key_default'), 'scope' => 'full', 'key_hash' => $this->mcp_api_key_hash]);
         return $plainApiKey;
     }
 
     public function revokeMcpApiKey(): void
     {
+        if ($this->mcp_api_key_hash) $this->mcpApiKeys()->where('key_hash', $this->mcp_api_key_hash)->update(['revoked_at' => now()]);
         $this->forceFill([
             'mcp_api_key_hash' => null,
             'mcp_api_key_generated_at' => null,
@@ -75,6 +83,16 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->forceFill([
             'mcp_api_key_last_used_at' => now(),
         ])->save();
+    }
+
+    public function mcpApiKeys(): HasMany
+    {
+        return $this->hasMany(McpApiKey::class);
+    }
+
+    public function hasTwoFactor(): bool
+    {
+        return $this->two_factor_secret !== null && $this->two_factor_confirmed_at !== null;
     }
 
     public function isAdmin(): bool

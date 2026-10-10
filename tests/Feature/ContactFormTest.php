@@ -2,12 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendSubmissionNotification;
 use App\Mail\ContactSubmissionReceived;
 use App\Models\ContactSubmission;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Setting;
+use App\Services\Forms\FormToken;
+use App\Services\Forms\Recaptcha;
+use App\Services\Forms\SubmissionNotifier;
 use Database\Seeders\ContactPageSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -25,7 +30,7 @@ class ContactFormTest extends TestCase
         parent::setUp();
 
         Locale::query()->firstOrCreate(['code' => 'es'], ['name' => 'Español', 'is_base' => true, 'is_active' => true, 'is_public' => true, 'sort_order' => 0]);
-        $this->seed([\Database\Seeders\SettingsSeeder::class, ContactPageSeeder::class]);
+        $this->seed([SettingsSeeder::class, ContactPageSeeder::class]);
         $this->page = Page::where('slug', 'contacto')->firstOrFail();
         RateLimiter::clear('forms');
     }
@@ -40,8 +45,17 @@ class ContactFormTest extends TestCase
             'subject' => 'Consulta general',
             'message' => 'Hola, quisiera más información sobre sus servicios.',
             'website' => '',
-            '_ts' => time() - 10,
+            '_form_token' => $this->formToken(),
         ], $overrides);
+    }
+
+    protected function formToken(): string
+    {
+        $this->travel(-10)->seconds();
+        $token = app(FormToken::class)->issue($this->page->id, 'contact', 'es');
+        $this->travelBack();
+
+        return $token;
     }
 
     public function test_contact_page_renders_the_form_with_editor_labels(): void
@@ -53,7 +67,7 @@ class ContactFormTest extends TestCase
         $response->assertSee('name="name"', false);
         $response->assertSee('Consulta general');
         $response->assertSee('name="website"', false);
-        $response->assertSee('name="_ts"', false);
+        $response->assertSee('name="_form_token"', false);
         $response->assertDontSee('recaptcha_token');
     }
 
@@ -92,7 +106,7 @@ class ContactFormTest extends TestCase
             ->assertRedirect('/contacto#contact-form')
             ->assertSessionHas('contact_form_sent');
 
-        $this->post(route('forms.contact.store'), $this->payload(['_ts' => time()]))
+        $this->post(route('forms.contact.store'), $this->payload(['_form_token' => app(FormToken::class)->issue($this->page->id, 'contact', 'es')]))
             ->assertRedirect('/contacto#contact-form');
 
         $this->assertDatabaseCount('contact_submissions', 0);
@@ -107,9 +121,9 @@ class ContactFormTest extends TestCase
         $this->get('/contacto')->assertSee('recaptcha_token')->assertSee('recaptcha/api.js?render=site-key', false);
 
         Http::fake([
-            \App\Services\Forms\Recaptcha::VERIFY_URL => Http::sequence()
-                ->push(['success' => true, 'score' => 0.1, 'action' => 'contact'])
-                ->push(['success' => true, 'score' => 0.9, 'action' => 'contact']),
+            Recaptcha::VERIFY_URL => Http::sequence()
+                ->push(['success' => true, 'score' => 0.1, 'action' => 'contact', 'hostname' => 'localhost'])
+                ->push(['success' => true, 'score' => 0.9, 'action' => 'contact', 'hostname' => 'localhost']),
         ]);
 
         $this->from('/contacto')->post(route('forms.contact.store'), $this->payload(['recaptcha_token' => 'low']))
@@ -145,6 +159,10 @@ class ContactFormTest extends TestCase
         $this->page->update(['content_json' => $content]);
 
         $this->post(route('forms.contact.store'), $this->payload());
+
+        $submission = ContactSubmission::firstOrFail();
+        $this->assertSame('queued', $submission->notification_status);
+        (new SendSubmissionNotification($submission->id, $submission->notification_token))->handle(app(SubmissionNotifier::class));
 
         Mail::assertSent(ContactSubmissionReceived::class, function (ContactSubmissionReceived $mail) {
             return $mail->hasTo('inbox@example.com')
@@ -184,5 +202,14 @@ class ContactFormTest extends TestCase
     public function test_localized_route_exists_for_non_base_locales(): void
     {
         $this->assertSame('/en/forms/contact', parse_url(route('localized.forms.contact.store', ['locale' => 'en']), PHP_URL_PATH));
+    }
+
+    public function test_validation_retry_preserves_valid_token_and_new_forms_defer_instant_submit(): void
+    {
+        $payload = $this->payload(['name' => '']);
+        $this->from('/contacto')->post(route('forms.contact.store'), $payload)->assertSessionHasErrors('name');
+        $this->get('/contacto')->assertSee($payload['_form_token'], false)->assertSee('data-form-fill-wait="0"', false);
+        $this->flushSession();
+        $this->get('/contacto')->assertSee('data-form-fill-wait="3"', false)->assertSee('Preparando el envío');
     }
 }

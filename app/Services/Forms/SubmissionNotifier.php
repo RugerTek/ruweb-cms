@@ -2,12 +2,12 @@
 
 namespace App\Services\Forms;
 
-use App\Mail\ContactSubmissionReceived;
+use App\Jobs\SendSubmissionNotification;
 use App\Models\ContactSubmission;
 use App\Models\Page;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 /**
  * Sends the "new submission" email when the form section on the page has
@@ -32,13 +32,24 @@ class SubmissionNotifier
             return false;
         }
 
+        $token = (string) Str::uuid();
+        $reserved = ContactSubmission::whereKey($submission->id)->whereNull('notified_at')->whereIn('notification_status', ['skipped', 'failed'])->update([
+            'notification_status' => 'queued', 'notification_token' => $token, 'notification_email' => $to,
+            'notification_attempts' => 0, 'notification_error' => null, 'notification_failed_at' => null,
+        ]);
+        if (! $reserved) {
+            return false;
+        }
         try {
-            Mail::mailer($this->mailer())->to($to)->send(new ContactSubmissionReceived($submission));
-            $submission->forceFill(['notified_at' => now()])->save();
+            $connection = config('queue.default') === 'sync' ? 'database' : config('queue.default');
+            SendSubmissionNotification::dispatch($submission->id, $token)->onConnection($connection)->afterCommit();
 
             return true;
         } catch (\Throwable $exception) {
-            Log::warning('Submission notification failed: '.$exception->getMessage());
+            ContactSubmission::whereKey($submission->id)->where('notification_token', $token)->update([
+                'notification_status' => 'failed', 'notification_failed_at' => now(), 'notification_error' => mb_substr($exception->getMessage(), 0, 1000),
+            ]);
+            Log::warning('Submission notification queue failed: '.$exception->getMessage());
 
             return false;
         }
@@ -46,6 +57,6 @@ class SubmissionNotifier
 
     public function mailer(): string
     {
-        return filled(Setting::get('brevo_api_key')) ? 'brevo' : (string) config('mail.default');
+        return trim((string) Setting::get('brevo_api_key')) !== '' || trim((string) config('mail.mailers.brevo.key')) !== '' ? 'brevo' : (string) config('mail.default');
     }
 }

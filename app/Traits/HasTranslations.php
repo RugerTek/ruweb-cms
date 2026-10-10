@@ -129,7 +129,7 @@ trait HasTranslations
         }
 
         $currentHashes = $base->translatableFieldFingerprints();
-        if ($currentHashes === []) {
+        if ($currentHashes === [] && empty($this->source_field_hashes)) {
             return [];
         }
 
@@ -140,11 +140,15 @@ trait HasTranslations
                 : array_keys($currentHashes);
         }
 
-        return array_values(array_keys(array_filter(
-            $currentHashes,
-            fn (string $hash, string $path): bool => ($storedHashes[$path] ?? null) !== $hash,
-            ARRAY_FILTER_USE_BOTH
-        )));
+        $paths = array_unique(array_merge(array_keys($currentHashes), array_keys($storedHashes)));
+
+        return array_values(array_filter($paths, fn (string $path): bool => ($storedHashes[$path] ?? null) !== ($currentHashes[$path] ?? self::removedSourceFieldHash())));
+
+    }
+
+    public static function removedSourceFieldHash(): string
+    {
+        return hash('sha256', 'ruweb:removed-source-field');
     }
 
     /**

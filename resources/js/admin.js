@@ -1,3 +1,4 @@
+import { installRepeaterRecovery, refreshRecoveryMedia } from './editor-recovery.js';
 import '../css/admin.css';
 import { initMediaMetadata } from './media-metadata.js';
 import { initEditorEngine } from './editor-engine.js';
@@ -547,18 +548,19 @@ function initMediaSelector(selector) {
         notifySelectorChange(selector);
     });
 
-    if (!input?.value) renderSelectorPreview(selector, null);
-    if (input?.value) {
-        fetchMediaItem(input.value)
-            .then((media) => renderSelectorPreview(selector, media))
-            .catch(() => renderSelectorPreview(selector, null));
-    }
+    refreshMediaSelector(selector);
+}
+
+function refreshMediaSelector(selector) {
+    const {input}=selectorNodes(selector);
+    return refreshRecoveryMedia(selector,input,renderSelectorPreview,fetchMediaItem);
 }
 
 selectors.forEach(initMediaSelector);
 
 // Repeaters clone rows at runtime, so their selectors are wired on demand.
 window.initMediaSelector = initMediaSelector;
+window.refreshMediaSelectorsWithin = root => root?.querySelectorAll?.('.media-selector').forEach(selector => {initMediaSelector(selector);refreshMediaSelector(selector);});
 window.initMediaSelectorsWithin = (root) => {
     root?.querySelectorAll?.('.media-selector').forEach(initMediaSelector);
 };
@@ -760,6 +762,7 @@ document.querySelectorAll('[data-logo-repeater]').forEach((repeater) => {
 
     // Adding, removing or reordering changes the payload without firing an input
     // event, so the editor would not see the form as dirty and Save would stay off.
+    installRepeaterRecovery(repeater,list,template,refreshRows);
     const notifyStructureChange = () => {
         repeater.dispatchEvent(new Event('change', { bubbles: true }));
     };
@@ -894,6 +897,7 @@ document.querySelectorAll('[data-repeater]').forEach((repeater) => {
         emptyMessage?.classList.toggle('hidden', items.length > 0);
     };
 
+    installRepeaterRecovery(repeater,list,template,refreshRows);
     const notifyStructureChange = () => repeater.dispatchEvent(new Event('change', { bubbles: true }));
 
     addButton.addEventListener('click', () => {

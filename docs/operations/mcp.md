@@ -20,7 +20,7 @@
 | REST API | `/mcp/*` | Direct integrations and scripts |
 
 Both are registered in `bootstrap/app.php` with the `mcp` prefix and middleware group. The group runs
-`AuthenticateMcpApiKey` first, then `Illuminate\Routing\Middleware\SubstituteBindings`, so REST parameters
+`AuthenticateMcpApiKey` first, then `EnforceMcpScopes` and `Illuminate\Routing\Middleware\SubstituteBindings`, so REST parameters
 `{page}`, `{post}`, `{media}` and `{menu}` resolve persisted records. Missing records return 404 only after
 valid authentication; missing or invalid tokens return 401. `{key}` for settings remains a plain string.
 Policies evaluate the user resolved from the token on both REST and JSON-RPC, independently of any browser
@@ -30,11 +30,22 @@ session.
 Authorization: Bearer <token>
 ```
 
-- **API key** for system-to-system use. The key acts with its owner's permissions; rotation invalidates the
-  previous key and revocation takes effect immediately.
+- **Named API keys** for system-to-system use. Each integration has its own hashed key, name, optional
+  expiration and scope. The MCP screen displays plaintext only immediately after creation and supports
+  individual revocation. Existing keys migrate as full-access keys without changing their value. The
+  legacy rotation helper still rotates its prior key; creating a named key preserves other integrations.
+  Revoked or expired migrated keys cannot fall back to legacy authentication.
+- Scopes apply to both REST and JSON-RPC: `read-only` permits reads; `draft-only` also permits creating and
+  updating page/post drafts; `full` permits operations within the owner's role. Draft-only keys cannot
+  publish, unpublish an existing published row, or mutate media, settings or menus. Draft status is checked
+  under a row lock within the mutation transaction, so concurrent publishing cannot bypass the scope.
+  Unknown future RPC tools are denied for restricted keys until explicitly classified.
 - **OAuth 2.0** for external agent platforms needing delegated authorization, through
   `/.well-known/oauth-authorization-server`, `/authorize` and `/token` (`routes/oauth.php`), configured with
   `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET` and `OAUTH_ALLOWED_REDIRECT_URIS`.
+
+See [account security](../admin/account-security.md) for OAuth throttling, second-factor enforcement and
+credential revocation on password or identity changes.
 
 `mcp`, `authorize`, `token` and `.well-known` are reserved slugs, so no page can shadow them.
 

@@ -2,15 +2,28 @@
 
 namespace App\Models;
 
+use App\Services\Media\MediaImagePipeline;
+use App\Services\Media\MediaUsage;
 use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class Media extends Model
 {
     use RecordsContentRevisions;
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $media): void {
+            if (app(MediaUsage::class)->references($media) !== []) {
+                throw ValidationException::withMessages(['media' => __('media_safety.in_use')]);
+            }
+        });
+        static::deleted(fn (self $media) => app(MediaImagePipeline::class)->deleteRelatedFiles($media));
+    }
 
     protected $appends = [
         'url',

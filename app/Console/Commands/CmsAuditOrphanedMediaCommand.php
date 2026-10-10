@@ -3,34 +3,20 @@
 namespace App\Console\Commands;
 
 use App\Models\Media;
-use App\Models\Setting;
+use App\Services\Media\MediaUsage;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class CmsAuditOrphanedMediaCommand extends Command
 {
     protected $signature = 'cms:media:audit-orphans {--delete : Delete orphaned media records and files}';
-    protected $description = 'Audit media not referenced by mediables or media-type settings';
+
+    protected $description = 'Audit media not referenced by content, localized settings or media relations';
 
     public function handle(): int
     {
-        $mediaSettingIds = Setting::query()
-            ->where('type', 'media')
-            ->whereNotNull('value')
-            ->pluck('value')
-            ->map(fn ($id) => (int) $id)
-            ->filter()
-            ->all();
-
-        $orphans = Media::query()
-            ->leftJoin('mediables', 'media.id', '=', 'mediables.media_id')
-            ->whereNull('mediables.media_id')
-            ->when(! empty($mediaSettingIds), function ($query) use ($mediaSettingIds) {
-                $query->whereNotIn('media.id', $mediaSettingIds);
-            })
-            ->orderByDesc('media.created_at')
-            ->select('media.*')
-            ->get();
+        $usage = app(MediaUsage::class);
+        $orphans = Media::query()->latest()->get()
+            ->filter(fn (Media $media) => $usage->references($media) === []);
 
         if ($orphans->isEmpty()) {
             $this->info('No orphaned media found.');
@@ -56,7 +42,6 @@ class CmsAuditOrphanedMediaCommand extends Command
         }
 
         foreach ($orphans as $orphan) {
-            Storage::disk($orphan->disk)->delete($orphan->path);
             $orphan->delete();
         }
 

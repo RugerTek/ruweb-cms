@@ -40,7 +40,7 @@ Behavior:
 8. Installs the preview navigation guard before public scripts run, on every refresh.
 9. Renews the content editing lease and disables saving if ownership is lost, keeping local edits visible.
 
-The current engine does not persist unsaved local drafts to `localStorage`. Draft state is represented by the model status and saved through the normal form endpoint.
+The engine persists user-scoped recovery snapshots separately from saved content, in browser storage and a server draft retained for 14 days. Recovery never publishes content. See [editorial-workflow.md](editorial-workflow.md) for versions, reviews, scheduling and preview links.
 
 ## DOM Contract
 

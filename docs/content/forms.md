@@ -50,7 +50,7 @@ POST /forms/{form}
   → {Form}SubmissionRequest: field rules + page_id + reCAPTCHA token rule
   → honeypot tripped? → redirect with success flag, store nothing
   → store row (fields + metadata)
-  → SubmissionNotifier: email if the page's form section enables it and mail is on
+  → SubmissionNotifier: reserve durable delivery + queue email if the page's form section enables it and mail is on
   → redirect to the page URL + #anchor with a session flag the template turns into the success message
 ```
 
@@ -63,9 +63,9 @@ Every public form includes all of these. None is optional.
 | Control | Implementation | Notes |
 |---------|----------------|-------|
 | CSRF | `@csrf` in the form | Standard `web` middleware |
-| Honeypot | `<x-forms.honeypot />` renders a visually hidden `website` text field and a hidden `_ts` render timestamp | `PublicFormRequest::isHoneypotTripped()` is true when `website` is filled or the form was submitted less than 3 seconds after render. Controllers **redirect as if it succeeded** and store nothing: never tell a bot it was caught. |
+| Honeypot | `<x-forms.honeypot />` renders a visually hidden `website` text field and an encrypted `_form_token` bound to the page id, form key, locale and server render time | `PublicFormRequest::isHoneypotTripped()` is true when `website` is filled or a valid token was submitted less than 3 seconds after render. Missing, malformed, future, expired (over two hours), or wrong-context tokens return a translated reload message. A client-supplied `_ts` never participates in validation. Valid tokens are preserved when field validation redirects back, and a translated short submit wait prevents humans retrying a newly rendered token from being silently dropped. Controllers **redirect as if it succeeded** and store nothing: never tell a bot it was caught. |
 | Rate limit | `->middleware('throttle:forms')` on the route | Limiter `forms` is defined in `AppServiceProvider` (10 per minute per IP). |
-| reCAPTCHA v3 | `<x-forms.recaptcha action="{form}" />` + `App\Rules\RecaptchaToken` added automatically by `PublicFormRequest::rules()` | Driven by the `security` settings group. With no keys the component renders nothing and the rule passes, so local and test environments need no credentials. The rule is implicit: a missing token fails when reCAPTCHA is on. Network errors fail closed with a translated retry message. The verified score is stored in `recaptcha_score`. |
+| reCAPTCHA v3 | `<x-forms.recaptcha action="{form}" />` + `App\Rules\RecaptchaToken` added automatically by `PublicFormRequest::rules()` | Driven by the `security` settings group. With no keys the component renders nothing and the rule passes, so local and test environments need no credentials. The rule is implicit: a missing token fails when reCAPTCHA is on. Network errors fail closed with a translated retry message. A successful response must contain literal boolean success, the expected action, a numeric score between 0 and 1 meeting the threshold, and a hostname matching the configured `APP_URL` host (never the submitted Host header). Incomplete responses fail closed. The verified score is stored in `recaptcha_score`. |
 
 ### Security settings
 
@@ -85,7 +85,7 @@ Rows are seeded by `SettingsSeeder` and by the migration `2026_09_14_000002_add_
 
 | Column | Source |
 |--------|--------|
-| `page_id` | Hidden input on the form; used for redirects and to read the form section (notifications) |
+| `page_id` | Required hidden input; must resolve to a published, non-future page in the route locale, with the form’s registered template and a present, visible registered section. Used for redirects and notifications; token binding prevents swapping page context. |
 | `locale` | `app()->getLocale()` |
 | `ip` | `Request::ip()` |
 | `user_agent` | Truncated to 500 chars |
@@ -139,30 +139,35 @@ Each item is `[data-repeater-item]` with `[data-repeater-label-input]`, `[data-r
 - Per-form partials live in `resources/views/admin/submissions/{form}/`: `_columns` (extra `<th>`), `_row` (matching `<td>`, receives `$submission` and `$url`), `_detail` (field list).
 - Tab labels come from `admin.forms.<key>` in `lang/*/admin.php`.
 
-## Notifications
+## Notification Delivery And Inbox Work
 
-`SubmissionNotifier::notify($submission, $page, $sectionKey = 'form')`:
+`SubmissionNotifier::notify($submission, $page, $sectionKey = 'form')` reads the section's enabled flag and valid recipient and requires `mail_enabled`. It atomically reserves a delivery generation only from `skipped` or `failed`, with a new opaque token, recipient and zeroed attempts. Already queued, sending, retrying or sent deliveries cannot be reserved again. Existing `notified_at` rows are marked sent by the workflow migration and never re-enqueued.
 
-1. Reads `notify_enabled` and `notify_email` from the page's form section. Either missing → no email.
-2. Requires the global `mail_enabled` setting. Off → logs and skips.
-3. Sends the Mailable through the `brevo` mailer when an effective key exists: the nonblank `brevo_api_key` setting takes precedence over `mail.mailers.brevo.key` (loaded from `BREVO_API_KEY`). Empty or whitespace-only keys do not select Brevo. With mail enabled and no effective key, the provider preserves the configured default (`MAIL_MAILER`); the notifier uses that mailer, with the `mail_from_*` settings as sender and the visitor as reply-to.
-4. Stamps `notified_at`. Any exception is logged; the visitor still sees success because the row is already stored.
+`SendSubmissionNotification` runs asynchronously on the configured queue connection; if the application chooses `sync`, delivery uses the `database` connection instead. Run a worker for that connection (`php artisan queue:work database` for the fallback). Queue insertion happens after commit. Queue errors leave a durable `failed` state rather than failing the visitor's successful submission.
 
-Test with `Mail::fake()`; the Mailable renders `emails/contact-submission.blade.php` and links to the admin detail view.
+The job uses four attempts and backoff of 30, 120 and 600 seconds. It claims the generation with a compare-and-swap before sending; duplicate and obsolete jobs cannot send or overwrite a newer generation. A worker killed during delivery can reclaim an expired sending lease after its 60 second timeout. Configure the queue's retry interval above the worker timeout. Successful delivery stamps `notified_at`; retryable transport exceptions preserve a diagnostic and `retrying` state, and exhausted jobs record `failed` with a failure timestamp. Email transport cannot guarantee exactly-once delivery if a worker dies after the provider accepted mail but before the success was persisted.
+
+Brevo selection remains unchanged: a nonblank database `brevo_api_key` takes precedence over `mail.mailers.brevo.key` / `BREVO_API_KEY`. Blank keys use the configured default mailer. Sender settings and visitor reply-to remain owned by the existing Mailable.
+
+The submissions detail screen displays translated delivery state, attempts, actionable failure guidance and a retry button for failed or skipped deliveries. Admins and editors may retry; the atomic generation reservation also protects concurrent clicks. Disabled mail or missing notification settings returns an actionable translated message.
+
+Submissions retain `read_at` for unread badges and the legacy new/read filters. A separate `workflow_status` (`new`, `in_progress`, `resolved`) records work independently from opening the detail screen. Admins and editors can select a responsible admin/editor, change state, and append internal notes. Notes are attributed to the logged-in user, length-validated and escaped in the detail view; they never appear on the public site or outgoing notification. The inbox filters by workflow, assignee (including unassigned), delivery state, text and date. Workflow controls are distinct from the immutable visitor fields. Deleting a submission cascades its notes; deleting a user clears assignment and preserves the note with a deleted-user attribution.
+
+Tests use `Queue::fake()` to verify reservation and async dispatch, and invoke jobs with `Mail::fake()` or a transport double to verify success, duplicate suppression, retries and exhausted delivery. RefreshDatabase tests use isolated SQLite databases.
 
 ## Adding A New Form: Checklist
 
 Follow this list in order. Each step names the contact counterpart to copy.
 
 1. **Contract.** Write the field list (name, type, required, rules), which labels/options are administrable, where submissions go, and whether email notifications apply. If any part is unclear, stop and ask the project owner; do not guess.
-2. **Migration + model.** `create_{form}_submissions_table` with the real field columns plus the metadata block above. Model with `casts` for the timestamps and `recaptcha_score`, `scopeUnread`, `isRead()`, `markRead()`. Do **not** add `RecordsContentRevisions`.
+2. **Migration + model.** `create_{form}_submissions_table` with the real field columns plus the metadata block above. Include the shared workflow/assignment and notification-generation metadata and a form-owned notes relation, as in the contact workflow migration. Model with `casts` for the timestamps and `recaptcha_score`, `scopeUnread`, `isRead()`, `markRead()`. Do **not** add `RecordsContentRevisions`.
 3. **Request.** `app/Http/Requests/Public/{Form}SubmissionRequest.php` extending `PublicFormRequest`: `formKey()` returns the registry key (also the reCAPTCHA action), `fieldRules()` the field rules, `messages()` translated via `public.forms.errors.*`.
 4. **Controller.** `app/Http/Controllers/Public/{Form}FormController.php` following the contact flow: honeypot → store → notify → redirect with a success flag and anchor.
 5. **Routes.** `POST /forms/{form}` inside the `public.locale` group and its `localized.` twin under the `{locale}` prefix, both with `throttle:forms`, before the page catch-all.
-6. **Template.** Section markup with `@csrf`, hidden `page_id`, labels from the section with `public.*` fallbacks, `<x-forms.honeypot />`, `<x-forms.recaptcha action="{form}" />`, success and error blocks, `old()` values, action from `LocalizedRoute::to('forms.{form}.store')`.
+6. **Template.** Section markup with `@csrf`, hidden `page_id`, labels from the section with `public.*` fallbacks, `<x-forms.honeypot :page="$page" form="{form}" />`, `<x-forms.recaptcha action="{form}" />`, success and error blocks, `old()` values, action from `LocalizedRoute::to('forms.{form}.store')`.
 7. **Schema.** Register the template/section in `config/cms.php` with every editable path flagged `translatable` or `preserve`.
 8. **Live Editor section partial.** `resources/views/admin/pages/sections/{template}_{section}.blade.php` with the contract above: note, labels, options repeater, notifications, green "View submissions" button.
-9. **Registry.** Add `config('cms.forms.{form}')` with `model`, `searchable`, `recaptcha_action`.
+9. **Registry.** Add `config('cms.forms.{form}')` with `model`, `searchable`, `recaptcha_action`, `template` and `section` (the server-verified page binding).
 10. **Admin partials.** `resources/views/admin/submissions/{form}/_columns|_row|_detail.blade.php`.
 11. **Notification.** If email applies, a Mailable + view; either reuse `SubmissionNotifier` (generalise the model type) or add a sibling with the same rules.
 12. **Translations.** `admin.forms.{form}`, field labels `admin.submission_field_*` you introduce, and `public.forms.{form}.*` fallbacks in every locale under `lang/`. Keep `lang/es/admin.php` and `lang/en/admin.php` key-for-key identical.

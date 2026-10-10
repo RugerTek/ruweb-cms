@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdatePageRequest;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Services\Editorial\EditorialHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -70,6 +71,8 @@ class PageController extends Controller
             $page->attachMedia($featuredImage, 'featured_image');
         }
 
+        app(EditorialHistory::class)->capture($page->fresh());
+
         return redirect()
             ->route('admin.pages.edit', ['page' => $page, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
             ->with('success', __('admin.page_created'));
@@ -77,6 +80,8 @@ class PageController extends Controller
 
     public function edit(Request $request, Page $page): View
     {
+        app(EditorialHistory::class)->capture($page);
+
         return view('admin.pages.edit', [
             'editorLease' => $request->attributes->get('editorLease'),
             'page' => $page,
@@ -88,12 +93,23 @@ class PageController extends Controller
 
     public function update(UpdatePageRequest $request, Page $page): RedirectResponse|JsonResponse
     {
+        if ($request->filled('_editor_base')) {
+            abort_unless(hash_equals(app(EditorialHistory::class)->fingerprint($page), $request->input('_editor_base')), 409, __('editorial.conflict'));
+        }
         $data = $request->validated();
+        if ($request->user()->isEditor() && $page->status === 'published') {
+            app(EditorialHistory::class)->stage($page, $data);
+            if ($request->wantsJson()) {
+                return response()->json(['saved' => true, 'staged' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($page)]);
+            }
+
+            return back()->with('success', __('editorial.staged'));
+        }
         $data['locale'] = $data['locale'] ?? $page->locale;
         $data['updated_by'] = $request->user()->id;
 
-        if ($data['status'] === 'published' && ! $page->published_at) {
-            $data['published_at'] = now();
+        if ($data['status'] === 'published' && empty($data['published_at'])) {
+            $data['published_at'] = $page->published_at ?? now();
         }
 
         $featuredImage = $data['featured_image'] ?? null;
@@ -126,8 +142,12 @@ class PageController extends Controller
         }
 
         if ($request->wantsJson()) {
-            return response()->json(['saved' => true]);
+            app(EditorialHistory::class)->capture($page->fresh());
+
+            return response()->json(['saved' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($page->fresh())]);
         }
+
+        app(EditorialHistory::class)->capture($page->fresh());
 
         return redirect()
             ->route('admin.pages.edit', ['page' => $page, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
@@ -148,6 +168,7 @@ class PageController extends Controller
 
     public function destroy(Page $page): RedirectResponse
     {
+        abort_if(request()->user()->isEditor() && $page->status === 'published', 403, __('editorial.publish_forbidden'));
         $page->media()->detach();
         $page->delete();
 
@@ -167,7 +188,7 @@ class PageController extends Controller
         }
 
         $base = $page->baseTranslation() ?: $page;
-        $translation = $base->replicate(['slug', 'published_at']);
+        $translation = $base->replicate(['slug', 'published_at', 'expires_at']);
         $translation->locale = $locale;
         $translation->slug = $this->uniqueTranslatedSlug($base->slug, $locale);
         $translation->status = 'draft';

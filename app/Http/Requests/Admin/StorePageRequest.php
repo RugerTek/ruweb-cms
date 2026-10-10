@@ -19,6 +19,8 @@ class StorePageRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'published_at' => ['nullable', 'date'],
+            'expires_at' => ['nullable', 'date', 'after:published_at'],
             'title' => ['required', 'string', 'max:255'],
             'locale' => ['nullable', 'string', Rule::in(Locale::installedCodes())],
             'slug' => [

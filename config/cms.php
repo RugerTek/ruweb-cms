@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\ContactSubmission;
+use App\Models\Post;
+
 return [
     // Application version. Single source of truth is the VERSION file at the
     // repository root, bumped together with CHANGELOG.md (see skills/changelog-version).
@@ -54,7 +57,7 @@ return [
     // Collection creation shortcuts in the public admin bar. Pages are always offered separately.
     'collections' => [
         'posts' => [
-            'model' => \App\Models\Post::class,
+            'model' => Post::class,
             'label' => 'admin.content_type_post',
             'create_route' => 'admin.posts.create',
         ],
@@ -151,9 +154,11 @@ return [
     // renders a tab per key under Submissions. Forms are code-owned, see docs/content/forms.md.
     'forms' => [
         'contact' => [
-            'model' => \App\Models\ContactSubmission::class,
+            'model' => ContactSubmission::class,
             'searchable' => ['name', 'email', 'phone', 'subject', 'message'],
             'recaptcha_action' => 'contact',
+            'template' => 'contact',
+            'section' => 'form',
         ],
     ],
 

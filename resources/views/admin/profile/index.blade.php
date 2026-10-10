@@ -60,6 +60,18 @@
                 </div>
             </div>
 
+            <p class="text-xs text-gray-400 mt-4">{{ __('security.email_hint') }}</p>
+            @if ($user->pending_email)<p class="text-xs text-sky-300">{{ __('security.pending_email', ['email' => $user->pending_email]) }}</p>@endif
+            <div class="grid sm:grid-cols-2 gap-4 mt-4">
+                <label class="text-sm text-gray-300" for="email_confirmation">{{ __('security.email_confirmation') }}
+                    <input id="email_confirmation" name="email_confirmation" type="email" class="block w-full bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
+                </label>
+                <label class="text-sm text-gray-300" for="email_current_password">{{ __('admin.field_current_password') }}
+                    <input id="email_current_password" name="current_password" type="password" autocomplete="current-password" class="block w-full bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
+                </label>
+                @error('email_confirmation') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+                @error('current_password') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+            </div>
             <div class="mt-5">
                 <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
                     {{ __('admin.btn_save_changes') }}
@@ -75,7 +87,7 @@
             @method('PUT')
 
             <h2 class="text-sm font-semibold text-white mb-1">{{ __('admin.profile_change_password') }}</h2>
-            <p class="text-xs text-gray-500 mb-4">{{ __('admin.profile_change_password_hint') }}</p>
+            <p class="text-xs text-gray-500 mb-4">{{ __('security.password_revocation') }}</p>
 
             <div class="grid sm:grid-cols-2 gap-4">
                 <div class="sm:col-span-2">
@@ -105,6 +117,7 @@
                 </button>
             </div>
         </form>
+        @include('admin.profile.security')
     </section>
 </div>
 

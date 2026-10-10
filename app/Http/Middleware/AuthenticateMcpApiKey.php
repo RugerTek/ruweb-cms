@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\McpApiKey;
 use App\Models\OauthAccessToken;
 use App\Models\User;
 use Closure;
@@ -33,6 +34,21 @@ class AuthenticateMcpApiKey
             return $next($request);
         }
 
+        $key = McpApiKey::with('user')->where('key_hash', hash('sha256', $token))
+            ->whereNull('revoked_at')->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))->first();
+        if ($key) {
+            $key->update(['last_used_at' => now()]);
+            if ($key->user->mcp_api_key_hash === $key->key_hash) $key->user->markMcpApiKeyAsUsed();
+            $request->attributes->set('mcp_scope', $key->scope);
+            $request->setUserResolver(fn () => $key->user);
+
+            return $next($request);
+        }
+        // A migrated revoked/expired key must never fall back to the legacy column.
+        if (McpApiKey::where('key_hash', hash('sha256', $token))->exists()) {
+            return $this->unauthorizedResponse('Invalid token.');
+        }
+
         // Fall back to MCP API key
         $user = User::findByMcpApiKey($token);
 
@@ -58,7 +74,7 @@ class AuthenticateMcpApiKey
             // Last resort: getallheaders() can bypass cPanel's CGI stripping
             if (! $header && function_exists('getallheaders')) {
                 $headers = array_change_key_case(getallheaders(), CASE_LOWER);
-                $header  = $headers['authorization'] ?? null;
+                $header = $headers['authorization'] ?? null;
             }
 
             if ($header && str_starts_with($header, 'Bearer ')) {

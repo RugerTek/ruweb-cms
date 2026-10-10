@@ -87,7 +87,17 @@ class UserController extends Controller
             unset($data['password']);
         }
 
-        $user->update($data);
+        if ($request->user()->is($user) && ((isset($data['email']) && $data['email'] !== $user->email) || isset($data['password']))) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['email' => __('security.use_profile')]);
+        }
+        $revoke = isset($data['password']) || ($data['email'] ?? $user->email) !== $user->email
+            || ($data['role'] ?? $user->role) !== $user->role;
+        $user->fill($data);
+        if ($revoke) {
+            app(\App\Services\Security\RevokeCredentials::class)->all($user);
+        } else {
+            $user->save();
+        }
 
         return redirect()
             ->route('admin.users.edit', $user)

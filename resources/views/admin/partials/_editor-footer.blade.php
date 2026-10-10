@@ -10,10 +10,12 @@
                     class="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-gray-300 text-sm font-medium rounded-md transition-colors">
                 {{ __('admin.btn_save_draft') }}
             </button>
+            @if(auth()->user()->isAdmin())
             <button type="button" id="publish-btn"
                     class="flex-1 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
                 {{ __('admin.btn_publish') }}
             </button>
+            @endif
         </div>
     @endif
 </div>

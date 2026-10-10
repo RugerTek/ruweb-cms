@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Admin\Auth\LoginController;
+use App\Http\Controllers\BlogController;
+use App\Http\Controllers\EditorialPreviewController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Public\ContactFormController;
 use App\Http\Controllers\SitemapController;
@@ -9,13 +10,15 @@ use App\Models\Locale;
 use App\Support\AdminLoginPath;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/draft-preview/{token}', EditorialPreviewController::class)->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:60,1')->name('editorial.preview');
+
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::middleware(['guest', 'admin.locale'])->group(function () {
     $loginPath = AdminLoginPath::segment();
 
-    Route::get('/' . $loginPath, [LoginController::class, 'showLoginForm'])->name('admin.login');
-    Route::post('/' . $loginPath, [LoginController::class, 'login'])->name('admin.login.submit');
+    Route::get('/'.$loginPath, [LoginController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/'.$loginPath, [LoginController::class, 'login'])->name('admin.login.submit');
 });
 
 $catalogLocales = Locale::catalogCodes();

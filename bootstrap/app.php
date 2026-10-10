@@ -1,11 +1,18 @@
 <?php
 
+use App\Http\Middleware\ApplyRedirects;
+use App\Http\Middleware\AuthenticateMcpApiKey;
+use App\Http\Middleware\EnforceMcpScopes;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SetAdminLocale;
+use App\Http\Middleware\SetPublicLocale;
 use App\Support\RedirectResolver;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -28,16 +35,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->group('mcp', [
-            \App\Http\Middleware\AuthenticateMcpApiKey::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            AuthenticateMcpApiKey::class,
+            EnforceMcpScopes::class,
+            SubstituteBindings::class,
         ]);
 
         $middleware->alias([
-            'role'         => \App\Http\Middleware\RoleMiddleware::class,
-            'admin.locale' => \App\Http\Middleware\SetAdminLocale::class,
-            'public.locale' => \App\Http\Middleware\SetPublicLocale::class,
-            'redirects'    => \App\Http\Middleware\ApplyRedirects::class,
-            'mcp.auth'     => \App\Http\Middleware\AuthenticateMcpApiKey::class,
+            'role' => RoleMiddleware::class,
+            'admin.locale' => SetAdminLocale::class,
+            'public.locale' => SetPublicLocale::class,
+            'redirects' => ApplyRedirects::class,
+            'mcp.auth' => AuthenticateMcpApiKey::class,
         ]);
         $middleware->redirectGuestsTo(fn () => '/');
     })

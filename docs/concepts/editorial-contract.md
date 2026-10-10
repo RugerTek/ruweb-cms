@@ -10,7 +10,7 @@ Implement only the capabilities the entity actually has.
 `App\Contracts\Editorial\Publishable`, implemented by `App\Traits\HasPublicationState` for the standard
 `status` + `published_at` columns.
 
-- `published()` returns only `status = published`, excluding future `published_at`.
+- `published()` returns only `status = published`, excluding future `published_at` and expired `expires_at`.
 - `isPublished()` applies the same rule to one instance.
 - Public queries MUST go through `published()`.
 

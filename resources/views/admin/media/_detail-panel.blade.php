@@ -104,6 +104,10 @@
             </div>
         </div>
 
+        <section class="mb-4" aria-labelledby="detail-usage-title">
+            <h3 id="detail-usage-title" class="text-xs font-medium text-gray-400 mb-2">{{ __('media_safety.usage') }}</h3>
+            <ul id="detail-usage" class="text-xs text-gray-400 space-y-2" aria-live="polite"></ul>
+        </section>
         <p id="detail-metadata-status" role="status" aria-live="polite" class="text-xs text-gray-300 mb-3"></p>
         <p id="detail-metadata-error" role="alert" class="hidden text-xs text-red-400 mb-3"></p>
         <div class="flex gap-2">

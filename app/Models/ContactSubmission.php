@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One submission of the code-owned contact form. See docs/content/forms.md.
@@ -16,7 +17,7 @@ class ContactSubmission extends Model
 {
     protected $fillable = [
         'page_id', 'locale', 'name', 'email', 'phone', 'subject', 'message',
-        'ip', 'user_agent', 'referer', 'recaptcha_score', 'read_at', 'notified_at',
+        'ip', 'user_agent', 'referer', 'recaptcha_score', 'read_at', 'notified_at', 'workflow_status', 'assigned_to',
     ];
 
     protected function casts(): array
@@ -25,12 +26,24 @@ class ContactSubmission extends Model
             'recaptcha_score' => 'float',
             'read_at' => 'datetime',
             'notified_at' => 'datetime',
+            'notification_started_at' => 'datetime',
+            'notification_failed_at' => 'datetime',
         ];
     }
 
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class);
+    }
+
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(ContactSubmissionNote::class);
     }
 
     public function scopeUnread(Builder $query): Builder

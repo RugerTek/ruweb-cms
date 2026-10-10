@@ -227,3 +227,16 @@ The base `Tests\TestCase` points the root at a fresh temp directory per test, de
 - `App\Services\Snapshots\SnapshotHousekeeping` — pending uploads, usage measurement, prune.
 - `App\Http\Controllers\Admin\DeveloperToolsController` — admin flow.
 - Tests live in `tests/Feature/DeveloperToolsSnapshotTest.php` and run on SQLite in memory, so `pdo_sqlite` is required locally.
+
+## Feature lifecycle on restore
+
+Full editorial versions, review requests and review comments travel with content, separately from the
+hash-only revision ledger. See [../admin/editorial-workflow.md](../admin/editorial-workflow.md). Recoverable drafts and shared preview
+links are local and cleared on restore. Older archives without version/review tables clear those tables
+at the destination rather than attaching old records to reused content ids. The same rule applies to
+submission notes when importing a snapshot that predates them.
+
+Queue jobs are excluded. Restored submissions with queued, sending or retrying notifications become
+failed with a reset-queue diagnostic and a cleared delivery token; the inbox offers a manual retry.
+Already notified submissions remain sent. This also prevents stale destination jobs from claiming
+restored notifications with the old generation token.

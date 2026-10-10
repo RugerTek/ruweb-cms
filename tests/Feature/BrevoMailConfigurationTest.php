@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendSubmissionNotification;
 use App\Mail\Transport\BrevoTransport;
 use App\Models\ContactSubmission;
 use App\Models\Page;
@@ -103,6 +104,9 @@ class BrevoMailConfigurationTest extends TestCase
         [$submission, $page] = $this->notification();
 
         $this->assertTrue(app(SubmissionNotifier::class)->notify($submission, $page));
+        $queued = $submission->fresh();
+        $this->assertSame('queued', $queued->notification_status);
+        (new SendSubmissionNotification($queued->id, $queued->notification_token))->handle(app(SubmissionNotifier::class));
         $this->assertNotNull($submission->fresh()->notified_at);
         $messages = Mail::mailer('array')->getSymfonyTransport()->messages();
         $this->assertCount(1, $messages);
@@ -116,10 +120,19 @@ class BrevoMailConfigurationTest extends TestCase
         Log::spy();
         Mail::shouldReceive('mailer')->once()->with('array')->andThrow(new RuntimeException('Simulated mail transport failure'));
 
-        $this->assertFalse(app(SubmissionNotifier::class)->notify($submission, $page));
+        $this->assertTrue(app(SubmissionNotifier::class)->notify($submission, $page));
+        $queued = $submission->fresh();
+        $job = new SendSubmissionNotification($queued->id, $queued->notification_token);
+        try {
+            $job->handle(app(SubmissionNotifier::class));
+            $this->fail('Expected mail transport failure');
+        } catch (RuntimeException $exception) {
+            $job->failed($exception);
+        }
+        $this->assertSame('failed', $submission->fresh()->notification_status);
         $this->assertNull($submission->fresh()->notified_at);
         $this->assertDatabaseHas('contact_submissions', ['id' => $submission->id]);
-        Log::shouldHaveReceived('warning')->once()->with('Submission notification failed: Simulated mail transport failure');
+        $this->assertSame('Simulated mail transport failure', $submission->fresh()->notification_error);
     }
 
     private function notification(): array

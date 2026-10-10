@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Public;
 
+use App\Models\Page;
 use App\Rules\RecaptchaToken;
+use App\Services\Forms\FormToken;
 use App\Services\Forms\Recaptcha;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -17,9 +19,6 @@ abstract class PublicFormRequest extends FormRequest
 {
     /** Honeypot text field that must stay empty. */
     public const HONEYPOT_FIELD = 'website';
-
-    /** Hidden render timestamp; submissions faster than this are bots. */
-    public const TIMESTAMP_FIELD = '_ts';
 
     public const MIN_SECONDS = 3;
 
@@ -36,7 +35,16 @@ abstract class PublicFormRequest extends FormRequest
     public function rules(): array
     {
         return $this->fieldRules() + [
-            'page_id' => ['nullable', 'integer', 'exists:pages,id'],
+            'page_id' => ['required', 'integer', function ($attribute, $value, $fail) {
+                if (! $this->formPage()) {
+                    $fail(__('submissions.context_invalid'));
+                }
+            }],
+            '_form_token' => ['required', 'string', function ($attribute, $value, $fail) {
+                if ($this->tokenAge() === null) {
+                    $fail(__('submissions.token_expired'));
+                }
+            }],
             'recaptcha_token' => [new RecaptchaToken($this->formKey(), $this->ip())],
         ];
     }
@@ -51,9 +59,29 @@ abstract class PublicFormRequest extends FormRequest
             return true;
         }
 
-        $rendered = $this->input(self::TIMESTAMP_FIELD);
+        return ($this->tokenAge() ?? -1) < self::MIN_SECONDS;
+    }
 
-        return is_numeric($rendered) && (time() - (int) $rendered) < self::MIN_SECONDS;
+    public function formPage(): ?Page
+    {
+        $config = config('cms.forms.'.$this->formKey(), []);
+        $page = Page::published()->where('locale', app()->getLocale())->find($this->integer('page_id'));
+        $section = $config['section'] ?? 'form';
+        if (! $page || $page->template_key !== ($config['template'] ?? $this->formKey()) || ! isset($page->sections()[$section]) || ! ($page->sections()[$section]['is_visible'] ?? true)) {
+            return null;
+        }
+
+        return $page;
+    }
+
+    protected function tokenAge(): ?int
+    {
+        return app(FormToken::class)->age($this->input('_form_token'), $this->integer('page_id'), $this->formKey(), app()->getLocale());
+    }
+
+    public function messages(): array
+    {
+        return ['_form_token.required' => __('submissions.token_expired'), '_form_token.string' => __('submissions.token_expired'), 'page_id.required' => __('submissions.context_invalid')];
     }
 
     /** Metadata stored next to every submission. */

@@ -25,7 +25,7 @@
 
 <div class="flex flex-wrap gap-1 mb-4">
     @foreach([null => 'all', 'new' => 'submission_status_new', 'read' => 'submission_status_read'] as $value => $labelKey)
-        <a href="{{ route('admin.submissions.index', array_filter(['form' => $form, 'status' => $value, 'search' => $filters['search'], 'from' => $filters['from'], 'to' => $filters['to']])) }}"
+        <a href="{{ route('admin.submissions.index', array_filter(['form' => $form, 'status' => $value, 'search' => $filters['search'], 'from' => $filters['from'], 'to' => $filters['to'], 'workflow' => $filters['workflow'], 'assignee' => $filters['assignee'], 'notification' => $filters['notification']])) }}"
            class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors {{ $currentStatus === $value ? 'bg-sky-500/10 text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
             {{ __('admin.'.$labelKey) }}
             @if($value === null) <span class="text-gray-600 ml-1">{{ $totalCount }}</span>
@@ -41,8 +41,20 @@
            class="flex-1 min-w-[12rem] bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50">
     <input type="date" name="from" value="{{ $filters['from'] }}" title="{{ __('admin.filter_from') }}" class="bg-[#1a1a1a] border border-white/10 text-gray-300 text-sm rounded-md px-3 py-2">
     <input type="date" name="to" value="{{ $filters['to'] }}" title="{{ __('admin.filter_to') }}" class="bg-[#1a1a1a] border border-white/10 text-gray-300 text-sm rounded-md px-3 py-2">
+    <select name="workflow" aria-label="{{ __('submissions.workflow') }}" class="bg-[#1a1a1a] border border-white/10 text-gray-300 text-sm rounded-md px-3 py-2">
+        <option value="">{{ __('submissions.any_workflow') }}</option>
+        @foreach(['new', 'in_progress', 'resolved'] as $state)<option value="{{ $state }}" @selected($filters['workflow'] === $state)>{{ __('submissions.'.$state) }}</option>@endforeach
+    </select>
+    <select name="assignee" aria-label="{{ __('submissions.assignee') }}" class="bg-[#1a1a1a] border border-white/10 text-gray-300 text-sm rounded-md px-3 py-2">
+        <option value="">{{ __('submissions.any_assignee') }}</option><option value="unassigned" @selected($filters['assignee'] === 'unassigned')>{{ __('submissions.unassigned') }}</option>
+        @foreach($assignees as $user)<option value="{{ $user->id }}" @selected((string) $filters['assignee'] === (string) $user->id)>{{ $user->name }}</option>@endforeach
+    </select>
+    <select name="notification" aria-label="{{ __('submissions.notification') }}" class="bg-[#1a1a1a] border border-white/10 text-gray-300 text-sm rounded-md px-3 py-2">
+        <option value="">{{ __('submissions.any_notification') }}</option>
+        @foreach(['queued', 'sending', 'retrying', 'failed', 'sent', 'skipped'] as $state)<option value="{{ $state }}" @selected($filters['notification'] === $state)>{{ __('submissions.'.$state) }}</option>@endforeach
+    </select>
     <button type="submit" class="px-3 py-2 bg-gray-800 border border-white/10 text-gray-400 text-sm rounded-md hover:bg-gray-700 transition-colors">{{ __('admin.search') }}</button>
-    @if($filters['search'] || $filters['from'] || $filters['to'])
+    @if($filters['search'] || $filters['from'] || $filters['to'] || $filters['workflow'] || $filters['assignee'] || $filters['notification'])
         <a href="{{ route('admin.submissions.index', ['form' => $form]) }}" class="px-3 py-2 text-gray-500 text-sm hover:text-gray-300">{{ __('admin.clear_filters') }}</a>
     @endif
 </form>
@@ -59,6 +71,9 @@
             <thead>
                 <tr class="border-b border-white/[0.06]">
                     @include("admin.submissions.{$form}._columns")
+                    <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">{{ __('submissions.workflow') }}</th>
+                    <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">{{ __('submissions.assignee') }}</th>
+                    <th class="text-left text-xs font-medium text-gray-500 px-4 py-3">{{ __('submissions.notification') }}</th>
                     <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">{{ __('admin.col_date') }}</th>
                     <th class="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">{{ __('admin.col_actions') }}</th>
                 </tr>
@@ -68,6 +83,9 @@
                     @php $url = route('admin.submissions.show', ['form' => $form, 'submission' => $submission->id]); @endphp
                     <tr class="hover:bg-white/[0.02] transition-colors {{ $submission->isRead() ? '' : 'bg-emerald-500/[0.03]' }}">
                         @include("admin.submissions.{$form}._row", ['submission' => $submission, 'url' => $url])
+                        <td class="px-4 py-3 text-sm text-gray-300">{{ __('submissions.'.$submission->workflow_status) }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-300">{{ $submission->assignee?->name ?? __('submissions.unassigned') }}</td>
+                        <td class="px-4 py-3 text-sm {{ $submission->notification_status === 'failed' ? 'text-red-400' : 'text-gray-400' }}">{{ __('submissions.'.$submission->notification_status) }}</td>
                         <td class="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">
                             {{ $submission->created_at->format('d/m/Y H:i') }}
                             @unless($submission->isRead())

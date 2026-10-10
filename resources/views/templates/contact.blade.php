@@ -92,7 +92,7 @@
                     <textarea id="contact-message" name="message" rows="6" required class="{{ $inputClass }}">{{ old('message') }}</textarea>
                 </div>
 
-                <x-forms.honeypot />
+                <x-forms.honeypot :page="$page" form="contact" />
                 <x-forms.recaptcha action="contact" />
 
                 <div class="flex items-center justify-between gap-4">

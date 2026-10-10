@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\OauthAccessToken;
 use App\Models\OauthAuthorizationCode;
+use App\Services\Security\Totp;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class OAuthController extends Controller
@@ -20,17 +22,20 @@ class OAuthController extends Controller
         }
 
         // If the user already has an active session, issue the code immediately
-        if (Auth::check()) {
+        $sessionRevoked = DB::table('admin_sessions')->where('id', hash('sha256', $request->session()->getId()))->whereNotNull('revoked_at')->exists();
+        if (! $sessionRevoked && Auth::check() && in_array(Auth::user()->role, config('cms.roles', ['admin', 'editor']))
+            && (int) $request->session()->get('security_version', 0) === (int) Auth::user()->security_version
+            && (! Auth::user()->hasTwoFactor() || $request->session()->get('two_factor_passed') === Auth::id())) {
             return $this->issueAuthCode($request, Auth::user());
         }
 
         return view('oauth.authorize', [
-            'response_type'         => $request->query('response_type'),
-            'client_id'             => $request->query('client_id'),
-            'redirect_uri'          => $request->query('redirect_uri'),
-            'code_challenge'        => $request->query('code_challenge'),
+            'response_type' => $request->query('response_type'),
+            'client_id' => $request->query('client_id'),
+            'redirect_uri' => $request->query('redirect_uri'),
+            'code_challenge' => $request->query('code_challenge'),
             'code_challenge_method' => $request->query('code_challenge_method'),
-            'state'                 => $request->query('state', ''),
+            'state' => $request->query('state', ''),
         ]);
     }
 
@@ -42,7 +47,7 @@ class OAuthController extends Controller
         }
 
         $request->validate([
-            'email'    => ['required', 'string', 'email'],
+            'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
@@ -56,6 +61,10 @@ class OAuthController extends Controller
             return back()->withErrors(['password' => __('admin.unauthorized')])->withInput($request->except('password'));
         }
 
+        if ($user->hasTwoFactor() && ! app(Totp::class)->verify($user, (string) $request->input('code'))) {
+            return back()->withErrors(['code' => __('security.invalid_code')])->withInput($request->except(['password', 'code']));
+        }
+
         return $this->issueAuthCode($request, $user);
     }
 
@@ -67,18 +76,18 @@ class OAuthController extends Controller
         $get = fn (string $key, string $default = '') => $request->query($key) ?? $request->input($key, $default);
 
         OauthAuthorizationCode::create([
-            'code'                  => $code,
-            'user_id'               => $user->id,
-            'client_id'             => $get('client_id'),
-            'redirect_uri'          => $get('redirect_uri'),
-            'code_challenge'        => $get('code_challenge'),
+            'code' => $code,
+            'user_id' => $user->id,
+            'client_id' => $get('client_id'),
+            'redirect_uri' => $get('redirect_uri'),
+            'code_challenge' => $get('code_challenge'),
             'code_challenge_method' => $get('code_challenge_method'),
-            'expires_at'            => now()->addSeconds(config('oauth.auth_code_ttl', 300)),
+            'expires_at' => now()->addSeconds(config('oauth.auth_code_ttl', 300)),
         ]);
 
         $redirectUri = $get('redirect_uri')
-            . '?code=' . $code
-            . '&state=' . rawurlencode($get('state'));
+            .'?code='.$code
+            .'&state='.rawurlencode($get('state'));
 
         return redirect()->away($redirectUri);
     }
@@ -86,10 +95,10 @@ class OAuthController extends Controller
     public function token(Request $request): JsonResponse
     {
         $request->validate([
-            'grant_type'    => ['required', 'string'],
-            'code'          => ['required', 'string'],
-            'redirect_uri'  => ['required', 'string'],
-            'client_id'     => ['required', 'string'],
+            'grant_type' => ['required', 'string'],
+            'code' => ['required', 'string'],
+            'redirect_uri' => ['required', 'string'],
+            'client_id' => ['required', 'string'],
             'code_verifier' => ['required', 'string'],
         ]);
 
@@ -98,38 +107,37 @@ class OAuthController extends Controller
         }
 
         $authCode = OauthAuthorizationCode::where('code', $request->input('code'))->first();
-
-        if (! $authCode
-            || $authCode->isUsed()
-            || $authCode->isExpired()
+        if (! $authCode || $authCode->isUsed() || $authCode->isExpired()
             || $authCode->redirect_uri !== $request->input('redirect_uri')
-            || $authCode->client_id !== $request->input('client_id')
-        ) {
+            || $authCode->client_id !== $request->input('client_id')) {
             return response()->json(['error' => 'invalid_grant'], 400);
         }
-
-        // Verify PKCE: base64url(SHA256(code_verifier)) must equal stored code_challenge
         $computed = rtrim(strtr(base64_encode(hash('sha256', $request->input('code_verifier'), true)), '+/', '-_'), '=');
         if (! hash_equals($authCode->code_challenge, $computed)) {
             return response()->json(['error' => 'invalid_grant'], 400);
         }
+        return DB::transaction(function () use ($authCode) {
+            // The first transactional query atomically claims and locks the immutable code.
+            // Avoid a shared read lock before this write (important for concurrent SQLite exchanges).
+            $claimed = OauthAuthorizationCode::whereKey($authCode->id)->whereNull('used_at')
+                ->where('expires_at', '>', now())->update(['used_at' => now()]);
+            if ($claimed !== 1) {
+                return response()->json(['error' => 'invalid_grant'], 400);
+            }
+            $rawToken = bin2hex(random_bytes(48));
+            OauthAccessToken::create([
+                'token' => hash('sha256', $rawToken),
+                'user_id' => $authCode->user_id,
+                'client_id' => $authCode->client_id,
+                'expires_at' => now()->addSeconds(config('oauth.access_token_ttl', 28800)),
+            ]);
 
-        $authCode->markAsUsed();
-
-        $rawToken = bin2hex(random_bytes(48));
-
-        OauthAccessToken::create([
-            'token'      => hash('sha256', $rawToken),
-            'user_id'    => $authCode->user_id,
-            'client_id'  => $authCode->client_id,
-            'expires_at' => now()->addSeconds(config('oauth.access_token_ttl', 28800)),
-        ]);
-
-        return response()->json([
-            'access_token' => $rawToken,
-            'token_type'   => 'Bearer',
-            'expires_in'   => config('oauth.access_token_ttl', 28800),
-        ]);
+            return response()->json([
+                'access_token' => $rawToken,
+                'token_type' => 'Bearer',
+                'expires_in' => config('oauth.access_token_ttl', 28800),
+            ]);
+        }, 3);
     }
 
     public function metadata(): JsonResponse
@@ -137,12 +145,12 @@ class OAuthController extends Controller
         $base = rtrim(config('app.url'), '/');
 
         return response()->json([
-            'issuer'                                => $base,
-            'authorization_endpoint'                => $base . '/authorize',
-            'token_endpoint'                        => $base . '/token',
-            'response_types_supported'              => ['code'],
-            'code_challenge_methods_supported'      => ['S256'],
-            'grant_types_supported'                 => ['authorization_code'],
+            'issuer' => $base,
+            'authorization_endpoint' => $base.'/authorize',
+            'token_endpoint' => $base.'/token',
+            'response_types_supported' => ['code'],
+            'code_challenge_methods_supported' => ['S256'],
+            'grant_types_supported' => ['authorization_code'],
         ]);
     }
 
@@ -153,14 +161,14 @@ class OAuthController extends Controller
         }
 
         $clientId = $request->input('client_id');
-        $clients  = config('oauth.clients', []);
+        $clients = config('oauth.clients', []);
 
         if (! isset($clients[$clientId])) {
             return 'unknown_client';
         }
 
-        $redirectUri  = $request->input('redirect_uri');
-        $allowedUris  = $clients[$clientId]['redirect_uris'] ?? [];
+        $redirectUri = $request->input('redirect_uri');
+        $allowedUris = $clients[$clientId]['redirect_uris'] ?? [];
 
         if (! in_array($redirectUri, $allowedUris, true)) {
             return 'invalid_redirect_uri';

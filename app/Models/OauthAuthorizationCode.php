@@ -17,11 +17,12 @@ class OauthAuthorizationCode extends Model
         'code_challenge',
         'code_challenge_method',
         'expires_at',
+        'used_at',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
-        'used_at'    => 'datetime',
+        'used_at' => 'datetime',
         'created_at' => 'datetime',
     ];
 

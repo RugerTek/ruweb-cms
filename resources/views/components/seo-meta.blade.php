@@ -85,7 +85,7 @@
 <meta name="twitter:image:alt" content="{{ $title }}">
 @endif
 
-@if($googleTagId)
+@if($googleTagId && ! ($isEditorPreview ?? false))
 <script async src="https://www.googletagmanager.com/gtag/js?id={{ urlencode($googleTagId) }}"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
@@ -95,7 +95,7 @@
 </script>
 @endif
 
-@if($metaPixelId)
+@if($metaPixelId && ! ($isEditorPreview ?? false))
 <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

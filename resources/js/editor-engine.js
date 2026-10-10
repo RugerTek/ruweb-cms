@@ -1,3 +1,4 @@
+import { initEditorRecovery } from './editor-recovery.js';
 import { prepareEditorPreview } from './editor-preview.js';
 
 export function initEditorEngine(config = {}) {
@@ -21,6 +22,7 @@ export function initEditorEngine(config = {}) {
     config.keepEditingLabel = config.keepEditingLabel || window.adminI18n?.btnKeepEditing || 'Keep editing';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
     const lease = config.lease || window.editorLease;
+    initEditorRecovery(form, config.recovery, csrfToken);
 
     let previewTimer = null;
     let previewSequence = 0;
@@ -37,6 +39,7 @@ export function initEditorEngine(config = {}) {
         data.delete('_token');
         data.delete('_method');
         data.delete('_editor_lock');
+        data.delete('_editor_base');
 
         const entries = [];
         for (const [key, value] of data.entries()) {
@@ -178,6 +181,7 @@ export function initEditorEngine(config = {}) {
             });
 
             if (response.ok) {
+                const savedResult = response.json ? await response.json().catch(() => ({})) : {};
                 const nextStatus = requestData.get('status') || null;
                 const statusInput = form.querySelector('[name="status"]');
                 if (statusOverride && statusInput) statusInput.value = nextStatus;
@@ -188,8 +192,8 @@ export function initEditorEngine(config = {}) {
                 savedSnapshot = statusOverride
                     ? JSON.stringify(submittedEntries.map(([key, value]) => [key, key === 'status' ? nextStatus : value]))
                     : submittedSnapshot;
-                form.dispatchEvent(new CustomEvent('editor:saved'));
-                showToast(savedMsg);
+                form.dispatchEvent(new CustomEvent('editor:saved', { detail: { ...savedResult, submittedSnapshot } }));
+                showToast(savedResult.staged ? (config.stagedMsg || savedMsg) : savedMsg);
 
                 if (reloadAfterSave && !isDirty()) {
                     window.removeEventListener('beforeunload', onBeforeUnload);

@@ -32,6 +32,6 @@ class ContactSubmissionRequest extends PublicFormRequest
             'email.email' => __('public.forms.errors.email_invalid'),
             'message.required' => __('public.forms.errors.message_required'),
             'message.min' => __('public.forms.errors.message_min'),
-        ];
+        ] + parent::messages();
     }
 }

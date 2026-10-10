@@ -9,6 +9,7 @@ use App\Models\Locale;
 use App\Models\Post;
 use App\Models\Taxonomy;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Services\Editorial\EditorialHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -90,6 +91,7 @@ class PostController extends Controller
 
     public function edit(Request $request, Post $post): View
     {
+        app(EditorialHistory::class)->capture($post);
         $this->authorize('update', $post);
 
         return view('admin.posts.edit', [
@@ -105,12 +107,23 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
+        if ($request->filled('_editor_base')) {
+            abort_unless(hash_equals(app(EditorialHistory::class)->fingerprint($post), $request->input('_editor_base')), 409, __('editorial.conflict'));
+        }
         $data = $request->validated();
+        if ($request->user()->isEditor() && $post->status === 'published') {
+            app(EditorialHistory::class)->stage($post, $data);
+            if ($request->wantsJson()) {
+                return response()->json(['saved' => true, 'staged' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($post)]);
+            }
+
+            return back()->with('success', __('editorial.staged'));
+        }
         $data['locale'] = $data['locale'] ?? $post->locale;
         $data['updated_by'] = $request->user()->id;
 
-        if ($data['status'] === 'published' && ! $post->published_at) {
-            $data['published_at'] = now();
+        if ($data['status'] === 'published' && empty($data['published_at'])) {
+            $data['published_at'] = $post->published_at ?? now();
         }
 
         $featuredImage = $data['featured_image'] ?? null;
@@ -134,7 +147,9 @@ class PostController extends Controller
         $post->syncTaxonomies($categories, 'category');
 
         if ($request->wantsJson()) {
-            return response()->json(['saved' => true]);
+            app(EditorialHistory::class)->capture($post->fresh());
+
+            return response()->json(['saved' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($post->fresh())]);
         }
 
         return redirect()
@@ -177,7 +192,7 @@ class PostController extends Controller
         }
 
         $base = $post->baseTranslation() ?: $post;
-        $translation = $base->replicate(['slug', 'published_at']);
+        $translation = $base->replicate(['slug', 'published_at', 'expires_at']);
         $translation->locale = $locale;
         $translation->slug = $this->uniqueTranslatedSlug($base->slug, $locale);
         $translation->status = 'draft';

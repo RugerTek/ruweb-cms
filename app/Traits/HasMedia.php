@@ -3,6 +3,9 @@
 namespace App\Traits;
 
 use App\Models\Media;
+use App\Models\Page;
+use App\Models\Post;
+use App\Services\Editorial\EditorialHistory;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 trait HasMedia
@@ -26,10 +29,17 @@ trait HasMedia
             'collection' => $collection,
             'order' => $order,
         ]);
+        if ($this instanceof Page || $this instanceof Post) {
+            app(EditorialHistory::class)->capture($this);
+        }
     }
 
     public function featuredImage(): ?Media
     {
+        if ($this->relationLoaded('media')) {
+            return $this->media->first(fn ($item) => $item->pivot->collection === 'featured_image');
+        }
+
         return $this->mediaByCollection('featured_image')->first();
     }
 }

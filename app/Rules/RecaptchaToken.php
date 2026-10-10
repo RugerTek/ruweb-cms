@@ -14,11 +14,12 @@ class RecaptchaToken implements ValidationRule
     public function __construct(
         protected string $action,
         protected ?string $ip = null,
+        protected ?string $hostname = null,
     ) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (! app(Recaptcha::class)->verify(is_string($value) ? $value : null, $this->ip, $this->action)) {
+        if (! app(Recaptcha::class)->verify(is_string($value) ? $value : null, $this->ip, $this->action, $this->hostname)) {
             $fail(__('public.forms.recaptcha_failed'));
         }
     }

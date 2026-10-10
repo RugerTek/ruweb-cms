@@ -32,9 +32,13 @@ class SnapshotService
     ];
 
     protected const EXCLUDED_TABLES = [
+        'mcp_api_keys',
+        'admin_sessions',
         'cache',
         'cache_locks',
         'content_edit_locks',
+        'editorial_drafts',
+        'editorial_preview_links',
         'failed_jobs',
         'job_batches',
         'jobs',
@@ -151,7 +155,7 @@ class SnapshotService
      *
      * @param  array<int, string>  $accepted  Risk keys the operator accepted.
      * @param  array{url_from?: ?string, url_to?: ?string}  $options  Override the origin rewrite
-     *         (defaults: manifest `app.url` → this installation's `app.url`).
+     *                                                                (defaults: manifest `app.url` → this installation's `app.url`).
      */
     public function restore(string $archivePath, array $accepted = [], array $options = []): array
     {
@@ -220,7 +224,7 @@ class SnapshotService
 
         $tables = array_values(array_filter(
             $allTables,
-            fn (array $table): bool => ! in_array($table['name'], self::RESTORE_SKIPPED_TABLES, true)
+            fn (array $table): bool => ! in_array($table['name'], array_merge(self::RESTORE_SKIPPED_TABLES, self::EXCLUDED_TABLES), true)
         ));
 
         $destination = [
@@ -297,7 +301,7 @@ class SnapshotService
 
                 try {
                     foreach ($this->orderedTableQuery($table)->cursor() as $row) {
-                        fwrite($handle, json_encode((array) $row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL);
+                        fwrite($handle, json_encode($table === 'users' ? $this->stripAccountCredentials((array) $row) : (array) $row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL);
                         $rows++;
                     }
                 } finally {
@@ -350,6 +354,26 @@ class SnapshotService
 
         try {
             $tableNames = array_column($tables, 'name');
+            if (array_intersect(['pages', 'posts'], $tableNames)) {
+                // User drafts/share links are installation-local; old archives must not inherit
+                // destination histories or reviews attached to reused content ids.
+                foreach (['editorial_drafts', 'editorial_preview_links', 'editorial_review_comments', 'editorial_versions', 'editorial_reviews'] as $editorialTable) {
+                    if (Schema::hasTable($editorialTable) && ! in_array($editorialTable, $tableNames, true)) {
+                        DB::table($editorialTable)->delete();
+                    }
+                }
+            }
+            if (in_array('contact_submissions', $tableNames, true) && ! in_array('contact_submission_notes', $tableNames, true)
+                && Schema::hasTable('contact_submission_notes')) {
+                DB::table('contact_submission_notes')->delete();
+            }
+            if (in_array('users', $tableNames, true)) {
+                foreach (['mcp_api_keys', 'admin_sessions', 'oauth_access_tokens', 'oauth_authorization_codes', 'password_reset_tokens', 'sessions'] as $credentials) {
+                    if (Schema::hasTable($credentials)) {
+                        DB::table($credentials)->delete();
+                    }
+                }
+            }
             // Older snapshots contain media but predate localized metadata. Do not let
             // destination overrides attach themselves to restored, potentially reused ids.
             if (in_array('media', $tableNames, true) && ! in_array('media_translations', $tableNames, true)
@@ -364,6 +388,17 @@ class SnapshotService
                 $this->importTable($extractDir.'/'.$table['file'], $table['name'], $rewriter);
             }
 
+            if (in_array('contact_submissions', $tableNames, true) && Schema::hasColumn('contact_submissions', 'notification_status')) {
+                // Queue jobs do not travel with snapshots. A visible retryable failure is safer
+                // than a permanent queued indicator or delivery by a stale destination job.
+                DB::table('contact_submissions')->whereIn('notification_status', ['queued', 'sending', 'retrying'])->update([
+                    'notification_status' => 'failed', 'notification_token' => null,
+                    'notification_started_at' => null, 'notification_failed_at' => now(),
+                    'notification_error' => 'Delivery queue was reset during snapshot restore.',
+                ]);
+                DB::table('contact_submissions')->whereNotNull('notified_at')->update(['notification_status' => 'sent']);
+            }
+
             DB::commit();
         } catch (\Throwable $exception) {
             DB::rollBack();
@@ -371,6 +406,22 @@ class SnapshotService
         } finally {
             $this->setForeignKeyChecks(true);
         }
+    }
+
+    protected function stripAccountCredentials(array $row): array
+    {
+        foreach (['remember_token', 'mcp_api_key_hash', 'mcp_api_key_generated_at', 'mcp_api_key_last_used_at',
+            'pending_email', 'pending_email_token', 'pending_email_expires_at', 'two_factor_secret',
+            'two_factor_recovery_codes', 'two_factor_confirmed_at', 'two_factor_last_counter'] as $field) {
+            if (array_key_exists($field, $row)) {
+                $row[$field] = null;
+            }
+        }
+        if (array_key_exists('security_version', $row)) {
+            $row['security_version'] = 0;
+        }
+
+        return $row;
     }
 
     protected function importTable(string $path, string $table, ?UrlRewriter $rewriter = null): void
@@ -392,6 +443,12 @@ class SnapshotService
                 }
 
                 $row = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+                if ($table === 'users') {
+                    $row = $this->stripAccountCredentials($row);
+                    if (Schema::hasColumn('users', 'security_version')) {
+                        $row['security_version'] = random_int(1000000, 2000000000);
+                    }
+                }
                 $batch[] = $rewriter ? $rewriter->rewriteRow($row) : $row;
 
                 if (count($batch) >= 500) {

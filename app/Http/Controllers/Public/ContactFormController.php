@@ -20,7 +20,7 @@ class ContactFormController extends Controller
 
     public function store(ContactSubmissionRequest $request, SubmissionNotifier $notifier): RedirectResponse
     {
-        $page = $request->filled('page_id') ? Page::find($request->integer('page_id')) : null;
+        $page = $request->formPage();
         $redirect = redirect()->to(($page?->url() ?: '/').'#contact-form')->with(self::SUCCESS_FLASH, true);
 
         if ($request->isHoneypotTripped()) {

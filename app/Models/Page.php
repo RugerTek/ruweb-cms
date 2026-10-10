@@ -6,6 +6,7 @@ use App\Contracts\Editorial\Mediable;
 use App\Contracts\Editorial\Previewable;
 use App\Contracts\Editorial\Publishable;
 use App\Contracts\Editorial\Seoable;
+use App\Services\Editorial\EditorialHistory;
 use App\Support\LinkDestination;
 use App\Support\SectionRichText;
 use App\Support\SiteUrl;
@@ -22,6 +23,22 @@ class Page extends Model implements Mediable, Previewable, Publishable, Seoable
     use HasMedia, HasPublicationState, HasTranslations;
     use RecordsContentRevisions;
 
+    protected static function booted(): void
+    {
+        static::saving(function ($model) {
+            if ($model->exists && $model->isDirty()) {
+                app(EditorialHistory::class)->capture($model->newQuery()->findOrFail($model->id));
+            }
+            if ((auth()->user() ?? request()->user())?->isEditor() && ($model->status === 'published' || $model->getOriginal('status') === 'published') && (! $model->exists || $model->isDirty())) {
+                abort(403, __('editorial.publish_forbidden'));
+            }
+        });
+        static::deleting(function ($model) {
+            abort_if((auth()->user() ?? request()->user())?->isEditor() && $model->status === 'published', 403, __('editorial.publish_forbidden'));
+        });
+        static::saved(fn ($model) => app(EditorialHistory::class)->capture($model));
+    }
+
     protected $fillable = [
         'locale',
         'translation_group_id',
@@ -34,6 +51,7 @@ class Page extends Model implements Mediable, Previewable, Publishable, Seoable
         'content_json',
         'status',
         'published_at',
+        'expires_at',
         'created_by',
         'updated_by',
     ];
@@ -44,6 +62,7 @@ class Page extends Model implements Mediable, Previewable, Publishable, Seoable
             'content_json' => 'array',
             'source_field_hashes' => 'array',
             'published_at' => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 
