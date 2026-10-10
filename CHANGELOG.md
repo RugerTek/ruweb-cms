@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.49.0 - 2026-10-10
+## 0.50.0 - 2026-10-10
+
+- Panel esencial operativo con búsqueda, estado real de publicación, historial/diff y preview autenticada para páginas, posts y colecciones registradas; la edición editorial continúa por agentes.
+- Essential conserva cuentas, accesos MCP, ajustes e integraciones, biblioteca y bandeja, y bloquea editores especializados y herramientas avanzadas; su build no descarga Live Editor ni TinyMCE.
+- Las pantallas de medios y ajustes se adaptan a móvil; los accesos de navegación y la barra pública respetan las capacidades sin cambiar datos ni permisos al volver a Full.
+- E2E-04 prueba instalación, primer administrador, usuario/credencial y cliente real Codex Sol 6.1; regresiones acumuladas, cambio de perfil y revisión independiente cierran el carácter experimental del panel esencial.
+
+## 0.49.0 - 2026-10-10 (d4c795f)
 
 - MCP amplía descubrimiento, idiomas, traducciones, programación y previews con revisiones explícitas, reintentos de creación y respuestas acotadas; ambos perfiles comparten las mismas herramientas.
 - Subidas multipart y metadatos de medios reutilizan el pipeline del panel, con permisos temporales, reintentos durables, borrado protegido y recuperación segura ante rollback.

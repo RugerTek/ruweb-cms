@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'back_to_content_list' => 'Back to list',
+    'history' => 'History',
+    'content_no_results' => 'No content found.',
+    'content_publication_date' => 'Publication date',
+    'essential_content_hint' => 'Inspect content, publication state and versions. Edit content through your connected agent.',
+    'scheduled' => 'Scheduled',
+    'expired' => 'Expired',
+    'action_preview' => 'Preview',
     'profile_editor_unavailable' => 'The visual editor is unavailable in the essential profile.',
     'editor_locked_title' => 'Content is being edited',
     'editor_locked_by' => ':name is editing this content.',

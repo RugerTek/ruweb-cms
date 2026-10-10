@@ -10,6 +10,7 @@ use App\Services\Snapshots\EnvironmentReportService;
 use App\Services\Snapshots\SnapshotException;
 use App\Services\Snapshots\SnapshotHousekeeping;
 use App\Services\Snapshots\SnapshotService;
+use App\Support\AdminCapabilities;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -30,7 +31,8 @@ class DeveloperToolsController extends Controller
 
     public function index(Request $request): View
     {
-        $activeTab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'system';
+        $activeTab = app(AdminCapabilities::class)->liveEditor() && in_array($request->query('tab'), self::TABS, true)
+            ? $request->query('tab') : 'system';
         $perPage = (int) config('cms.redirects.per_page', 25);
 
         return view('admin.developer-tools.index', [

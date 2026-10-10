@@ -21,7 +21,7 @@ the value is cast when read, and how it is validated on save. Locale overrides l
 | `media` | media picker | `Media` or `null` | logos, images, files |
 | `password` | masked input | decrypted `string` | encrypted at rest |
 | `social_links` | repeater (network + URL) | `list<array{network, url}>` | JSON; catalog in `App\Support\SocialNetworks` |
-| `rich_text` | TinyMCE `short-description` | sanitised HTML or `null` | render with `ContentHelper::richText()` ([rich-text.md](rich-text.md)) |
+| `rich_text` | TinyMCE `short-description` in full; native textarea in essential | sanitised HTML or `null` | render with `ContentHelper::richText()` ([rich-text.md](rich-text.md)) |
 | `map_point` | Leaflet picker + lat/lng | `array{lat: float, lng: float}` or `null` | JSON; tiles in `config('cms.maps')` |
 
 A `media` setting that ships with a default points at the `horizontal` placeholder when it is a social image.

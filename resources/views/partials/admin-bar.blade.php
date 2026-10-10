@@ -72,6 +72,7 @@
 
         <span class="text-gray-700 mx-1 flex-none select-none">|</span>
 
+        @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
         {{-- Menus --}}
         <a href="{{ route('admin.menus.index') }}"
            class="flex items-center gap-1.5 px-2 py-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors text-[11px] flex-none"
@@ -81,6 +82,8 @@
             </svg>
             <span class="hidden sm:inline">{{ trans('admin.menus', [], $adminLocale) }}</span>
         </a>
+
+        @endif
 
         @if($createLinks)
         <span class="text-gray-700 mx-1 flex-none select-none">|</span>
@@ -110,6 +113,7 @@
         @if($isAdmin)
         <span class="text-gray-700 mx-1 flex-none select-none">|</span>
 
+        @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
         {{-- Edit layout: hover / focus dropdown to the Header and Footer screens (docs/admin/layout.md). CSS only, no JS on the public side. --}}
         <div class="relative flex-none group">
             <button type="button"
@@ -139,6 +143,7 @@
             </div>
         </div>
 
+        @endif
         <span class="text-gray-700 mx-1 flex-none select-none">|</span>
 
         <form method="POST"

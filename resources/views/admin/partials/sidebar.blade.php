@@ -58,6 +58,7 @@
                     </a>
                 </li>
             @endif
+            @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
             @php
                 $postsGroupActive = request()->routeIs('admin.posts.*') || request()->routeIs('admin.taxonomies.*');
             @endphp
@@ -84,6 +85,7 @@
                             {{ __('admin.all_posts') }}
                         </a>
                     </li>
+                    @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
                     <li>
                         <a href="{{ route('admin.taxonomies.index', 'category') }}"
                            class="flex items-center px-2 py-1.5 rounded-md text-xs transition-colors
@@ -91,8 +93,25 @@
                             {{ __('admin.categories') }}
                         </a>
                     </li>
+                    @endif
                 </ul>
             </li>
+            @else
+                @foreach(config('cms.collections', []) as $collectionKey => $collection)
+                    @if(\Illuminate\Support\Facades\Gate::allows('viewAny', $collection['model']))
+                        <li>
+                            <a href="{{ route('admin.content.index', $collectionKey) }}"
+                               class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors {{ request()->routeIs('admin.content.*') && request()->route('type') === $collectionKey ? 'bg-sky-500/10 text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2"/>
+                                </svg>
+                                <span>{{ __($collection['label']) }}</span>
+                            </a>
+                        </li>
+                    @endif
+                @endforeach
+            @endif
+            @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
             <li>
                 <a href="{{ route('admin.menus.index') }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
@@ -133,6 +152,7 @@
                     <span>{{ __('admin.footer') }}</span>
                 </a>
             </li>
+            @endif
             @endif
             <li>
                 <a href="{{ route('admin.editorial-control.index') }}"

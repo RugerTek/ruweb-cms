@@ -20,6 +20,9 @@ class EditorialController extends Controller
 
     public function index(Request $request, string $type, int $id)
     {
+        if (! app(AdminCapabilities::class)->liveEditor()) {
+            return app(ContentStatusController::class)->show($request, $type, $id, $this->history);
+        }
         $model = $this->history->model($type, $id);
         $this->history->capture($model);
         $versions = $this->history->query($model)->latest('id')->paginate(20);

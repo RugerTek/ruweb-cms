@@ -5,7 +5,6 @@ const installRepeaterRecovery = (...args) => {
 };
 import '../css/admin.css';
 import { initMediaMetadata } from './media-metadata.js';
-import { initTitleEditors, initLinkComboboxes } from './editor-controls.js';
 
 initMediaMetadata();
 
@@ -16,8 +15,6 @@ if (token) {
 const adminI18n = window.adminI18n || {};
 const t = (key, fallback = '') => adminI18n[key] ?? fallback;
 const maxUploadKb = Number(adminI18n.maxUploadKb || 0);
-initTitleEditors();
-initLinkComboboxes();
 // Associate the legacy plain labels with their controls as well.
 document.querySelectorAll('label:not([for])').forEach(label => {
     if (label.querySelector('input, select, textarea')) return;
@@ -26,11 +23,6 @@ document.querySelectorAll('label:not([for])').forEach(label => {
     field.id ||= `field-${crypto.randomUUID()}`; label.htmlFor = field.id;
     label.id ||= `${field.id}-label`;
 });
-
-// TinyMCE is heavy, so its chunk is only fetched on screens that actually use it.
-if (document.querySelector('[data-rich-text]')) {
-    import('./rich-text.js').then((module) => module.initRichText());
-}
 
 // Map picker for `map_point` settings (docs/admin/layout.md): Leaflet is
 // code-split like TinyMCE and fetched only when a picker is on the page.

@@ -46,7 +46,7 @@ setting or add an environment override. Read [docs/concepts/admin-profiles.md](d
 Both profiles require data/schema, renderer, operations/validation, permissions, media ids, publication and
 appropriate tests. Only `full` requires specialized visual editors. In `essential`, do not build a Live
 Editor partial by default. MCP has the same tools in both; roles and credential scopes remain independent.
-Essential is experimental until its operational panel passes phase 4. Verify the destination profile before
+Essential’s operational panel passed phase 4; later capabilities retain their own roadmap gates. Verify the destination profile before
 deployment; switching profiles regenerates configuration/routes caches and restarts persistent workers,
 without converting or mutating content.
 

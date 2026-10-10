@@ -38,7 +38,7 @@
                         @foreach($items as $item)
                             <tr class="hover:bg-white/[0.02] transition-colors">
                                 <td class="px-4 py-4">
-                                    <a href="{{ route('admin.'.$item->getTable().'.edit', $item) }}" class="font-medium text-sky-400 hover:text-sky-300 focus:outline-none focus:underline">{{ $item->title }}</a>
+                                    <a href="{{ app(\App\Support\AdminCapabilities::class)->contentUrl($item) }}" class="font-medium text-sky-400 hover:text-sky-300 focus:outline-none focus:underline">{{ $item->title }}</a>
                                     <p class="text-xs text-gray-500 mt-1">{{ strtoupper($item->locale) }}</p>
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap"><span class="inline-flex px-2 py-1 text-xs font-medium rounded-md {{ $item->status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-400' }}">{{ __('admin.status_'.$item->status) }}</span></td>

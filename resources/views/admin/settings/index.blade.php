@@ -14,7 +14,7 @@
 
     {{-- Group tabs --}}
     @php $groupNames = $groups->keys(); @endphp
-    <div class="flex gap-1 mb-6 border-b border-white/[0.06]">
+    <div class="flex flex-wrap gap-1 mb-6 border-b border-white/[0.06]">
         @foreach ($groupNames as $group)
             @php
                 $groupKey = 'admin.settings_groups.' . $group;

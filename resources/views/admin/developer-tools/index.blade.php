@@ -35,6 +35,7 @@
            class="px-3 py-2 text-sm border-b-2 transition-colors {{ $activeTab === 'system' ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
             {{ __('admin.developer_tools_system') }}
         </a>
+        @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
         <a href="{{ route('admin.developer-tools.index', ['tab' => 'migration']) }}"
            class="px-3 py-2 text-sm border-b-2 transition-colors {{ $activeTab === 'migration' ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
             {{ __('admin.developer_tools_migration') }}
@@ -47,6 +48,7 @@
            class="px-3 py-2 text-sm border-b-2 transition-colors {{ $activeTab === 'not-found' ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
             {{ __('admin.not_found_monitor') }}
         </a>
+        @endif
     </div>
 
     @if($activeTab === 'system')

@@ -143,7 +143,7 @@
                                 <td class="px-5 py-4 text-right">
                                     <a href="{{ $row['edit_url'] }}?return={{ urlencode(request()->fullUrl()) }}"
                                        class="inline-flex items-center px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-xs font-medium text-sky-300 hover:bg-white/10 transition-colors">
-                                        {{ __('admin.action_edit') }}
+                                        {{ __(app(\App\Support\AdminCapabilities::class)->liveEditor() ? 'admin.action_edit' : 'admin.history') }}
                                     </a>
                                 </td>
                             </tr>
@@ -208,13 +208,13 @@
                                             <form method="POST" action="{{ $item['action']['url'] }}" class="inline">
                                                 @csrf
                                                 <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-xs font-medium text-sky-300 hover:bg-white/10 transition-colors">
-                                                    {{ $item['action']['label'] }}
+                                                    {{ app(\App\Support\AdminCapabilities::class)->liveEditor() ? $item['action']['label'] : __('admin.history') }}
                                                 </button>
                                             </form>
                                         @else
                                             <a href="{{ $item['action']['url'] }}"
                                                class="inline-flex items-center px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-xs font-medium text-sky-300 hover:bg-white/10 transition-colors">
-                                                {{ $item['action']['label'] }}
+                                                {{ app(\App\Support\AdminCapabilities::class)->liveEditor() ? $item['action']['label'] : __('admin.history') }}
                                             </a>
                                         @endif
                                     @endif

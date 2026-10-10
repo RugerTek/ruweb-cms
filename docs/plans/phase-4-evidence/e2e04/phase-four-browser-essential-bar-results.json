@@ -1,0 +1,13 @@
+{
+  "stage": "essential-bar",
+  "checks": [
+    "Authenticated public bar excludes unavailable editorial links in essential"
+  ],
+  "script_requests": [
+    "/build/assets/admin-essential-D21C-EYT.js",
+    "/build/assets/admin-common-TVIx-gSD.js",
+    "/build/assets/app-DbUEORY_.js",
+    "/build/assets/chunk-DPI0Y_ll.js"
+  ],
+  "page_errors": []
+}

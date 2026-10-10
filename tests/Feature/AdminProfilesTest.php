@@ -41,6 +41,7 @@ class AdminProfilesTest extends TestCase
             Artisan::call('cms:capabilities');
             $local = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
             $this->assertSame($profile, $local['admin_profile']);
+            $this->assertSame('stable', $local['stability']);
             foreach (['read-only', 'draft-only', 'full'] as $scope) {
                 $this->withToken(McpApiKey::issue($actor, 'Discovery', $scope, null));
                 $this->getJson('/mcp/capabilities')->assertOk()->assertExactJson(['data' => $local]);
@@ -65,7 +66,7 @@ class AdminProfilesTest extends TestCase
         $this->put('/admin/pages/'.$page->id, ['title' => 'Forbidden UI write'])->assertNotFound();
         $this->get('/admin/posts/create')->assertNotFound();
         $this->get('/admin/pages')->assertOk()->assertDontSee('/admin/pages/create')->assertDontSee('/admin/pages/'.$page->id.'/edit')->assertDontSee('editor-engine')->assertSee('/admin/editorial/pages/'.$page->id);
-        $this->get('/profile-fixture')->assertOk()->assertSee('Preserved body')->assertDontSee('/admin/pages/create')->assertDontSee('/admin/pages/'.$page->id.'/edit');
+        $this->get('/profile-fixture')->assertOk()->assertSee('Preserved body')->assertDontSee('/admin/pages/create')->assertDontSee('/admin/pages/'.$page->id.'/edit')->assertDontSee('/admin/menus')->assertDontSee('/admin/header')->assertDontSee('/admin/footer');
         $this->assertSame($before, $page->fresh()->getRawOriginal());
         config(['cms.admin_profile' => 'full']);
         $this->assertTrue(app(AdminCapabilities::class)->liveEditor());

@@ -1,0 +1,16 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Essential entrypoint network",
+    "No editor/TinyMCE requests",
+    "Operational media upload modal",
+    "Editor direct URL denied"
+  ],
+  "script_requests": [
+    "/build/assets/admin-essential-D21C-EYT.js",
+    "/build/assets/admin-common-TVIx-gSD.js",
+    "/build/assets/app-DbUEORY_.js",
+    "/build/assets/chunk-DPI0Y_ll.js"
+  ],
+  "page_errors": []
+}

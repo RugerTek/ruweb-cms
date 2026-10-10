@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\CacheController;
 use App\Http\Controllers\Admin\ClaudeMcpController;
+use App\Http\Controllers\Admin\ContentStatusController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeveloperToolsController;
 use App\Http\Controllers\Admin\EditorialControlController;
@@ -36,18 +37,23 @@ use Illuminate\Support\Facades\Route;
 
 // Authenticated admin routes
 Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'admin.locale'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('content/{type}', [ContentStatusController::class, 'index'])->name('content.index');
+    Route::get('content/{type}/{id}', [ContentStatusController::class, 'show'])->whereNumber('id')->name('content.show');
+    Route::get('content/{type}/{id}/preview', [ContentStatusController::class, 'preview'])->whereNumber('id')->name('content.preview');
     Route::get('editorial-calendar', [EditorialController::class, 'calendar'])->name('editorial.calendar');
     Route::prefix('editorial/{type}/{id}')->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editorial.')->group(function () {
         $controller = EditorialController::class;
         Route::get('/', [$controller, 'index'])->name('index');
-        Route::match(['get', 'post', 'delete'], 'draft', [$controller, 'draft'])->name('draft');
-        Route::post('restore/{version}', [$controller, 'restore'])->name('restore')->middleware(ProtectEditorialMutation::class);
-        Route::post('review', [$controller, 'review'])->name('review');
-        Route::post('review/{review}/comments', [$controller, 'comment'])->name('comment');
-        Route::post('review/{review}', [$controller, 'decide'])->name('decide')->middleware(ProtectEditorialMutation::class);
-        Route::post('approve-field', [$controller, 'approveField'])->name('approve-field')->middleware(ProtectEditorialMutation::class);
-        Route::post('share', [$controller, 'share'])->name('share');
-        Route::delete('share/{link}', [$controller, 'revoke'])->name('revoke');
+        Route::middleware(RequireLiveEditor::class)->group(function () use ($controller) {
+            Route::match(['get', 'post', 'delete'], 'draft', [$controller, 'draft'])->name('draft');
+            Route::post('restore/{version}', [$controller, 'restore'])->name('restore')->middleware(ProtectEditorialMutation::class);
+            Route::post('review', [$controller, 'review'])->name('review');
+            Route::post('review/{review}/comments', [$controller, 'comment'])->name('comment');
+            Route::post('review/{review}', [$controller, 'decide'])->name('decide')->middleware(ProtectEditorialMutation::class);
+            Route::post('approve-field', [$controller, 'approveField'])->name('approve-field')->middleware(ProtectEditorialMutation::class);
+            Route::post('share', [$controller, 'share'])->name('share');
+            Route::delete('share/{link}', [$controller, 'revoke'])->name('revoke');
+        });
     });
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -76,14 +82,14 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         ->except(['show'])
         ->middlewareFor(['create', 'store'], RequireLiveEditor::class)
         ->middlewareFor(['edit', 'update'], [RequireLiveEditor::class, ProtectLiveEditor::class])
-        ->middlewareFor('destroy', ProtectLiveEditor::class);
+        ->middlewareFor('destroy', [RequireLiveEditor::class, ProtectLiveEditor::class]);
     Route::post('pages/{page}/translations/{locale}', [PageController::class, 'translate'])->name('pages.translate')->middleware(RequireLiveEditor::class);
 
     Route::resource('posts', PostController::class)
         ->except(['show'])
         ->middlewareFor(['create', 'store'], RequireLiveEditor::class)
         ->middlewareFor(['edit', 'update'], [RequireLiveEditor::class, ProtectLiveEditor::class])
-        ->middlewareFor('destroy', ProtectLiveEditor::class);
+        ->middlewareFor('destroy', [RequireLiveEditor::class, ProtectLiveEditor::class]);
     Route::post('posts/{post}/translations/{locale}', [PostController::class, 'translate'])->name('posts.translate')->middleware(RequireLiveEditor::class);
 
     Route::post('editor-locks/{type}/{id}/heartbeat', [EditorLockController::class, 'heartbeat'])
@@ -91,7 +97,7 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
     Route::post('editor-locks/{type}/{id}/release', [EditorLockController::class, 'release'])
         ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.release')->middleware(RequireLiveEditor::class);
 
-    Route::prefix('taxonomies/{type}')->name('taxonomies.')->group(function () {
+    Route::prefix('taxonomies/{type}')->name('taxonomies.')->middleware(RequireLiveEditor::class)->group(function () {
         Route::get('/', [TaxonomyController::class, 'index'])->name('index');
         Route::get('/create', [TaxonomyController::class, 'create'])->name('create');
         Route::post('/', [TaxonomyController::class, 'store'])->name('store');
@@ -101,9 +107,9 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         Route::post('/{taxonomy}/translations/{locale}', [TaxonomyController::class, 'translate'])->name('translate');
     });
 
-    Route::resource('menus', MenuController::class)->except(['show']);
-    Route::post('menus/{menu}/translations/{locale}', [MenuController::class, 'translate'])->name('menus.translate');
-    Route::put('menus/{menu}/items', [MenuController::class, 'syncItems'])->name('menus.items.sync');
+    Route::resource('menus', MenuController::class)->except(['show'])->middleware(RequireLiveEditor::class);
+    Route::post('menus/{menu}/translations/{locale}', [MenuController::class, 'translate'])->name('menus.translate')->middleware(RequireLiveEditor::class);
+    Route::put('menus/{menu}/items', [MenuController::class, 'syncItems'])->name('menus.items.sync')->middleware(RequireLiveEditor::class);
 
     Route::post('pages/{page}/preview', [PageController::class, 'previewRender'])->name('pages.preview')->middleware(RequireLiveEditor::class);
 
@@ -125,31 +131,31 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         Route::put('analytics', [AnalyticsController::class, 'update'])->name('analytics.update');
         Route::post('cache/refresh', [CacheController::class, 'refresh'])->name('cache.refresh');
         Route::get('developer-tools', [DeveloperToolsController::class, 'index'])->name('developer-tools.index');
-        Route::post('developer-tools/download', [DeveloperToolsController::class, 'download'])->name('developer-tools.download');
-        Route::post('developer-tools/upload', [DeveloperToolsController::class, 'upload'])->name('developer-tools.upload');
-        Route::get('developer-tools/review/{token}', [DeveloperToolsController::class, 'review'])->name('developer-tools.review')->where('token', '[A-Za-z0-9]{40}');
-        Route::post('developer-tools/review/{token}/restore', [DeveloperToolsController::class, 'restore'])->name('developer-tools.restore')->where('token', '[A-Za-z0-9]{40}');
-        Route::delete('developer-tools/review/{token}', [DeveloperToolsController::class, 'discard'])->name('developer-tools.discard')->where('token', '[A-Za-z0-9]{40}');
-        Route::post('developer-tools/prune', [DeveloperToolsController::class, 'prune'])->name('developer-tools.prune');
+        Route::post('developer-tools/download', [DeveloperToolsController::class, 'download'])->name('developer-tools.download')->middleware(RequireLiveEditor::class);
+        Route::post('developer-tools/upload', [DeveloperToolsController::class, 'upload'])->name('developer-tools.upload')->middleware(RequireLiveEditor::class);
+        Route::get('developer-tools/review/{token}', [DeveloperToolsController::class, 'review'])->name('developer-tools.review')->where('token', '[A-Za-z0-9]{40}')->middleware(RequireLiveEditor::class);
+        Route::post('developer-tools/review/{token}/restore', [DeveloperToolsController::class, 'restore'])->name('developer-tools.restore')->where('token', '[A-Za-z0-9]{40}')->middleware(RequireLiveEditor::class);
+        Route::delete('developer-tools/review/{token}', [DeveloperToolsController::class, 'discard'])->name('developer-tools.discard')->where('token', '[A-Za-z0-9]{40}')->middleware(RequireLiveEditor::class);
+        Route::post('developer-tools/prune', [DeveloperToolsController::class, 'prune'])->name('developer-tools.prune')->middleware(RequireLiveEditor::class);
         Route::get('email', [EmailController::class, 'index'])->name('email.index');
         Route::put('email', [EmailController::class, 'update'])->name('email.update');
         Route::post('email/test', [EmailController::class, 'sendTestEmail'])->name('email.test');
         Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
         // Header and footer: one screen each centralising what the client can edit (docs/admin/layout.md).
-        Route::get('header', [HeaderController::class, 'index'])->name('header.index');
-        Route::put('header', [HeaderController::class, 'update'])->name('header.update');
-        Route::get('footer', [FooterController::class, 'index'])->name('footer.index');
-        Route::put('footer', [FooterController::class, 'update'])->name('footer.update');
+        Route::get('header', [HeaderController::class, 'index'])->name('header.index')->middleware(RequireLiveEditor::class);
+        Route::put('header', [HeaderController::class, 'update'])->name('header.update')->middleware(RequireLiveEditor::class);
+        Route::get('footer', [FooterController::class, 'index'])->name('footer.index')->middleware(RequireLiveEditor::class);
+        Route::put('footer', [FooterController::class, 'update'])->name('footer.update')->middleware(RequireLiveEditor::class);
         // Redirects and the 404 monitor. The screen is a Developer Tools tab; these are the
         // write actions behind it (docs/operations/redirects.md).
         Route::get('redirects/sample-csv', [RedirectController::class, 'sampleCsv'])->name('redirects.sample-csv');
-        Route::post('redirects/import', [RedirectController::class, 'import'])->name('redirects.import');
-        Route::post('redirects', [RedirectController::class, 'store'])->name('redirects.store');
-        Route::put('redirects/{redirect}', [RedirectController::class, 'update'])->name('redirects.update');
-        Route::delete('redirects/{redirect}', [RedirectController::class, 'destroy'])->name('redirects.destroy');
-        Route::delete('redirects/not-found/all', [RedirectController::class, 'clearNotFound'])->name('redirects.not-found.clear');
-        Route::delete('redirects/not-found/{notFoundHit}', [RedirectController::class, 'destroyNotFound'])->name('redirects.not-found.destroy');
+        Route::post('redirects/import', [RedirectController::class, 'import'])->name('redirects.import')->middleware(RequireLiveEditor::class);
+        Route::post('redirects', [RedirectController::class, 'store'])->name('redirects.store')->middleware(RequireLiveEditor::class);
+        Route::put('redirects/{redirect}', [RedirectController::class, 'update'])->name('redirects.update')->middleware(RequireLiveEditor::class);
+        Route::delete('redirects/{redirect}', [RedirectController::class, 'destroy'])->name('redirects.destroy')->middleware(RequireLiveEditor::class);
+        Route::delete('redirects/not-found/all', [RedirectController::class, 'clearNotFound'])->name('redirects.not-found.clear')->middleware(RequireLiveEditor::class);
+        Route::delete('redirects/not-found/{notFoundHit}', [RedirectController::class, 'destroyNotFound'])->name('redirects.not-found.destroy')->middleware(RequireLiveEditor::class);
 
         Route::get('languages', [LanguageController::class, 'index'])->name('languages.index');
         Route::post('languages', [LanguageController::class, 'store'])->name('languages.store');

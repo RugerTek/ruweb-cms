@@ -49,9 +49,29 @@ final class AdminCapabilities
 
     public function contentUrl(object $model, ?string $returnUrl = null): string
     {
+        if (! $this->liveEditor() && ! in_array($model->getTable(), ['pages', 'posts'], true)) {
+            foreach (config('cms.collections', []) as $type => $collection) {
+                if ($model instanceof $collection['model']) {
+                    return route('admin.content.show', [$type, $model->getKey()]);
+                }
+            }
+        }
+
         return $this->liveEditor()
             ? route('admin.'.$model->getTable().'.edit', [$model, 'return' => $returnUrl])
             : route('admin.editorial.index', [$model->getTable(), $model->getKey()]);
+    }
+
+    public function publicationState(object $model): string
+    {
+        if ($model->status !== 'published') {
+            return 'draft';
+        }
+        if ($model->expires_at && $model->expires_at->lte(now())) {
+            return 'expired';
+        }
+
+        return $model->isPublished() ? 'published' : 'scheduled';
     }
 
     /** The same secret-free deployment manifest for CLI and MCP. */
@@ -73,7 +93,7 @@ final class AdminCapabilities
 
         return [
             'admin_profile' => $this->profile(),
-            'stability' => $this->liveEditor() ? 'stable' : 'experimental',
+            'stability' => 'stable',
             'capabilities' => ['public_site' => true, 'mcp' => true, 'identity' => true, 'live_editor' => $this->liveEditor(), 'specialized_editor_delivery' => $this->liveEditor()],
             'authorization' => 'Independent of profile: account role and credential scope apply to every operation.',
             'block_formats' => ['structured'],

@@ -10,7 +10,10 @@ remote script tag and no API key: the build is the open-source one, declared wit
 `license_key: 'gpl'`.
 
 The bundle is large, so it is code-split: the chunk is fetched only on screens that
-contain a `[data-rich-text]` field, keeping the shared admin bundle small.
+contain a `[data-rich-text]` field in the `full` profile, keeping the shared admin bundle small.
+The `essential` entrypoint has no dependency on TinyMCE or visual title/link editors. Shared operational
+settings use escaped native textareas in essential: existing HTML remains intact in the field and the
+same server-side sanitization runs on save. Switching profiles does not convert stored values.
 
 Skin and editable-area styles are inlined into the bundle, so no TinyMCE assets need to
 be published into `public/`.

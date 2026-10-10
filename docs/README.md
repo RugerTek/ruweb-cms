@@ -7,7 +7,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 
 | Doc | Owns |
 |---|---|
-| [concepts/admin-profiles.md](concepts/admin-profiles.md) | Profile discovery, delivery requirements, experimental essential rollout and transitions |
+| [concepts/admin-profiles.md](concepts/admin-profiles.md) | Profile discovery, delivery requirements, essential operational panel and transitions |
 | [concepts/architecture.md](concepts/architecture.md) | What this starter is, its principles, the registry in `config/cms.php`, request flows, where new work goes |
 | [concepts/content-model.md](concepts/content-model.md) | Shape of `content_json`: `meta`, `sections`, `is_visible`, media ids |
 | [concepts/editorial-contract.md](concepts/editorial-contract.md) | `Publishable`, `Seoable`, `Mediable`, `Previewable` and which entity implements what |

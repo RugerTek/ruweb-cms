@@ -11,6 +11,7 @@ use App\Models\Taxonomy;
 use App\Services\Content\ContentSchemaRegistry;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Posts\PostOperations;
+use App\Support\AdminCapabilities;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,9 @@ class PostController extends Controller
 {
     public function index(Request $request): View
     {
+        if (! app(AdminCapabilities::class)->liveEditor()) {
+            return app(ContentStatusController::class)->index($request, 'posts');
+        }
         $this->authorize('viewAny', Post::class);
 
         $baseLocale = Locale::baseCode();

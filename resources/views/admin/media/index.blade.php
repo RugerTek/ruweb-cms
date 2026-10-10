@@ -16,7 +16,7 @@
 
 <!-- Filters -->
 <div class="flex flex-col sm:flex-row gap-3 mb-6">
-    <form id="filter-form" method="GET" class="flex flex-1 gap-2">
+    <form id="filter-form" method="GET" class="flex min-w-0 flex-1 flex-col sm:flex-row gap-2">
         <select id="filter-type" name="type" class="bg-[#1a1a1a] border border-white/10 text-gray-400 text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50">
             <option value="">{{ __('admin.all_types') }}</option>
             <option value="image" {{ request('type') === 'image' ? 'selected' : '' }}>{{ __('admin.images') }}</option>
@@ -34,7 +34,7 @@
             name="search"
             value="{{ request('search') }}"
             placeholder="{{ __('admin.search_media_ph') }}"
-            class="flex-1 bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50"
+            class="min-w-0 flex-1 bg-[#1a1a1a] border border-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50"
         >
     </form>
 </div>

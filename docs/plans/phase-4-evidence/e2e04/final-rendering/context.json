@@ -1,0 +1,17 @@
+{
+  "purpose": "Recapture equivalent MCP draft after real responsive navigation transition and final back-to-list wording",
+  "real_installer": true,
+  "real_browser_identity_and_credential": true,
+  "record_transport": "real HTTP MCP create/read with original Sol record fields; original Codex client evidence remains distinct",
+  "client_rerun": false,
+  "profile": "essential",
+  "stability": "stable",
+  "keys_revoked": true,
+  "isolated_database_dropped": true,
+  "server_stopped": true,
+  "back_link_assertion": {
+    "label": "Volver al listado",
+    "destination": "/admin/content/pages",
+    "browser_verified": true
+  }
+}

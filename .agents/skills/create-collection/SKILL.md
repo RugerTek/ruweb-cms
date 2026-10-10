@@ -19,7 +19,7 @@ Run `php artisan cms:capabilities` and read
 Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
 publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
 rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
-role/scope permissions are independent. Essential remains experimental until phase 4.
+role/scope permissions are independent. Essential’s operational panel passed phase 4; later capabilities retain their own roadmap gates.
 
 ## Steps
 

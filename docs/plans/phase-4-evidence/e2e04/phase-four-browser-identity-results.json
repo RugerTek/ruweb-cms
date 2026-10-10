@@ -1,0 +1,12 @@
+{
+  "stage": "identity",
+  "checks": [
+    "First installed administrator logs in and creates an editor through UI",
+    "Editor logs in and issues own draft-only credential through UI"
+  ],
+  "script_requests": [
+    "/build/assets/admin-essential-D21C-EYT.js",
+    "/build/assets/admin-common-TVIx-gSD.js"
+  ],
+  "page_errors": []
+}

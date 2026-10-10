@@ -1,10 +1,10 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–3 implementadas y aceptadas con sus gates E2E. Fases 4–11 autorizadas, sin iniciar.
+**Estado:** fases 0–4 implementadas y aceptadas con sus gates E2E. Fases 5–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 9 — cierre de fase 3 con MCP bilingüe, medios/layout y E2E-03.
+**Revisión:** 10 — cierre de fase 4 con panel esencial operativo, cliente real y E2E-04.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
-**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)) y perfiles de fase 2 ([resultados](phase-2-results.md)) y MCP de fase 3 ([resultados](phase-3-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
+**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)) y perfiles de fase 2 ([resultados](phase-2-results.md)) y MCP de fase 3 ([resultados](phase-3-results.md)) y panel esencial de fase 4 ([resultados](phase-4-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
 ## 1. Objetivo y valor del producto
 
@@ -63,7 +63,7 @@ Documentos base: [arquitectura](../concepts/architecture.md), [MCP](../operation
 
 ## 4. Perfiles propuestos
 
-Los perfiles `full` y `essential` están implementados desde fase 2; essential sigue experimental hasta el cierre de fase 4. Las capacidades posteriores de esta tabla conservan su fase de entrega.
+Los perfiles `full` y `essential` están implementados desde fase 2; el panel operativo de essential superó E2E-04 y la revisión independiente de fase 4. Las capacidades posteriores de esta tabla conservan su fase de entrega.
 
 | Capacidad | `full` — Completo | `essential` — Esencial |
 |---|---|---|
@@ -396,9 +396,9 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Reutilizar login, cuentas, accesos, ajustes, biblioteca y bandeja; listados ligeros con estado y preview.
-- [ ] Retirar navegación y rutas del Live Editor en esencial; evitar cargar su runtime y dependencias editoriales.
-- [ ] Mantener acceso administrativo a la configuración de integraciones; no crear CRUD editorial alternativo.
+- [x] Reutilizar login, cuentas, accesos, ajustes, biblioteca y bandeja; listados ligeros con estado y preview.
+- [x] Retirar navegación y rutas del Live Editor en esencial; evitar cargar su runtime y dependencias editoriales.
+- [x] Mantener acceso administrativo a la configuración de integraciones; no crear CRUD editorial alternativo.
 
 **E2E-04 — Entrar como persona y continuar con el agente**
 
@@ -412,6 +412,8 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 **Aprobación:** no hay enlaces rotos, formularios editoriales encubiertos ni cargas de editor en esencial. El cambio de perfil no altera permisos ni reduce MCP.
 
 **Reversión:** configurar `full` y regenerar cachés; verificar recuperación de rutas existentes.
+
+**Resultado:** fase aceptada con [evidencia](phase-4-results.md): instalación real, usuario/credencial desde navegador, cliente Codex Sol 6.1, panel esencial sin editor, vuelta a Full, revisión independiente y regresiones acumuladas aprobadas.
 
 ### Fase 5 — Revisión, versiones y recuperación por MCP
 
@@ -647,7 +649,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La autorización global habilita comenzar fase 4 tras este cierre; no requiere una nueva confirmación por fase.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La autorización global habilita comenzar fase 5 tras este cierre; no requiere una nueva confirmación por fase.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

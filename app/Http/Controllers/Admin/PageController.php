@@ -11,6 +11,7 @@ use App\Services\Content\ContentSchemaRegistry;
 use App\Services\Content\TranslationOperations;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Pages\PageOperations;
+use App\Support\AdminCapabilities;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,9 @@ class PageController extends Controller
 {
     public function index(Request $request): View
     {
+        if (! app(AdminCapabilities::class)->liveEditor()) {
+            return app(ContentStatusController::class)->index($request, 'pages');
+        }
         $baseLocale = Locale::baseCode();
         $query = Page::query()->where('locale', $baseLocale)->with('translations')->latest();
 

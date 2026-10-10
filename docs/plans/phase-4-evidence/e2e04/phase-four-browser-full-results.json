@@ -1,0 +1,14 @@
+{
+  "stage": "full",
+  "checks": [
+    "Profile switch retains MCP content and restores compatible visual edit/save"
+  ],
+  "script_requests": [
+    "/build/assets/admin-FDU-cp1Y.js",
+    "/build/assets/admin-common-TVIx-gSD.js",
+    "/build/assets/rich-text-DE--GJmh.js",
+    "/build/assets/chunk-DPI0Y_ll.js",
+    "/build/assets/app-DbUEORY_.js"
+  ],
+  "page_errors": []
+}

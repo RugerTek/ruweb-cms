@@ -1,0 +1,19 @@
+{
+  "initial_profile": "full",
+  "checks": [
+    "full: cached CLI/MCP discovery and content preserved after server restart",
+    "full: content-managed literal image still fails conventions",
+    "essential: cached CLI/MCP discovery and content preserved after server restart",
+    "essential: content-managed literal image still fails conventions",
+    "full: cached CLI/MCP discovery and content preserved after server restart",
+    "full: content-managed literal image still fails conventions",
+    "Identical missing editor fails full and passes essential",
+    "Invalid deployment profile fails explicitly at startup"
+  ],
+  "server_process_ids": [
+    40600,
+    40677,
+    40767
+  ],
+  "page_id": 118
+}

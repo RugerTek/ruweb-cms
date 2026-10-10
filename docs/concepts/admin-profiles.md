@@ -26,12 +26,27 @@ required only in full. Human operational lists and identity/security interfaces 
 
 ## Current rollout and transition
 
-Essential is **experimental** in phase 2. Specialized page/post creation, editing, preview rendering and
-editor lock endpoints return 404. Essential loads a separate entrypoint without the specialized engine,
-feedback or recovery runtime; common form/media controls remain shared. Listings use history links and hide creation
-and translation shortcuts. Public output, existing content and MCP operations remain available. The final
-operational panel, minimal media interface and status/preview workflows are phase 4; this increment does
-not claim that panel complete. Other operational interfaces continue to use the existing implementation.
+Essential's operational panel passed [E2E-04](../plans/phase-4-results.md). Both profiles are supported
+for the currently implemented structured-content capabilities. HTML composition, Custom Code and the
+additional MCP workflows remain governed by their later roadmap gates.
+
+Essential retains login, account security, users/roles, MCP access management, general settings,
+analytics/email integrations, languages, media upload/search/metadata/usage and form submission inboxes.
+Developer Tools shows basic system diagnostics; snapshots and advanced changes use authorized CLI
+operations. Taxonomy/menu/header/footer editors and page/post editor mutations return 404. Full retains
+its existing editorial screens and actions.
+
+Pages, posts and registered collections have read-only operational lists across all locales, with title/slug
+search, draft/live/scheduled/expired state, persisted version history/differences and preview. Collection
+lists require `viewAny`; status and preview require `view`. A private authenticated GET preview renders
+saved content with no caching/indexing, no admin bar/analytics or form submission. Opening status or
+preview never captures versions or creates bearer preview links. Editing, translation, publication and
+restoration remain agent operations in essential, according to the operations currently available.
+
+Essential uses a separate entrypoint whose dependency graph excludes the Live Editor, its specialized
+controls, recovery runtime and TinyMCE. Common form/media/map controls remain available. Rich-text
+settings use escaped native textareas and the same server sanitizer; this does not introduce an editorial
+CRUD or alter stored content. Navigation and the authenticated public bar hide unavailable actions.
 
 Before activating changes, discover the destination profile. A custom section delivered only for essential
 cannot be activated in full until its missing visual editor is delivered and conventions pass. A profile

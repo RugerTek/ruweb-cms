@@ -141,3 +141,52 @@ acceptance evidence. `phase-three-page.json` includes confidential preview URLs:
 credential manifest, omit it from published evidence, and delete it after browser verification. Stop servers,
 run the guarded `phase-zero-cleanup.php` for each newly generated schema, and delete copied `.env` files and
 configuration caches. Continue running cumulative E2E-00/01 and the documented E2E-02 regression separately.
+
+## Phase four: person-to-agent handoff (E2E-04)
+
+Use a disposable copy with its own vendor, storage, bootstrap caches, a never-used
+`ruweb_phase0_` MySQL schema and the production Vite build. Exclude `.git`, `node_modules`,
+`storage`, `public/storage`, `public/hot` and bootstrap caches. Keep any `.env` carrying the
+local database account private. Select `essential` in the copy's versioned config. Set the
+same `PHASE0_STORAGE` and `PHASE0_DATABASE` isolation variables used by earlier phases.
+
+Unlike earlier fixtures, provision E2E-04 with `php tests/E2E/phase-four-install.php`. This
+executes the **real `cms:install` command**, including migrations, placeholders, seeded public
+pages and the first administrator. Its guard rejects an existing schema. Do not run the
+phase-zero fixture on this database. Start the copy with the phase-zero router on free
+loopback port 8018, then execute the following stages:
+
+```bash
+PHASE4_STAGE=identity PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-four-browser.cjs
+PHASE4_CODEX_CLIENT=/absolute/path/to/codex python3 tests/E2E/phase-four-client.py
+PHASE4_STAGE=essential PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-four-browser.cjs
+PHASE4_STAGE=essential-bar PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-four-browser.cjs
+```
+
+The browser creates an editor account through the first administrator's session, logs in as
+that editor and issues its own draft-only credential. The real Sol 6.1 Codex CLI then discovers
+MCP, creates/reads/updates a draft using revision checks and receives an explicit publication
+denial. The client uses an ephemeral home with only this fixture server and a copied existing
+authentication file; it does not edit global configuration. The explicit CLI sandbox/approval
+bypass permits MCP tool calls in this isolated acceptance run, whose prompt permits only the
+fixture MCP tools. It is not a deployment setting.
+
+The essential browser stage checks preserved operational routes, readonly listing/status,
+authenticated native preview, anonymous draft 404, a real media search, canonical site-name
+setting edit and public effect, direct editor 404, and no full-editor/TinyMCE downloads. Desktop
+and mobile captures assert no horizontal document overflow. The separate essential-bar stage
+checks the authenticated public bar has no links to unavailable editors. Network evidence is
+limited to path/method/status and script paths; raw browser traces with session tokens are not
+retained. Credential screens are never captured.
+
+Stop the server, change only the copy's profile to `full`, regenerate config/routes caches with
+`php tests/E2E/phase-two-control.php cache`, clear any fixture edit leases with its `unlock` action,
+and start a fresh server. Run `PHASE4_STAGE=full` with the browser script: it checks the exact
+agent content survived and makes/saves/reopens a real visual heading edit. No persistent workers
+run in this fixture. Profile deployment on an actual site must restart them as documented.
+
+Run accumulated E2E-00/01 in a separate full fixture and E2E-02/03 in both profiles, sequentially
+on 8018. Keep non-secret result JSON, path-only network traces, code/build fingerprints and
+captures. Stop every server, execute guarded phase-zero cleanup for each schema, and remove
+all ephemeral client homes/auth, private Codex transport logs, manifest, `.env`, config caches
+and server/mail logs. Never preserve a credential or preview URL as acceptance evidence.

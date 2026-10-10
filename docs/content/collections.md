@@ -63,3 +63,9 @@ Discover the deployment with `php artisan cms:capabilities` before implementing 
 keep models/schema, shared validation and operations, policies, public published queries, media/localization,
 operational listing and tests; specialized editorial forms and Live Editor controls are optional and should
 not be built by default. Full retains the editorial CRUD and UI/UX requirements above.
+
+Essential reuses the operational `/admin/content/{registered-key}` list and its status/preview routes.
+Register the model and translated label in `cms.collections`; the list checks its `viewAny` policy and
+status/preview check `view`. The model must honor the publication, preview, media and locale contracts
+above. Human lists search title/slug in every locale and separate drafts, live publications, future
+publications and expired content. They do not create, mutate, translate, restore or publish content.

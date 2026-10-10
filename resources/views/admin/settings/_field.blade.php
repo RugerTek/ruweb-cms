@@ -82,7 +82,7 @@
 
     @elseif ($setting->type === 'rich_text')
         {{-- Short running text with links; sanitised on save (docs/admin/rich-text.md). --}}
-        <textarea name="settings[{{ $setting->key }}]" rows="3" data-rich-text="short-description" class="{{ $inputClass }}">{{ old('settings.' . $setting->key, $setting->value) }}</textarea>
+        <textarea name="settings[{{ $setting->key }}]" rows="3" @if(app(\App\Support\AdminCapabilities::class)->liveEditor()) data-rich-text="short-description" @endif class="{{ $inputClass }}">{{ old('settings.' . $setting->key, $setting->value) }}</textarea>
 
     @elseif ($setting->type === 'map_point')
         @include('admin.settings._map-point', ['setting' => $setting])

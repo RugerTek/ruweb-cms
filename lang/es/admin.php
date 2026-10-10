@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'back_to_content_list' => 'Volver al listado',
+    'history' => 'Historial',
+    'content_no_results' => 'No se encontraron contenidos.',
+    'content_publication_date' => 'Fecha de publicación',
+    'essential_content_hint' => 'Consulta el contenido, su estado y sus versiones. Para editarlo, utiliza el agente conectado.',
+    'scheduled' => 'Programado',
+    'expired' => 'Vencido',
+    'action_preview' => 'Vista previa',
     'profile_editor_unavailable' => 'El editor visual no está disponible en el perfil esencial.',
     'editor_locked_title' => 'Contenido en edición',
     'editor_locked_by' => ':name está editando este contenido.',
