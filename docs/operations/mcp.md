@@ -19,8 +19,12 @@
 | MCP server (JSON-RPC 2.0) | `POST /mcp/rpc` | Agents and MCP clients |
 | REST API | `/mcp/*` | Direct integrations and scripts |
 
-Both are registered in `bootstrap/app.php` with the `mcp` prefix and `mcp.auth`
-(`App\Http\Middleware\AuthenticateMcpApiKey`), so they cannot diverge in authentication.
+Both are registered in `bootstrap/app.php` with the `mcp` prefix and middleware group. The group runs
+`AuthenticateMcpApiKey` first, then `Illuminate\Routing\Middleware\SubstituteBindings`, so REST parameters
+`{page}`, `{post}`, `{media}` and `{menu}` resolve persisted records. Missing records return 404 only after
+valid authentication; missing or invalid tokens return 401. `{key}` for settings remains a plain string.
+Policies evaluate the user resolved from the token on both REST and JSON-RPC, independently of any browser
+session.
 
 ```http
 Authorization: Bearer <token>
@@ -69,6 +73,14 @@ Setting an image field with no real asset: select the placeholder matching the s
 `routes/mcp.php` mirrors the tools: `GET /mcp/pages`, `GET /mcp/pages/{page}`, `POST /mcp/pages/drafts`,
 `PATCH /mcp/pages/{page}/draft`, `POST /mcp/pages/{page}/publish`, the same shape for posts, plus
 `/mcp/media`, `/mcp/settings/{key}` and `/mcp/menus` including `PUT /mcp/menus/{menu}/items`.
+
+Media detail is `GET /mcp/media/{media}`. Update metadata with `PATCH /mcp/media/{media}` or the compatible
+`PATCH /mcp/media/{media}/metadata` route. Both accept optional `locale` (query string or JSON body on PATCH)
+for an active language. Omitting it edits/reads base text. Secondary alt/title overrides live in
+`media_translations`; blank fields inherit base text, and clearing both removes the override. Omitted fields
+stay intact. `media_list`, `media_get` and `media_update_metadata` expose the same optional locale via RPC.
+Media responses return resolved `alt`/`title` plus the canonical per-language `metadata` map. See
+[../content/images.md](../content/images.md#localized-metadata).
 
 Keep REST and MCP aligned in authentication, authorization, serialization and validation — they are two
 front doors to one controller layer.

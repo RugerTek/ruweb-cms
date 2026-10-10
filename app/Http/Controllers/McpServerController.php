@@ -163,7 +163,7 @@ class McpServerController extends Controller
                 $this->mcp->mediaList($this->synth($req, $args)),
 
             'media_get' => fn ($req, $args) =>
-                $this->mcp->mediaGet($this->synth($req), Media::findOrFail($args['media_id'])),
+                $this->mcp->mediaGet($this->synth($req, $this->without($args, 'media_id')), Media::findOrFail($args['media_id'])),
 
             'media_update_metadata' => fn ($req, $args) =>
                 $this->mcp->mediaAttachMetadata(

@@ -22,11 +22,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/oauth.php'));
 
             Route::prefix('mcp')
-                ->middleware('mcp.auth')
+                ->middleware('mcp')
                 ->group(base_path('routes/mcp.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->group('mcp', [
+            \App\Http\Middleware\AuthenticateMcpApiKey::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
+
         $middleware->alias([
             'role'         => \App\Http\Middleware\RoleMiddleware::class,
             'admin.locale' => \App\Http\Middleware\SetAdminLocale::class,

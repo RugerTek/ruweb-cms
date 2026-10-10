@@ -21,6 +21,7 @@ Route::post('/posts/{post}/publish', [McpController::class, 'postsPublish']);
 
 Route::get('/media', [McpController::class, 'mediaList']);
 Route::get('/media/{media}', [McpController::class, 'mediaGet']);
+Route::patch('/media/{media}', [McpController::class, 'mediaAttachMetadata']);
 Route::patch('/media/{media}/metadata', [McpController::class, 'mediaAttachMetadata']);
 
 Route::get('/settings', [McpController::class, 'settingsListGrouped']);

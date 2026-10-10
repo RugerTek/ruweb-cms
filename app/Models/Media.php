@@ -65,6 +65,27 @@ class Media extends Model
         return $this->hasMany(MediaTranslation::class);
     }
 
+    /** Persist validated alt/title fields without duplicating the shared file. */
+    public function updateMetadata(array $fields, string $locale): void
+    {
+        $fields = array_map(fn ($value) => filled($value) ? $value : null, $fields);
+        if ($locale === Locale::baseCode()) {
+            $this->update($fields);
+
+            return;
+        }
+        $translation = $this->translations()->firstOrNew(['locale' => $locale]);
+        $translation->fill($fields);
+        if (blank($translation->alt) && blank($translation->title)) {
+            if ($translation->exists) {
+                $translation->delete();
+            }
+        } else {
+            $translation->save();
+        }
+        $this->unsetRelation('translations');
+    }
+
     public function localizedAlt(?string $locale = null): ?string
     {
         return $this->localizedMetadata('alt', $locale);

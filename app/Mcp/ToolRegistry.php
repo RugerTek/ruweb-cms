@@ -180,6 +180,7 @@ class ToolRegistry
                 'inputSchema' => [
                     'type'       => 'object',
                     'properties' => [
+                        'locale' => ['type' => 'string', 'description' => 'Idioma activo del medio; omitir para usar el texto base. Una traducción vacía hereda el texto base.'],
                         'type'     => ['type' => 'string', 'enum' => ['image', 'application'], 'description' => 'Filtrar por tipo MIME.'],
                         'search'   => ['type' => 'string', 'description' => 'Buscar por nombre, título o texto alt.'],
                         'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100],
@@ -193,6 +194,7 @@ class ToolRegistry
                     'type'       => 'object',
                     'required'   => ['media_id'],
                     'properties' => [
+                        'locale' => ['type' => 'string', 'description' => 'Idioma activo del medio; omitir para usar el texto base. Una traducción vacía hereda el texto base.'],
                         'media_id' => ['type' => 'integer', 'description' => 'ID del archivo de medios.'],
                     ],
                 ],
@@ -204,6 +206,7 @@ class ToolRegistry
                     'type'       => 'object',
                     'required'   => ['media_id'],
                     'properties' => [
+                        'locale' => ['type' => 'string', 'description' => 'Idioma activo del medio; omitir para usar el texto base. Una traducción vacía hereda el texto base.'],
                         'media_id' => ['type' => 'integer'],
                         'alt'      => ['type' => ['string', 'null'], 'description' => 'Texto alternativo para accesibilidad.'],
                         'title'    => ['type' => ['string', 'null'], 'description' => 'Título descriptivo del archivo.'],

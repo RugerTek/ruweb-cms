@@ -145,7 +145,7 @@ class McpController extends Controller
 
     public function postsList(Request $request): JsonResponse
     {
-        $this->authorize('viewAny', Post::class);
+        $this->authorizeForUser($request->user(), 'viewAny', Post::class);
 
         $validated = Validator::make($request->all(), [
             'search' => ['nullable', 'string', 'max:255'],
@@ -181,7 +181,7 @@ class McpController extends Controller
 
     public function postsGet(Request $request, Post $post): JsonResponse
     {
-        $this->authorize('view', $post);
+        $this->authorizeForUser($request->user(), 'view', $post);
 
         return response()->json([
             'data' => $this->serializePost($post),
@@ -190,7 +190,7 @@ class McpController extends Controller
 
     public function postsCreateDraft(Request $request): JsonResponse
     {
-        $this->authorize('create', Post::class);
+        $this->authorizeForUser($request->user(), 'create', Post::class);
 
         $validated = Validator::make($request->all(), [
             'title' => ['required', 'string', 'max:255'],
@@ -224,7 +224,7 @@ class McpController extends Controller
 
     public function postsUpdateDraft(Request $request, Post $post): JsonResponse
     {
-        $this->authorize('update', $post);
+        $this->authorizeForUser($request->user(), 'update', $post);
 
         $validated = Validator::make($request->all(), [
             'title' => ['sometimes', 'string', 'max:255'],
@@ -260,7 +260,7 @@ class McpController extends Controller
 
     public function postsPublish(Request $request, Post $post): JsonResponse
     {
-        $this->authorize('update', $post);
+        $this->authorizeForUser($request->user(), 'update', $post);
 
         $post->update([
             'status' => 'published',
@@ -281,9 +281,10 @@ class McpController extends Controller
             'search' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', 'string', Rule::in(['image', 'application'])],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'locale' => ['sometimes', 'string', Rule::in($this->mediaLocales())],
         ])->validate();
 
-        $query = Media::query()->latest();
+        $query = Media::query()->with('translations')->latest();
 
         if (! empty($validated['type'])) {
             $query->where('mime_type', 'like', $validated['type'] . '/%');
@@ -293,14 +294,17 @@ class McpController extends Controller
             $query->where(function ($q) use ($validated) {
                 $q->where('original_filename', 'like', '%' . $validated['search'] . '%')
                     ->orWhere('title', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('alt', 'like', '%' . $validated['search'] . '%');
+                    ->orWhere('alt', 'like', '%' . $validated['search'] . '%')
+                    ->orWhereHas('translations', fn ($translations) => $translations
+                        ->where('title', 'like', '%'.$validated['search'].'%')
+                        ->orWhere('alt', 'like', '%'.$validated['search'].'%'));
             });
         }
 
         $media = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20));
 
         return response()->json([
-            'data' => $media->getCollection()->map(fn (Media $item) => $this->serializeMedia($item))->values(),
+            'data' => $media->getCollection()->map(fn (Media $item) => $this->serializeMedia($item, $validated['locale'] ?? null))->values(),
             'meta' => [
                 'total' => $media->total(),
                 'current_page' => $media->currentPage(),
@@ -314,8 +318,12 @@ class McpController extends Controller
     {
         $this->authorizeCmsEditor($request);
 
+        $validated = Validator::make($request->all(), [
+            'locale' => ['sometimes', 'string', Rule::in($this->mediaLocales())],
+        ])->validate();
+
         return response()->json([
-            'data' => $this->serializeMedia($media),
+            'data' => $this->serializeMedia($media->load('translations'), $validated['locale'] ?? null),
         ]);
     }
 
@@ -324,15 +332,23 @@ class McpController extends Controller
         $this->authorizeCmsEditor($request);
 
         $validated = Validator::make($request->all(), [
+            'locale' => ['sometimes', 'string', Rule::in($this->mediaLocales())],
             'alt' => ['nullable', 'string', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],
         ])->validate();
 
-        $media->update($validated);
+        $locale = $validated['locale'] ?? Locale::baseCode();
+        unset($validated['locale']);
+        $media->updateMetadata($validated, $locale);
 
         return response()->json([
-            'data' => $this->serializeMedia($media->fresh()),
+            'data' => $this->serializeMedia($media->fresh()->load('translations'), $locale),
         ]);
+    }
+
+    protected function mediaLocales(): array
+    {
+        return array_values(array_unique([Locale::baseCode(), ...Locale::where('is_active', true)->pluck('code')->all()]));
     }
 
     public function settingsListGrouped(Request $request): JsonResponse
@@ -401,7 +417,7 @@ class McpController extends Controller
 
     public function menusList(Request $request): JsonResponse
     {
-        $this->authorize('viewAny', Menu::class);
+        $this->authorizeForUser($request->user(), 'viewAny', Menu::class);
 
         $menus = Menu::withCount('items')->latest()->get();
 
@@ -412,7 +428,7 @@ class McpController extends Controller
 
     public function menusGet(Request $request, Menu $menu): JsonResponse
     {
-        $this->authorize('view', $menu);
+        $this->authorizeForUser($request->user(), 'view', $menu);
 
         return response()->json([
             'data' => $this->serializeMenu($menu, withTree: true),
@@ -421,7 +437,7 @@ class McpController extends Controller
 
     public function menusCreate(Request $request): JsonResponse
     {
-        $this->authorize('create', Menu::class);
+        $this->authorizeForUser($request->user(), 'create', Menu::class);
 
         $validated = Validator::make($request->all(), [
             'name'     => ['required', 'string', 'max:255'],
@@ -441,7 +457,7 @@ class McpController extends Controller
 
     public function menusUpdate(Request $request, Menu $menu): JsonResponse
     {
-        $this->authorize('update', $menu);
+        $this->authorizeForUser($request->user(), 'update', $menu);
 
         $validated = Validator::make($request->all(), [
             'name'     => ['sometimes', 'string', 'max:255'],
@@ -459,7 +475,7 @@ class McpController extends Controller
 
     public function menusSyncItems(Request $request, Menu $menu): JsonResponse
     {
-        $this->authorize('update', $menu);
+        $this->authorizeForUser($request->user(), 'update', $menu);
 
         $validated = Validator::make($request->all(), [
             'items'               => ['present', 'array'],
@@ -516,7 +532,7 @@ class McpController extends Controller
 
     public function menusDelete(Request $request, Menu $menu): JsonResponse
     {
-        $this->authorize('delete', $menu);
+        $this->authorizeForUser($request->user(), 'delete', $menu);
 
         $menu->delete();
 
@@ -565,8 +581,9 @@ class McpController extends Controller
         ];
     }
 
-    protected function serializeMedia(Media $media): array
+    protected function serializeMedia(Media $media, ?string $locale = null): array
     {
+        $locale ??= Locale::baseCode();
         return [
             'id' => $media->id,
             'filename' => $media->filename,
@@ -576,8 +593,9 @@ class McpController extends Controller
             'size' => $media->size,
             'formatted_size' => $media->formatted_size,
             'is_image' => $media->is_image,
-            'alt' => $media->alt,
-            'title' => $media->title,
+            'alt' => $media->localizedAlt($locale),
+            'title' => $media->localizedTitle($locale),
+            'metadata' => $media->metadata,
             'disk' => $media->disk,
             'path' => $media->path,
             'url' => $media->url,

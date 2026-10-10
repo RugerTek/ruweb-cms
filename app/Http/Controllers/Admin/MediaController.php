@@ -211,21 +211,7 @@ class MediaController extends Controller
                 return;
             }
             foreach ($validated['metadata'] as $locale => $fields) {
-                $fields = array_map(fn ($value) => filled($value) ? $value : null, $fields);
-                if ($locale === Locale::baseCode()) {
-                    $media->update($fields);
-
-                    continue;
-                }
-                $translation = $media->translations()->firstOrNew(['locale' => $locale]);
-                $translation->fill($fields);
-                if (blank($translation->alt) && blank($translation->title)) {
-                    if ($translation->exists) {
-                        $translation->delete();
-                    }
-                } else {
-                    $translation->save();
-                }
+                $media->updateMetadata($fields, $locale);
             }
         });
 

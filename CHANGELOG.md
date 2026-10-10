@@ -8,6 +8,10 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
+## 0.46.1 - 2026-10-10
+
+- Corregido el binding de modelos en las rutas MCP REST de medios, páginas, posts y menús: se autentica el token antes de resolver el registro y los IDs inexistentes devuelven 404. GET/PATCH de medios y las herramientas RPC admiten metadatos por `locale`, con fallback al texto base; las policies usan al propietario del token. Se añaden pruebas REST con token real para lectura, actualización, idiomas y permisos.
+
 ## 0.46.0 - 2026-10-06 (e7103ed)
 
 - Alt y título traducibles por idioma para un mismo archivo: textos base compatibles con los medios existentes, traducciones por campo con fallback y sin duplicar imágenes.
