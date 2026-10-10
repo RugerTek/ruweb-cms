@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\Taxonomy;
 use App\Services\Content\ContentSchemaRegistry;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Posts\PostOperations;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,29 +61,7 @@ class PostController extends Controller
     {
         $this->authorize('create', Post::class);
 
-        $data = $request->validated();
-        $data['locale'] = $data['locale'] ?? Locale::baseCode();
-        $data['created_by'] = $request->user()->id;
-        $data['updated_by'] = $request->user()->id;
-
-        if ($data['status'] === 'published' && empty($data['published_at'])) {
-            $data['published_at'] = now();
-        }
-
-        $featuredImage = $data['featured_image'] ?? null;
-        $categories = $data['categories'] ?? [];
-        unset($data['featured_image'], $data['categories'], $data['acknowledged_fields']);
-
-        $post = Post::create($data);
-        $post->source_fingerprint = $post->translatableFingerprint();
-        $post->source_field_hashes = $post->translatableFieldFingerprints();
-        $post->save();
-
-        if ($featuredImage) {
-            $post->attachMedia($featuredImage, 'featured_image');
-        }
-
-        $post->syncTaxonomies($categories, 'category');
+        $post = app(PostOperations::class)->save($request->user(), $request->validated());
 
         return redirect()
             ->route('admin.posts.edit', ['post' => $post, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
@@ -107,48 +86,17 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
-        if ($request->filled('_editor_base')) {
-            abort_unless(hash_equals(app(EditorialHistory::class)->fingerprint($post), $request->input('_editor_base')), 409, __('editorial.conflict'));
-        }
-        $data = $request->validated();
-        if ($request->user()->isEditor() && $post->status === 'published') {
-            app(EditorialHistory::class)->stage($post, $data);
+        $staged = $request->user()->isEditor() && $post->status === 'published';
+        $post = app(PostOperations::class)->save($request->user(), $request->validated(), $post, base: $request->input('_editor_base'));
+        if ($staged) {
             if ($request->wantsJson()) {
                 return response()->json(['saved' => true, 'staged' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($post)]);
             }
 
             return back()->with('success', __('editorial.staged'));
         }
-        $data['locale'] = $data['locale'] ?? $post->locale;
-        $data['updated_by'] = $request->user()->id;
-
-        if ($data['status'] === 'published' && empty($data['published_at'])) {
-            $data['published_at'] = $post->published_at ?? now();
-        }
-
-        $featuredImage = $data['featured_image'] ?? null;
-        $categories = $data['categories'] ?? [];
-        unset($data['featured_image'], $data['categories']);
-
-        $post->update($data);
-        if ($post->isBaseLocale()) {
-            $post->source_fingerprint = $post->translatableFingerprint();
-            $post->source_field_hashes = $post->translatableFieldFingerprints();
-        } else {
-            $post->syncTranslationFromBase();
-        }
-        $post->save();
-
-        $post->media()->wherePivot('collection', 'featured_image')->detach();
-        if ($featuredImage) {
-            $post->attachMedia($featuredImage, 'featured_image');
-        }
-
-        $post->syncTaxonomies($categories, 'category');
 
         if ($request->wantsJson()) {
-            app(EditorialHistory::class)->capture($post->fresh());
-
             return response()->json(['saved' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($post->fresh())]);
         }
 
@@ -173,8 +121,7 @@ class PostController extends Controller
     {
         $this->authorize('delete', $post);
 
-        $post->media()->detach();
-        $post->delete();
+        app(PostOperations::class)->delete(request()->user(), $post);
 
         return redirect()
             ->route('admin.posts.index')
@@ -184,58 +131,11 @@ class PostController extends Controller
     public function translate(Request $request, Post $post, string $locale): RedirectResponse
     {
         $this->authorize('create', Post::class);
-        abort_unless(Locale::where('code', $locale)->where('is_active', true)->exists(), 404);
-
-        $existing = $post->translations()->where('locale', $locale)->first();
-        if ($existing) {
-            return redirect()->route('admin.posts.edit', ['post' => $existing, 'return' => $this->normalizeReturnUrl($request->input('return'))]);
-        }
-
-        $base = $post->baseTranslation() ?: $post;
-        $translation = $base->replicate(['slug', 'published_at', 'expires_at']);
-        $translation->locale = $locale;
-        $translation->slug = $this->uniqueTranslatedSlug($base->slug, $locale);
-        $translation->status = 'draft';
-        $translation->translation_status = 'needs_review';
-        $translation->source_fingerprint = $base->translatableFingerprint();
-        $translation->source_field_hashes = $base->translatableFieldFingerprints();
-        $translation->created_by = $request->user()->id;
-        $translation->updated_by = $request->user()->id;
-        $translation->save();
-
-        foreach ($base->media as $media) {
-            $translation->attachMedia($media->id, $media->pivot->collection, $media->pivot->order);
-        }
-
-        $translation->syncTaxonomies($this->translatedTaxonomyIds($base, 'category', $locale), 'category');
+        $translation = app(PostOperations::class)->translate($request->user(), $post, $locale);
 
         return redirect()
             ->route('admin.posts.edit', ['post' => $translation, 'return' => $this->normalizeReturnUrl($request->input('return'))])
             ->with('success', __('admin.post_created'));
-    }
-
-    private function uniqueTranslatedSlug(string $slug, string $locale): string
-    {
-        $candidate = $slug;
-        $counter = 2;
-
-        while (Post::where('locale', $locale)->where('slug', $candidate)->exists()) {
-            $candidate = $slug.'-'.$counter;
-            $counter++;
-        }
-
-        return $candidate;
-    }
-
-    private function translatedTaxonomyIds(Post $base, string $type, string $locale): array
-    {
-        return $base->taxonomiesByType($type)
-            ->with('translations')
-            ->get()
-            ->map(fn (Taxonomy $taxonomy) => $taxonomy->translations->firstWhere('locale', $locale)?->id)
-            ->filter()
-            ->values()
-            ->all();
     }
 
     /**

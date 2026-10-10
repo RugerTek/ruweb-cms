@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\RevisionConflict;
 use App\Mcp\ToolRegistry;
 use App\Models\Media;
 use App\Models\Menu;
 use App\Models\Page;
 use App\Models\Post;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 /**
  * JSON-RPC 2.0 MCP server endpoint.
@@ -21,7 +26,7 @@ class McpServerController extends Controller
 {
     private const PROTOCOL_VERSION = '2024-11-05';
 
-    public function __construct(private McpController $mcp) {}
+    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media) {}
 
     public function handle(Request $request): JsonResponse
     {
@@ -31,9 +36,9 @@ class McpServerController extends Controller
             return $this->errorResponse(null, -32600, 'Invalid Request: jsonrpc must be "2.0".');
         }
 
-        $method         = $body['method'] ?? null;
-        $params         = $body['params'] ?? [];
-        $id             = $body['id'] ?? null;
+        $method = $body['method'] ?? null;
+        $params = $body['params'] ?? [];
+        $id = $body['id'] ?? null;
         $isNotification = ! array_key_exists('id', $body);
 
         // JSON-RPC notifications must not receive a response
@@ -46,22 +51,26 @@ class McpServerController extends Controller
                 'initialize' => $this->handleInitialize(),
                 'tools/list' => $this->handleToolsList(),
                 'tools/call' => $this->handleToolsCall($request, $params),
-                default      => throw new \InvalidArgumentException("Method not found: {$method}", -32601),
+                default => throw new \InvalidArgumentException("Method not found: {$method}", -32601),
             };
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return $this->errorResponse($id, -32602, 'Validation failed.', $e->errors());
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             return $this->errorResponse($id, -32603, $e->getMessage());
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (ModelNotFoundException) {
             return $this->errorResponse($id, -32602, 'Resource not found.');
+        } catch (RevisionConflict $e) {
+            return $this->errorResponse($id, -32009, $e->getMessage(), $e->diagnostic());
+        } catch (HttpExceptionInterface $e) {
+            return $this->errorResponse($id, $e->getStatusCode() === 409 ? -32009 : -32602, $e->getMessage(), ['status' => $e->getStatusCode(), 'recovery' => $e->getStatusCode() === 409 ? 'Read current revision, merge changes and retry.' : 'Correct the input and retry.']);
         } catch (\InvalidArgumentException $e) {
             return $this->errorResponse($id, $e->getCode() ?: -32600, $e->getMessage());
         }
 
         return response()->json([
             'jsonrpc' => '2.0',
-            'id'      => $id,
-            'result'  => $result,
+            'id' => $id,
+            'result' => $result,
         ]);
     }
 
@@ -73,9 +82,9 @@ class McpServerController extends Controller
     {
         return [
             'protocolVersion' => self::PROTOCOL_VERSION,
-            'capabilities'    => ['tools' => new \stdClass()],
-            'serverInfo'      => [
-                'name'    => config('app.name', 'ruweb-cms'),
+            'capabilities' => ['tools' => new \stdClass],
+            'serverInfo' => [
+                'name' => config('app.name', 'ruweb-cms'),
                 'version' => '1.0.0',
             ],
         ];
@@ -88,7 +97,7 @@ class McpServerController extends Controller
 
     private function handleToolsCall(Request $request, array $params): array
     {
-        $name      = $params['name'] ?? null;
+        $name = $params['name'] ?? null;
         $arguments = $params['arguments'] ?? [];
 
         if (! $name) {
@@ -110,7 +119,7 @@ class McpServerController extends Controller
             'content' => [
                 [
                     'type' => 'text',
-                    'text' => json_encode($response->getData(true), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+                    'text' => $response->getContent(),
                 ],
             ],
         ];
@@ -123,95 +132,86 @@ class McpServerController extends Controller
     private function resolveHandler(string $name): ?\Closure
     {
         $handlers = [
+            'settings_update_batch' => fn ($req, $args) => $this->mcp->settingsUpdateBatch($this->synth($req, $args)),
+            'content_read_field' => fn ($req, $args) => $this->content->readField($this->synth($req, $args), $args['type'], $args['id']),
+            'cms_schema' => fn ($req, $args) => $this->content->schema($this->synth($req, $args)),
+            'locales_list' => fn ($req, $args) => $this->content->locales($this->synth($req, $args)),
+            'locales_configure' => fn ($req, $args) => $this->content->configureLocales($this->synth($req, $args)),
+            'content_translate' => fn ($req, $args) => $this->content->translation($this->synth($req, $args), $args['type'], $args['id']),
+            'content_translation_changes' => fn ($req, $args) => $this->content->changes($this->synth($req, $args), $args['type'], $args['id']),
+            'content_translation_acknowledge' => fn ($req, $args) => $this->content->acknowledge($this->synth($req, $args), $args['type'], $args['id']),
+            'content_publication' => fn ($req, $args) => $this->content->publication($this->synth($req, $args), $args['type'], $args['id']),
+            'content_preview' => fn ($req, $args) => $this->content->preview($this->synth($req, $args), $args['type'], $args['id']),
+            'media_authorize_upload' => fn ($req, $args) => $this->media->authorizeUpload($this->synth($req, $args)),
+            'media_usages' => fn ($req, $args) => $this->media->usages($this->synth($req, $args), Media::findOrFail($args['media_id'])),
+            'media_delete' => fn ($req, $args) => $this->media->destroy($this->synth($req, $args), Media::findOrFail($args['media_id'])),
             'cms_capabilities' => fn ($req, $args) => $this->mcp->capabilities($this->synth($req)),
             // Pages
-            'pages_list' => fn ($req, $args) =>
-                $this->mcp->pagesList($this->synth($req, $args)),
+            'pages_list' => fn ($req, $args) => $this->mcp->pagesList($this->synth($req, $args)),
 
-            'pages_get' => fn ($req, $args) =>
-                $this->mcp->pagesGet($this->synth($req), Page::findOrFail($args['page_id'])),
+            'pages_get' => fn ($req, $args) => $this->mcp->pagesGet($this->synth($req, $args), Page::findOrFail($args['page_id'])),
 
-            'pages_create_draft' => fn ($req, $args) =>
-                $this->mcp->pagesCreateDraft($this->synth($req, $args)),
+            'pages_create_draft' => fn ($req, $args) => $this->mcp->pagesCreateDraft($this->synth($req, $args)),
 
-            'pages_update_draft' => fn ($req, $args) =>
-                $this->mcp->pagesUpdateDraft(
-                    $this->synth($req, $this->without($args, 'page_id')),
-                    Page::findOrFail($args['page_id'])
-                ),
+            'pages_update_draft' => fn ($req, $args) => $this->mcp->pagesUpdateDraft(
+                $this->synth($req, $this->without($args, 'page_id')),
+                Page::findOrFail($args['page_id'])
+            ),
 
-            'pages_publish' => fn ($req, $args) =>
-                $this->mcp->pagesPublish($this->synth($req), Page::findOrFail($args['page_id'])),
+            'pages_publish' => fn ($req, $args) => $this->mcp->pagesPublish($this->synth($req, $args), Page::findOrFail($args['page_id'])),
 
             // Posts
-            'posts_list' => fn ($req, $args) =>
-                $this->mcp->postsList($this->synth($req, $args)),
+            'posts_list' => fn ($req, $args) => $this->mcp->postsList($this->synth($req, $args)),
 
-            'posts_get' => fn ($req, $args) =>
-                $this->mcp->postsGet($this->synth($req), Post::findOrFail($args['post_id'])),
+            'posts_get' => fn ($req, $args) => $this->mcp->postsGet($this->synth($req, $args), Post::findOrFail($args['post_id'])),
 
-            'posts_create_draft' => fn ($req, $args) =>
-                $this->mcp->postsCreateDraft($this->synth($req, $args)),
+            'posts_create_draft' => fn ($req, $args) => $this->mcp->postsCreateDraft($this->synth($req, $args)),
 
-            'posts_update_draft' => fn ($req, $args) =>
-                $this->mcp->postsUpdateDraft(
-                    $this->synth($req, $this->without($args, 'post_id')),
-                    Post::findOrFail($args['post_id'])
-                ),
+            'posts_update_draft' => fn ($req, $args) => $this->mcp->postsUpdateDraft(
+                $this->synth($req, $this->without($args, 'post_id')),
+                Post::findOrFail($args['post_id'])
+            ),
 
-            'posts_publish' => fn ($req, $args) =>
-                $this->mcp->postsPublish($this->synth($req), Post::findOrFail($args['post_id'])),
+            'posts_publish' => fn ($req, $args) => $this->mcp->postsPublish($this->synth($req, $args), Post::findOrFail($args['post_id'])),
 
             // Media
-            'media_list' => fn ($req, $args) =>
-                $this->mcp->mediaList($this->synth($req, $args)),
+            'media_list' => fn ($req, $args) => $this->mcp->mediaList($this->synth($req, $args)),
 
-            'media_get' => fn ($req, $args) =>
-                $this->mcp->mediaGet($this->synth($req, $this->without($args, 'media_id')), Media::findOrFail($args['media_id'])),
+            'media_get' => fn ($req, $args) => $this->mcp->mediaGet($this->synth($req, $this->without($args, 'media_id')), Media::findOrFail($args['media_id'])),
 
-            'media_update_metadata' => fn ($req, $args) =>
-                $this->mcp->mediaAttachMetadata(
-                    $this->synth($req, $this->without($args, 'media_id')),
-                    Media::findOrFail($args['media_id'])
-                ),
+            'media_update_metadata' => fn ($req, $args) => $this->mcp->mediaAttachMetadata(
+                $this->synth($req, $this->without($args, 'media_id')),
+                Media::findOrFail($args['media_id'])
+            ),
 
             // Settings
-            'settings_list' => fn ($req, $args) =>
-                $this->mcp->settingsListGrouped($this->synth($req)),
+            'settings_list' => fn ($req, $args) => $this->mcp->settingsListGrouped($this->synth($req)),
 
-            'settings_get' => fn ($req, $args) =>
-                $this->mcp->settingsGet($this->synth($req), $args['key']),
+            'settings_get' => fn ($req, $args) => $this->mcp->settingsGet($this->synth($req), $args['key']),
 
-            'settings_update' => fn ($req, $args) =>
-                $this->mcp->settingsUpdate(
-                    $this->synth($req, $this->without($args, 'key')),
-                    $args['key']
-                ),
+            'settings_update' => fn ($req, $args) => $this->mcp->settingsUpdate(
+                $this->synth($req, $this->without($args, 'key')),
+                $args['key']
+            ),
 
             // Menus
-            'menus_list' => fn ($req, $args) =>
-                $this->mcp->menusList($this->synth($req)),
+            'menus_list' => fn ($req, $args) => $this->mcp->menusList($this->synth($req, $args)),
 
-            'menus_get' => fn ($req, $args) =>
-                $this->mcp->menusGet($this->synth($req), Menu::findOrFail($args['menu_id'])),
+            'menus_get' => fn ($req, $args) => $this->mcp->menusGet($this->synth($req), Menu::findOrFail($args['menu_id'])),
 
-            'menus_create' => fn ($req, $args) =>
-                $this->mcp->menusCreate($this->synth($req, $args)),
+            'menus_create' => fn ($req, $args) => $this->mcp->menusCreate($this->synth($req, $args)),
 
-            'menus_update' => fn ($req, $args) =>
-                $this->mcp->menusUpdate(
-                    $this->synth($req, $this->without($args, 'menu_id')),
-                    Menu::findOrFail($args['menu_id'])
-                ),
+            'menus_update' => fn ($req, $args) => $this->mcp->menusUpdate(
+                $this->synth($req, $this->without($args, 'menu_id')),
+                Menu::findOrFail($args['menu_id'])
+            ),
 
-            'menus_sync_items' => fn ($req, $args) =>
-                $this->mcp->menusSyncItems(
-                    $this->synth($req, $this->without($args, 'menu_id')),
-                    Menu::findOrFail($args['menu_id'])
-                ),
+            'menus_sync_items' => fn ($req, $args) => $this->mcp->menusSyncItems(
+                $this->synth($req, $this->without($args, 'menu_id')),
+                Menu::findOrFail($args['menu_id'])
+            ),
 
-            'menus_delete' => fn ($req, $args) =>
-                $this->mcp->menusDelete($this->synth($req), Menu::findOrFail($args['menu_id'])),
+            'menus_delete' => fn ($req, $args) => $this->mcp->menusDelete($this->synth($req, $args), Menu::findOrFail($args['menu_id'])),
         ];
 
         return $handlers[$name] ?? null;
@@ -228,6 +228,7 @@ class McpServerController extends Controller
     private function synth(Request $original, array $data = []): Request
     {
         $synthetic = Request::create('/', 'POST', $data);
+        $synthetic->headers->set('Authorization', (string) $original->header('Authorization'));
         $synthetic->setUserResolver(fn () => $original->user());
 
         return $synthetic;
@@ -252,8 +253,8 @@ class McpServerController extends Controller
 
         return response()->json([
             'jsonrpc' => '2.0',
-            'id'      => $id,
-            'error'   => $error,
+            'id' => $id,
+            'error' => $error,
         ]);
     }
 }

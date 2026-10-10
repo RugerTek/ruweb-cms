@@ -1,0 +1,9 @@
+{
+  "profile": "full",
+  "checks": [
+    "Local, REST and JSON-RPC profile/capabilities match with limited scopes",
+    "Full agent delivery: specialized editor saves custom testimony fields",
+    "Public renderer, persisted custom fields, media validation and draft/future publication guards"
+  ],
+  "page_id": 118
+}

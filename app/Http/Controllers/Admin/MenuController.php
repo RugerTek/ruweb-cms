@@ -6,15 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMenuRequest;
 use App\Http\Requests\Admin\SyncMenuItemsRequest;
 use App\Http\Requests\Admin\UpdateMenuRequest;
+use App\Models\Locale;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Taxonomy;
-use App\Models\Locale;
+use App\Services\Menus\MenuOperations;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -58,11 +59,7 @@ class MenuController extends Controller
 
     public function store(StoreMenuRequest $request): RedirectResponse
     {
-        $this->authorize('create', Menu::class);
-
-        $data = $request->validated();
-        $data['locale'] = $data['locale'] ?? Locale::baseCode();
-        $menu = Menu::create($data);
+        $menu = app(MenuOperations::class)->create($request->user(), $request->validated());
 
         return redirect()->route('admin.menus.edit', $menu)
             ->with('success', __('admin.menu_created'));
@@ -73,23 +70,19 @@ class MenuController extends Controller
         $this->authorize('update', $menu);
 
         return view('admin.menus.edit', [
-            'menu'       => $menu,
-            'menuItems'  => $menu->tree(),
-            'pages'      => Page::published()->where('locale', $menu->locale)->orderBy('title')->get(['id', 'title', 'slug']),
-            'posts'      => Post::published()->where('locale', $menu->locale)->orderBy('title')->get(['id', 'title', 'slug']),
+            'menu' => $menu,
+            'menuItems' => $menu->tree(),
+            'pages' => Page::published()->where('locale', $menu->locale)->orderBy('title')->get(['id', 'title', 'slug']),
+            'posts' => Post::published()->where('locale', $menu->locale)->orderBy('title')->get(['id', 'title', 'slug']),
             'taxonomies' => Taxonomy::where('locale', $menu->locale)->ordered()->get(['id', 'name', 'slug', 'type']),
-            'locales'    => Locale::where('is_active', true)->orderBy('sort_order')->get(),
+            'locales' => Locale::where('is_active', true)->orderBy('sort_order')->get(),
             'menuTranslations' => Menu::where('slug', $menu->slug)->get()->keyBy('locale'),
         ]);
     }
 
     public function update(UpdateMenuRequest $request, Menu $menu): RedirectResponse
     {
-        $this->authorize('update', $menu);
-
-        $data = $request->validated();
-        $data['locale'] = $data['locale'] ?? $menu->locale;
-        $menu->update($data);
+        app(MenuOperations::class)->update($request->user(), $menu, $request->validated());
 
         return redirect()->route('admin.menus.edit', $menu)
             ->with('success', __('admin.menu_updated'));
@@ -97,41 +90,7 @@ class MenuController extends Controller
 
     public function syncItems(SyncMenuItemsRequest $request, Menu $menu): RedirectResponse|JsonResponse
     {
-        $this->authorize('update', $menu);
-
-        DB::transaction(function () use ($request, $menu) {
-            $menu->items()->delete();
-
-            $items = $request->validated()['items'];
-            $idMap = []; // maps temp client IDs to real DB IDs
-
-            foreach ($items as $itemData) {
-                $menuItem = MenuItem::create([
-                    'menu_id'       => $menu->id,
-                    'parent_id'     => null, // resolved in second pass
-                    'label'         => $itemData['label'],
-                    'type'          => $itemData['type'],
-                    'linkable_type' => $this->resolveLinkableType($itemData['type']),
-                    'linkable_id'   => $itemData['type'] !== 'custom_link' ? ($itemData['linkable_id'] ?? null) : null,
-                    'url'           => $itemData['type'] === 'custom_link' ? \App\Support\SiteUrl::toRelative($itemData['url'] ?? null) : null,
-                    'target'        => $itemData['target'],
-                    'translation_status' => ($itemData['type'] !== 'custom_link' && empty($itemData['linkable_id'])) ? 'needs_review' : null,
-                    'order'         => $itemData['order'],
-                ]);
-
-                if (isset($itemData['id'])) {
-                    $idMap[$itemData['id']] = $menuItem->id;
-                }
-            }
-
-            // Second pass: resolve parent_id references
-            foreach ($items as $itemData) {
-                if (!empty($itemData['parent_id']) && isset($idMap[$itemData['parent_id']]) && isset($itemData['id']) && isset($idMap[$itemData['id']])) {
-                    MenuItem::where('id', $idMap[$itemData['id']])
-                        ->update(['parent_id' => $idMap[$itemData['parent_id']]]);
-                }
-            }
-        });
+        app(MenuOperations::class)->syncItems($request->user(), $menu, $request->validated());
 
         if ($request->wantsJson()) {
             return response()->json(['saved' => true]);
@@ -202,9 +161,7 @@ class MenuController extends Controller
 
     public function destroy(Menu $menu): RedirectResponse
     {
-        $this->authorize('delete', $menu);
-
-        $menu->delete();
+        app(MenuOperations::class)->delete(request()->user(), $menu);
 
         return redirect()->route('admin.menus.index')
             ->with('success', __('admin.menu_deleted'));
@@ -213,10 +170,10 @@ class MenuController extends Controller
     private function resolveLinkableType(string $type): ?string
     {
         return match ($type) {
-            'page'     => Page::class,
-            'post'     => Post::class,
+            'page' => Page::class,
+            'post' => Post::class,
             'taxonomy' => Taxonomy::class,
-            default    => null,
+            default => null,
         };
     }
 

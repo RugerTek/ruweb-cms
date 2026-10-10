@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mcp\ToolRegistry;
 use App\Models\Locale;
 use App\Models\McpApiKey;
 use App\Models\Media;
@@ -44,7 +45,7 @@ class McpPhaseZeroTest extends TestCase
     {
         $response = $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'])->assertOk();
         $tools = json_decode($response->getContent())->result->tools;
-        $this->assertCount(23, $tools);
+        $this->assertCount(count(ToolRegistry::all()), $tools);
         foreach ($tools as $tool) {
             $this->assertIsObject($tool->inputSchema->properties, $tool->name);
         }

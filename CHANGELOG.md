@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.48.0 - 2026-10-10
+## 0.49.0 - 2026-10-10
+
+- MCP amplía descubrimiento, idiomas, traducciones, programación y previews con revisiones explícitas, reintentos de creación y respuestas acotadas; ambos perfiles comparten las mismas herramientas.
+- Subidas multipart y metadatos de medios reutilizan el pipeline del panel, con permisos temporales, reintentos durables, borrado protegido y recuperación segura ante rollback.
+- Posts, menús y ajustes comparten operaciones con identidad explícita; layout/contacto/SEO conservan una fila canónica y una allowlist validada sin secretos.
+- El sitemap refleja publicación programada y cambios actuales; el header resuelve sus menús por ubicación e idioma, comprobado en E2E bilingüe real con MySQL y navegador.
+
+## 0.48.0 - 2026-10-10 (448c6af)
 
 - **Perfiles de administración:** configuración versionada `full`/`essential`, completo por defecto y diagnóstico explícito ante valores inválidos; el perfil esencial continúa experimental sin convertir datos ni permisos.
 - **Descubrimiento común:** comando local y herramienta/endpoint MCP informan perfil, capacidades, esquemas y compatibilidad visual; ambos perfiles conservan el mismo catálogo y autorización por identidad/scope.

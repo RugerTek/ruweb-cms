@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Setting;
-use App\Models\Locale;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 
 class SitemapController extends Controller
 {
     public function __invoke(): Response
     {
-        $xml = Cache::remember('sitemap-xml', 3600, function () {
+        // Publication and expiry are time-dependent, including scheduled content.
+        // Resolve current visibility per request rather than serving stale cached URLs.
+        $xml = (function () {
             $homepageGroupId = Setting::get('homepage_translation_group_id');
             $homePage = $homepageGroupId
                 ? Page::published()->where('translation_group_id', $homepageGroupId)->where('locale', Locale::baseCode())->first()
@@ -29,7 +30,7 @@ class SitemapController extends Controller
             $latestPostDate = $posts->first()?->updated_at;
 
             return view('sitemap.index', compact('homePage', 'pages', 'posts', 'latestPostDate'))->render();
-        });
+        })();
 
         return response($xml, 200, ['Content-Type' => 'text/xml; charset=utf-8']);
     }

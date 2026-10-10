@@ -1,0 +1,6 @@
+{
+  "E2E00_E2E01": "Full profile real HTTP and real isolated queue worker regression passed before final response-validation-only edits.",
+  "E2E02": "Both profiles repeat the documented deterministic fixture HTTP/browser and cached transitions; the original real agent deliveries from phase 2 were not repeated.",
+  "E2E03": "Fresh final candidate real MySQL and anonymous browser verification in both profiles; source/build digests match exactly.",
+  "privacy": "No credentials, bearer tokens or confidential preview URLs are included."
+}

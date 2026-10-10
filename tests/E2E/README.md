@@ -36,7 +36,7 @@ The fixed UI account is `phase0@example.test` / `Phase0-Test-Only-2026!`, only i
 For browser verification visit `/panel-baseline`, then `/login` and `/admin/submissions/contact` (sent).
 The row edited by MCP can be opened in the admin using the draft ID from the result file.
 
-Separately reconnect a real Codex client, open a fresh conversation and verify 23 discovered tools,
+Separately reconnect a real Codex client, open a fresh conversation and verify the current 36 discovered tools,
 including `menus_list` and `settings_list`. An HTTP tools/list pass does not prove client discovery.
 
 After stopping the server, revoke test credentials and remove **only this run's generated schema** with:
@@ -108,3 +108,36 @@ Retain `phase-two-*-results.json`, context/diffs and screenshots as non-secret e
 E2E-00/01 on full and inspect their results. After all server processes stop, use `phase-zero-cleanup.php`
 to revoke keys and drop only each newly generated schema, then delete the ephemeral manifest, copied `.env`
 and generated config cache (it embeds credentials). Do not commit those files or server/mail logs.
+
+
+## Phase three: remote editorial operation (E2E-03)
+
+Prepare two disposable copies and fresh MySQL fixtures as above, selecting `full` and `essential` in their
+versioned configuration. Use the same fixture administrator and full bearer for both REST and RPC within
+each deployment. Set `PHASE3_PROFILE` to the selected profile. Start the loopback server with
+`tests/E2E/phase-three-router.php`, which adds a fixture-only controllable clock; production routes and
+bootstrap never read its clock file. Run the profiles sequentially on port 8018:
+
+```bash
+python3 tests/E2E/phase-three-http.py
+PHASE3_STAGE=draft PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-three-browser.cjs
+python3 tests/E2E/phase-three-http.py --publish
+PHASE3_STAGE=public PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-three-browser.cjs
+```
+
+The first stage discovers the actual home template schema, configures English through HTTP, transfers a real
+1600×900 PNG with a credential-bound upload ticket, retries its receipt, edits localized image metadata,
+creates and translates a draft, edits its slug/SEO/copy with revision checks, creates localized menu links,
+configures a portable CTA and localized footer through batch settings, rejects malformed menu revisions,
+and checks media usage protection. Draft/public/sitemap exclusion and anonymous preview rendering are
+verified before publication. The second stage publishes both locales, checks canonical/hreflang and image
+bytes, then schedules another page and advances the isolated clock across its publication time. The browser
+stages decode the actual responsive images and capture both languages at desktop and mobile widths.
+No browser login or cookie identity is used for MCP. Only fixture setup, image generation and clock injection
+use the local test controls; functional editorial operations go through the HTTP transports.
+
+Retain `phase-three-results.json`, `phase-three-browser-*-results.json` and screenshots as non-secret
+acceptance evidence. `phase-three-page.json` includes confidential preview URLs: keep it private with the
+credential manifest, omit it from published evidence, and delete it after browser verification. Stop servers,
+run the guarded `phase-zero-cleanup.php` for each newly generated schema, and delete copied `.env` files and
+configuration caches. Continue running cumulative E2E-00/01 and the documented E2E-02 regression separately.

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Admin\Concerns;
 
-use App\Models\Setting;
+use App\Services\Settings\SettingOperations;
 use App\Support\LinkDestination;
 use App\Support\RichTextSanitizer;
+use App\Support\SiteUrl;
 use App\Support\SocialNetworks;
 use Illuminate\Validation\Rule;
 
@@ -23,28 +24,7 @@ trait PersistsSettings
      */
     protected function persistSettings(array $settings): void
     {
-        foreach ($settings as $key => $value) {
-            $existing = Setting::where('key', $key)->first();
-
-            if (! $existing) {
-                continue;
-            }
-
-            if ($existing->type === 'password' && ($value === null || $value === '')) {
-                continue;
-            }
-
-            $value = match ($existing->type) {
-                'social_links' => $this->normalizeSocialLinks($value),
-                'map_point' => $this->normalizeMapPoint($value),
-                'rich_text' => $this->normalizeRichText($value),
-                default => $value,
-            };
-
-            Setting::set($key, $value);
-        }
-
-        Setting::clearCache();
+        app(SettingOperations::class)->persist(request()->user(), $settings);
     }
 
     /**
@@ -116,7 +96,7 @@ trait PersistsSettings
 
         if ($page === '' || $page === LinkDestination::CUSTOM) {
             $settings[$pageKey] = null;
-            $settings[$urlKey] = trim((string) ($settings[$urlKey] ?? '')) ?: null;
+            $settings[$urlKey] = SiteUrl::toRelative(trim((string) ($settings[$urlKey] ?? ''))) ?: null;
         } else {
             $settings[$urlKey] = null;
         }

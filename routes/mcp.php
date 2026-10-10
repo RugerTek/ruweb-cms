@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\McpContentController;
 use App\Http\Controllers\McpController;
+use App\Http\Controllers\McpMediaController;
 use App\Http\Controllers\McpServerController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +28,7 @@ Route::get('/media/{media}', [McpController::class, 'mediaGet']);
 Route::patch('/media/{media}', [McpController::class, 'mediaAttachMetadata']);
 Route::patch('/media/{media}/metadata', [McpController::class, 'mediaAttachMetadata']);
 
+Route::patch('/settings', [McpController::class, 'settingsUpdateBatch']);
 Route::get('/settings', [McpController::class, 'settingsListGrouped']);
 Route::get('/settings/{key}', [McpController::class, 'settingsGet']);
 Route::patch('/settings/{key}', [McpController::class, 'settingsUpdate']);
@@ -36,3 +39,18 @@ Route::post('/menus', [McpController::class, 'menusCreate']);
 Route::patch('/menus/{menu}', [McpController::class, 'menusUpdate']);
 Route::put('/menus/{menu}/items', [McpController::class, 'menusSyncItems']);
 Route::delete('/menus/{menu}', [McpController::class, 'menusDelete']);
+
+Route::get('/schema', [McpContentController::class, 'schema']);
+Route::get('/locales', [McpContentController::class, 'locales']);
+Route::post('/locales', [McpContentController::class, 'configureLocales']);
+Route::post('/content/{type}/{id}/translation', [McpContentController::class, 'translation']);
+Route::get('/content/{type}/{id}/translation-changes', [McpContentController::class, 'changes']);
+Route::post('/content/{type}/{id}/translation-acknowledge', [McpContentController::class, 'acknowledge']);
+Route::post('/content/{type}/{id}/publication', [McpContentController::class, 'publication']);
+Route::post('/content/{type}/{id}/preview', [McpContentController::class, 'preview']);
+Route::post('/media/upload-authorization', [McpMediaController::class, 'authorizeUpload']);
+Route::post('/media/uploads', [McpMediaController::class, 'upload']);
+Route::get('/media/{media}/usages', [McpMediaController::class, 'usages']);
+Route::delete('/media/{media}', [McpMediaController::class, 'destroy']);
+
+Route::get('/content/{type}/{id}/field', [McpContentController::class, 'readField']);

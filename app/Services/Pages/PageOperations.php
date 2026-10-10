@@ -6,10 +6,12 @@ use App\Mcp\ContentPatch;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\User;
+use App\Services\Content\RevisionGuard;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Validator;
 
 /** Page writes shared by the panel and both bearer transports. */
 final class PageOperations
@@ -17,6 +19,7 @@ final class PageOperations
     public function save(User $actor, array $input, ?Page $page = null, bool $draftOnly = false, ?string $base = null): Page
     {
         $this->authorize($actor);
+        $base ??= $input['expected_revision'] ?? null;
 
         return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $input, $page, $draftOnly, $base) {
             $page = $page ? Page::query()->lockForUpdate()->findOrFail($page->id) : null;
@@ -24,8 +27,8 @@ final class PageOperations
                 throw new AuthorizationException(__('editorial.mcp_draft_required'));
             }
             $history = app(EditorialHistory::class);
-            if ($page && $base !== null && ! hash_equals($history->fingerprint($page), $base)) {
-                abort(409, __('editorial.conflict'));
+            if ($page) {
+                RevisionGuard::check($page, $base);
             }
             if ($draftOnly && ! $page) {
                 $input['status'] = 'draft';
@@ -88,16 +91,42 @@ final class PageOperations
         }, 3));
     }
 
-    public function publish(User $actor, Page $page): Page
+    public function publish(User $actor, Page $page, ?string $expectedRevision = null): Page
     {
         $this->authorize($actor);
         if (! $actor->isAdmin()) {
             throw new AuthorizationException(__('editorial.publish_forbidden'));
         }
 
-        return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $page) {
+        return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $page, $expectedRevision) {
             $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+            RevisionGuard::check($page, $expectedRevision);
             $page->update(['status' => 'published', 'published_at' => $page->published_at ?? now(), 'updated_by' => $actor->id]);
+
+            app(EditorialHistory::class)->capture($page->fresh());
+
+            return $page->fresh();
+        }, 3));
+    }
+
+    public function setPublication(User $actor, Page $page, ?string $date, ?string $expectedRevision = null): Page
+    {
+        $this->authorize($actor);
+        if (! $actor->isAdmin()) {
+            throw new AuthorizationException(__('editorial.publish_forbidden'));
+        }
+        if ($date !== null) {
+            Validator::make(['published_at' => $date], ['published_at' => ['required', 'date', 'after:now']])->validate();
+        }
+
+        return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $page, $date, $expectedRevision) {
+            $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+            RevisionGuard::check($page, $expectedRevision);
+            if ($date !== null && $page->expires_at !== null) {
+                Validator::make(['published_at' => $date, 'expires_at' => $page->expires_at], ['expires_at' => ['date', 'after:published_at']])->validate();
+            }
+            $page->update(['status' => $date === null ? 'draft' : 'published', 'published_at' => $date === null ? $page->published_at : $date, 'updated_by' => $actor->id]);
+            app(EditorialHistory::class)->capture($page->fresh());
 
             return $page->fresh();
         }, 3));

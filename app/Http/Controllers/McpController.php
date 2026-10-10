@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Mcp\ContentPatch;
+use App\Mcp\ContentResponse;
 use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Menu;
@@ -11,15 +11,18 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\Setting;
 use App\Models\Taxonomy;
+use App\Services\Content\OperationReceipt;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Media\MediaOperations;
+use App\Services\Menus\MenuOperations;
 use App\Services\Pages\PageOperations;
+use App\Services\Posts\PostOperations;
+use App\Services\Settings\SettingOperations;
 use App\Support\AdminCapabilities;
-use App\Support\SiteUrl;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -37,6 +40,8 @@ class McpController extends Controller
         $this->authorizeCmsEditor($request);
 
         $validated = Validator::make($request->all(), [
+            'fields' => ['sometimes', 'array', 'max:30'],
+            'fields.*' => ['string', 'max:100'],
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', Rule::in(config('cms.statuses'))],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -56,7 +61,7 @@ class McpController extends Controller
         $pages = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20), ['*'], 'page', $validated['page'] ?? 1);
 
         return response()->json([
-            'data' => $pages->getCollection()->map(fn (Page $page) => $this->serializePage($page))->values(),
+            'data' => $pages->getCollection()->map(fn (Page $page) => $this->project($this->serializePage($page), $request))->values(),
             'meta' => [
                 'total' => $pages->total(),
                 'current_page' => $pages->currentPage(),
@@ -71,19 +76,20 @@ class McpController extends Controller
         $this->authorizeCmsEditor($request);
 
         return response()->json([
-            'data' => $this->serializePage($page),
+            'data' => $this->project($this->serializePage($page), $request),
         ]);
     }
 
     public function pagesCreateDraft(Request $request): JsonResponse
     {
-        $page = app(PageOperations::class)->save($request->user(), $request->all(), draftOnly: true);
+        $page = app(OperationReceipt::class)->run($request->user(), $request->input('operation_key'), 'pages_create_draft', $request->all(), fn () => app(PageOperations::class)->save($request->user(), $request->all(), draftOnly: true));
 
         return response()->json(['data' => $this->serializePage($page)], 201);
     }
 
     public function pagesUpdateDraft(Request $request, Page $page): JsonResponse
     {
+        Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
         $page = app(PageOperations::class)->save($request->user(), $request->all(), $page, draftOnly: true);
 
         return response()->json(['data' => $this->serializePage($page)]);
@@ -91,7 +97,8 @@ class McpController extends Controller
 
     public function pagesPublish(Request $request, Page $page): JsonResponse
     {
-        $page = app(PageOperations::class)->publish($request->user(), $page);
+        Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $page = app(PageOperations::class)->publish($request->user(), $page, $request->input('expected_revision'));
 
         return response()->json(['data' => $this->serializePage($page)]);
     }
@@ -101,6 +108,8 @@ class McpController extends Controller
         $this->authorizeForUser($request->user(), 'viewAny', Post::class);
 
         $validated = Validator::make($request->all(), [
+            'fields' => ['sometimes', 'array', 'max:30'],
+            'fields.*' => ['string', 'max:100'],
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', Rule::in(config('cms.statuses'))],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -123,7 +132,7 @@ class McpController extends Controller
         $posts = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20), ['*'], 'page', $validated['page'] ?? 1);
 
         return response()->json([
-            'data' => $posts->getCollection()->map(fn (Post $post) => $this->serializePost($post))->values(),
+            'data' => $posts->getCollection()->map(fn (Post $post) => $this->project($this->serializePost($post), $request))->values(),
             'meta' => [
                 'total' => $posts->total(),
                 'current_page' => $posts->currentPage(),
@@ -138,109 +147,31 @@ class McpController extends Controller
         $this->authorizeForUser($request->user(), 'view', $post);
 
         return response()->json([
-            'data' => $this->serializePost($post),
+            'data' => $this->project($this->serializePost($post), $request),
         ]);
     }
 
     public function postsCreateDraft(Request $request): JsonResponse
     {
-        $this->authorizeForUser($request->user(), 'create', Post::class);
+        $post = app(OperationReceipt::class)->run($request->user(), $request->input('operation_key'), 'posts_create_draft', $request->all(), fn () => app(PostOperations::class)->save($request->user(), $request->all(), draftOnly: true));
 
-        $validated = Validator::make($request->all(), [
-            'locale' => ['sometimes', 'string', Rule::in(Locale::installedCodes())],
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('posts', 'slug')->where('locale', $request->input('locale', Locale::baseCode()))],
-            'excerpt' => ['nullable', 'string', 'max:500'],
-            'content' => ['nullable', 'string'],
-            'featured_image' => ['nullable', 'integer', 'exists:media,id'],
-            'meta_json' => ['nullable', 'array'],
-            'meta_json.title' => ['nullable', 'string', 'max:255'],
-            'meta_json.description' => ['nullable', 'string', 'max:320'],
-        ])->validate();
-
-        $userId = $request->user()->id;
-        $featuredImageId = $validated['featured_image'] ?? null;
-        unset($validated['featured_image']);
-
-        $post = Post::create(array_merge($validated, [
-            'status' => 'draft',
-            'created_by' => $userId,
-            'updated_by' => $userId,
-        ]));
-
-        if ($featuredImageId) {
-            $post->attachMedia($featuredImageId, 'featured_image');
-        }
-
-        return response()->json([
-            'data' => $this->serializePost($post->fresh()),
-        ], 201);
+        return response()->json(['data' => $this->serializePost($post)], 201);
     }
 
     public function postsUpdateDraft(Request $request, Post $post): JsonResponse
     {
-        return DB::transaction(function () use ($request, $post) {
-            $post = Post::query()->lockForUpdate()->findOrFail($post->id);
-            if ($post->status !== 'draft') {
-                throw new AuthorizationException(__('editorial.mcp_draft_required'));
-            }
-            $this->authorizeForUser($request->user(), 'update', $post);
+        Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $post = app(PostOperations::class)->save($request->user(), $request->all(), $post, draftOnly: true);
 
-            $validated = Validator::make($request->all(), [
-                'title' => ['sometimes', 'string', 'max:255'],
-                'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('posts', 'slug')->where('locale', $post->locale)->ignore($post->id)],
-                'excerpt' => ['sometimes', 'nullable', 'string', 'max:500'],
-                'content' => ['sometimes', 'nullable', 'string'],
-                'featured_image' => ['nullable', 'integer', 'exists:media,id'],
-                'meta_json' => ['sometimes', 'nullable', 'array'],
-                'meta_json.title' => ['nullable', 'string', 'max:255'],
-                'meta_json.description' => ['nullable', 'string', 'max:320'],
-            ])->validate();
-
-            $featuredImageId = $validated['featured_image'] ?? null;
-            $hasFeaturedImage = array_key_exists('featured_image', $validated);
-            unset($validated['featured_image']);
-
-            $validated['status'] = 'draft';
-            $validated['updated_by'] = $request->user()->id;
-
-            if (isset($validated['meta_json'])) {
-                $validated['meta_json'] = ContentPatch::apply($post->meta_json ?? [], $validated['meta_json']);
-            }
-
-            $post->update($validated);
-
-            if ($hasFeaturedImage) {
-                $post->media()->wherePivot('collection', 'featured_image')->detach();
-                if ($featuredImageId) {
-                    $post->attachMedia($featuredImageId, 'featured_image');
-                }
-            }
-
-            app(EditorialHistory::class)->capture($post->fresh());
-
-            return response()->json([
-                'data' => $this->serializePost($post->fresh()),
-            ]);
-        }, 3);
+        return response()->json(['data' => $this->serializePost($post)]);
     }
 
     public function postsPublish(Request $request, Post $post): JsonResponse
     {
-        if (! $request->user()?->isAdmin()) {
-            throw new AuthorizationException(__('editorial.publish_forbidden'));
-        }
-        $this->authorizeForUser($request->user(), 'update', $post);
+        Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $post = app(PostOperations::class)->publish($request->user(), $post, $request->input('expected_revision'));
 
-        $post->update([
-            'status' => 'published',
-            'published_at' => $post->published_at ?? now(),
-            'updated_by' => $request->user()->id,
-        ]);
-
-        return response()->json([
-            'data' => $this->serializePost($post->fresh()),
-        ]);
+        return response()->json(['data' => $this->serializePost($post)]);
     }
 
     public function mediaList(Request $request): JsonResponse
@@ -248,6 +179,8 @@ class McpController extends Controller
         $this->authorizeCmsEditor($request);
 
         $validated = Validator::make($request->all(), [
+            'fields' => ['sometimes', 'array', 'max:30'],
+            'fields.*' => ['string', 'max:100'],
             'search' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', 'string', Rule::in(['image', 'application'])],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -300,21 +233,10 @@ class McpController extends Controller
 
     public function mediaAttachMetadata(Request $request, Media $media): JsonResponse
     {
-        $this->authorizeCmsEditor($request);
+        Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $media = app(MediaOperations::class)->update($request->user(), $media, $request->all(), $request->input('expected_revision'));
 
-        $validated = Validator::make($request->all(), [
-            'locale' => ['sometimes', 'string', Rule::in($this->mediaLocales())],
-            'alt' => ['nullable', 'string', 'max:255'],
-            'title' => ['nullable', 'string', 'max:255'],
-        ])->validate();
-
-        $locale = $validated['locale'] ?? Locale::baseCode();
-        unset($validated['locale']);
-        $media->updateMetadata($validated, $locale);
-
-        return response()->json([
-            'data' => $this->serializeMedia($media->fresh()->load('translations'), $locale),
-        ]);
+        return response()->json(['data' => $this->serializeMedia($media->load('translations'), $request->input('locale'))]);
     }
 
     protected function mediaLocales(): array
@@ -355,31 +277,24 @@ class McpController extends Controller
         if (! $request->user()->isAdmin()) {
             throw new AuthorizationException('Only admins can update settings through MCP.');
         }
-
-        $allowedKeys = config('cms.mcp.settings_writable_keys', []);
-
-        if (! in_array($key, $allowedKeys, true)) {
-            return response()->json([
-                'message' => 'Setting key is read-only in MCP.',
-            ], 422);
+        if (! in_array($key, config('cms.mcp.settings_writable_keys', []), true)) {
+            return response()->json(['message' => 'Setting key is read-only in MCP.'], 422);
         }
-
-        $setting = Setting::query()->where('key', $key)->first();
-
-        if (! $setting) {
+        if (! Setting::where('key', $key)->exists()) {
             return response()->json(['message' => 'Setting not found.'], 404);
         }
+        $validated = Validator::make($request->all(), ['value' => ['present'], 'locale' => ['nullable', 'string'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
+        app(SettingOperations::class)->update($request->user(), [$key => $validated['value']], $validated['locale'] ?? null, isset($validated['expected_revision']) ? [$key => $validated['expected_revision']] : []);
 
-        $validated = Validator::make($request->all(), [
-            'value' => ['nullable'],
-        ])->validate();
+        return response()->json(['data' => $this->serializeSetting(Setting::where('key', $key)->firstOrFail())]);
+    }
 
-        Setting::set($key, $validated['value'] ?? null);
-        Setting::clearCache();
+    public function settingsUpdateBatch(Request $request): JsonResponse
+    {
+        $data = Validator::make($request->all(), ['settings' => ['required', 'array', 'max:50'], 'locale' => ['nullable', 'string'], 'expected_revisions' => ['sometimes', 'array'], 'expected_revisions.*' => ['string', 'size:64']])->validate();
+        app(SettingOperations::class)->update($request->user(), $data['settings'], $data['locale'] ?? null, $data['expected_revisions'] ?? []);
 
-        return response()->json([
-            'data' => $this->serializeSetting($setting->fresh()),
-        ]);
+        return response()->json(['data' => Setting::whereIn('key', array_keys($data['settings']))->get()->map(fn ($setting) => $this->serializeSetting($setting))->values()]);
     }
 
     // -------------------------------------------------------------------------
@@ -390,10 +305,12 @@ class McpController extends Controller
     {
         $this->authorizeForUser($request->user(), 'viewAny', Menu::class);
 
-        $menus = Menu::withCount('items')->latest()->get();
+        $validated = Validator::make($request->all(), ['page' => ['sometimes', 'integer', 'min:1'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100']])->validate();
+        $menus = Menu::withCount('items')->latest()->orderByDesc('id')->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20), ['*'], 'page', $validated['page'] ?? 1);
 
         return response()->json([
-            'data' => $menus->map(fn (Menu $menu) => $this->serializeMenu($menu))->values(),
+            'data' => $menus->getCollection()->map(fn (Menu $menu) => $this->serializeMenu($menu))->values(),
+            'meta' => ['total' => $menus->total(), 'current_page' => $menus->currentPage(), 'last_page' => $menus->lastPage(), 'per_page' => $menus->perPage()],
         ]);
     }
 
@@ -408,106 +325,40 @@ class McpController extends Controller
 
     public function menusCreate(Request $request): JsonResponse
     {
-        $this->authorizeForUser($request->user(), 'create', Menu::class);
+        $menu = app(MenuOperations::class)->create($request->user(), $request->all());
 
-        $validated = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'locale' => ['nullable', 'string', Rule::in(Locale::installedCodes())],
-            'slug' => ['required', 'string', 'max:255', Rule::unique('menus', 'slug')->where('locale', $request->input('locale', Locale::baseCode()))],
-            'location' => ['nullable', 'string', 'max:255', Rule::unique('menus', 'location')->where('locale', $request->input('locale', Locale::baseCode()))],
-        ])->validate();
-
-        $validated['locale'] = $validated['locale'] ?? Locale::baseCode();
-
-        $menu = Menu::create($validated);
-
-        return response()->json([
-            'data' => $this->serializeMenu($menu->fresh()),
-        ], 201);
+        return response()->json(['data' => $this->serializeMenu($menu)], 201);
     }
 
     public function menusUpdate(Request $request, Menu $menu): JsonResponse
     {
-        $this->authorizeForUser($request->user(), 'update', $menu);
+        $menu = app(MenuOperations::class)->update($request->user(), $menu, $request->all());
 
-        $validated = Validator::make($request->all(), [
-            'name' => ['sometimes', 'string', 'max:255'],
-            'locale' => ['sometimes', 'string', Rule::in(Locale::installedCodes())],
-            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('menus', 'slug')->where('locale', $request->input('locale', $menu->locale))->ignore($menu->id)],
-            'location' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('menus', 'location')->where('locale', $request->input('locale', $menu->locale))->ignore($menu->id)],
-        ])->validate();
-
-        $menu->update($validated);
-
-        return response()->json([
-            'data' => $this->serializeMenu($menu->fresh()),
-        ]);
+        return response()->json(['data' => $this->serializeMenu($menu)]);
     }
 
     public function menusSyncItems(Request $request, Menu $menu): JsonResponse
     {
-        $this->authorizeForUser($request->user(), 'update', $menu);
+        $menu = app(MenuOperations::class)->syncItems($request->user(), $menu, $request->all());
 
-        $validated = Validator::make($request->all(), [
-            'items' => ['present', 'array'],
-            'items.*.id' => ['nullable', 'integer'],
-            'items.*.parent_id' => ['nullable', 'integer'],
-            'items.*.label' => ['required', 'string', 'max:255'],
-            'items.*.type' => ['required', 'string', 'in:custom_link,page,post,taxonomy'],
-            'items.*.linkable_id' => ['nullable', 'integer'],
-            'items.*.url' => ['nullable', 'string', 'max:2048'],
-            'items.*.target' => ['required', 'string', 'in:_self,_blank'],
-            'items.*.order' => ['required', 'integer', 'min:0'],
-        ])->validate();
-
-        DB::transaction(function () use ($validated, $menu) {
-            $menu->items()->delete();
-
-            $idMap = [];
-
-            foreach ($validated['items'] as $itemData) {
-                $menuItem = MenuItem::create([
-                    'menu_id' => $menu->id,
-                    'parent_id' => null,
-                    'label' => $itemData['label'],
-                    'type' => $itemData['type'],
-                    'linkable_type' => $this->resolveLinkableType($itemData['type']),
-                    'linkable_id' => $itemData['type'] !== 'custom_link' ? ($itemData['linkable_id'] ?? null) : null,
-                    'url' => $itemData['type'] === 'custom_link' ? SiteUrl::toRelative($itemData['url'] ?? null) : null,
-                    'target' => $itemData['target'],
-                    'order' => $itemData['order'],
-                ]);
-
-                if (isset($itemData['id'])) {
-                    $idMap[$itemData['id']] = $menuItem->id;
-                }
-            }
-
-            foreach ($validated['items'] as $itemData) {
-                if (
-                    ! empty($itemData['parent_id']) &&
-                    isset($idMap[$itemData['parent_id']]) &&
-                    isset($itemData['id']) &&
-                    isset($idMap[$itemData['id']])
-                ) {
-                    MenuItem::where('id', $idMap[$itemData['id']])
-                        ->update(['parent_id' => $idMap[$itemData['parent_id']]]);
-                }
-            }
-        });
-
-        return response()->json([
-            'data' => $this->serializeMenu($menu->fresh(), withTree: true),
-        ]);
+        return response()->json(['data' => $this->serializeMenu($menu, withTree: true)]);
     }
 
     public function menusDelete(Request $request, Menu $menu): JsonResponse
     {
-        $this->authorizeForUser($request->user(), 'delete', $menu);
-
-        $menu->delete();
+        app(MenuOperations::class)->delete($request->user(), $menu, $request->all());
 
         return response()->json(null, 204);
+    }
+
+    protected function project(array $data, Request $request): array
+    {
+        if (! $request->has('fields')) {
+            return $data;
+        }
+        $fields = Validator::make($request->all(), ['fields' => ['required', 'array', 'max:30'], 'fields.*' => ['string', Rule::in(array_keys($data))]])->validate()['fields'];
+
+        return array_intersect_key($data, array_flip([...$fields, 'id', 'revision', 'truncated_fields', 'recovery']));
     }
 
     protected function authorizeCmsEditor(Request $request): void
@@ -519,8 +370,11 @@ class McpController extends Controller
 
     protected function serializePage(Page $page): array
     {
-        return [
+        return ContentResponse::bounded([
             'id' => $page->id,
+            'revision' => app(EditorialHistory::class)->fingerprint($page),
+            'translation_status' => $page->translation_status,
+            'stale_fields' => $page->staleTranslatableFields(),
             'title' => $page->title,
             'locale' => $page->locale,
             'translation_group_id' => $page->translation_group_id,
@@ -533,13 +387,17 @@ class McpController extends Controller
             'featured_image' => $page->featuredImage() ? $this->serializeMedia($page->featuredImage()) : null,
             'created_at' => $page->created_at?->toISOString(),
             'updated_at' => $page->updated_at?->toISOString(),
-        ];
+        ]);
     }
 
     protected function serializePost(Post $post): array
     {
-        return [
+        return ContentResponse::bounded([
             'id' => $post->id,
+            'revision' => app(EditorialHistory::class)->fingerprint($post),
+            'translation_status' => $post->translation_status,
+            'stale_fields' => $post->staleTranslatableFields(),
+            'categories' => $post->taxonomies()->where('type', 'category')->pluck('taxonomies.id')->all(),
             'title' => $post->title,
             'locale' => $post->locale,
             'translation_group_id' => $post->translation_group_id,
@@ -553,7 +411,7 @@ class McpController extends Controller
             'featured_image' => $post->featuredImage() ? $this->serializeMedia($post->featuredImage()) : null,
             'created_at' => $post->created_at?->toISOString(),
             'updated_at' => $post->updated_at?->toISOString(),
-        ];
+        ]);
     }
 
     protected function serializeMedia(Media $media, ?string $locale = null): array
@@ -562,6 +420,7 @@ class McpController extends Controller
 
         return [
             'id' => $media->id,
+            'revision' => app(MediaOperations::class)->fingerprint($media),
             'filename' => $media->filename,
             'original_filename' => $media->original_filename,
             'mime_type' => $media->mime_type,
@@ -584,6 +443,8 @@ class McpController extends Controller
     {
         return [
             'key' => $setting->key,
+            'revision' => app(SettingOperations::class)->fingerprint($setting),
+            'writable' => in_array($setting->key, config('cms.mcp.settings_writable_keys', []), true),
             'value' => $setting->type === 'password' ? null : Setting::get($setting->key),
             'redacted' => $setting->type === 'password',
             'type' => $setting->type,
@@ -595,6 +456,7 @@ class McpController extends Controller
     {
         $data = [
             'id' => $menu->id,
+            'revision' => app(MenuOperations::class)->fingerprint($menu),
             'name' => $menu->name,
             'slug' => $menu->slug,
             'locale' => $menu->locale,

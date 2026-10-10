@@ -53,13 +53,14 @@ status, raw = request('/mcp/rpc', {'jsonrpc':'2.0','id':1,'method':'initialize',
 assert status == 200 and 'result' in json.loads(raw)
 status, raw = request('/mcp/rpc', {'jsonrpc':'2.0','id':2,'method':'tools/list'}, manifest['keys']['full'])
 tools = json.loads(raw)['result']['tools']
-assert len(tools) == 23 and all(isinstance(t['inputSchema']['properties'], dict) for t in tools)
+assert len(tools) >= 23 and all(isinstance(t['inputSchema']['properties'], dict) for t in tools)
+assert {'cms_capabilities', 'menus_list', 'settings_list', 'pages_create_draft', 'media_get'}.issubset({t['name'] for t in tools})
 menus = rpc('menus_list')['data']
 assert menus and rpc('menus_get', {'menu_id': menus[0]['id']})['data']['id'] == menus[0]['id']
 assert rpc('settings_list')['data']
 secret = rpc('settings_get', {'key':'recaptcha_secret_key'})['data']
 assert secret['value'] is None and secret['redacted'] is True
-passed('Discovery: 23 valid schemas; menus/settings callable')
+passed('Discovery: ' + str(len(tools)) + ' valid schemas; menus/settings callable')
 
 before = rpc('settings_get', {'key':'recaptcha_min_score'})['data']
 status, _ = request('/mcp/settings/recaptcha_min_score', {'value':0}, manifest['keys']['full'], method='PATCH')

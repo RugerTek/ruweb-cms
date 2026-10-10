@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\RevisionConflict;
 use App\Http\Middleware\ApplyRedirects;
 use App\Http\Middleware\AuthenticateMcpApiKey;
 use App\Http\Middleware\EnforceMcpScopes;
@@ -50,6 +51,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => '/');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (RevisionConflict $exception, Request $request) {
+            if ($request->expectsJson() || $request->is('mcp/*')) {
+                return response()->json(['message' => $exception->getMessage(), 'error' => $exception->diagnostic()], 409);
+            }
+
+            return null;
+        });
+
         $exceptions->render(function (AuthenticationException $exception, Request $request) {
             if ($request->is('admin') || $request->is('admin/*')) {
                 return response()->view('errors.404', [], 404);

@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdatePageRequest;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Services\Content\TranslationOperations;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Pages\PageOperations;
 use Illuminate\Http\JsonResponse;
@@ -115,29 +116,7 @@ class PageController extends Controller
 
     public function translate(Request $request, Page $page, string $locale): RedirectResponse
     {
-        abort_unless(Locale::where('code', $locale)->where('is_active', true)->exists(), 404);
-        abort_if(! $page->isTranslationSchemaReady(), 422, 'This page template is not translation-ready.');
-
-        $existing = $page->translations()->where('locale', $locale)->first();
-        if ($existing) {
-            return redirect()->route('admin.pages.edit', ['page' => $existing, 'return' => $this->normalizeReturnUrl($request->input('return'))]);
-        }
-
-        $base = $page->baseTranslation() ?: $page;
-        $translation = $base->replicate(['slug', 'published_at', 'expires_at']);
-        $translation->locale = $locale;
-        $translation->slug = $this->uniqueTranslatedSlug($base->slug, $locale);
-        $translation->status = 'draft';
-        $translation->translation_status = 'needs_review';
-        $translation->source_fingerprint = $base->translatableFingerprint();
-        $translation->source_field_hashes = $base->translatableFieldFingerprints();
-        $translation->created_by = $request->user()->id;
-        $translation->updated_by = $request->user()->id;
-        $translation->save();
-
-        foreach ($base->media as $media) {
-            $translation->attachMedia($media->id, $media->pivot->collection, $media->pivot->order);
-        }
+        $translation = app(TranslationOperations::class)->create($request->user(), $page, $locale);
 
         return redirect()
             ->route('admin.pages.edit', ['page' => $translation, 'return' => $this->normalizeReturnUrl($request->input('return'))])

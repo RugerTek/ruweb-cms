@@ -136,4 +136,5 @@ Translate structured fields, never rendered HTML.
 9. Set `translation_status = needs_review` when review is still pending; clear it by syncing from the current
    base fingerprint when the translation is final.
 
-No MCP tooling is required for this workflow.
+MCP exposes this workflow through `cms_schema`, `content_translate`, draft patches,
+`content_translation_changes` and `content_translation_acknowledge`; see [MCP](../operations/mcp.md).

@@ -1,10 +1,10 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–2 implementadas y aceptadas con sus gates E2E. Fases 3–11 autorizadas, sin iniciar.
+**Estado:** fases 0–3 implementadas y aceptadas con sus gates E2E. Fases 4–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 8 — cierre de fase 2 con perfiles, descubrimiento y E2E-02.
+**Revisión:** 9 — cierre de fase 3 con MCP bilingüe, medios/layout y E2E-03.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
-**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)) y perfiles de fase 2 ([resultados](phase-2-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
+**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)) y perfiles de fase 2 ([resultados](phase-2-results.md)) y MCP de fase 3 ([resultados](phase-3-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
 ## 1. Objetivo y valor del producto
 
@@ -373,9 +373,9 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Descubrimiento de esquemas/templates y operaciones para contenido, asociaciones, traducciones y programación.
-- [ ] Subida de medios mediante el pipeline actual; usos, metadatos localizados y borrado protegido.
-- [ ] Menús, contacto, layout y ajustes aprobados; respuestas acotadas y contratos de conflictos/reintentos.
+- [x] Descubrimiento de esquemas/templates y operaciones para contenido, asociaciones, traducciones y programación.
+- [x] Subida de medios mediante el pipeline actual; usos, metadatos localizados y borrado protegido.
+- [x] Menús, contacto, layout y ajustes aprobados; respuestas acotadas y contratos de conflictos/reintentos.
 
 **E2E-03 — Publicar una página bilingüe desde una conexión MCP**
 
@@ -389,6 +389,8 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 **Aprobación:** los resultados se observan en el sitio público y coinciden con los datos MCP. Repetir en ambos perfiles y verificar paridad de herramientas para idéntica identidad.
 
 **Reversión:** desactivar herramientas nuevas afectadas, conservando las actuales, los datos y el panel completo.
+
+**Resultado:** fase aceptada con [evidencia](phase-3-results.md), 36 herramientas comunes, E2E-03 real en ambos perfiles y regresiones acumuladas.
 
 ### Fase 4 — Panel esencial utilizable
 
@@ -645,7 +647,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La autorización global habilita comenzar fase 3 tras este cierre; no requiere una nueva confirmación por fase.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La autorización global habilita comenzar fase 4 tras este cierre; no requiere una nueva confirmación por fase.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

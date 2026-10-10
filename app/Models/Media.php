@@ -8,6 +8,7 @@ use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -22,7 +23,7 @@ class Media extends Model
                 throw ValidationException::withMessages(['media' => __('media_safety.in_use')]);
             }
         });
-        static::deleted(fn (self $media) => app(MediaImagePipeline::class)->deleteRelatedFiles($media));
+        static::deleted(fn (self $media) => DB::afterCommit(fn () => app(MediaImagePipeline::class)->deleteRelatedFiles($media)));
     }
 
     protected $appends = [

@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Post;
+
 /** Deployment capabilities only. Never authorizes an actor or a credential. */
 final class AdminCapabilities
 {
@@ -76,6 +78,9 @@ final class AdminCapabilities
             'authorization' => 'Independent of profile: account role and credential scope apply to every operation.',
             'block_formats' => ['structured'],
             'templates' => $templates,
+            'registered_collections' => collect(config('cms.collections', []))->map(fn ($collection) => ['model' => class_basename($collection['model']), 'mcp_operations' => $collection['model'] === Post::class ? 'posts' : null])->all(),
+            'schema_discovery' => ['tool' => 'cms_schema', 'content_types' => ['pages', 'posts']],
+            'locales_discovery' => 'locales_list',
             'content_rules' => ['media_by_id', 'root_relative_internal_urls', 'published_only_public_queries', 'forms_defined_in_code'],
             'profile_guide' => 'docs/concepts/admin-profiles.md',
         ];
