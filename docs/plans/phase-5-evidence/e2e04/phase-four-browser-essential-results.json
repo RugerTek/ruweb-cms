@@ -1,0 +1,409 @@
+{
+  "stage": "essential",
+  "checks": [
+    "Preserved operational screens and integration configuration load",
+    "Agent draft appears in listing and authenticated preview; anonymous public URL is 404",
+    "Real media search and canonical setting edit affect public output",
+    "Direct editor URL returns 404; no editor runtime or TinyMCE downloaded"
+  ],
+  "script_requests": [
+    "/build/assets/admin-essential-D21C-EYT.js",
+    "/build/assets/admin-common-TVIx-gSD.js",
+    "/build/assets/app-DbUEORY_.js",
+    "/build/assets/chunk-DPI0Y_ll.js",
+    "/build/assets/map-picker-Cps751Cc.js"
+  ],
+  "page_errors": [],
+  "network_trace": [
+    {
+      "path": "/login",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/login",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/profile",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/users",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/claude-mcp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/editorial-control",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/submissions/contact",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/posts",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/pages",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/content/pages/3/preview",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-CFqdbxDV.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-DbUEORY_.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/editorial/pages/3",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/media",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/storage/media/2026/10/5d08fd64-f585-40b6-b9f7-11d914beda99.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/storage/media/2026/10/f67ca44d-38f5-426c-b1e5-969955301d71.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/storage/media/2026/10/3cfd5ede-6558-4ab9-b6a0-8d8a85006b39.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/settings",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/storage/media/2026/10/5d08fd64-f585-40b6-b9f7-11d914beda99.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/map-picker-Cps751Cc.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/settings",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin/settings",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/storage/media/2026/10/5d08fd64-f585-40b6-b9f7-11d914beda99.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/map-picker-Cps751Cc.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/pages/3/edit",
+      "status": 404,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-CFqdbxDV.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-DbUEORY_.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    }
+  ]
+}

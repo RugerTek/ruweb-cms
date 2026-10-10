@@ -1,0 +1,191 @@
+{
+  "stage": "full",
+  "checks": [
+    "Profile switch retains MCP content and restores compatible visual edit/save"
+  ],
+  "script_requests": [
+    "/build/assets/admin-FDU-cp1Y.js",
+    "/build/assets/admin-common-TVIx-gSD.js",
+    "/build/assets/rich-text-DE--GJmh.js",
+    "/build/assets/chunk-DPI0Y_ll.js",
+    "/build/assets/app-DbUEORY_.js"
+  ],
+  "page_errors": [],
+  "network_trace": [
+    {
+      "path": "/login",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-FDU-cp1Y.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/login",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-FDU-cp1Y.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/pages/3/edit",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-FDU-cp1Y.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/editorial/pages/3/draft",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/pages/3/preview",
+      "status": 200,
+      "method": "POST"
+    },
+    {
+      "path": "/storage/media/2026/10/5d08fd64-f585-40b6-b9f7-11d914beda99.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-CFqdbxDV.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-DbUEORY_.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/rich-text-DE--GJmh.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/pages/3",
+      "status": 200,
+      "method": "POST"
+    },
+    {
+      "path": "/admin/editorial/pages/3/draft",
+      "status": 200,
+      "method": "DELETE"
+    },
+    {
+      "path": "/admin/pages/3/edit",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-FDU-cp1Y.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/editorial/pages/3/draft",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/pages/3/preview",
+      "status": 200,
+      "method": "POST"
+    },
+    {
+      "path": "/storage/media/2026/10/5d08fd64-f585-40b6-b9f7-11d914beda99.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-CFqdbxDV.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-DbUEORY_.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/rich-text-DE--GJmh.js",
+      "status": 200,
+      "method": "GET"
+    }
+  ]
+}

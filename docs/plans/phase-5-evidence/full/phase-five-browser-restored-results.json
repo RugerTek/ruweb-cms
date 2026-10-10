@@ -1,0 +1,11 @@
+{
+  "profile": "full",
+  "stage": "restored",
+  "anonymous": true,
+  "checks": [
+    "Original public content and canonical",
+    "Desktop and mobile rendering",
+    "Revoked proposal preview inaccessible after draft restore and republish"
+  ],
+  "page_errors": []
+}

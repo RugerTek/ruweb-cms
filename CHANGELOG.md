@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.50.0 - 2026-10-10
+## 0.51.0 - 2026-10-10
+
+- Flujo editorial compartido entre panel y MCP: propuestas completas, revisión de una versión exacta, comentarios con autoría, historial/diff recuperable y restauración explícita como borrador o propuesta.
+- Revisiones obligatorias y reintentos durables en operaciones editoriales nuevas protegen cambios concurrentes; un editor puede pedir revisión sin modificar lo publicado y sólo el administrador asignado aprueba.
+- Previews revocables quedan fijadas a versiones inmutables con vencimiento y sin caché; la aprobación conserva programación/retiro y MCP permite configurar caducidad con permisos administrativos.
+- E2E-05 en ambos perfiles con HTTP/MySQL y navegador anónimo, regresiones acumuladas y revisión independiente verifican conflictos de base, asociaciones actuales, roles, autoría y recuperación Unicode.
+
+## 0.50.0 - 2026-10-10 (35494a6)
 
 - Panel esencial operativo con búsqueda, estado real de publicación, historial/diff y preview autenticada para páginas, posts y colecciones registradas; la edición editorial continúa por agentes.
 - Essential conserva cuentas, accesos MCP, ajustes e integraciones, biblioteca y bandeja, y bloquea editores especializados y herramientas avanzadas; su build no descarga Live Editor ni TinyMCE.

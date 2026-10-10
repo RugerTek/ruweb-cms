@@ -1,0 +1,97 @@
+{
+  "baseline_commit": "35494a64b8118676950185ab9a596787c3f3ebbc",
+  "version": "0.51.0",
+  "final_source_sha256": {
+    "app/Services/Editorial/EditorialOperations.php": "eb09d41c72411a85fba9f570bc8fb5fb689a1fa1bdf7a87a959ac2846a439f86",
+    "app/Services/Editorial/EditorialHistory.php": "9985d37364e61ce81f7ed6f3a3e9de8042b2b7cca3efeb63c501d055f04b404d",
+    "app/Services/Pages/PageOperations.php": "b73f2fa79df6d1e6e0711f01feef0b022462cc379de9d2a5cae97eb5d4238a87",
+    "app/Services/Posts/PostOperations.php": "b1979c430ba6d0ad17fa6309e0c98d78337d8326bc34542f968edb6048a2207e",
+    "app/Http/Controllers/Admin/EditorialController.php": "ecf7faf5cf7f8ef1d227a750af0a4436464285148c6c11c30b86eb800f8245f3",
+    "app/Http/Controllers/McpContentController.php": "044751b53a930e46c89d1d0a9a6bafae2992e46027027c6ad82047bda04ca6a8",
+    "app/Http/Controllers/McpServerController.php": "189327b0e8e74bd26a64296a43e13217a580f95749058abe0df2a18bd33e39a4",
+    "app/Http/Middleware/EnforceMcpScopes.php": "5e51456b95320ddcc342f576140ae56d0461638cd478339ef798eb94eee3f50a",
+    "app/Mcp/ToolRegistry.php": "46f244b71a7e6ba1e7c158458d0f1f8a1dea4160f380726844832101e30b8a09",
+    "routes/mcp.php": "197aed815aefb19695efbc7874609bfda853d316fd3cb89189c0d602ed5d4865",
+    "database/migrations/2026_10_10_220000_create_editorial_operation_receipts.php": "bdfac1e39ec279d135af0bfa8afcd6535aab1bab95bc34e8397b2d7ba036f869",
+    "tests/Feature/PhaseFiveEditorialTest.php": "a92eb83f23a99522ab0af034d846d1dd09cd11d9b63665dba1afdf408243307e",
+    "tests/E2E/phase-five-http.py": "3186e6aa12dacb5477deaca7b97b9cfb8969705d1c94e786872422a35b9d9260",
+    "tests/E2E/phase-five-browser.cjs": "f61415d68fca83275159446bc60802604ad9c16a3c793af970bdf5f72fa3cd98",
+    "tests/E2E/phase-five-control.php": "3962506154896ad1e9f56a56a27b7027c8778110d28778376b8e8434cf84b8e6"
+  },
+  "final_http_source_sha256": {
+    "full": {
+      "app/Services/Editorial/EditorialOperations.php": "fd5cdb8ab9cb76c01c2faaefeb57cb577983d24f835805935815d11dceaf30dd",
+      "app/Services/Editorial/EditorialHistory.php": "9985d37364e61ce81f7ed6f3a3e9de8042b2b7cca3efeb63c501d055f04b404d",
+      "app/Services/Pages/PageOperations.php": "b73f2fa79df6d1e6e0711f01feef0b022462cc379de9d2a5cae97eb5d4238a87",
+      "app/Services/Posts/PostOperations.php": "b1979c430ba6d0ad17fa6309e0c98d78337d8326bc34542f968edb6048a2207e",
+      "app/Http/Controllers/Admin/EditorialController.php": "ecf7faf5cf7f8ef1d227a750af0a4436464285148c6c11c30b86eb800f8245f3",
+      "app/Http/Controllers/McpContentController.php": "044751b53a930e46c89d1d0a9a6bafae2992e46027027c6ad82047bda04ca6a8",
+      "app/Http/Controllers/McpServerController.php": "f90993188c9debd18742e23753a3a6eea12caa5d8a75c7201e36feaaf076c5ce",
+      "app/Http/Middleware/EnforceMcpScopes.php": "5e51456b95320ddcc342f576140ae56d0461638cd478339ef798eb94eee3f50a",
+      "app/Mcp/ToolRegistry.php": "46f244b71a7e6ba1e7c158458d0f1f8a1dea4160f380726844832101e30b8a09",
+      "routes/mcp.php": "4c08084b84ec3da942931e1efa316f1a8c8b6c75265f4755531e589aa845237f",
+      "database/migrations/2026_10_10_220000_create_editorial_operation_receipts.php": "bdfac1e39ec279d135af0bfa8afcd6535aab1bab95bc34e8397b2d7ba036f869",
+      "tests/Feature/PhaseFiveEditorialTest.php": "2267b081be9085989b316cfa47cd3a895e6b5eb95e32e3a1eb0d4c63e69e7caa",
+      "tests/E2E/phase-five-http.py": "3186e6aa12dacb5477deaca7b97b9cfb8969705d1c94e786872422a35b9d9260",
+      "tests/E2E/phase-five-browser.cjs": "f61415d68fca83275159446bc60802604ad9c16a3c793af970bdf5f72fa3cd98",
+      "tests/E2E/phase-five-control.php": "9f380d0faee5c1895ab1fc4f9f0a20c3719594275b19144629b36b872b66ade0"
+    },
+    "essential": {
+      "app/Services/Editorial/EditorialOperations.php": "fd5cdb8ab9cb76c01c2faaefeb57cb577983d24f835805935815d11dceaf30dd",
+      "app/Services/Editorial/EditorialHistory.php": "9985d37364e61ce81f7ed6f3a3e9de8042b2b7cca3efeb63c501d055f04b404d",
+      "app/Services/Pages/PageOperations.php": "b73f2fa79df6d1e6e0711f01feef0b022462cc379de9d2a5cae97eb5d4238a87",
+      "app/Services/Posts/PostOperations.php": "b1979c430ba6d0ad17fa6309e0c98d78337d8326bc34542f968edb6048a2207e",
+      "app/Http/Controllers/Admin/EditorialController.php": "ecf7faf5cf7f8ef1d227a750af0a4436464285148c6c11c30b86eb800f8245f3",
+      "app/Http/Controllers/McpContentController.php": "044751b53a930e46c89d1d0a9a6bafae2992e46027027c6ad82047bda04ca6a8",
+      "app/Http/Controllers/McpServerController.php": "f90993188c9debd18742e23753a3a6eea12caa5d8a75c7201e36feaaf076c5ce",
+      "app/Http/Middleware/EnforceMcpScopes.php": "5e51456b95320ddcc342f576140ae56d0461638cd478339ef798eb94eee3f50a",
+      "app/Mcp/ToolRegistry.php": "46f244b71a7e6ba1e7c158458d0f1f8a1dea4160f380726844832101e30b8a09",
+      "routes/mcp.php": "4c08084b84ec3da942931e1efa316f1a8c8b6c75265f4755531e589aa845237f",
+      "database/migrations/2026_10_10_220000_create_editorial_operation_receipts.php": "bdfac1e39ec279d135af0bfa8afcd6535aab1bab95bc34e8397b2d7ba036f869",
+      "tests/Feature/PhaseFiveEditorialTest.php": "99d63356650500dc33f8139c8e120ac20c8872b0abe01577b0cecd7f044c497c",
+      "tests/E2E/phase-five-http.py": "3186e6aa12dacb5477deaca7b97b9cfb8969705d1c94e786872422a35b9d9260",
+      "tests/E2E/phase-five-browser.cjs": "f61415d68fca83275159446bc60802604ad9c16a3c793af970bdf5f72fa3cd98",
+      "tests/E2E/phase-five-control.php": "9f380d0faee5c1895ab1fc4f9f0a20c3719594275b19144629b36b872b66ade0"
+    }
+  },
+  "final_source_after_http_changes": [
+    "Pint formatting only",
+    "Require explicit restore mode on generic MCP entrypoint (panel keeps draft default)",
+    "Validate read arguments and new RPC entity inputs before dispatch; field diagnostics tested",
+    "Constrain newly added REST entity routes to installed type/numeric id"
+  ],
+  "verification": {
+    "suite": {
+      "passed": 455,
+      "assertions": 3439,
+      "duration_seconds": 25.12,
+      "command": "composer test",
+      "environment": "SQLite memory with isolated config/routes/services/packages caches"
+    },
+    "conventions": "pass",
+    "pint": "pass",
+    "e2e05": "pass both profiles, fresh real MySQL after base_fingerprint fix",
+    "cumulative": "00/01 full;02+transitions/03 both profiles;04 real installer/browser/Sol6.1 client/full transition"
+  },
+  "cleanup": {
+    "schemas": "dropped guarded generated schemas",
+    "credentials": "revoked and private manifests removed",
+    "private_previews": "removed",
+    "client_auth_homes": "removed",
+    "private_logs_sessions_caches": "removed",
+    "port8018": "free"
+  },
+  "runtime": {
+    "php": "8.5.4",
+    "minimum_php": "8.3 remains pre-release verification obligation",
+    "database": "real isolated MySQL for HTTP gates; SQLite memory for full suite",
+    "browser": "Chromium desktop1440/mobile390",
+    "build": "reused unchanged production assets, no JavaScript changes"
+  },
+  "snapshot_handoff": [
+    "editorial_versions.base_fingerprint nullable, legacy proposals without known base reject review conservatively",
+    "editorial_operation_receipts new actor/content scoped retry table; inclusion/exclusion explicitly phase10",
+    "preview tokens/URLs remain excluded from snapshots and receipts"
+  ],
+  "build_manifest_sha256": "cf4be4a2a9d8776da8fada3dba68115758adbd4cd16876f4c44ca5005f6acf78"
+}

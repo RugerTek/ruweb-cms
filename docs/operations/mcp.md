@@ -198,7 +198,7 @@ available target-locale terms. `categories` on post drafts accepts category IDs 
 before/after text ranges (256 characters by default). Select `field`, `offset` and `length` (at most 8192) to review
 long text completely; `source_id` permits focused source reads. `content_translation_acknowledge` requires the
 reviewed `base_hash`; source changes or stale revisions reject the acknowledgement without loss. These edits
-operate on drafts. Proposals against published content remain phase 5.
+operate on drafts. Published changes use the proposal/review operations below.
 
 `content_publication {type,id,action,published_at?,expected_revision?}` accepts `schedule` or `unpublish` for
 admin/full credentials. Scheduling requires a future instant and an expiry later than publication when present.
@@ -234,3 +234,67 @@ reported by hash instead of echoing unbounded names. `fields` on page/post reads
 ranges (up to 100). Recheck revision between reads. Never submit a clipped read as replacement content. REST paths
 for generic content operations are `/mcp/content/{type}/{id}/translation`, `/translation-changes`,
 `/translation-acknowledge`, `/publication`, `/preview` and `/field`.
+
+
+## Editorial operation contract (phase 5)
+
+The catalog is identical in `full` and `essential`. Generic editorial operations resolve only `pages` and
+`posts`; callers cannot submit PHP model names or database table names. `EditorialOperations` owns the shared
+rules for the panel and cookie-free bearer transports. Every operation receives its acting `User` explicitly.
+
+Read-only credentials may call `content_versions`, `content_version`, `content_diff` and `content_reviews`.
+These reads never capture history or issue preview links. Draft-only credentials additionally may propose changes
+to published content, request review, comment, restore **as a proposal**, issue exact previews and revoke their
+own links. Draft-only cannot decide a review, publish, schedule, expire or withdraw publication, nor restore
+published content directly as a draft. Full credentials retain the account's role restrictions: only the assigned
+administrator decides a review; only administrators alter publication. An administrator may revoke any link.
+Legacy draft-update tools still reject published content even with an administrator/full credential.
+
+`content_propose {type,id,changes,expected_revision,operation_key}` validates the same page/post editorial
+fields as the existing draft operations, including media IDs, language-specific taxonomies, sanitation and
+partial JSON merging. Proposals are immutable complete versions; public content and associations stay intact.
+Publication status, publication/expiry dates, locale identity and authorship cannot be patched in `changes`.
+
+`content_review_request` requires `version_id` and `reviewer_id` for the selected exact version. The request
+records its author and the proposal's original live base fingerprint. A proposal whose original base already changed cannot request a fresh review against the new base. `content_review_comment` requires `review_id` and `body`;
+`content_review_decide` requires `review_id` and `state: approved|changes_requested`. Approval rereads and locks
+both the content and review, rejects a changed base, then applies that exact proposal with its associations.
+It preserves the current publication status, scheduled date and expiry. Further proposals cannot silently replace
+the requested version. Authors of proposals, requests, decisions/comments and committed versions remain traceable.
+
+`content_restore {type,id,version_id,mode,expected_revision,operation_key}` makes its effect explicit:
+`proposal` creates a historical-content proposal while preserving the live publication; `draft` replaces the
+record with a historical draft and therefore intentionally withdraws a live publication. The latter is the
+existing panel restore behavior, and requires an administrator on published records. Neither mode silently
+republishes. Available media and taxonomy associations are retained; deleted associations are skipped. Historical
+copy is validated against today's schema and uniqueness rules before application. Review and publish explicitly
+when the restored draft is ready.
+
+All new editorial mutations except preview issuance require a 64-character `expected_revision` and a durable
+`operation_key`. The actor/content/key receipt commits atomically with the result. Identical retries return the
+original result even after the base changes; different input under the same key fails with 409. Re-read before
+starting another operation. Preview issuance retains optional revision compatibility with phase 3 and creates a
+new link on each retry; revoke any unwanted retry link. Active human edit leases reject MCP content application
+with 423 rather than silently overwriting a person editing in the panel. Missing inputs return field-level 422
+validation diagnostics; stale bases return 409 / RPC `-32009`, with recovery instructions.
+
+`content_preview` accepts optional `version_id`, `hours` (1–168, default 1) and `expected_revision`. It pins the
+selected proposal or persisted baseline to an immutable version, so later edits cannot change the preview's
+copy or associations. Output includes `link.id`, the exact version and confidential `url`/`preview_url`.
+`content_preview_revoke {type,id,link_id,expected_revision,operation_key}` revokes that capability immediately.
+The anonymous renderer checks revocation and expiry on every request, uses no-store/private and noindex headers,
+and suppresses analytics, editor assets, forms and the admin bar. Token hashes are never returned, URLs are not
+stored in operation receipts, and links remain excluded from snapshots.
+
+History is read through bounded pages; version/diff field ranges recover long text without clipping revision or
+version fingerprints. Never feed a clipped value back as replacement content. REST reads use
+`GET /mcp/content/{type}/{id}/{versions|version|diff|reviews}`. Writes use POST with
+`propose`, `review-request`, `review-decide`, `review-comment`, `restore`, `preview`, or `preview-revoke`.
+
+`content_publication` additionally accepts `action: expire` and required `expires_at` (future datetime or null
+to clear retirement). This administrator/full operation sets retirement without editing content; dates must follow
+publication. Public pages, posts and sitemap honor expiry even before the minute scheduler materializes a draft.
+
+The migration adds `editorial_versions.base_fingerprint` and the new `editorial_operation_receipts` table. Existing proposals without a known base are rejected for new review requests/approval: read current content and create a fresh proposal/review instead. Ordinary version history and restoration remain available. `editorial_operation_receipts` contains actor-scoped retry results, not preview URLs/tokens.
+Snapshot inclusion/exclusion for these receipts is an explicit phase 10 decision; do not assume a retry receipt
+is portable editorial content.

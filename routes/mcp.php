@@ -54,3 +54,10 @@ Route::get('/media/{media}/usages', [McpMediaController::class, 'usages']);
 Route::delete('/media/{media}', [McpMediaController::class, 'destroy']);
 
 Route::get('/content/{type}/{id}/field', [McpContentController::class, 'readField']);
+
+foreach (['versions', 'version', 'diff', 'reviews'] as $action) {
+    Route::get('/content/{type}/{id}/'.$action, [McpContentController::class, 'editorialRead'])->defaults('action', $action)->whereNumber('id')->whereIn('type', ['pages', 'posts']);
+}
+foreach (['propose', 'review_request', 'review_decide', 'review_comment', 'restore', 'preview_revoke'] as $action) {
+    Route::post('/content/{type}/{id}/'.str_replace('_', '-', $action), [McpContentController::class, 'editorialWrite'])->defaults('action', $action)->whereNumber('id')->whereIn('type', ['pages', 'posts']);
+}

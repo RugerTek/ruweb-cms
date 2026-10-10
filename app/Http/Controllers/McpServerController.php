@@ -12,6 +12,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -102,6 +103,10 @@ class McpServerController extends Controller
 
         if (! $name) {
             throw new \InvalidArgumentException('Missing required param: name.', -32602);
+        }
+
+        if (in_array($name, ['content_versions', 'content_version', 'content_diff', 'content_reviews', 'content_propose', 'content_review_request', 'content_review_decide', 'content_review_comment', 'content_restore', 'content_preview_revoke', 'content_preview'], true)) {
+            Validator::make($arguments, ['type' => ['required', 'in:pages,posts'], 'id' => ['required', 'integer', 'min:1']])->validate();
         }
 
         $handler = $this->resolveHandler($name);
@@ -213,6 +218,13 @@ class McpServerController extends Controller
 
             'menus_delete' => fn ($req, $args) => $this->mcp->menusDelete($this->synth($req, $args), Menu::findOrFail($args['menu_id'])),
         ];
+
+        foreach (['versions', 'version', 'diff', 'reviews'] as $action) {
+            $handlers['content_'.$action] = fn ($req, $args) => $this->content->editorialRead($this->synth($req, $args), $args['type'], $args['id'], $action);
+        }
+        foreach (['propose', 'review_request', 'review_decide', 'review_comment', 'restore', 'preview_revoke'] as $action) {
+            $handlers['content_'.$action] = fn ($req, $args) => $this->content->editorialWrite($this->synth($req, $args), $args['type'], $args['id'], $action);
+        }
 
         return $handlers[$name] ?? null;
     }

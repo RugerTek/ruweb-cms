@@ -117,6 +117,23 @@ final class PostOperations
         return $this->changePublication($actor, $post, ['status' => 'published', 'published_at' => $publishedAt], $expectedRevision);
     }
 
+    public function setExpiry(User $actor, Post $post, ?string $expiresAt, ?string $expectedRevision = null): Post
+    {
+        Gate::forUser($actor)->authorize('update', $post);
+        if (! $actor->isAdmin()) {
+            throw new AuthorizationException(__('editorial.publish_forbidden'));
+        }
+
+        return $this->transaction($actor, function () use ($actor, $post, $expiresAt, $expectedRevision) {
+            $post = Post::query()->lockForUpdate()->findOrFail($post->id);
+            $this->checkRevision($post, $expectedRevision);
+            Validator::make(['expires_at' => $expiresAt, 'published_at' => $post->published_at], ['expires_at' => ['nullable', 'date', 'after:now', 'after:published_at']])->validate();
+            $post->update(['expires_at' => $expiresAt, 'updated_by' => $actor->id]);
+
+            return $post->fresh();
+        });
+    }
+
     public function unpublish(User $actor, Post $post, ?string $expectedRevision = null): Post
     {
         return $this->changePublication($actor, $post, ['status' => 'draft'], $expectedRevision);

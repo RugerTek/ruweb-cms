@@ -41,14 +41,14 @@ class EditorialHistory
     {
         $payload = $this->payload($model);
         $hash = hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        if ($this->query($model)->latest('id')->value('fingerprint') === $hash) {
+        if ($this->query($model)->where('is_proposal', false)->latest('id')->value('fingerprint') === $hash) {
             return;
         }
         $this->query($model)->insert(['content_type' => $model->getTable(), 'content_id' => $model->id, 'user_id' => EditorialActor::current()?->id,
             'payload' => json_encode($payload), 'fingerprint' => $hash, 'created_at' => now(), 'updated_at' => now()]);
     }
 
-    public function stage(Model $model, array $data): void
+    public function stage(Model $model, array $data): int
     {
         $payload = $this->payload($model);
         $featured = $data['featured_image'] ?? null;
@@ -78,8 +78,20 @@ class EditorialHistory
         if ($categories !== null) {
             $payload['taxonomies'] = array_merge(DB::table('taxonomies')->whereIn('id', $payload['taxonomies'])->where('type', '!=', 'category')->pluck('id')->all(), $categories);
         }
-        $this->query($model)->insert(['content_type' => $model->getTable(), 'content_id' => $model->id, 'user_id' => EditorialActor::current()?->id, 'is_proposal' => true,
-            'payload' => json_encode($payload), 'fingerprint' => hash('sha256', json_encode($payload)), 'created_at' => now(), 'updated_at' => now()]);
+
+        return $this->storeProposal($model, $payload);
+    }
+
+    public function storeProposal(Model $model, array $payload): int
+    {
+        return $this->query($model)->insertGetId([
+            'content_type' => $model->getTable(), 'content_id' => $model->id,
+            'user_id' => EditorialActor::current()?->id, 'is_proposal' => true,
+            'base_fingerprint' => $this->fingerprint($model),
+            'payload' => json_encode($payload),
+            'fingerprint' => hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 
     public function restore(Model $model, int $version, bool $asDraft = true): void

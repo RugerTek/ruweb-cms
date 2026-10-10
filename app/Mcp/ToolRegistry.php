@@ -11,11 +11,35 @@ class ToolRegistry
         return [
             ['name' => 'cms_capabilities', 'description' => 'Discover deployment profile, capabilities, template schemas and editor compatibility. Permissions remain account/scope dependent.', 'inputSchema' => ['type' => 'object', 'properties' => new \stdClass]],
             ...self::phaseThreeTools(),
+            ...self::editorialTools(),
             ...self::pageTools(),
             ...self::postTools(),
             ...self::mediaTools(),
             ...self::settingTools(),
             ...self::menuTools(),
+        ];
+    }
+
+    private static function editorialTools(): array
+    {
+        $entity = ['type' => ['type' => 'string', 'enum' => ['pages', 'posts']], 'id' => ['type' => 'integer', 'minimum' => 1]];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
+        $key = ['operation_key' => ['type' => 'string', 'maxLength' => 100]];
+        $version = ['version_id' => ['type' => 'integer', 'minimum' => 1]];
+        $tool = fn ($name, $description, $properties, $required) => ['name' => 'content_'.$name, 'description' => $description, 'inputSchema' => ['type' => 'object', 'properties' => $entity + $properties, 'required' => array_merge(['type', 'id'], $required)]];
+        $write = fn ($name, $description, $properties, $required) => $tool($name, $description.' Requires current expected_revision and an operation_key; identical retries recover the original result.', $revision + $key + $properties, array_merge(['expected_revision', 'operation_key'], $required));
+
+        return [
+            $tool('versions', 'Read full history/proposal metadata in bounded pages without creating versions.', ['page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], []),
+            $tool('version', 'Read a selected immutable version. Large field values are recoverable with field/offset/length; fingerprints stay intact.', $version + ['field' => ['type' => 'string', 'maxLength' => 500], 'offset' => ['type' => 'integer', 'minimum' => 0], 'length' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 8192]], ['version_id']),
+            $tool('diff', 'Compare an immutable version against current content or another version; paginated paths and field ranges recover large differences.', $version + ['compare_version_id' => ['type' => 'integer', 'minimum' => 1], 'page' => ['type' => 'integer', 'minimum' => 1], 'field' => ['type' => 'string', 'maxLength' => 500], 'offset' => ['type' => 'integer', 'minimum' => 0], 'length' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 8192]], ['version_id']),
+            $tool('reviews', 'Read review requests and authored comments in bounded pages; recover comment body with review_id/comment_id and text ranges, or field=comment for the request note.', ['page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100], 'review_id' => ['type' => 'integer', 'minimum' => 1], 'comment_id' => ['type' => 'integer', 'minimum' => 1], 'comments_page' => ['type' => 'integer', 'minimum' => 1], 'field' => ['type' => 'string', 'enum' => ['comment']], 'offset' => ['type' => 'integer', 'minimum' => 0], 'length' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 8192]], []),
+            $write('propose', 'Stage validated changes as a proposal while preserving live content. Draft-only credentials may propose published changes.', ['changes' => ['type' => 'object']], ['changes']),
+            $write('review_request', 'Request an assigned administrator to review an exact proposal version; draft-only credentials may request review.', $version + ['reviewer_id' => ['type' => 'integer', 'minimum' => 1], 'comment' => ['type' => 'string', 'maxLength' => 10000]], ['reviewer_id', 'version_id']),
+            $write('review_decide', 'Assigned administrator/full scope only: approve the exact requested version or request changes. A changed base rejects approval atomically.', ['review_id' => ['type' => 'integer', 'minimum' => 1], 'state' => ['type' => 'string', 'enum' => ['approved', 'changes_requested']], 'comment' => ['type' => 'string', 'maxLength' => 10000]], ['review_id', 'state']),
+            $write('review_comment', 'Add an authored review comment; draft-only credentials may comment.', ['review_id' => ['type' => 'integer', 'minimum' => 1], 'body' => ['type' => 'string', 'maxLength' => 10000]], ['review_id', 'body']),
+            $write('restore', 'Restore a version as a proposal preserving live publication, or explicitly as a draft withdrawing publication (administrator/full scope for published records). Associations/media retained when available.', $version + ['mode' => ['type' => 'string', 'enum' => ['draft', 'proposal']]], ['version_id', 'mode']),
+            $write('preview_revoke', 'Revoke a shared preview issued by this actor, or any link as administrator.', ['link_id' => ['type' => 'integer', 'minimum' => 1]], ['link_id']),
         ];
     }
 
@@ -34,8 +58,8 @@ class ToolRegistry
             $tool('content_translate', 'Create a draft translation in the same group, preserving media and remapping associations. Identical retries return the existing translation. Then patch translated copy and slug.', $entity + ['locale' => ['type' => 'string', 'enum' => Locale::installedCodes()]], ['type', 'id', 'locale']),
             $tool('content_translation_changes', 'Inspect source changes in pages of 100 fields. Text ranges default to 256 characters; select field/offset/length for its complete review. Hashes remain intact.', $entity + ['page' => ['type' => 'integer', 'minimum' => 1], 'field' => ['type' => 'string', 'maxLength' => 500], 'offset' => ['type' => 'integer', 'minimum' => 0], 'length' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 8192]], ['type', 'id']),
             $tool('content_translation_acknowledge', 'Acknowledge a reviewed source field on a draft translation; stale source hash/revision fails without loss.', $entity + $revision + ['field' => ['type' => 'string', 'maxLength' => 500], 'base_hash' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]], ['type', 'id', 'field', 'base_hash']),
-            $tool('content_publication', 'Admin/full scope only: schedule future publication or withdraw publication. Future rows stay absent publicly until the publication instant.', $entity + $revision + ['action' => ['type' => 'string', 'enum' => ['schedule', 'unpublish']], 'published_at' => ['type' => 'string', 'format' => 'date-time']], ['type', 'id', 'action']),
-            $tool('content_preview', 'Issue an expiring draft preview URL without a browser session. Token URLs are confidential; expiry 1–168 hours.', $entity + ['hours' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 168]], ['type', 'id']),
+            $tool('content_publication', 'Admin/full scope only: schedule, withdraw publication, or configure future expiry (null clears it). Public queries honor both dates.', $entity + $revision + ['action' => ['type' => 'string', 'enum' => ['schedule', 'unpublish', 'expire']], 'published_at' => ['type' => 'string', 'format' => 'date-time'], 'expires_at' => ['type' => ['string', 'null'], 'format' => 'date-time']], ['type', 'id', 'action']),
+            $tool('content_preview', 'Issue a preview pinned to an exact history/proposal version without a browser session. Later edits cannot alter it. Confidential URL; expiry 1–168 hours; revoke with content_preview_revoke.', $entity + ['version_id' => ['type' => 'integer', 'minimum' => 1], 'expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64], 'hours' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 168]], ['type', 'id']),
             $tool('media_authorize_upload', 'Obtain a short-lived credential-bound multipart upload ticket. Transfer file bytes over HTTP with the same bearer; never place binary data in model context.'),
             $tool('media_usages', 'Inspect paginated media references before deletion, including content JSON, pivots, settings and versions.', ['media_id' => ['type' => 'integer', 'minimum' => 1], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], ['media_id']),
             $tool('media_delete', 'Delete unused media using the shared protected pipeline; used media is rejected without loss.', ['media_id' => ['type' => 'integer', 'minimum' => 1]], ['media_id']),

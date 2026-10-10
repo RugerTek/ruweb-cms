@@ -132,6 +132,24 @@ final class PageOperations
         }, 3));
     }
 
+    public function setExpiry(User $actor, Page $page, ?string $expiresAt, ?string $expectedRevision = null): Page
+    {
+        $this->authorize($actor);
+        if (! $actor->isAdmin()) {
+            throw new AuthorizationException(__('editorial.publish_forbidden'));
+        }
+
+        return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $page, $expiresAt, $expectedRevision) {
+            $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+            RevisionGuard::check($page, $expectedRevision);
+            Validator::make(['expires_at' => $expiresAt, 'published_at' => $page->published_at], ['expires_at' => ['nullable', 'date', 'after:now', 'after:published_at']])->validate();
+            $page->update(['expires_at' => $expiresAt, 'updated_by' => $actor->id]);
+            app(EditorialHistory::class)->capture($page->fresh());
+
+            return $page->fresh();
+        }, 3));
+    }
+
     private function authorize(User $actor): void
     {
         if (! in_array($actor->role, config('cms.roles', []), true)) {

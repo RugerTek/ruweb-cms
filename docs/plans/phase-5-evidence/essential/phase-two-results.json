@@ -1,0 +1,9 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Local, REST and JSON-RPC profile/capabilities match with limited scopes",
+    "Essential agent delivery: custom testimony operates without editorial partial",
+    "Public renderer, persisted custom fields, media validation and draft/future publication guards"
+  ],
+  "page_id": 109
+}

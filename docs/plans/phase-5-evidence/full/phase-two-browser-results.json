@@ -1,0 +1,18 @@
+{
+  "profile": "full",
+  "checks": [
+    "Synchronous editor initialization",
+    "Recovery rebuild",
+    "Add/reorder/confirmed delete",
+    "Browser form save and public output",
+    "Desktop/mobile captures"
+  ],
+  "script_requests": [
+    "/build/assets/admin-FDU-cp1Y.js",
+    "/build/assets/admin-common-TVIx-gSD.js",
+    "/build/assets/rich-text-DE--GJmh.js",
+    "/build/assets/chunk-DPI0Y_ll.js",
+    "/build/assets/app-DbUEORY_.js"
+  ],
+  "page_errors": []
+}

@@ -1,0 +1,90 @@
+{
+  "stage": "essential-bar",
+  "checks": [
+    "Authenticated public bar excludes unavailable editorial links in essential"
+  ],
+  "script_requests": [
+    "/build/assets/admin-essential-D21C-EYT.js",
+    "/build/assets/admin-common-TVIx-gSD.js",
+    "/build/assets/app-DbUEORY_.js",
+    "/build/assets/chunk-DPI0Y_ll.js"
+  ],
+  "page_errors": [],
+  "network_trace": [
+    {
+      "path": "/login",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/login",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-CpKQ4jNn.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-D21C-EYT.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-TVIx-gSD.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-CFqdbxDV.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/chunk-DPI0Y_ll.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/app-DbUEORY_.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/storage/media/2026/10/variants/5d08fd64-f585-40b6-b9f7-11d914beda99-1536w.webp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/storage/media/2026/10/variants/f67ca44d-38f5-426c-b1e5-969955301d71-240w.webp",
+      "status": 200,
+      "method": "GET"
+    }
+  ]
+}

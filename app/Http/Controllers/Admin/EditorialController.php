@@ -8,11 +8,11 @@ use App\Models\Post;
 use App\Models\User;
 use App\Services\Content\ContentEditLock;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Editorial\EditorialOperations;
 use App\Support\AdminCapabilities;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class EditorialController extends Controller
 {
@@ -51,7 +51,7 @@ class EditorialController extends Controller
     {
         $model = $this->history->model($type, $id);
         abort_if($request->user()->isEditor() && $model->status === 'published', 403, __('editorial.publish_forbidden'));
-        $this->history->restore($model, $version);
+        app(EditorialOperations::class)->restore($request->user(), $model, $version);
 
         return redirect(app(AdminCapabilities::class)->contentUrl($model))->with('success', __('editorial.restored'));
     }
@@ -88,9 +88,7 @@ class EditorialController extends Controller
     {
         $model = $this->history->model($type, $id);
         $data = $request->validate(['reviewer_id' => ['required', 'integer', 'exists:users,id'], 'comment' => ['nullable', 'string', 'max:10000']]);
-        abort_unless(User::find($data['reviewer_id'])->isAdmin(), 422);
-        $this->history->query($model, 'editorial_reviews')->insert(['content_type' => $type, 'content_id' => $id, 'requested_by' => $request->user()->id,
-            'reviewer_id' => $data['reviewer_id'], 'version_id' => $this->history->query($model)->where('is_proposal', true)->where('user_id', $request->user()->id)->latest('id')->value('id'), 'fingerprint' => $this->history->fingerprint($model), 'state' => 'pending', 'comment' => $data['comment'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        app(EditorialOperations::class)->requestReview($request->user(), $model, $data['reviewer_id'], $request->integer('version_id') ?: null, $data['comment'] ?? null);
 
         return back()->with('success', __('editorial.review_requested'));
     }
@@ -100,19 +98,7 @@ class EditorialController extends Controller
         $model = $this->history->model($type, $id);
         abort_unless($request->user()->isAdmin(), 403);
         $data = $request->validate(['state' => ['required', 'in:approved,changes_requested'], 'comment' => ['nullable', 'string', 'max:10000']]);
-        DB::transaction(function () use ($request, $model, $review, $data) {
-            $model = $model->newQuery()->lockForUpdate()->findOrFail($model->id);
-            $row = $this->history->query($model, 'editorial_reviews')->where('id', $review)->lockForUpdate()->first();
-            abort_unless($row && $row->reviewer_id === $request->user()->id && $row->state === 'pending', 403);
-            abort_unless(hash_equals($row->fingerprint, $this->history->fingerprint($model)), 409, __('editorial.conflict'));
-            if ($data['state'] === 'approved' && $row->version_id) {
-                $this->history->restore($model, (int) $row->version_id, false);
-            }
-            if (! empty($data['comment'])) {
-                DB::table('editorial_review_comments')->insert(['review_id' => $review, 'user_id' => $request->user()->id, 'body' => $data['comment'], 'created_at' => now(), 'updated_at' => now()]);
-            }
-            $this->history->query($model, 'editorial_reviews')->where('id', $review)->update(['state' => $data['state'], 'updated_at' => now()]);
-        });
+        app(EditorialOperations::class)->decide($request->user(), $model, $review, $data['state'], $data['comment'] ?? null);
 
         return back()->with('success', __('editorial.review_decided'));
     }
@@ -122,7 +108,7 @@ class EditorialController extends Controller
         $model = $this->history->model($type, $id);
         abort_unless($this->history->query($model, 'editorial_reviews')->where('id', $review)->exists(), 404);
         $data = $request->validate(['body' => ['required', 'string', 'max:10000']]);
-        DB::table('editorial_review_comments')->insert(['review_id' => $review, 'user_id' => $request->user()->id, 'body' => $data['body'], 'created_at' => now(), 'updated_at' => now()]);
+        app(EditorialOperations::class)->comment($request->user(), $model, $review, $data['body']);
 
         return back()->with('success', __('editorial.comment_added'));
     }
@@ -155,24 +141,14 @@ class EditorialController extends Controller
     {
         $model = $this->history->model($type, $id);
         $data = $request->validate(['hours' => ['required', 'integer', 'min:1', 'max:168'], 'version_id' => ['nullable', 'integer']]);
-        if (! empty($data['version_id'])) {
-            abort_unless($this->history->query($model)->where('id', $data['version_id'])->exists(), 422);
-        }
-        $token = Str::random(64);
-        $this->history->query($model, 'editorial_preview_links')->insert(['content_type' => $type, 'content_id' => $id, 'token_hash' => hash('sha256', $token),
-            'version_id' => $data['version_id'] ?? $this->history->query($model)->where('is_proposal', true)->where('user_id', $request->user()->id)->latest('id')->value('id'),
-            'user_id' => $request->user()->id, 'expires_at' => now()->addHours($data['hours']), 'created_at' => now(), 'updated_at' => now()]);
+        $link = app(EditorialOperations::class)->share($request->user(), $model, $data['hours'], $data['version_id'] ?? null);
 
-        return back()->with('previewUrl', route('editorial.preview', $token));
+        return back()->with('previewUrl', $link['url']);
     }
 
     public function revoke(Request $request, string $type, int $id, int $link)
     {
-        $model = $this->history->model($type, $id);
-        $query = $this->history->query($model, 'editorial_preview_links')->where('id', $link);
-        $row = $query->first();
-        abort_unless($row && ($request->user()->isAdmin() || $row->user_id === $request->user()->id), 403);
-        $query->update(['revoked_at' => now()]);
+        app(EditorialOperations::class)->revoke($request->user(), $this->history->model($type, $id), $link);
 
         return back()->with('success', __('editorial.revoked'));
     }

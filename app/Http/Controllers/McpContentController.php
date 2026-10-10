@@ -11,13 +11,13 @@ use App\Services\Content\LocaleOperations;
 use App\Services\Content\TranslationOperations;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Editorial\EditorialOperations;
 use App\Services\Pages\PageOperations;
 use App\Services\Posts\PostOperations;
 use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class McpContentController extends Controller
@@ -80,8 +80,11 @@ class McpContentController extends Controller
     public function publication(Request $request, string $type, int $id): JsonResponse
     {
         $model = $this->model($type, $id);
-        $data = Validator::make($request->all(), ['action' => ['required', Rule::in(['schedule', 'unpublish'])], 'published_at' => ['required_if:action,schedule', 'nullable', 'date', 'after:now'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
-        if ($model instanceof Page) {
+        $data = Validator::make($request->all(), ['action' => ['required', Rule::in(['schedule', 'unpublish', 'expire'])], 'published_at' => ['required_if:action,schedule', 'nullable', 'date', 'after:now'], 'expires_at' => ['present_if:action,expire', 'nullable', 'date', 'after:now'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
+        if ($data['action'] === 'expire') {
+            $ops = $model instanceof Page ? app(PageOperations::class) : app(PostOperations::class);
+            $result = $ops->setExpiry($request->user(), $model, $data['expires_at'], $data['expected_revision'] ?? null);
+        } elseif ($model instanceof Page) {
             $result = app(PageOperations::class)->setPublication($request->user(), $model, $data['action'] === 'schedule' ? $data['published_at'] : null, $data['expected_revision'] ?? null);
         } else {
             $ops = app(PostOperations::class);
@@ -93,17 +96,17 @@ class McpContentController extends Controller
 
     public function preview(Request $request, string $type, int $id): JsonResponse
     {
-        $model = $this->model($type, $id);
-        if ($model instanceof Post) {
-            $this->authorizeForUser($request->user(), 'update', $model);
-        } else {
-            abort_unless(in_array($request->user()->role, config('cms.roles', []), true), 403);
-        }
-        $data = Validator::make($request->all(), ['hours' => ['sometimes', 'integer', 'min:1', 'max:168']])->validate();
-        $token = Str::random(64);
-        app(EditorialHistory::class)->query($model, 'editorial_preview_links')->insert(['content_type' => $type, 'content_id' => $id, 'token_hash' => hash('sha256', $token), 'version_id' => null, 'user_id' => $request->user()->id, 'expires_at' => now()->addHours($data['hours'] ?? 1), 'created_at' => now(), 'updated_at' => now()]);
+        return $this->editorialWrite($request, $type, $id, 'preview');
+    }
 
-        return response()->json(['data' => ['url' => route('editorial.preview', $token), 'expires_at' => now()->addHours($data['hours'] ?? 1)->toISOString()]]);
+    public function editorialRead(Request $request, string $type, int $id, string $action): JsonResponse
+    {
+        return response()->json(['data' => app(EditorialOperations::class)->read($request->user(), $type, $id, $action, $request->all())]);
+    }
+
+    public function editorialWrite(Request $request, string $type, int $id, string $action): JsonResponse
+    {
+        return response()->json(['data' => app(EditorialOperations::class)->write($request->user(), $type, $id, $action, $request->all())]);
     }
 
     public function readField(Request $request, string $type, int $id): JsonResponse

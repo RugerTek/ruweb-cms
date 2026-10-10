@@ -36,7 +36,7 @@ The fixed UI account is `phase0@example.test` / `Phase0-Test-Only-2026!`, only i
 For browser verification visit `/panel-baseline`, then `/login` and `/admin/submissions/contact` (sent).
 The row edited by MCP can be opened in the admin using the draft ID from the result file.
 
-Separately reconnect a real Codex client, open a fresh conversation and verify the current 36 discovered tools,
+Separately reconnect a real Codex client, open a fresh conversation and verify the current 46 discovered tools,
 including `menus_list` and `settings_list`. An HTTP tools/list pass does not prove client discovery.
 
 After stopping the server, revoke test credentials and remove **only this run's generated schema** with:
@@ -190,3 +190,27 @@ on 8018. Keep non-secret result JSON, path-only network traces, code/build finge
 captures. Stop every server, execute guarded phase-zero cleanup for each schema, and remove
 all ephemeral client homes/auth, private Codex transport logs, manifest, `.env`, config caches
 and server/mail logs. Never preserve a credential or preview URL as acceptance evidence.
+
+
+## Phase five: exact review and recovery (E2E-05)
+
+Prepare disposable full and essential copies with separate vendor/bootstrap caches, storage and unused MySQL
+schemas as above. Set `PHASE5_PROFILE` to the copy's configured profile. Reuse the phase-zero fixture and run each server sequentially on loopback 8018 with
+`phase-three-router.php` for isolated clock control. The candidate includes the receipt migration; production
+Vite assets remain unchanged by this phase. Run:
+
+```bash
+php tests/E2E/phase-five-control.php identity
+python3 tests/E2E/phase-five-http.py
+PHASE5_STAGE=proposal PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-five-browser.cjs
+python3 tests/E2E/phase-five-http.py --complete
+PHASE5_STAGE=restored PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-five-browser.cjs
+```
+
+The fixture identities are setup only. Real bearer HTTP performs proposals, exact review requests, comments,
+assigned administrator approval, conflict rejection, historical restoration/review/republishing, preview
+revocation and retirement. Public output and sitemap checks use anonymous requests; the browser confirms
+public/preview rendering and denied revoked/expired capabilities without an admin session or Live Editor.
+Retain only sanitized result JSON and screenshots; the private preview/credential manifest is deleted by the
+guarded cleanup. Repeat affected E2E-00–04 separately using their documented stages and stop all servers before
+cleanup. Never change the repository's profile, `.env`, production database or caches to run this fixture.
