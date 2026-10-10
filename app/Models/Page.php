@@ -6,6 +6,7 @@ use App\Contracts\Editorial\Mediable;
 use App\Contracts\Editorial\Previewable;
 use App\Contracts\Editorial\Publishable;
 use App\Contracts\Editorial\Seoable;
+use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
 use App\Support\LinkDestination;
 use App\Support\SectionRichText;
@@ -29,12 +30,12 @@ class Page extends Model implements Mediable, Previewable, Publishable, Seoable
             if ($model->exists && $model->isDirty()) {
                 app(EditorialHistory::class)->capture($model->newQuery()->findOrFail($model->id));
             }
-            if ((auth()->user() ?? request()->user())?->isEditor() && ($model->status === 'published' || $model->getOriginal('status') === 'published') && (! $model->exists || $model->isDirty())) {
+            if (EditorialActor::current()?->isEditor() && ($model->status === 'published' || $model->getOriginal('status') === 'published') && (! $model->exists || $model->isDirty())) {
                 abort(403, __('editorial.publish_forbidden'));
             }
         });
         static::deleting(function ($model) {
-            abort_if((auth()->user() ?? request()->user())?->isEditor() && $model->status === 'published', 403, __('editorial.publish_forbidden'));
+            abort_if(EditorialActor::current()?->isEditor() && $model->status === 'published', 403, __('editorial.publish_forbidden'));
         });
         static::saved(fn ($model) => app(EditorialHistory::class)->capture($model));
     }

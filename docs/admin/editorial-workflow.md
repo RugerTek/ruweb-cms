@@ -2,6 +2,22 @@
 
 Pages and posts share the history/review screen linked from their editor. Admins publish; editors prepare drafts and request review from an assigned administrator. Changes to an already-published record made by an editor are stored as a full proposal, leaving the live publication unchanged. Approval applies the exact proposal selected by the review, after checking that the live content still matches the review fingerprint. Changes made after the request require a new review. Review requests, decisions and comments retain their authors.
 
+## Shared page operations
+
+`App\Services\Pages\PageOperations` owns page creation/save and publication for the panel, MCP JSON-RPC
+and REST. Callers pass the acting `User` explicitly; the operation validates its input through `PageInput`,
+checks roles, reloads existing pages under a row lock and commits content, associations and history together.
+The browser's full form keeps its merge, translation acknowledgement and proposal semantics; bearer draft
+patches keep omitted siblings, replace lists and remove explicit null keys. Draft-only writes reject any
+persisted status other than `draft`, including administrator requests.
+
+`EditorialActor::run()` scopes permissions and history/ledger authorship to that identity and restores the
+previous context on success or failure. Model writes outside an operation retain their existing HTTP fallback.
+A browser session cannot override a bearer actor. `ContentRevisionLedger::transaction()` restores its request
+coalescing checkpoint on rollback and before each retry, so a rolled-back attempt cannot suppress the
+committed revision. Published editor changes from the panel remain proposals; broader MCP editorial flows
+are not part of this extraction.
+
 ## Full versions
 
 `editorial_versions` contains full attributes, media ids with collection/order and taxonomy ids. It is separate from `content_revisions`, the append-only hash ledger used by snapshots. Saving captures the previous persisted state before mutation, including the first programmatic write after an upgrade, and captures the resulting state. Admin controllers and media/taxonomy attachment helpers also capture association changes. Restoration creates another version and a draft; it never silently republishes historical content. Restoring a live publication requires an administrator. Missing deleted associations are skipped; retained versions keep media referenced for deletion protection.

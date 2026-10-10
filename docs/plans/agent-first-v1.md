@@ -1,10 +1,10 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fase 0 implementada y aceptada con E2E y cliente Codex real. Fases 1–11 autorizadas, sin iniciar.
+**Estado:** fases 0 y 1 implementadas y aceptadas con sus gates E2E. Fases 2–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 6 — cierre de fase 0 y autorización de ejecución completa con gates por fase.
+**Revisión:** 7 — cierre de fase 1 con operaciones compartidas y E2E-01.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
-**Entrega actual:** correcciones de fase 0 y [registro de resultados](phase-0-results.md). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
+**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
 ## 1. Objetivo y valor del producto
 
@@ -331,9 +331,11 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Extraer primero guardar borrador/publicar páginas a operaciones independientes de controladores y sesión.
-- [ ] Mantener adaptadores admin/REST/MCP compatibles; unificar validación, permisos, transacciones y errores.
-- [ ] Extraer los demás dominios dentro de su fase funcional, evitando una reescritura masiva inicial.
+- [x] Extraer primero guardar borrador/publicar páginas a operaciones independientes de controladores y sesión.
+- [x] Mantener adaptadores admin/REST/MCP compatibles; unificar validación, permisos, transacciones y errores.
+- [x] Mantener los demás dominios para su fase funcional, evitando una reescritura masiva inicial.
+
+**Estado de entrega:** aceptada en 0.47.2; operaciones con actor explícito, validación compartida y transacciones con historial/revisiones. E2E-00, worker y E2E-01 aprobados sobre MySQL aislado; suite completa y convenciones aprobadas. [Evidencia y límites](phase-1-results.md).
 
 **E2E-01 — Una operación, varias entradas**
 
@@ -643,7 +645,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-La fase 0 está aceptada y su implementación y evidencia están registradas en el documento de resultados. La autorización global habilita comenzar fase 1 tras este cierre; no requiere una nueva confirmación por fase.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La autorización global habilita comenzar fase 2 tras este cierre; no requiere una nueva confirmación por fase.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

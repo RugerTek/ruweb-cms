@@ -8,7 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.47.1 - 2026-10-10
+## 0.47.2 - 2026-10-10
+
+- **Operaciones de páginas compartidas:** panel, REST y MCP delegan guardado y publicación en un servicio con validación común, identidad explícita, permisos, bloqueo y transacciones; se conservan parches y propuestas editoriales existentes.
+- **Autoría y reintentos:** la sesión no reemplaza al actor de la operación en historial/revisiones, y un rollback no elimina el registro de un reintento confirmado; se cubren conflictos, slugs por idioma y rechazos sin mutación.
+- **Aceptación de fase 1:** regresiones funcionales y E2E-00/01 sobre MySQL aislado verifican panel, MCP sin cookies, publicación pública y equivalencia REST.
+
+## 0.47.1 - 2026-10-10 (0aa7236)
 
 - **Errores de herramientas MCP:** los rechazos HTTP de los controladores se devuelven con `isError: true`, conservando el diagnóstico; se verifica el rechazo de ajustes no permitidos y recursos inexistentes sin mutación.
 - **MCP, correcciones de fase 0:** se corrigen los esquemas de herramientas sin argumentos, la paginación explícita y estable y la identificación de idioma/grupo de traducción; la creación valida idiomas instalados y slugs por idioma.

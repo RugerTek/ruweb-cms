@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
+use App\Services\Editorial\EditorialActor;
 use App\Services\Revisions\ContentRevisionLedger;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Append a content revision on every create, update and delete.
@@ -20,7 +20,7 @@ trait RecordsContentRevisions
             static::$event(function ($model) use ($event): void {
                 [$type, $id] = $model->revisionSubject();
 
-                app(ContentRevisionLedger::class)->record($type, $id, $event, Auth::id());
+                app(ContentRevisionLedger::class)->record($type, $id, $event, EditorialActor::current()?->id);
             });
         }
     }

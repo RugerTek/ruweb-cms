@@ -9,6 +9,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Services\Content\ContentSchemaRegistry;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Pages\PageOperations;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,28 +51,7 @@ class PageController extends Controller
 
     public function store(StorePageRequest $request): RedirectResponse
     {
-        $data = $request->validated();
-        $data['locale'] = $data['locale'] ?? Locale::baseCode();
-        $data['created_by'] = $request->user()->id;
-        $data['updated_by'] = $request->user()->id;
-
-        if ($data['status'] === 'published' && empty($data['published_at'])) {
-            $data['published_at'] = now();
-        }
-
-        $featuredImage = $data['featured_image'] ?? null;
-        unset($data['featured_image'], $data['acknowledged_fields'], $data['editor_field_origins']);
-
-        $page = Page::create($data);
-        $page->source_fingerprint = $page->translatableFingerprint();
-        $page->source_field_hashes = $page->translatableFieldFingerprints();
-        $page->save();
-
-        if ($featuredImage) {
-            $page->attachMedia($featuredImage, 'featured_image');
-        }
-
-        app(EditorialHistory::class)->capture($page->fresh());
+        $page = app(PageOperations::class)->save($request->user(), $request->all());
 
         return redirect()
             ->route('admin.pages.edit', ['page' => $page, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])
@@ -93,61 +73,17 @@ class PageController extends Controller
 
     public function update(UpdatePageRequest $request, Page $page): RedirectResponse|JsonResponse
     {
-        if ($request->filled('_editor_base')) {
-            abort_unless(hash_equals(app(EditorialHistory::class)->fingerprint($page), $request->input('_editor_base')), 409, __('editorial.conflict'));
+        $staged = $request->user()->isEditor() && $page->status === 'published';
+        $page = app(PageOperations::class)->save(
+            $request->user(), $request->all(), $page,
+            base: $request->filled('_editor_base') ? $request->input('_editor_base') : null,
+        );
+        if ($request->wantsJson()) {
+            return response()->json(['saved' => true, ...($staged ? ['staged' => true] : []), 'fingerprint' => app(EditorialHistory::class)->fingerprint($page)]);
         }
-        $data = $request->validated();
-        if ($request->user()->isEditor() && $page->status === 'published') {
-            app(EditorialHistory::class)->stage($page, $data);
-            if ($request->wantsJson()) {
-                return response()->json(['saved' => true, 'staged' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($page)]);
-            }
-
+        if ($staged) {
             return back()->with('success', __('editorial.staged'));
         }
-        $data['locale'] = $data['locale'] ?? $page->locale;
-        $data['updated_by'] = $request->user()->id;
-
-        if ($data['status'] === 'published' && empty($data['published_at'])) {
-            $data['published_at'] = $page->published_at ?? now();
-        }
-
-        $featuredImage = $data['featured_image'] ?? null;
-        unset($data['featured_image'], $data['acknowledged_fields'], $data['editor_field_origins']);
-
-        if (isset($data['content_json'])) {
-            $existing = $page->content_json ?? [];
-            $submitted = $data['content_json'];
-            foreach ($submitted['sections'] ?? [] as $key => $section) {
-                $submitted['sections'][$key] = array_replace($existing['sections'][$key] ?? [], $section);
-            }
-            if (isset($submitted['meta'])) {
-                $submitted['meta'] = array_replace($existing['meta'] ?? [], $submitted['meta']);
-            }
-            $submitted['sections'] = array_replace($existing['sections'] ?? [], $submitted['sections'] ?? []);
-            $data['content_json'] = array_replace($existing, $submitted);
-        }
-        $page->update($data);
-        if ($page->isBaseLocale()) {
-            $page->source_fingerprint = $page->translatableFingerprint();
-            $page->source_field_hashes = $page->translatableFieldFingerprints();
-        } else {
-            $page->syncTranslationFromBase();
-        }
-        $page->save();
-
-        $page->media()->wherePivot('collection', 'featured_image')->detach();
-        if ($featuredImage) {
-            $page->attachMedia($featuredImage, 'featured_image');
-        }
-
-        if ($request->wantsJson()) {
-            app(EditorialHistory::class)->capture($page->fresh());
-
-            return response()->json(['saved' => true, 'fingerprint' => app(EditorialHistory::class)->fingerprint($page->fresh())]);
-        }
-
-        app(EditorialHistory::class)->capture($page->fresh());
 
         return redirect()
             ->route('admin.pages.edit', ['page' => $page, 'return' => $this->normalizeReturnUrl($request->input('return', $request->query('return')))])

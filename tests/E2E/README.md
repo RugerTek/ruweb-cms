@@ -48,3 +48,17 @@ php tests/E2E/phase-zero-cleanup.php
 The cleanup checks the generated database-name pattern, requires its fixture manifest, and refuses any
 other database. It removes the credential manifest but retains non-secret local test evidence. Storage and
 logs can be removed later once evidence has been reviewed. No production migration is needed by these fixes.
+
+## Phase one: shared page operations (E2E-01)
+
+Reuse the same fresh fixture and loopback server above. After `phase-zero-http.py` and the worker pass,
+run `python3 tests/E2E/phase-one-http.py` with the same two isolation variables. Run it once per fixture.
+It creates a draft through the admin session, reads/edits/publishes through cookie-free MCP, parses the
+reopened admin form to compare exact persisted field values, and checks public content and SEO without
+session. A second independent draft exercises equivalent REST edits/publication and authorization
+rejections. RPC denials assert their exact HTTP status, JSON-RPC code and authorization message;
+a generic internal failure does not count as an authorization pass. Read-only edits and editor publication must fail without changing either record.
+
+`phase-one-results.json` records the five acceptance checks and both non-secret page IDs. Use the same
+cleanup procedure to revoke keys and drop only this run's isolated schema. E2E-00 remains mandatory;
+E2E-01 supplements it and never replaces the phase-zero script.

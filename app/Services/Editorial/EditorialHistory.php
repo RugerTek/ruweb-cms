@@ -6,7 +6,6 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Services\Content\ContentSchemaRegistry;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /** Full restorable versions; intentionally independent from the snapshot hash ledger. */
@@ -45,7 +44,7 @@ class EditorialHistory
         if ($this->query($model)->latest('id')->value('fingerprint') === $hash) {
             return;
         }
-        $this->query($model)->insert(['content_type' => $model->getTable(), 'content_id' => $model->id, 'user_id' => (Auth::id() ?? request()->user()?->id),
+        $this->query($model)->insert(['content_type' => $model->getTable(), 'content_id' => $model->id, 'user_id' => EditorialActor::current()?->id,
             'payload' => json_encode($payload), 'fingerprint' => $hash, 'created_at' => now(), 'updated_at' => now()]);
     }
 
@@ -79,7 +78,7 @@ class EditorialHistory
         if ($categories !== null) {
             $payload['taxonomies'] = array_merge(DB::table('taxonomies')->whereIn('id', $payload['taxonomies'])->where('type', '!=', 'category')->pluck('id')->all(), $categories);
         }
-        $this->query($model)->insert(['content_type' => $model->getTable(), 'content_id' => $model->id, 'user_id' => (Auth::id() ?? request()->user()?->id), 'is_proposal' => true,
+        $this->query($model)->insert(['content_type' => $model->getTable(), 'content_id' => $model->id, 'user_id' => EditorialActor::current()?->id, 'is_proposal' => true,
             'payload' => json_encode($payload), 'fingerprint' => hash('sha256', json_encode($payload)), 'created_at' => now(), 'updated_at' => now()]);
     }
 
@@ -94,7 +93,7 @@ class EditorialHistory
             $attributes = array_intersect_key($payload['attributes'], array_flip($model->getFillable()));
             // Restoring always creates a draft: a historical publication is never silently republished.
             $attributes['status'] = $asDraft ? 'draft' : $model->status;
-            $attributes['updated_by'] = (Auth::id() ?? request()->user()?->id);
+            $attributes['updated_by'] = EditorialActor::current()?->id;
             $model->fill($attributes)->save();
             $model->media()->detach();
             foreach ($payload['media'] as $media) {

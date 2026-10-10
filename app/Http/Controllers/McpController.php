@@ -12,6 +12,7 @@ use App\Models\Post;
 use App\Models\Setting;
 use App\Models\Taxonomy;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Pages\PageOperations;
 use App\Support\SiteUrl;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -68,101 +69,23 @@ class McpController extends Controller
 
     public function pagesCreateDraft(Request $request): JsonResponse
     {
-        $this->authorizeCmsEditor($request);
+        $page = app(PageOperations::class)->save($request->user(), $request->all(), draftOnly: true);
 
-        $validated = Validator::make($request->all(), [
-            'locale' => ['sometimes', 'string', Rule::in(Locale::installedCodes())],
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique('pages', 'slug')->where('locale', $request->input('locale', Locale::baseCode()))],
-            'template_key' => ['required', 'string', Rule::in(array_keys(config('cms.templates', [])))],
-            'content_json' => ['nullable', 'array'],
-            'content_json.meta' => ['nullable', 'array'],
-            'content_json.sections' => ['nullable', 'array'],
-            'featured_image' => ['nullable', 'integer', 'exists:media,id'],
-        ])->validate();
-
-        $userId = $request->user()->id;
-        $featuredImageId = $validated['featured_image'] ?? null;
-        unset($validated['featured_image']);
-
-        $page = Page::create(array_merge($validated, [
-            'status' => 'draft',
-            'created_by' => $userId,
-            'updated_by' => $userId,
-        ]));
-
-        if ($featuredImageId) {
-            $page->attachMedia($featuredImageId, 'featured_image');
-        }
-
-        return response()->json([
-            'data' => $this->serializePage($page->fresh()),
-        ], 201);
+        return response()->json(['data' => $this->serializePage($page)], 201);
     }
 
     public function pagesUpdateDraft(Request $request, Page $page): JsonResponse
     {
-        return DB::transaction(function () use ($request, $page) {
-            $page = Page::query()->lockForUpdate()->findOrFail($page->id);
-            if ($page->status !== 'draft') {
-                throw new AuthorizationException(__('editorial.mcp_draft_required'));
-            }
-            $this->authorizeCmsEditor($request);
+        $page = app(PageOperations::class)->save($request->user(), $request->all(), $page, draftOnly: true);
 
-            $validated = Validator::make($request->all(), [
-                'title' => ['sometimes', 'string', 'max:255'],
-                'slug' => ['sometimes', 'string', 'max:255', Rule::unique('pages', 'slug')->where('locale', $page->locale)->ignore($page->id)],
-                'template_key' => ['sometimes', 'string', Rule::in(array_keys(config('cms.templates', [])))],
-                'content_json' => ['sometimes', 'array'],
-                'content_json.meta' => ['nullable', 'array'],
-                'content_json.sections' => ['nullable', 'array'],
-                'featured_image' => ['nullable', 'integer', 'exists:media,id'],
-            ])->validate();
-
-            $featuredImageId = $validated['featured_image'] ?? null;
-            $hasFeaturedImage = array_key_exists('featured_image', $validated);
-            unset($validated['featured_image']);
-
-            $validated['status'] = 'draft';
-            $validated['updated_by'] = $request->user()->id;
-
-            if (isset($validated['content_json'])) {
-                $validated['content_json'] = ContentPatch::apply($page->content_json ?? [], $validated['content_json']);
-            }
-
-            $page->update($validated);
-
-            if ($hasFeaturedImage) {
-                $page->media()->wherePivot('collection', 'featured_image')->detach();
-                if ($featuredImageId) {
-                    $page->attachMedia($featuredImageId, 'featured_image');
-                }
-            }
-
-            app(EditorialHistory::class)->capture($page->fresh());
-
-            return response()->json([
-                'data' => $this->serializePage($page->fresh()),
-            ]);
-        }, 3);
+        return response()->json(['data' => $this->serializePage($page)]);
     }
 
     public function pagesPublish(Request $request, Page $page): JsonResponse
     {
-        if (! $request->user()?->isAdmin()) {
-            throw new AuthorizationException(__('editorial.publish_forbidden'));
-        }
-        $this->authorizeCmsEditor($request);
+        $page = app(PageOperations::class)->publish($request->user(), $page);
 
-        $page->update([
-            'status' => 'published',
-            'published_at' => $page->published_at ?? now(),
-            'updated_by' => $request->user()->id,
-        ]);
-
-        return response()->json([
-            'data' => $this->serializePage($page->fresh()),
-        ]);
+        return response()->json(['data' => $this->serializePage($page)]);
     }
 
     public function postsList(Request $request): JsonResponse

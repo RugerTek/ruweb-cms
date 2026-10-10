@@ -56,6 +56,22 @@ class ContentRevisionLedger
         return $revision;
     }
 
+    /** Restore request coalescing when a transaction rolls back or retries. */
+    public function transaction(callable $callback, int $attempts = 1): mixed
+    {
+        $recorded = $this->recordedThisRequest;
+        try {
+            return DB::transaction(function () use ($callback, $recorded) {
+                $this->recordedThisRequest = $recorded;
+
+                return $callback();
+            }, $attempts);
+        } catch (\Throwable $exception) {
+            $this->recordedThisRequest = $recorded;
+            throw $exception;
+        }
+    }
+
     /** Run a callback without recording anything, e.g. seeders or bulk imports. */
     public function withoutRecording(callable $callback): mixed
     {
