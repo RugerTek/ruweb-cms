@@ -8,7 +8,7 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.47.0 - 2026-10-10
+## 0.47.0 - 2026-10-10 (f337e7d)
 
 - **Seguridad de cuentas y acceso:** intercambio OAuth atómico y limitado, recuperación sin enumeración, confirmación del nuevo email y revocación de credenciales al cambiar identidad. Se incorporan segundo factor TOTP, códigos de recuperación, gestión de sesiones y claves MCP con nombre, permisos, vencimiento y revocación individual.
 - **Formularios y seguimiento:** reCAPTCHA valida acción, puntuación y dominio; el token firmado vincula tiempo, formulario, página publicada e idioma. Las notificaciones salen por cola con reintentos y estados visibles; la bandeja añade responsables, estados, notas internas, filtros y reenvío manual.
