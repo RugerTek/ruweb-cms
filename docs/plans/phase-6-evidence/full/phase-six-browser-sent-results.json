@@ -1,0 +1,11 @@
+{
+  "profile": "full",
+  "stage": "sent",
+  "checks": [
+    "Real browser visitor CSRF/signed token/elapsed fill/recaptcha submission",
+    "Same persisted submission visible to authenticated admin",
+    "Desktop/mobile admin rendering",
+    "MCP assignment, workflow and note reflected in admin"
+  ],
+  "page_errors": []
+}

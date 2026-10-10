@@ -5,10 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Forms\FormRegistry;
-use App\Services\Forms\SubmissionNotifier;
+use App\Services\Forms\SubmissionOperations;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -19,56 +18,20 @@ use Illuminate\View\View;
 class SubmissionController extends Controller
 {
     public function __construct(
-        protected FormRegistry $forms
+        protected FormRegistry $forms,
+        protected SubmissionOperations $operations
     ) {}
 
     public function index(Request $request, string $form): View
     {
-        $config = $this->forms->get($form);
-        $query = $this->forms->query($form)->latest('id');
-
-        $status = in_array($request->query('status'), ['new', 'read'], true) ? $request->query('status') : null;
+        $query = $this->operations->query($request->user(), $form, $request->query());
+        $status = $request->query('status');
         $search = trim((string) $request->query('search', ''));
         $from = $request->query('from');
         $to = $request->query('to');
-
-        if ($status === 'new') {
-            $query->whereNull('read_at');
-        } elseif ($status === 'read') {
-            $query->whereNotNull('read_at');
-        }
-
-        $workflow = in_array($request->query('workflow'), ['new', 'in_progress', 'resolved'], true) ? $request->query('workflow') : null;
+        $workflow = $request->query('workflow');
         $assignee = $request->query('assignee');
-        $notification = in_array($request->query('notification'), ['queued', 'retrying', 'sending', 'failed', 'sent', 'skipped'], true) ? $request->query('notification') : null;
-        if ($workflow) {
-            $query->where('workflow_status', $workflow);
-        }
-        if ($assignee === 'unassigned') {
-            $query->whereNull('assigned_to');
-        } elseif (ctype_digit((string) $assignee)) {
-            $query->where('assigned_to', (int) $assignee);
-        }
-        if ($notification) {
-            $query->where('notification_status', $notification);
-        }
-        $query->with('assignee');
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($config, $search) {
-                foreach ((array) ($config['searchable'] ?? []) as $column) {
-                    $q->orWhere($column, 'like', '%'.$search.'%');
-                }
-            });
-        }
-
-        if ($from && strtotime($from)) {
-            $query->whereDate('created_at', '>=', $from);
-        }
-
-        if ($to && strtotime($to)) {
-            $query->whereDate('created_at', '<=', $to);
-        }
+        $notification = $request->query('notification');
 
         return view('admin.submissions.index', [
             'form' => $form,
@@ -82,14 +45,10 @@ class SubmissionController extends Controller
         ]);
     }
 
-    public function show(string $form, int $submission): View
+    public function show(Request $request, string $form, int $submission): View
     {
-        $this->forms->get($form);
-        $record = $this->forms->query($form)->findOrFail($submission);
-
-        if (method_exists($record, 'markRead')) {
-            $record->markRead();
-        }
+        $this->operations->write($request->user(), $form, $submission, 'mark_read', []);
+        $record = $this->operations->record($request->user(), $form, $submission);
 
         return view('admin.submissions.show', [
             'form' => $form,
@@ -100,37 +59,28 @@ class SubmissionController extends Controller
 
     public function update(Request $request, string $form, int $submission): RedirectResponse
     {
-        $record = $this->forms->query($form)->findOrFail($submission);
-        $data = $request->validate([
-            'workflow_status' => ['required', Rule::in(['new', 'in_progress', 'resolved'])],
-            'assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')->whereIn('role', ['admin', 'editor'])],
-        ]);
-        $record->update($data);
+        $this->operations->write($request->user(), $form, $submission, 'update_workflow', $request->all());
 
         return back()->with('success', __('submissions.saved'));
     }
 
     public function note(Request $request, string $form, int $submission): RedirectResponse
     {
-        $record = $this->forms->query($form)->findOrFail($submission);
-        $data = $request->validate(['body' => ['required', 'string', 'max:5000']]);
-        $record->notes()->create(['body' => $data['body'], 'user_id' => $request->user()->id]);
+        $this->operations->write($request->user(), $form, $submission, 'add_note', $request->all());
 
         return back()->with('success', __('submissions.note_added'));
     }
 
-    public function resend(string $form, int $submission, SubmissionNotifier $notifier): RedirectResponse
+    public function resend(Request $request, string $form, int $submission): RedirectResponse
     {
-        $record = $this->forms->query($form)->findOrFail($submission);
-        $queued = $notifier->notify($record, $record->page, $this->forms->get($form)['section'] ?? 'form');
+        $queued = $this->operations->write($request->user(), $form, $submission, 'retry_notification', $request->all())['queued'];
 
         return back()->with($queued ? 'success' : 'error', __('submissions.'.($queued ? 'notification_queued' : 'notification_unavailable')));
     }
 
-    public function destroy(string $form, int $submission): RedirectResponse
+    public function destroy(Request $request, string $form, int $submission): RedirectResponse
     {
-        $this->forms->get($form);
-        $this->forms->query($form)->findOrFail($submission)->delete();
+        $this->operations->write($request->user(), $form, $submission, 'delete', $request->all());
 
         return redirect()
             ->route('admin.submissions.index', ['form' => $form])

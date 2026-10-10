@@ -1,0 +1,81 @@
+{
+  "profiles": [
+    "full",
+    "essential"
+  ],
+  "database": "real MySQL guarded disposable schema per profile",
+  "transport": "real cookie-free REST/RPC and Chromium browser",
+  "concurrency": {
+    "php_server_workers": 4,
+    "concurrent_note_requests": 8,
+    "concurrent_retry_requests": 8
+  },
+  "notification": {
+    "failed_real_attempts": 4,
+    "recovery_deliveries": 1,
+    "external_mail": false,
+    "duplicate_delivery": false
+  },
+  "browser": {
+    "stages": [
+      "submit",
+      "tracked",
+      "failed",
+      "sent"
+    ],
+    "widths": [
+      1440,
+      390
+    ],
+    "mobile_sidebar_closed": true,
+    "workflow_assignee_note_controls_hit_tested": true,
+    "screenshots_per_profile": 9
+  },
+  "authorization": {
+    "scope": "exact translated denial messages asserted",
+    "viewer": "exact explicit role denial message asserted",
+    "credentials": [
+      "absent",
+      "invalid",
+      "expired"
+    ]
+  },
+  "regressions": {
+    "E2E00": "passed in separate fresh full fixture on identical product",
+    "E2E01": "passed in separate fresh full fixture on identical product",
+    "evidence_path": "regressions/"
+  },
+  "cleanup": {
+    "servers_stopped": true,
+    "schemas_dropped": true,
+    "credentials_revoked_and_deleted": true,
+    "private_logs_deleted": true,
+    "copied_env_deleted": true
+  },
+  "sha256": {
+    "tests/E2E/phase-six-control.php": "381eac17b8ca5651ec0a7bdff22cc5a45fa8bc192c8cb69fc5d7d7b292654e24",
+    "tests/E2E/phase-six-browser.cjs": "611ea557a6c24615da1cced5a570177638bc7ae50b57459b7234f513460c6b20",
+    "tests/E2E/phase-six-http.py": "352941e5a3c11bf9365ba7cb22b84ec11832729eac416a31999c4959c0bbb4f9",
+    "app/Services/Forms/SubmissionOperations.php": "6ba62c43e1fa606cd012954df8010d2fa190c0465cd641daba172739b980bf21",
+    "app/Jobs/SendSubmissionNotification.php": "be8f34774d61d547edcccd2720ad76803b21603e03e7365ac3c197ad3f6b4d17",
+    "app/Services/Forms/SubmissionNotifier.php": "5b4cb02c5cd1454c9974485024c2ad0662509d67576496cd50197a30b0f3a065",
+    "app/Http/Controllers/McpServerController.php": "82f002b611ef6d8b94885d57f94fcbd7796bb1e7ef7913897a23d491e93b5afd",
+    "app/Mcp/ToolRegistry.php": "ed8a3ac5b2f99857c8630c2468faf310a65355833cd501c500477e4d56a1a25d",
+    "public/build/manifest.json": "cf4be4a2a9d8776da8fada3dba68115758adbd4cd16876f4c44ca5005f6acf78"
+  },
+  "baseline": "cabf2b0f52276bff6f0bb9312b625bcb464c1145",
+  "tool_count": 52,
+  "verification": {
+    "tests": 472,
+    "assertions": 3616,
+    "conventions": "pass",
+    "pint": "pass",
+    "diff_check": "pass",
+    "runtime": "PHP 8.5.4; PHP 8.3 minimum remains release check",
+    "external_boundaries": "Exact Google reCAPTCHA test response; controlled failing mail transport and isolated mail log",
+    "duration_seconds": 25.41
+  },
+  "evidence_note": "Final E2E06 repeats both profiles after adding exact scope denial assertions and mobile UI sidebar close/transition/hit-test. Separate E2E00/01 uses identical product code. No frontend changes; exact production build retained.",
+  "candidate_version": "0.52.0",
+  "independent_review": "approved; exact scope messages and visible mobile controls verified"
+}

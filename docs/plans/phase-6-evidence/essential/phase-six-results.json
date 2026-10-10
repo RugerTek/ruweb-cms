@@ -1,0 +1,11 @@
+{
+  "profile": "essential",
+  "cookie_free_mcp": true,
+  "checks": [
+    "Cookie-free discovery/read with explicit private-inbox role/scope and expired/invalid credential denials",
+    "MCP assignment/note/status, eight concurrent idempotent notes, stale conflict, invalid CSRF/form token and unpublished page rejection",
+    "Four exhausted worker attempts expose observable failure while preserving the visitor submission",
+    "Eight concurrent real MySQL retry receipts and repeated active retry reserve only one recovered delivery",
+    "Recovered delivery metadata and final resolved state; sent submission cannot queue another mail"
+  ]
+}

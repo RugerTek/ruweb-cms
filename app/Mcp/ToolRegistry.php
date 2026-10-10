@@ -12,11 +12,29 @@ class ToolRegistry
             ['name' => 'cms_capabilities', 'description' => 'Discover deployment profile, capabilities, template schemas and editor compatibility. Permissions remain account/scope dependent.', 'inputSchema' => ['type' => 'object', 'properties' => new \stdClass]],
             ...self::phaseThreeTools(),
             ...self::editorialTools(),
+            ...self::submissionTools(),
             ...self::pageTools(),
             ...self::postTools(),
             ...self::mediaTools(),
             ...self::settingTools(),
             ...self::menuTools(),
+        ];
+    }
+
+    private static function submissionTools(): array
+    {
+        $form = ['form' => ['type' => 'string', 'enum' => array_keys(config('cms.forms', []))]];
+        $entity = $form + ['id' => ['type' => 'integer', 'minimum' => 1]];
+        $page = ['page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]];
+        $write = fn ($name, $description, $properties, $required) => ['name' => 'submissions_'.$name, 'description' => $description.' Full credential scope and admin/editor role required. Send current revision and a unique operation_key; identical retries recover the original result.', 'inputSchema' => ['type' => 'object', 'properties' => $entity + ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64], 'operation_key' => ['type' => 'string', 'maxLength' => 100]] + $properties, 'required' => array_merge(['form', 'id', 'expected_revision', 'operation_key'], $required)]];
+
+        return [
+            ['name' => 'submissions_list', 'description' => 'Search the code-owned form inbox in bounded pages. Read-only; never marks submissions read. Filters by workflow, assignee, delivery, read state and dates.', 'inputSchema' => ['type' => 'object', 'properties' => $form + $page + ['search' => ['type' => 'string', 'maxLength' => 200], 'status' => ['type' => 'string', 'enum' => ['new', 'read']], 'workflow' => ['type' => 'string', 'enum' => ['new', 'in_progress', 'resolved']], 'assignee' => ['type' => ['integer', 'string'], 'description' => 'User ID or unassigned.'], 'notification' => ['type' => 'string', 'enum' => ['skipped', 'queued', 'sending', 'retrying', 'failed', 'sent']], 'from' => ['type' => 'string', 'format' => 'date'], 'to' => ['type' => 'string', 'format' => 'date']], 'required' => ['form']]],
+            ['name' => 'submissions_get', 'description' => 'Read a submission and paginated authored notes without changing read state. Recover long visitor text using field/offset/length. Delivery tokens and transport secrets are excluded.', 'inputSchema' => ['type' => 'object', 'properties' => $entity + ['notes_page' => ['type' => 'integer', 'minimum' => 1], 'field' => ['type' => 'string', 'maxLength' => 100], 'offset' => ['type' => 'integer', 'minimum' => 0], 'length' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 8192]], 'required' => ['form', 'id']]],
+            $write('assign', 'Assign a responsible administrator/editor, or clear assignment with null.', ['assigned_to' => ['type' => ['integer', 'null'], 'minimum' => 1]], ['assigned_to']),
+            $write('set_status', 'Set operational follow-up state independently of read state; visitor fields remain immutable.', ['workflow_status' => ['type' => 'string', 'enum' => ['new', 'in_progress', 'resolved']]], ['workflow_status']),
+            $write('add_note', 'Append an internal note attributed to the bearer owner. Notes never enter public pages or mail.', ['body' => ['type' => 'string', 'maxLength' => 5000]], ['body']),
+            $write('retry_notification', 'Reserve a retry only for failed/skipped delivery using the code-owned notification configuration. Pending/sent generations do not send again. Query delivery state after processing; provider acceptance followed by connection failure cannot guarantee exactly-once.', [], []),
         ];
     }
 

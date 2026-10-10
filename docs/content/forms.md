@@ -184,3 +184,8 @@ Follow this list in order. Each step names the contact counterpart to copy.
 - storing submissions through the content revision ledger
 - linking the editor section to the dashboard instead of the form's own submission listing
 - hardcoding label text in the template without a `public.*` fallback
+
+
+## Remote inbox operations
+
+The panel and MCP share actor-aware `SubmissionOperations` for inbox filters, assignment, workflow, notes, marking read and retry requests. MCP reads are explicitly side-effect free; opening the human detail view marks read. MCP follow-up requires both an administrator/editor account and a full-scope credential, independently of the deployment profile. Read-only and draft-only scopes can only read. Durable operation receipts protect note/retry requests from repeated client calls, row revisions reject stale input, and `submission_events` records the acting user for follow-up changes. See [MCP submission follow-up](../operations/mcp.md#submission-follow-up-phase-6) for bounded reads and recovery. Neither transport permits editing visitor fields, form structure, validation or delivery destinations.

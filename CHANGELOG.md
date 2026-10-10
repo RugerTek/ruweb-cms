@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.51.0 - 2026-10-10
+## 0.52.0 - 2026-10-10
+
+- Bandeja por MCP con búsqueda/listado/detalle, asignación, estados, notas y reintento de notificaciones mediante operaciones compartidas con el panel; formularios y campos siguen definidos por código, sin configurar destinos desde la bandeja.
+- Seguimiento exclusivo de credenciales full y roles admin/editor en ambos perfiles, lecturas sin mutaciones, resultados acotados recuperables y diagnóstico de entrega sin secretos del transporte.
+- Revisiones, recibos idempotentes y auditoría por actor protegen notas y reenvíos concurrentes; claims de entrega y fallos de cola después del commit conservan estados recuperables.
+- E2E-06 en completo y esencial verifica anti-spam completo, MySQL/HTTP/navegador/worker reales, cuatro fallos, recuperación al buzón aislado y ausencia de entregas repetidas, con regresiones de formularios y MCP.
+
+## 0.51.0 - 2026-10-10 (cabf2b0)
 
 - Flujo editorial compartido entre panel y MCP: propuestas completas, revisión de una versión exacta, comentarios con autoría, historial/diff recuperable y restauración explícita como borrador o propuesta.
 - Revisiones obligatorias y reintentos durables en operaciones editoriales nuevas protegen cambios concurrentes; un editor puede pedir revisión sin modificar lo publicado y sólo el administrador asignado aprueba.

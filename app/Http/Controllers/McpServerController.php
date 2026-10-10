@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -27,7 +28,7 @@ class McpServerController extends Controller
 {
     private const PROTOCOL_VERSION = '2024-11-05';
 
-    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media) {}
+    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions) {}
 
     public function handle(Request $request): JsonResponse
     {
@@ -107,6 +108,10 @@ class McpServerController extends Controller
 
         if (in_array($name, ['content_versions', 'content_version', 'content_diff', 'content_reviews', 'content_propose', 'content_review_request', 'content_review_decide', 'content_review_comment', 'content_restore', 'content_preview_revoke', 'content_preview'], true)) {
             Validator::make($arguments, ['type' => ['required', 'in:pages,posts'], 'id' => ['required', 'integer', 'min:1']])->validate();
+        }
+
+        if (str_starts_with((string) $name, 'submissions_')) {
+            Validator::make($arguments, ['form' => ['required', 'string', Rule::in(array_keys(config('cms.forms', [])))], 'id' => [$name === 'submissions_list' ? 'sometimes' : 'required', 'integer', 'min:1']])->validate();
         }
 
         $handler = $this->resolveHandler($name);
@@ -218,6 +223,12 @@ class McpServerController extends Controller
 
             'menus_delete' => fn ($req, $args) => $this->mcp->menusDelete($this->synth($req, $args), Menu::findOrFail($args['menu_id'])),
         ];
+
+        $handlers['submissions_list'] = fn ($req, $args) => $this->submissions->index($this->synth($req, $args), $args['form']);
+        $handlers['submissions_get'] = fn ($req, $args) => $this->submissions->show($this->synth($req, $args), $args['form'], $args['id']);
+        foreach (['assign', 'set_status', 'add_note', 'retry_notification'] as $action) {
+            $handlers['submissions_'.$action] = fn ($req, $args) => $this->submissions->write($this->synth($req, $args), $args['form'], $args['id'], $action);
+        }
 
         foreach (['versions', 'version', 'diff', 'reviews'] as $action) {
             $handlers['content_'.$action] = fn ($req, $args) => $this->content->editorialRead($this->synth($req, $args), $args['type'], $args['id'], $action);

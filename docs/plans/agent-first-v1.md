@@ -1,8 +1,8 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–5 implementadas y aceptadas con sus gates E2E. Fases 6–11 autorizadas, sin iniciar.
+**Estado:** fases 0–6 implementadas y aceptadas con sus gates E2E. Fases 7–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 10 — cierre de fase 5 con revisión exacta, recuperación por MCP y E2E-05.
+**Revisión:** 11 — seguimiento de formularios compartido, permisos operacionales y E2E-06 en ambos perfiles.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
 **Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)) y perfiles de fase 2 ([resultados](phase-2-results.md)) y MCP de fase 3 ([resultados](phase-3-results.md)) y panel esencial de fase 4 ([resultados](phase-4-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
@@ -441,8 +441,8 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Exponer búsqueda de envíos, asignación, estados, notas y reintento de notificaciones.
-- [ ] Mantener formularios definidos por código y reutilizar las reglas antispam, cola y permisos actuales.
+- [x] Exponer búsqueda de envíos, asignación, estados, notas y reintento de notificaciones.
+- [x] Mantener formularios definidos por código y reutilizar las reglas antispam, cola y permisos actuales.
 
 **E2E-06 — Del visitante al seguimiento y la entrega**
 
@@ -456,6 +456,8 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 **Aprobación:** persistencia, worker, estados y buzón concuerdan; no se envía correo real. El escenario no promete entrega exactamente una vez ante fallos del proveedor tras aceptar el correo.
 
 **Reversión:** desactivar nuevas operaciones MCP de seguimiento; conservar bandeja, formularios y cola.
+
+**Cierre:** implementación, revisión independiente y E2E-06 aceptados; [resultados](phase-6-results.md).
 
 ### Fase 7 — Páginas HTML, bloques y componentes
 
@@ -651,7 +653,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La autorización global habilita comenzar fase 6 tras este cierre; no requiere una nueva confirmación por fase.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). Fase 7 no se inició; la autorización global conserva los gates por fase.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

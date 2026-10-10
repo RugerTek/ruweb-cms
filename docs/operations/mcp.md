@@ -109,7 +109,7 @@ ID descending as a tie-breaker. This is offset pagination over a stable inventor
 across concurrent inserts/deletes. Both REST and RPC use the explicitly supplied page.
 
 Zero-argument tools must serialize `inputSchema.properties` as an object (`{}`), never an array (`[]`).
-The two tools absent in the initial Codex test both used the invalid array shape; phase 0 repaired the original 22 tools. The current catalog has 36 tools, including deployment discovery; every schema must remain valid.
+The two tools absent in the initial Codex test both used the invalid array shape; phase 0 repaired the original 22 tools. The current catalog has 52 tools, including deployment discovery; every schema must remain valid.
 After a schema change, reconnect the client and open a fresh session to verify its discovered catalog. `template_key` enumerates `config('cms.templates')`, so an agent cannot invent a template.
 
 Setting an image field with no real asset: select the placeholder matching the slot's aspect ratio by its
@@ -298,3 +298,20 @@ publication. Public pages, posts and sitemap honor expiry even before the minute
 The migration adds `editorial_versions.base_fingerprint` and the new `editorial_operation_receipts` table. Existing proposals without a known base are rejected for new review requests/approval: read current content and create a fresh proposal/review instead. Ordinary version history and restoration remain available. `editorial_operation_receipts` contains actor-scoped retry results, not preview URLs/tokens.
 Snapshot inclusion/exclusion for these receipts is an explicit phase 10 decision; do not assume a retry receipt
 is portable editorial content.
+
+
+## Submission follow-up (phase 6)
+
+`submissions_list {form,search?,status?,workflow?,assignee?,notification?,from?,to?,page?,per_page?}` searches the code-owned form inbox. `form` enumerates registered `cms.forms` keys; no arbitrary model/table name is accepted. Search is limited to 200 characters, pages to 100 records. `assignee` is a user ID or `unassigned`; `status: new|read` follows `read_at`, independently of `workflow: new|in_progress|resolved`.
+
+`submissions_get {form,id,notes_page?,field?,offset?,length?}` reads one record and authored notes in pages of 20. Visitor text is bounded to 8192 characters, with `truncated_fields` hashes and complete character length; use `field/offset/length` to recover it. Always reread the revision before editing follow-up. Reads never mark a record read or reserve mail; the human panel detail still explicitly marks it read. Transport tokens, claims, recipients and raw exception strings are excluded from MCP responses. User attribution contains only ID, name and role.
+
+`submissions_assign {assigned_to}` assigns an administrator/editor or clears with null; `submissions_set_status {workflow_status}` changes follow-up state; `submissions_add_note {body}` appends an internal note (nonblank, at most 5000 characters); `submissions_retry_notification` requests a delivery retry. All four require `form`, `id`, current 64-character `expected_revision` and a durable `operation_key`. Account administrators and editors may operate the inbox, but **only full-scope credentials permit follow-up and retry**. Read-only and draft-only credentials may read within those account roles; editorial credentials do not gain notification or workflow permissions. Both profiles expose the same tools. Visitor fields, form fields/validation and notification destinations cannot be changed by these tools.
+
+Panel and transports delegate to `SubmissionOperations` with an explicit actor. Row locks reject stale revisions; actor-scoped receipts serialize identical retries and return their original result. Changing input with an existing key conflicts. Workflow, assignment, notes and retry requests record their actor in `submission_events`; notes also retain their author. Internal notes never enter public pages or outgoing mail. New `submission_operation_receipts` and `submission_events` tables are operational records; snapshot portability is reviewed in phase 10.
+
+Retry atomically reserves only failed/skipped delivery generations. Pending and sent generations cannot enqueue again; query the latest delivery state after worker processing. Mail remains controlled by the existing enabled flag, page notification configuration and deployed transport. Delivery uses the real queue with four attempts and backoff; no MCP tool configures a transport or recipient. A provider accepting mail before a connection/worker failure cannot guarantee exactly-once delivery. Failed deliveries expose state/attempts without leaking transport exceptions; repair transport/configuration through its authorized operational path, reread revision and request a retry.
+
+REST mirrors these tools at `GET /mcp/submissions/{form}`, `GET /mcp/submissions/{form}/{id}` and `POST /mcp/submissions/{form}/{id}/{assign|set-status|add-note|retry-notification}`. Missing records return 404, invalid input 422, stale/different retry inputs 409 (RPC `-32009`). Correct the named field or reread and merge before starting a new operation; retry a lost response with the exact same input/key.
+
+Role denial follows the existing JSON-RPC contract: HTTP 200 with `error.code: -32603` and the explicit authorization message; REST returns HTTP 403. Scope middleware denials return HTTP 403 and RPC `-32603`. Acceptance checks the exact code/message and unchanged data, rather than treating an arbitrary error as an authorization pass. Any global normalization belongs to phase 9 interoperability review.

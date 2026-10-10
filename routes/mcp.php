@@ -4,6 +4,7 @@ use App\Http\Controllers\McpContentController;
 use App\Http\Controllers\McpController;
 use App\Http\Controllers\McpMediaController;
 use App\Http\Controllers\McpServerController;
+use App\Http\Controllers\McpSubmissionController;
 use Illuminate\Support\Facades\Route;
 
 // JSON-RPC 2.0 MCP server endpoint
@@ -60,4 +61,11 @@ foreach (['versions', 'version', 'diff', 'reviews'] as $action) {
 }
 foreach (['propose', 'review_request', 'review_decide', 'review_comment', 'restore', 'preview_revoke'] as $action) {
     Route::post('/content/{type}/{id}/'.str_replace('_', '-', $action), [McpContentController::class, 'editorialWrite'])->defaults('action', $action)->whereNumber('id')->whereIn('type', ['pages', 'posts']);
+}
+
+// Operational inbox: account role and credential scope remain independent of profile.
+Route::get('/submissions/{form}', [McpSubmissionController::class, 'index']);
+Route::get('/submissions/{form}/{id}', [McpSubmissionController::class, 'show'])->whereNumber('id');
+foreach (['assign', 'set_status', 'add_note', 'retry_notification'] as $action) {
+    Route::post('/submissions/{form}/{id}/'.str_replace('_', '-', $action), [McpSubmissionController::class, 'write'])->defaults('action', $action)->whereNumber('id');
 }

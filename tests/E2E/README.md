@@ -214,3 +214,45 @@ public/preview rendering and denied revoked/expired capabilities without an admi
 Retain only sanitized result JSON and screenshots; the private preview/credential manifest is deleted by the
 guarded cleanup. Repeat affected E2E-00–04 separately using their documented stages and stop all servers before
 cleanup. Never change the repository's profile, `.env`, production database or caches to run this fixture.
+
+## Phase six: visitor follow-up and delivery (E2E-06)
+
+Prepare fresh disposable full and essential copies, each with independent vendor/bootstrap caches, storage,
+production Vite assets and a never-used MySQL schema, using the guarded phase-zero fixture above. Set
+`PHP_CLI_SERVER_WORKERS=4` when starting the fixture server so concurrent HTTP mutations execute in independent
+processes against MySQL. Set `PHASE6_PROFILE` to the copy's configured profile and run profiles sequentially on loopback 8018 with the
+phase-zero router. Functional submission operations use the real browser or cookie-free MCP HTTP;
+fixture controls only create identities, select a worker mail transport, advance its clock and assert evidence.
+
+```bash
+php tests/E2E/phase-six-control.php identity
+PHASE6_STAGE=submit PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-six-browser.cjs
+python3 tests/E2E/phase-six-http.py
+PHASE6_STAGE=tracked PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-six-browser.cjs
+php tests/E2E/phase-six-control.php fail-worker
+PHASE6_STAGE=failed PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-six-browser.cjs
+python3 tests/E2E/phase-six-http.py --recover
+php tests/E2E/phase-six-control.php deliver-worker
+python3 tests/E2E/phase-six-http.py --complete
+PHASE6_STAGE=sent PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-six-browser.cjs
+php tests/E2E/phase-six-control.php deliver-worker
+```
+
+The visitor fills and submits the actual public form through Chromium with its real CSRF and signed form token,
+a real minimum fill wait and an opaque reCAPTCHA input. Only Google's exact external verification endpoint is
+stubbed by the guarded router. The browser blocks all external origins. The same persisted row is read through
+MCP, assigned, annotated and advanced in workflow, then reopened in the admin at desktop/mobile widths.
+Invalid CSRF/form tokens, an unpublished originating page, invalid/expired credentials and disallowed
+roles/scopes are rejected without creating or changing a submission. Eight simultaneous same-key note requests
+and eight simultaneous recovery requests prove one receipt and one queue reservation across real workers.
+
+The real database queue worker exhausts the job's four configured attempts against a controlled failing mail
+transport. An isolated worker clock advances across the actual backoff delays; no job or submission row is
+edited by the fixture. Failed delivery remains observable while the visitor data survives. MCP queues recovery,
+replays its receipt and rejects duplicate reservation. The recovered worker delivers exactly once to the local
+mail log; subsequent retries and another worker run cannot send again. No external email is sent.
+
+Retain sanitized `phase-six-results.json`, browser result JSON and screenshots. Treat the fixture manifest and
+mail/server logs as private. Stop every server before guarded `phase-zero-cleanup.php`, remove copied `.env`
+and configuration caches, delete private logs/fixture files, and repeat accumulated E2E-00/01 in a separate fresh
+full fixture. Do not modify the repository's profile, production database or caches to run acceptance.
