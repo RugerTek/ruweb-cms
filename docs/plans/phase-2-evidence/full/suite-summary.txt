@@ -1,0 +1,3 @@
+composer test (DB_CONNECTION=sqlite DB_DATABASE=:memory: DB_URL=)
+398 passed (2424 assertions)
+Duration: 22.97s

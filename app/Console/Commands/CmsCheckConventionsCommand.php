@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\AdminCapabilities;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -24,6 +25,8 @@ class CmsCheckConventionsCommand extends Command
 
     public function handle(): int
     {
+        $this->violations = [];
+        app(AdminCapabilities::class)->profile();
         $scope = $this->scopedFiles();
 
         $this->formRoutesAreThrottled($scope);
@@ -31,6 +34,7 @@ class CmsCheckConventionsCommand extends Command
         $this->registeredFormsAreComplete($scope);
         $this->adminTranslationsMatch($scope);
         $this->registeredTemplatesHaveViews($scope);
+        $this->registeredSectionsHaveEditors($scope);
         $this->templatesDoNotHardcodeImages($scope);
         $this->seedersDoNotStoreAbsoluteUrls($scope);
         $this->versionMatchesChangelog($scope);
@@ -139,7 +143,7 @@ class CmsCheckConventionsCommand extends Command
         foreach (File::allFiles(resource_path('views')) as $file) {
             $contents = $file->getContents();
 
-            if (! Str::contains($contents, "forms.") || ! Str::contains($contents, '<form')) {
+            if (! Str::contains($contents, 'forms.') || ! Str::contains($contents, '<form')) {
                 continue;
             }
 
@@ -256,6 +260,22 @@ class CmsCheckConventionsCommand extends Command
                     "registered template '{$key}' has no view and would fall back to default",
                     'docs/content/templates.md — The View'
                 );
+            }
+        }
+    }
+
+    /** Specialized fields cannot silently fall back to heading/body in full. */
+    private function registeredSectionsHaveEditors(?array $scope): void
+    {
+        if (! $this->touches($scope, 'config/cms.php', 'resources/views/admin/pages/sections') || ! app(AdminCapabilities::class)->liveEditor()) {
+            return;
+        }
+        foreach (config('cms.templates', []) as $key => $template) {
+            foreach ($template['sections'] ?? [] as $section) {
+                if (app(AdminCapabilities::class)->requiresSectionEditor($template, $section)
+                    && app(AdminCapabilities::class)->sectionEditor($section) === null) {
+                    $this->flag('section-editor-missing', "resources/views/admin/pages/sections/{$key}_{$section}.blade.php", "custom fields in '{$key}.{$section}' require an editor in full", 'docs/content/templates.md — Section Editor Partials');
+                }
             }
         }
     }

@@ -66,7 +66,7 @@
     <script>
         window.adminI18n = {!! json_encode($adminI18n, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
     </script>
-    @vite(['resources/js/admin.js'])
+    @vite([app(\App\Support\AdminCapabilities::class)->liveEditor() ? 'resources/js/admin.js' : 'resources/js/admin-essential.js'])
     <style>
         .editor-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .editor-scroll::-webkit-scrollbar-track { background: transparent; }

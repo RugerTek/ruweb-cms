@@ -7,6 +7,16 @@ description: Reviews changed code against the documented contracts of ruweb-cms 
 
 Reports findings; it does not rewrite code unless the user asks.
 
+## Profile First
+
+Run `php artisan cms:capabilities` and read
+[docs/concepts/admin-profiles.md](../../../docs/concepts/admin-profiles.md) before choosing deliverables.
+`full` requires specialized editors for custom structured fields. In `essential`, omit specialized Live
+Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
+publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
+rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
+role/scope permissions are independent. Essential remains experimental until phase 4.
+
 ## 1. Deterministic Pass
 
 ```bash

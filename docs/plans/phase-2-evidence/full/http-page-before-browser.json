@@ -1,0 +1,38 @@
+{
+  "id": 115,
+  "title": "E2E02 Testimonios",
+  "locale": "es",
+  "translation_group_id": "a3fb15cd-4a5d-4791-8962-1d8435a04c9e",
+  "slug": "phase2-testimonials",
+  "url": "/phase2-testimonials",
+  "template_key": "default",
+  "status": "published",
+  "published_at": "2026-10-10T21:08:02.000000Z",
+  "content_json": {
+    "meta": {
+      "title": "Testimonios SEO"
+    },
+    "sections": {
+      "content": {
+        "body": "<p>Contenido previo</p>",
+        "heading": "Hermano conservado",
+        "is_visible": "1"
+      },
+      "testimonials": {
+        "items": [
+          {
+            "role": "Directora",
+            "quote": "El equipo cumplió cada detalle.",
+            "author": "Ana Torres",
+            "portrait_id": "2"
+          }
+        ],
+        "heading": "Clientes que confían",
+        "is_visible": "1"
+      }
+    }
+  },
+  "featured_image": null,
+  "created_at": "2026-10-10T21:08:02.000000Z",
+  "updated_at": "2026-10-10T21:08:02.000000Z"
+}

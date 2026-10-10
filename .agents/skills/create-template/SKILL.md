@@ -8,6 +8,16 @@ description: Registers a new page template in the ruweb-cms starter — config e
 Read [docs/content/templates.md](../../../docs/content/templates.md) and
 [docs/concepts/content-model.md](../../../docs/concepts/content-model.md).
 
+## Profile First
+
+Run `php artisan cms:capabilities` and read
+[docs/concepts/admin-profiles.md](../../../docs/concepts/admin-profiles.md) before choosing deliverables.
+`full` requires specialized editors for custom structured fields. In `essential`, omit specialized Live
+Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
+publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
+rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
+role/scope permissions are independent. Essential remains experimental until phase 4.
+
 ## Steps
 
 1. **Name the key** (`landing`, `services`) and list its sections in order.
@@ -17,7 +27,7 @@ Read [docs/content/templates.md](../../../docs/content/templates.md) and
 3. **Create `resources/views/templates/{key}.blade.php`**, extending `layouts.public`, reading
    `$page->sections()`, guarding each section with `is_visible` plus a content check, rendering media through
    `<x-responsive-img :media="…">`. No hardcoded copy, no hardcoded asset paths.
-4. **Editor partials** for sections that need more than `heading` + `body`, per
+4. **Full only: editor partials** for sections that need more than `heading` + `body`, per
    [docs/admin/live-editor-ui-ux.md](../../../docs/admin/live-editor-ui-ux.md): one accordion per section,
    visibility switch, repeater rules.
 5. **Seed** a starter page or example content with the matching placeholders

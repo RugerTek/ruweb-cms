@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.47.2 - 2026-10-10
+## 0.48.0 - 2026-10-10
+
+- **Perfiles de administración:** configuración versionada `full`/`essential`, completo por defecto y diagnóstico explícito ante valores inválidos; el perfil esencial continúa experimental sin convertir datos ni permisos.
+- **Descubrimiento común:** comando local y herramienta/endpoint MCP informan perfil, capacidades, esquemas y compatibilidad visual; ambos perfiles conservan el mismo catálogo y autorización por identidad/scope.
+- **Entrega según perfil:** AGENTS, skills y convenciones exigen editores especializados sólo en completo; rutas, enlaces y assets distinguen el editor de los controles operativos compartidos.
+- **Aceptación de fase 2:** dos agentes reales construyeron la misma sección en copias full/essential; MySQL, formularios HTTP, navegador, publicación, medios, caches y transiciones sin pérdida quedan documentados con fixture determinista y regresiones acumuladas.
+
+## 0.47.2 - 2026-10-10 (59716ab)
 
 - **Operaciones de páginas compartidas:** panel, REST y MCP delegan guardado y publicación en un servicio con validación común, identidad explícita, permisos, bloqueo y transacciones; se conservan parches y propuestas editoriales existentes.
 - **Autoría y reintentos:** la sesión no reemplaza al actor de la operación en historial/revisiones, y un rollback no elimina el registro de un reintento confirmado; se cubren conflictos, slugs por idioma y rechazos sin mutación.

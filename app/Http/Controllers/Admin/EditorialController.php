@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\User;
 use App\Services\Content\ContentEditLock;
 use App\Services\Editorial\EditorialHistory;
+use App\Support\AdminCapabilities;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,7 @@ class EditorialController extends Controller
         abort_if($request->user()->isEditor() && $model->status === 'published', 403, __('editorial.publish_forbidden'));
         $this->history->restore($model, $version);
 
-        return redirect()->route("admin.$type.edit", $id)->with('success', __('editorial.restored'));
+        return redirect(app(AdminCapabilities::class)->contentUrl($model))->with('success', __('editorial.restored'));
     }
 
     public function draft(Request $request, string $type, int $id)

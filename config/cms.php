@@ -4,6 +4,9 @@ use App\Models\ContactSubmission;
 use App\Models\Post;
 
 return [
+    // Versioned deployment choice. No database setting or environment override.
+    'admin_profile' => 'full',
+
     // Application version. Single source of truth is the VERSION file at the
     // repository root, bumped together with CHANGELOG.md (see skills/changelog-version).
     'version' => trim((string) @file_get_contents(base_path('VERSION'))) ?: '0.0.0',

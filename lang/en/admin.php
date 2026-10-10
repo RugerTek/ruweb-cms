@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'profile_editor_unavailable' => 'The visual editor is unavailable in the essential profile.',
     'editor_locked_title' => 'Content is being edited',
     'editor_locked_by' => ':name is editing this content.',
     'editor_locked_help' => 'You can open the editor when they finish. If they closed the window or lost their connection, the lock is released within two minutes.',

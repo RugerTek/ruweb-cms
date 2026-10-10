@@ -123,6 +123,7 @@ class McpServerController extends Controller
     private function resolveHandler(string $name): ?\Closure
     {
         $handlers = [
+            'cms_capabilities' => fn ($req, $args) => $this->mcp->capabilities($this->synth($req)),
             // Pages
             'pages_list' => fn ($req, $args) =>
                 $this->mcp->pagesList($this->synth($req, $args)),

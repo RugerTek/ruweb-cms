@@ -7,6 +7,7 @@ class ToolRegistry
     public static function all(): array
     {
         return [
+            ['name' => 'cms_capabilities', 'description' => 'Discover deployment profile, capabilities, template schemas and editor compatibility. Permissions remain account/scope dependent.', 'inputSchema' => ['type' => 'object', 'properties' => new \stdClass]],
             ...self::pageTools(),
             ...self::postTools(),
             ...self::mediaTools(),

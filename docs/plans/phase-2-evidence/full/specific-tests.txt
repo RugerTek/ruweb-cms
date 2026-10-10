@@ -1,0 +1,9 @@
+
+   PASS  Tests\Feature\DefaultTestimonialsTest
+  ✓ shared save preserves content and renders published testimonials     0.15s
+  ✓ invalid portrait is rejected by shared operations                    0.01s
+  ✓ full editor exposes repeater and square media controls               0.02s
+  ✓ browser empty repeater saves as an empty list                        0.01s
+
+  Tests:    4 passed (25 assertions)
+  Duration: 0.25s

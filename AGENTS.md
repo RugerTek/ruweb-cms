@@ -38,6 +38,18 @@ App at `http://localhost:8000`, admin at `/admin`. The login path is the `admin_
 
 Everything else: [docs/README.md](docs/README.md) maps every doc to the decision it owns.
 
+## Deployment Profile
+
+Before creating pages, templates, sections or collections, run `php artisan cms:capabilities`.
+The versioned `config/cms.php` key `admin_profile` is `full` (default) or `essential`; never store it as a
+setting or add an environment override. Read [docs/concepts/admin-profiles.md](docs/concepts/admin-profiles.md).
+Both profiles require data/schema, renderer, operations/validation, permissions, media ids, publication and
+appropriate tests. Only `full` requires specialized visual editors. In `essential`, do not build a Live
+Editor partial by default. MCP has the same tools in both; roles and credential scopes remain independent.
+Essential is experimental until its operational panel passes phase 4. Verify the destination profile before
+deployment; switching profiles regenerates configuration/routes caches and restarts persistent workers,
+without converting or mutating content.
+
 ## Hard Rules
 
 1. **Editable copy lives in the database, never in Blade.** A user-facing string hardcoded in a template is a

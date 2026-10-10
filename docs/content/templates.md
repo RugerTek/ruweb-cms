@@ -4,6 +4,14 @@
 > [../concepts/content-model.md](../concepts/content-model.md); editor behaviour in
 > [../admin/live-editor-ui-ux.md](../admin/live-editor-ui-ux.md).
 
+## Profile first
+
+Run `php artisan cms:capabilities`; see [../concepts/admin-profiles.md](../concepts/admin-profiles.md).
+Schema, renderer, validation, permissions, publication and media contracts apply in both profiles.
+Specialized section partials and their UI/UX contract are required only in `full`. In `essential`, omit them
+by default and verify data operations plus public rendering. Existing partials may remain for returning to
+full. `cms:check-conventions` enforces missing custom-field editors only in full.
+
 ## Registration
 
 Every template is one entry in `config('cms.templates')`:
@@ -85,7 +93,7 @@ UI, not part of the rendering contract.
 1. Add the key to `sections`.
 2. Add its paths to `schema` with the right flags.
 3. Render it in the template view, guarded by `is_visible`.
-4. Add the editor partial when it needs more than heading + body, following
+4. In `full`, add the editor partial when it needs more than heading + body, following
    [../admin/live-editor-ui-ux.md](../admin/live-editor-ui-ux.md) (one accordion per section, repeater markup,
    visibility control).
 5. Seed placeholder media for any image field.

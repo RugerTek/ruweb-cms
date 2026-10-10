@@ -12,7 +12,7 @@ class AdminBar
     /** @return list<array{label:string,href:string}> */
     public static function createLinks(User $user, string $locale, string $returnUrl): array
     {
-        if (! in_array($user->role, config('cms.roles', []), true)) {
+        if (! app(AdminCapabilities::class)->liveEditor() || ! in_array($user->role, config('cms.roles', []), true)) {
             return [];
         }
 

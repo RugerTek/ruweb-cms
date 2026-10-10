@@ -55,3 +55,11 @@ do not exist and collections the signed-in user's `create` policy denies.
 Creation links carry the exact public URL in `return`. Create screens, the subsequent editor and language
 switches must preserve that origin using same-site return validation. The menu creates content through the
 normal admin flow; the Menus screen remains the owner of navigation items.
+
+## Profile-aware delivery
+
+Discover the deployment with `php artisan cms:capabilities` before implementing a collection.
+[Administration profiles](../concepts/admin-profiles.md) defines the delivery contract. In essential,
+keep models/schema, shared validation and operations, policies, public published queries, media/localization,
+operational listing and tests; specialized editorial forms and Live Editor controls are optional and should
+not be built by default. Full retains the editorial CRUD and UI/UX requirements above.

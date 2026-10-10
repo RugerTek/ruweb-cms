@@ -44,7 +44,7 @@ class McpPhaseZeroTest extends TestCase
     {
         $response = $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'])->assertOk();
         $tools = json_decode($response->getContent())->result->tools;
-        $this->assertCount(22, $tools);
+        $this->assertCount(23, $tools);
         foreach ($tools as $tool) {
             $this->assertIsObject($tool->inputSchema->properties, $tool->name);
         }

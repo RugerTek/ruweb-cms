@@ -9,6 +9,16 @@ Read [docs/content/pages.md](../../../docs/content/pages.md) and
 [docs/concepts/content-model.md](../../../docs/concepts/content-model.md) before writing anything. For a new
 template also read [docs/content/templates.md](../../../docs/content/templates.md).
 
+## Profile First
+
+Run `php artisan cms:capabilities` and read
+[docs/concepts/admin-profiles.md](../../../docs/concepts/admin-profiles.md) before choosing deliverables.
+`full` requires specialized editors for custom structured fields. In `essential`, omit specialized Live
+Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
+publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
+rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
+role/scope permissions are independent. Essential remains experimental until phase 4.
+
 ## Steps
 
 1. **Settle the spec.** Page name, slug (infer from the name when not given), sections and the fields each one
@@ -22,7 +32,7 @@ template also read [docs/content/templates.md](../../../docs/content/templates.m
 5. **Fill every image slot** with the placeholder matching the slot's aspect ratio, resolved by
    `placeholder_key` ([docs/content/images.md](../../../docs/content/images.md)), so the page renders complete
    on a fresh install.
-6. **Add a section editor partial** (`resources/views/admin/pages/sections/{template}_{section}.blade.php`)
+6. **Full only: add a section editor partial** (`resources/views/admin/pages/sections/{template}_{section}.blade.php`)
    for any section needing more than the generic `heading` + `body`, following
    [docs/admin/live-editor-ui-ux.md](../../../docs/admin/live-editor-ui-ux.md).
 7. **Declare every editable path** in the template `schema` with `translatable` / `preserve` / `remap`.

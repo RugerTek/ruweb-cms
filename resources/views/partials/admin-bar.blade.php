@@ -9,7 +9,9 @@
     $editLabel = null;
     $editTitle = null;
 
-    if (request()->routeIs('blog.show') && isset($post)) {
+    if (! app(\App\Support\AdminCapabilities::class)->liveEditor()) {
+        $editHref = null;
+    } elseif (request()->routeIs('blog.show') && isset($post)) {
         $editHref = route('admin.posts.edit', ['post' => $post->id, 'return' => $currentUrl]);
         $editLabel = trans('admin.action_edit', [], $adminLocale) . ' post';
         $editTitle = trans('admin.action_edit', [], $adminLocale) . ' este post';

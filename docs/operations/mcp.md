@@ -71,6 +71,7 @@ Defined in `app/Mcp/ToolRegistry.php`:
 
 | Group | Tools |
 |---|---|
+| Discovery | `cms_capabilities` |
 | Pages | `pages_list`, `pages_get`, `pages_create_draft`, `pages_update_draft`, `pages_publish` |
 | Posts | `posts_list`, `posts_get`, `posts_create_draft`, `posts_update_draft`, `posts_publish` |
 | Media | `media_list`, `media_get`, `media_update_metadata` |
@@ -107,7 +108,7 @@ ID descending as a tie-breaker. This is offset pagination over a stable inventor
 across concurrent inserts/deletes. Both REST and RPC use the explicitly supplied page.
 
 Zero-argument tools must serialize `inputSchema.properties` as an object (`{}`), never an array (`[]`).
-The two tools absent in the initial Codex test both used the invalid array shape; clients must receive valid schemas for all 22 tools.
+The two tools absent in the initial Codex test both used the invalid array shape; phase 0 repaired the original 22 tools. The current catalog has 23 tools, including deployment discovery; every schema must remain valid.
 After a schema change, reconnect the client and open a fresh session to verify its discovered catalog. `template_key` enumerates `config('cms.templates')`, so an agent cannot invent a template.
 
 Setting an image field with no real asset: select the placeholder matching the slot's aspect ratio by its
@@ -150,3 +151,11 @@ defaults listing pagination to 20.
    an `inputSchema` that enumerates valid values wherever a config registry exists.
 3. Add the REST route in `routes/mcp.php` when the operation belongs there too.
 4. Serialize through the existing helpers so both surfaces answer the same shape.
+
+## Deployment discovery
+
+Call `cms_capabilities` (or `GET /mcp/capabilities`) before development work. Its secret-free manifest is
+identical to `php artisan cms:capabilities`: selected profile, rollout stability, schemas, structured block
+support and section visual compatibility. The tool catalog is identical for full and essential, and this
+read is available to read-only and draft-only scopes. Profiles never grant account/credential permissions.
+See [administration profiles](../concepts/admin-profiles.md).

@@ -1,0 +1,332 @@
+diff --git a/app/Http/Requests/Admin/Concerns/ValidatesPageSections.php b/app/Http/Requests/Admin/Concerns/ValidatesPageSections.php
+index e82aee1..5e257ca 100644
+--- a/app/Http/Requests/Admin/Concerns/ValidatesPageSections.php
++++ b/app/Http/Requests/Admin/Concerns/ValidatesPageSections.php
+@@ -15,7 +15,7 @@ protected function prepareForValidation(): void
+         if (! is_array($content)) {
+             return;
+         }
+-        foreach (['sections.features.logos', 'sections.form.subject_options'] as $path) {
++        foreach (['sections.features.logos', 'sections.form.subject_options', 'sections.testimonials.items'] as $path) {
+             if (Arr::has($content, $path) && in_array(data_get($content, $path), ['', null], true)) {
+                 data_set($content, $path, []);
+             }
+diff --git a/config/cms.php b/config/cms.php
+index 5ebb244..c83034c 100644
+--- a/config/cms.php
++++ b/config/cms.php
+@@ -69,7 +69,7 @@
+     'templates' => [
+         'default' => [
+             'name' => 'Default Page',
+-            'sections' => ['content'],
++            'sections' => ['content', 'testimonials'],
+             'schema' => [
+                 'meta.title' => ['type' => 'text', 'translatable' => true],
+                 'meta.description' => ['type' => 'textarea', 'translatable' => true],
+@@ -77,6 +77,12 @@
+                 'sections.content.is_visible' => ['type' => 'boolean', 'preserve' => true],
+                 'sections.content.heading' => ['type' => 'text', 'translatable' => true],
+                 'sections.content.body' => ['type' => 'textarea', 'translatable' => true, 'rich_text' => 'section-body'],
++                'sections.testimonials.is_visible' => ['type' => 'boolean', 'preserve' => true],
++                'sections.testimonials.heading' => ['type' => 'text', 'translatable' => true],
++                'sections.testimonials.items.*.quote' => ['type' => 'textarea', 'translatable' => true],
++                'sections.testimonials.items.*.author' => ['type' => 'text', 'preserve' => true],
++                'sections.testimonials.items.*.role' => ['type' => 'text', 'translatable' => true],
++                'sections.testimonials.items.*.portrait_id' => ['type' => 'media', 'localized_media' => true],
+             ],
+         ],
+         'home' => [
+diff --git a/lang/en/admin.php b/lang/en/admin.php
+index 9d0a69b..bf92ce6 100644
+--- a/lang/en/admin.php
++++ b/lang/en/admin.php
+@@ -1047,4 +1047,14 @@
+     'media_metadata_saved' => 'Texts saved.',
+     'media_metadata_error' => 'Unable to save texts. Your changes are still here.',
+     'media_metadata_invalid' => 'Select active languages and use only alt and title.',
++    'section_testimonials' => 'Testimonials',
++    'testimonial_item' => 'Testimonial :position',
++    'testimonial_quote' => 'Quote',
++    'testimonial_author' => 'Name',
++    'testimonial_role' => 'Role',
++    'testimonial_portrait' => 'Portrait',
++    'testimonial_add' => 'Add testimonial',
++    'testimonial_remove' => 'Remove testimonial',
++    'testimonial_empty' => 'No testimonials yet.',
++    'testimonial_confirm_remove' => 'The testimonial :item will be removed.',
+ ];
+diff --git a/lang/es/admin.php b/lang/es/admin.php
+index f85462d..6b4bee5 100644
+--- a/lang/es/admin.php
++++ b/lang/es/admin.php
+@@ -1047,4 +1047,14 @@
+     'media_metadata_saved' => 'Textos guardados.',
+     'media_metadata_error' => 'No se pudieron guardar los textos. Tus cambios siguen aquí.',
+     'media_metadata_invalid' => 'Selecciona idiomas activos y usa solamente alt y título.',
++    'section_testimonials' => 'Testimonios',
++    'testimonial_item' => 'Testimonio :position',
++    'testimonial_quote' => 'Testimonio',
++    'testimonial_author' => 'Nombre',
++    'testimonial_role' => 'Cargo',
++    'testimonial_portrait' => 'Retrato',
++    'testimonial_add' => 'Añadir testimonio',
++    'testimonial_remove' => 'Eliminar testimonio',
++    'testimonial_empty' => 'Aún no hay testimonios.',
++    'testimonial_confirm_remove' => 'Se eliminará el testimonio :item.',
+ ];
+diff --git a/resources/views/templates/default.blade.php b/resources/views/templates/default.blade.php
+index 2ab5ce4..4f3e61c 100644
+--- a/resources/views/templates/default.blade.php
++++ b/resources/views/templates/default.blade.php
+@@ -19,5 +19,31 @@
+             {!! \App\Support\SectionRichText::render($content['body'], 'section-body') !!}
+         </div>
+     @endif
++    @php
++        $testimonials = $page->sections()['testimonials'] ?? [];
++        $items = collect($testimonials['items'] ?? [])->filter(fn ($item) => filled($item['quote'] ?? null));
++        $portraits = \App\Models\Media::whereIn('id', $items->pluck('portrait_id')->filter())->get()->keyBy('id');
++    @endphp
++    @if(($testimonials['is_visible'] ?? 1) && $items->isNotEmpty())
++        <section class="mt-12" @if($testimonials['heading'] ?? null) aria-labelledby="testimonials-heading" @endif>
++            @if($testimonials['heading'] ?? null)
++                <h2 id="testimonials-heading" class="text-2xl font-semibold mb-6">{!! \App\Support\EditorialTitle::render($testimonials['heading']) !!}</h2>
++            @endif
++            <div class="space-y-6">
++                @foreach($items as $item)
++                    <figure class="rounded-xl border border-gray-200 p-6">
++                        <blockquote class="text-lg text-gray-700 whitespace-pre-line">{{ $item['quote'] }}</blockquote>
++                        <figcaption class="mt-4 flex items-center gap-3">
++                            <x-responsive-img :media="$portraits->get($item['portrait_id'] ?? null)" sizes="64px" alt="" class="h-16 w-16 rounded-full object-cover aspect-square" />
++                            <div>
++                                @if($item['author'] ?? null)<p class="font-semibold">{{ $item['author'] }}</p>@endif
++                                @if($item['role'] ?? null)<p class="text-sm text-gray-600">{{ $item['role'] }}</p>@endif
++                            </div>
++                        </figcaption>
++                    </figure>
++                @endforeach
++            </div>
++        </section>
++    @endif
+ </article>
+ @endsection
+diff --git a/routes/admin.php b/routes/admin.php
+index 003f9bd..c94d853 100644
+--- a/routes/admin.php
++++ b/routes/admin.php
+@@ -74,14 +74,16 @@
+ 
+     Route::resource('pages', PageController::class)
+         ->except(['show'])
+-        ->middlewareFor(['create', 'store', 'edit', 'update'], RequireLiveEditor::class)
+-        ->middlewareFor(['edit', 'update', 'destroy'], ProtectLiveEditor::class);
++        ->middlewareFor(['create', 'store'], RequireLiveEditor::class)
++        ->middlewareFor(['edit', 'update'], [RequireLiveEditor::class, ProtectLiveEditor::class])
++        ->middlewareFor('destroy', ProtectLiveEditor::class);
+     Route::post('pages/{page}/translations/{locale}', [PageController::class, 'translate'])->name('pages.translate')->middleware(RequireLiveEditor::class);
+ 
+     Route::resource('posts', PostController::class)
+         ->except(['show'])
+-        ->middlewareFor(['create', 'store', 'edit', 'update'], RequireLiveEditor::class)
+-        ->middlewareFor(['edit', 'update', 'destroy'], ProtectLiveEditor::class);
++        ->middlewareFor(['create', 'store'], RequireLiveEditor::class)
++        ->middlewareFor(['edit', 'update'], [RequireLiveEditor::class, ProtectLiveEditor::class])
++        ->middlewareFor('destroy', ProtectLiveEditor::class);
+     Route::post('posts/{post}/translations/{locale}', [PostController::class, 'translate'])->name('posts.translate')->middleware(RequireLiveEditor::class);
+ 
+     Route::post('editor-locks/{type}/{id}/heartbeat', [EditorLockController::class, 'heartbeat'])
+diff --git a/resources/views/admin/pages/sections/_testimonial-item.blade.php b/resources/views/admin/pages/sections/_testimonial-item.blade.php
+new file mode 100644
+index 0000000..701205b
+--- /dev/null
++++ b/resources/views/admin/pages/sections/_testimonial-item.blade.php
+@@ -0,0 +1,66 @@
++@php
++    $itemUid = 'testimonial-'.\Illuminate\Support\Str::uuid();
++    $itemLabel = filled($item['author'] ?? null)
++        ? $item['author']
++        : __('admin.testimonial_item', ['position' => is_numeric($index) ? $index + 1 : 1]);
++@endphp
++
++<div class="testimonial-repeater-item rounded-lg border border-white/[0.08] bg-[#141414] overflow-hidden" data-repeater-item>
++    <div class="flex items-center gap-1 px-3 py-2">
++        <button type="button"
++                data-repeater-toggle
++                aria-expanded="false" aria-controls="{{ $itemUid }}-body"
++                class="flex items-center gap-2 min-w-0 flex-1 text-left">
++            <svg data-repeater-icon class="w-4 h-4 shrink-0 text-gray-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
++                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
++            </svg>
++            <span data-repeater-item-label class="text-sm text-gray-300 truncate">{{ $itemLabel }}</span>
++        </button>
++
++        <div class="flex items-center gap-0.5 shrink-0">
++            <button type="button" data-repeater-move-up
++                    title="{{ __('admin.btn_move_up') }}"
++                    aria-label="{{ __('admin.btn_move_up') }}"
++                    class="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded transition-colors disabled:opacity-25 disabled:pointer-events-none">
++                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
++                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
++                </svg>
++            </button>
++            <button type="button" data-repeater-move-down
++                    title="{{ __('admin.btn_move_down') }}"
++                    aria-label="{{ __('admin.btn_move_down') }}"
++                    class="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded transition-colors disabled:opacity-25 disabled:pointer-events-none">
++                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
++                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
++                </svg>
++            </button>
++            <button type="button" data-repeater-remove
++                    title="{{ __('admin.testimonial_remove') }}"
++                    aria-label="{{ __('admin.testimonial_remove') }}"
++                    class="p-1.5 text-red-500/70 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors">
++                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
++                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
++                </svg>
++            </button>
++        </div>
++    </div>
++
++    <div id="{{ $itemUid }}-body" data-repeater-body class="hidden border-t border-white/[0.08] p-3 space-y-3">
++        @foreach(['author', 'role', 'quote'] as $field)
++            <div data-field-wrapper>
++                <label for="{{ $itemUid }}-{{ $field }}" class="block text-xs font-medium text-gray-500 mb-1">{{ __('admin.testimonial_'.$field) }}</label>
++                @if($field === 'quote')
++                    <textarea id="{{ $itemUid }}-{{ $field }}" name="content_json[sections][{{ $sectionKey }}][items][{{ $index }}][{{ $field }}]" rows="4" class="w-full bg-[#1a1a1a] border border-white/10 text-white rounded-md px-3 py-2">{{ $item[$field] ?? '' }}</textarea>
++                @else
++                    <input id="{{ $itemUid }}-{{ $field }}" type="text" @if($field === 'author') data-repeater-label-input @endif name="content_json[sections][{{ $sectionKey }}][items][{{ $index }}][{{ $field }}]" value="{{ $item[$field] ?? '' }}" class="w-full bg-[#1a1a1a] border border-white/10 text-white rounded-md px-3 py-2">
++                @endif
++            </div>
++        @endforeach
++        @include('admin.media._selector', [
++            'name' => "content_json[sections][{$sectionKey}][items][{$index}][portrait_id]",
++            'value' => $item['portrait_id'] ?? null,
++            'label' => __('admin.testimonial_portrait'),
++            'type' => 'image', 'placeholder' => 'square',
++        ])
++    </div>
++</div>
+diff --git a/resources/views/admin/pages/sections/default_testimonials.blade.php b/resources/views/admin/pages/sections/default_testimonials.blade.php
+new file mode 100644
+index 0000000..93833dd
+--- /dev/null
++++ b/resources/views/admin/pages/sections/default_testimonials.blade.php
+@@ -0,0 +1,23 @@
++@php
++    $sectionData = $contentJson['sections'][$sectionKey] ?? [];
++    $items = array_values($sectionData['items'] ?? []);
++@endphp
++@include('admin.partials._editorial-title', [
++    'name' => "content_json[sections][{$sectionKey}][heading]", 'value' => $sectionData['heading'] ?? '',
++])
++<div data-repeater data-repeater-key="items" data-item-label="{{ __('admin.testimonial_item') }}" data-confirm-remove="{{ __('admin.testimonial_confirm_remove') }}" data-confirm-label="{{ __('admin.remove') }}">
++    <input type="hidden" name="content_json[sections][{{ $sectionKey }}][items]" value="" data-empty-repeater>
++    <div data-repeater-list class="space-y-2">
++        @foreach($items as $index => $item)
++            @include('admin.pages.sections._testimonial-item', compact('sectionKey', 'index', 'item'))
++        @endforeach
++    </div>
++    <p data-repeater-empty class="text-xs text-gray-500 {{ count($items) ? 'hidden' : '' }}">{{ __('admin.testimonial_empty') }}</p>
++    <button type="button" data-repeater-add class="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md">
++        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4" /></svg>
++        {{ __('admin.testimonial_add') }}
++    </button>
++    <template data-repeater-template>
++        @include('admin.pages.sections._testimonial-item', ['sectionKey' => $sectionKey, 'index' => '__INDEX__', 'item' => []])
++    </template>
++</div>
+diff --git a/tests/Feature/DefaultTestimonialsTest.php b/tests/Feature/DefaultTestimonialsTest.php
+new file mode 100644
+index 0000000..37a400f
+--- /dev/null
++++ b/tests/Feature/DefaultTestimonialsTest.php
+@@ -0,0 +1,87 @@
++<?php
++
++namespace Tests\Feature;
++
++use App\Models\Media;
++use App\Models\User;
++use App\Services\Pages\PageOperations;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Illuminate\Validation\ValidationException;
++use Tests\TestCase;
++
++class DefaultTestimonialsTest extends TestCase
++{
++    use RefreshDatabase;
++
++    public function test_shared_save_preserves_content_and_renders_published_testimonials(): void
++    {
++        $this->travelTo(now()->startOfDay());
++        $actor = User::factory()->create(['role' => 'admin']);
++        $portrait = Media::create([
++            'filename' => 'square.webp', 'original_filename' => 'square.webp',
++            'mime_type' => 'image/webp', 'extension' => 'webp', 'size' => 100, 'disk' => 'public',
++            'path' => 'placeholders/square.webp', 'width' => 1200, 'height' => 1200,
++            'placeholder_key' => 'square',
++        ]);
++        $operations = app(PageOperations::class);
++        $page = $operations->save($actor, [
++            'title' => 'Our clients', 'slug' => 'our-clients', 'template_key' => 'default',
++            'content_json' => ['sections' => ['content' => ['heading' => 'Existing section', 'body' => 'Keep this content.']]],
++        ], draftOnly: true);
++        $section = [
++            'heading' => 'Clientes que confían', 'is_visible' => true,
++            'items' => [['quote' => 'El equipo cumplió cada detalle.', 'author' => 'Ana Torres', 'role' => 'Directora', 'portrait_id' => $portrait->id]],
++        ];
++        $page = $operations->save($actor, ['content_json' => ['sections' => ['testimonials' => $section]]], $page, draftOnly: true);
++        $this->assertSame($section, $page->fresh()->sections()['testimonials']);
++        $this->assertSame('Keep this content.', $page->sections()['content']['body']);
++        $this->get('/our-clients')->assertNotFound();
++        $page = $operations->publish($actor, $page);
++        $this->get('/our-clients')->assertOk()->assertSee('Clientes que confían')->assertSee('El equipo cumplió cada detalle.')->assertSee('Ana Torres')->assertSee('Directora')->assertSee($portrait->url(), false)->assertSee('Existing section');
++
++        $page->update(['published_at' => now()->addDay()]);
++        $this->get('/our-clients')->assertNotFound();
++        $page->update(['published_at' => now(), 'content_json' => ['sections' => ['testimonials' => $section]]]);
++        $content = $page->content_json;
++        $content['sections']['testimonials']['is_visible'] = false;
++        $page->update(['content_json' => $content]);
++        $this->get('/our-clients')->assertOk()->assertDontSee('El equipo cumplió cada detalle.');
++        $content['sections']['testimonials']['is_visible'] = true;
++        $content['sections']['testimonials']['items'] = [];
++        $page->update(['content_json' => $content]);
++        $this->get('/our-clients')->assertOk()->assertDontSee('Clientes que confían');
++    }
++
++    public function test_invalid_portrait_is_rejected_by_shared_operations(): void
++    {
++        $this->expectException(ValidationException::class);
++        app(PageOperations::class)->save(User::factory()->create(['role' => 'admin']), [
++            'title' => 'Invalid', 'slug' => 'invalid', 'template_key' => 'default',
++            'content_json' => ['sections' => ['testimonials' => ['items' => [['quote' => 'Quote', 'portrait_id' => 999999]]]]],
++        ], draftOnly: true);
++    }
++
++    public function test_full_editor_exposes_repeater_and_square_media_controls(): void
++    {
++        $actor = User::factory()->create(['role' => 'admin']);
++        $page = app(PageOperations::class)->save($actor, ['title' => 'Editor', 'slug' => 'editor', 'template_key' => 'default'], draftOnly: true);
++        $this->actingAs($actor)->get(route('admin.pages.edit', $page))->assertOk()
++            ->assertSee('data-repeater-key="items"', false)
++            ->assertSee('data-repeater-toggle', false)
++            ->assertSee('data-repeater-remove', false)
++            ->assertSee('data-repeater-move-up', false)
++            ->assertSee('[portrait_id]', false)
++            ->assertSee('aspect-ratio: 1/1', false)
++            ->assertSee('content_json[sections][testimonials][is_visible]', false);
++    }
++
++    public function test_browser_empty_repeater_saves_as_an_empty_list(): void
++    {
++        $actor = User::factory()->create(['role' => 'admin']);
++        $page = app(PageOperations::class)->save($actor, [
++            'title' => 'Empty', 'slug' => 'empty', 'template_key' => 'default', 'status' => 'draft',
++            'content_json' => ['sections' => ['testimonials' => ['items' => '']]],
++        ]);
++        $this->assertSame([], $page->sections()['testimonials']['items']);
++    }
++}

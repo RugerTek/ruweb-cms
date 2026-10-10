@@ -6,12 +6,14 @@
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
     <h1 class="text-lg font-semibold text-white">{{ __('admin.posts') }}</h1>
 
-    <a href="{{ route('admin.posts.create') }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
+    @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
+<a href="{{ route('admin.posts.create') }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
         {{ __('admin.new_post') }}
     </a>
+@endif
 </div>
 
 <div class="flex gap-1 mb-6 border-b border-white/[0.06]">
@@ -54,9 +56,11 @@
         </svg>
         <p class="text-sm font-medium text-gray-500">{{ __('admin.no_posts_yet') }}</p>
         <p class="text-sm text-gray-600 mt-1">{{ __('admin.no_posts_hint') }}</p>
-        <a href="{{ route('admin.posts.create') }}" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
+        @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
+<a href="{{ route('admin.posts.create') }}" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
             {{ __('admin.new_post') }}
         </a>
+@endif
     </div>
 @else
     <div class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl overflow-hidden">
@@ -74,7 +78,7 @@
                 @foreach ($posts as $post)
                     <tr class="hover:bg-white/[0.02] transition-colors">
                         <td class="px-4 py-3">
-                            <a href="{{ route('admin.posts.edit', $post) }}" class="text-sm text-white hover:text-sky-400 transition-colors">
+                            <a href="{{ app(\App\Support\AdminCapabilities::class)->contentUrl($post) }}" class="text-sm text-white hover:text-sky-400 transition-colors">
                                 {{ $post->title }}
                             </a>
                         </td>
@@ -92,7 +96,7 @@
                                             : ($state === 'missing' ? 'bg-white/[0.04] text-gray-600' : 'bg-yellow-500/10 text-yellow-400');
                                     @endphp
                                     @if($translation)
-                                        <a href="{{ route('admin.posts.edit', $translation) }}"
+                                        <a href="{{ app(\App\Support\AdminCapabilities::class)->contentUrl($translation) }}"
                                            title="{{ __('admin.edit_translation', ['lang' => $locale->name]) }}"
                                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors hover:ring-1 hover:ring-white/20 {{ $badgeColor }}">
                                             {{ strtoupper($locale->code) }}
@@ -126,7 +130,7 @@
                                         </svg>
                                     </a>
                                 @endif
-                                <a href="{{ route('admin.posts.edit', $post) }}" class="text-gray-600 hover:text-gray-400 transition-colors" title="{{ __('admin.action_edit') }}">
+                                <a href="{{ app(\App\Support\AdminCapabilities::class)->contentUrl($post) }}" class="text-gray-600 hover:text-gray-400 transition-colors" title="{{ __('admin.action_edit') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>

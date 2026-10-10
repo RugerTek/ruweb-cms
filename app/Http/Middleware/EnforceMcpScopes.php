@@ -6,19 +6,21 @@ use App\Models\Page;
 use App\Models\Post;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnforceMcpScopes
 {
-    private const READ = ['pages_list', 'pages_get', 'posts_list', 'posts_get', 'media_list', 'media_get', 'settings_list', 'settings_get', 'menus_list', 'menus_get'];
+    private const READ = ['cms_capabilities', 'pages_list', 'pages_get', 'posts_list', 'posts_get', 'media_list', 'media_get', 'settings_list', 'settings_get', 'menus_list', 'menus_get'];
 
     private const DRAFT = ['pages_create_draft', 'pages_update_draft', 'posts_create_draft', 'posts_update_draft'];
 
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->attributes->get('mcp_scope') === 'draft-only') {
-            return \Illuminate\Support\Facades\DB::transaction(fn () => $this->authorizeScope($request, $next), 3);
+            return DB::transaction(fn () => $this->authorizeScope($request, $next), 3);
         }
+
         return $this->authorizeScope($request, $next);
     }
 

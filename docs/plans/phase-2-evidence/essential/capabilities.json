@@ -1,0 +1,361 @@
+{
+    "admin_profile": "essential",
+    "stability": "experimental",
+    "capabilities": {
+        "public_site": true,
+        "mcp": true,
+        "identity": true,
+        "live_editor": false,
+        "specialized_editor_delivery": false
+    },
+    "authorization": "Independent of profile: account role and credential scope apply to every operation.",
+    "block_formats": [
+        "structured"
+    ],
+    "templates": {
+        "default": {
+            "sections": {
+                "content": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                },
+                "testimonials": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                }
+            },
+            "schema": {
+                "meta.title": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "meta.description": {
+                    "type": "textarea",
+                    "translatable": true
+                },
+                "meta.featured_image": {
+                    "type": "media",
+                    "localized_media": true
+                },
+                "sections.content.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.content.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.content.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "section-body"
+                },
+                "sections.testimonials.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.testimonials.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.testimonials.items.*.quote": {
+                    "type": "textarea",
+                    "translatable": true
+                },
+                "sections.testimonials.items.*.author": {
+                    "type": "text",
+                    "preserve": true
+                },
+                "sections.testimonials.items.*.role": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.testimonials.items.*.portrait_id": {
+                    "type": "media",
+                    "localized_media": true
+                }
+            }
+        },
+        "home": {
+            "sections": {
+                "hero": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                },
+                "features": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                },
+                "cta": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                }
+            },
+            "schema": {
+                "meta.title": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "meta.description": {
+                    "type": "textarea",
+                    "translatable": true
+                },
+                "meta.featured_image": {
+                    "type": "media",
+                    "localized_media": true
+                },
+                "sections.hero.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.hero.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.hero.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "short-description"
+                },
+                "sections.hero.image_id": {
+                    "type": "media",
+                    "localized_media": true
+                },
+                "sections.features.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.features.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.features.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "section-body"
+                },
+                "sections.features.logos.*.image_id": {
+                    "type": "media",
+                    "localized_media": true
+                },
+                "sections.features.logos.*.label": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.cta.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.cta.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.cta.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "short-description"
+                },
+                "sections.cta.button_label": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.cta.button_page": {
+                    "type": "page_reference",
+                    "preserve": true
+                },
+                "sections.cta.button_url": {
+                    "type": "url",
+                    "preserve": true
+                },
+                "sections.cta.button_new_tab": {
+                    "type": "boolean",
+                    "preserve": true
+                }
+            }
+        },
+        "home-alt": {
+            "sections": {
+                "hero": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                },
+                "features": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                },
+                "cta": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                }
+            },
+            "schema": {
+                "meta.title": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "meta.description": {
+                    "type": "textarea",
+                    "translatable": true
+                },
+                "meta.featured_image": {
+                    "type": "media",
+                    "localized_media": true
+                },
+                "sections.hero.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.hero.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.hero.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "short-description"
+                },
+                "sections.hero.image_id": {
+                    "type": "media",
+                    "localized_media": true
+                },
+                "sections.features.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.features.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.features.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "section-body"
+                },
+                "sections.cta.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.cta.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.cta.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "short-description"
+                },
+                "sections.cta.button_label": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.cta.button_page": {
+                    "type": "page_reference",
+                    "preserve": true
+                },
+                "sections.cta.button_url": {
+                    "type": "url",
+                    "preserve": true
+                },
+                "sections.cta.button_new_tab": {
+                    "type": "boolean",
+                    "preserve": true
+                }
+            }
+        },
+        "contact": {
+            "sections": {
+                "intro": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                },
+                "form": {
+                    "specialized_editor_required": false,
+                    "visual_editor_available": false
+                }
+            },
+            "schema": {
+                "meta.title": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "meta.description": {
+                    "type": "textarea",
+                    "translatable": true
+                },
+                "meta.featured_image": {
+                    "type": "media",
+                    "localized_media": true
+                },
+                "sections.intro.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.intro.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.intro.body": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "short-description"
+                },
+                "sections.form.is_visible": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.form.heading": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.labels.name": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.labels.email": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.labels.phone": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.labels.subject": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.labels.message": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.button_label": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.success_message": {
+                    "type": "textarea",
+                    "translatable": true,
+                    "rich_text": "short-description"
+                },
+                "sections.form.subject_options.*.label": {
+                    "type": "text",
+                    "translatable": true
+                },
+                "sections.form.notify_enabled": {
+                    "type": "boolean",
+                    "preserve": true
+                },
+                "sections.form.notify_email": {
+                    "type": "text",
+                    "preserve": true
+                }
+            }
+        }
+    },
+    "content_rules": [
+        "media_by_id",
+        "root_relative_internal_urls",
+        "published_only_public_queries",
+        "forms_defined_in_code"
+    ],
+    "profile_guide": "docs\/concepts\/admin-profiles.md"
+}

@@ -1,0 +1,188 @@
+diff --git a/config/cms.php b/config/cms.php
+index 53e6ac3..de3fa6c 100644
+--- a/config/cms.php
++++ b/config/cms.php
+@@ -69,7 +69,7 @@
+     'templates' => [
+         'default' => [
+             'name' => 'Default Page',
+-            'sections' => ['content'],
++            'sections' => ['content', 'testimonials'],
+             'schema' => [
+                 'meta.title' => ['type' => 'text', 'translatable' => true],
+                 'meta.description' => ['type' => 'textarea', 'translatable' => true],
+@@ -77,6 +77,12 @@
+                 'sections.content.is_visible' => ['type' => 'boolean', 'preserve' => true],
+                 'sections.content.heading' => ['type' => 'text', 'translatable' => true],
+                 'sections.content.body' => ['type' => 'textarea', 'translatable' => true, 'rich_text' => 'section-body'],
++                'sections.testimonials.is_visible' => ['type' => 'boolean', 'preserve' => true],
++                'sections.testimonials.heading' => ['type' => 'text', 'translatable' => true],
++                'sections.testimonials.items.*.quote' => ['type' => 'textarea', 'translatable' => true],
++                'sections.testimonials.items.*.author' => ['type' => 'text', 'preserve' => true],
++                'sections.testimonials.items.*.role' => ['type' => 'text', 'translatable' => true],
++                'sections.testimonials.items.*.portrait_id' => ['type' => 'media', 'localized_media' => true],
+             ],
+         ],
+         'home' => [
+diff --git a/lang/en/admin.php b/lang/en/admin.php
+index 9d0a69b..6efc53e 100644
+--- a/lang/en/admin.php
++++ b/lang/en/admin.php
+@@ -962,6 +962,7 @@
+     'template_home' => 'Homepage',
+     'template_home-alt' => 'Alternate homepage',
+     'template_contact' => 'Contact',
++    'section_testimonials' => 'Testimonials',
+     'section_content' => 'Content',
+     'section_hero' => 'Hero',
+     'section_features' => 'Features',
+diff --git a/lang/es/admin.php b/lang/es/admin.php
+index f85462d..49fc745 100644
+--- a/lang/es/admin.php
++++ b/lang/es/admin.php
+@@ -962,6 +962,7 @@
+     'template_home' => 'Inicio',
+     'template_home-alt' => 'Inicio alternativo',
+     'template_contact' => 'Contacto',
++    'section_testimonials' => 'Testimonios',
+     'section_content' => 'Contenido',
+     'section_hero' => 'Portada',
+     'section_features' => 'Presentación',
+diff --git a/resources/views/templates/default.blade.php b/resources/views/templates/default.blade.php
+index 2ab5ce4..6e9913f 100644
+--- a/resources/views/templates/default.blade.php
++++ b/resources/views/templates/default.blade.php
+@@ -19,5 +19,37 @@
+             {!! \App\Support\SectionRichText::render($content['body'], 'section-body') !!}
+         </div>
+     @endif
++    @php
++        $testimonials = $page->sections()['testimonials'] ?? [];
++        $testimonialItems = collect($testimonials['items'] ?? [])
++            ->filter(fn ($item) => is_array($item) && filled($item['quote'] ?? null));
++        $portraits = \App\Models\Media::whereIn('id', $testimonialItems->pluck('portrait_id')->filter())->get()->keyBy('id');
++    @endphp
++
++    @if(($testimonials['is_visible'] ?? 1) && $testimonialItems->isNotEmpty())
++        <section class="mt-12" data-section="testimonials">
++            @if($testimonials['heading'] ?? null)
++                <h2 class="text-2xl font-semibold text-gray-900 mb-6">{{ $testimonials['heading'] }}</h2>
++            @endif
++            <div class="grid gap-6 sm:grid-cols-2">
++                @foreach($testimonialItems as $item)
++                    <figure class="rounded-xl border border-gray-200 p-6">
++                        <blockquote class="text-lg text-gray-700">{{ $item['quote'] }}</blockquote>
++                        <figcaption class="mt-4 flex items-center gap-3">
++                            <x-responsive-img :media="$portraits->get($item['portrait_id'] ?? null)" sizes="64px" :alt="$item['author'] ?? ''" class="h-16 w-16 rounded-full object-cover aspect-square" />
++                            <div>
++                                @if($item['author'] ?? null)
++                                    <p class="font-semibold text-gray-900">{{ $item['author'] }}</p>
++                                @endif
++                                @if($item['role'] ?? null)
++                                    <p class="text-sm text-gray-600">{{ $item['role'] }}</p>
++                                @endif
++                            </div>
++                        </figcaption>
++                    </figure>
++                @endforeach
++            </div>
++        </section>
++    @endif
+ </article>
+ @endsection
+diff --git a/tests/Feature/DefaultTestimonialsTest.php b/tests/Feature/DefaultTestimonialsTest.php
+new file mode 100644
+index 0000000..b9e3c97
+--- /dev/null
++++ b/tests/Feature/DefaultTestimonialsTest.php
+@@ -0,0 +1,90 @@
++<?php
++
++namespace Tests\Feature;
++
++use App\Models\Media;
++use App\Models\User;
++use App\Services\Pages\PageOperations;
++use Database\Seeders\PlaceholderMediaSeeder;
++use Illuminate\Auth\Access\AuthorizationException;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Illuminate\Support\Facades\Storage;
++use Illuminate\Validation\ValidationException;
++use Tests\TestCase;
++
++class DefaultTestimonialsTest extends TestCase
++{
++    use RefreshDatabase;
++
++    public function test_shared_operations_save_testimonials_and_render_square_placeholder_only_when_published(): void
++    {
++        $this->withoutVite();
++        $this->travelTo(now()->startOfDay());
++        Storage::fake('public');
++        $this->seed(PlaceholderMediaSeeder::class);
++        $portrait = Media::where('placeholder_key', 'square')->sole();
++        $this->assertSame($portrait->width, $portrait->height);
++
++        $actor = User::factory()->create(['role' => 'admin']);
++        $operations = app(PageOperations::class);
++        $page = $operations->save($actor, [
++            'title' => 'Clientes', 'slug' => 'clientes-testimonios', 'template_key' => 'default',
++            'content_json' => ['sections' => ['content' => ['heading' => 'Contenido existente', 'body' => 'Conservar este texto.']]],
++        ], draftOnly: true);
++        $testimonials = [
++            'heading' => 'Clientes que confían', 'is_visible' => true,
++            'items' => [['quote' => 'El equipo cumplió cada detalle.', 'author' => 'Ana Torres', 'role' => 'Directora', 'portrait_id' => $portrait->id]],
++        ];
++        $page = $operations->save($actor, ['content_json' => ['sections' => ['testimonials' => $testimonials]]], $page, draftOnly: true);
++        $this->assertSame($testimonials, $page->sections()['testimonials']);
++        $this->assertSame('Conservar este texto.', $page->sections()['content']['body']);
++        $this->get('/clientes-testimonios')->assertNotFound();
++
++        $page = $operations->publish($actor, $page);
++        $this->get('/clientes-testimonios')->assertOk()
++            ->assertSee('Contenido existente')->assertSee('Conservar este texto.')
++            ->assertSee('Clientes que confían')->assertSee('El equipo cumplió cada detalle.')
++            ->assertSee('Ana Torres')->assertSee('Directora')->assertSee($portrait->url, false)
++            ->assertSee('aspect-square', false);
++
++        $page->update(['published_at' => now()->addDay()]);
++        $this->get('/clientes-testimonios')->assertNotFound();
++        $page->update(['published_at' => now()->subMinute()]);
++        $page->update(['content_json' => ['sections' => ['testimonials' => array_replace($testimonials, ['is_visible' => false])]]]);
++        $this->get('/clientes-testimonios')->assertOk()->assertDontSee('Clientes que confían');
++        $page->update(['content_json' => ['sections' => ['testimonials' => array_replace($testimonials, ['items' => []])]]]);
++        $this->get('/clientes-testimonios')->assertOk()->assertDontSee('data-section="testimonials"', false);
++        $page->update(['content_json' => []]);
++        $this->get('/clientes-testimonios')->assertOk()->assertDontSee('data-section="testimonials"', false);
++    }
++
++    public function test_testimonial_media_and_repeaters_are_validated_by_shared_operations(): void
++    {
++        $actor = User::factory()->create(['role' => 'admin']);
++        foreach ([['items' => 'invalid'], ['items' => [['portrait_id' => 999999]]], ['is_visible' => 'invalid']] as $invalid) {
++            try {
++                app(PageOperations::class)->save($actor, [
++                    'title' => 'Invalid', 'slug' => 'invalid', 'template_key' => 'default',
++                    'content_json' => ['sections' => ['testimonials' => $invalid]],
++                ], draftOnly: true);
++                $this->fail('Invalid testimonial content must fail.');
++            } catch (ValidationException $exception) {
++                $this->assertNotEmpty($exception->errors());
++                $this->assertDatabaseCount('pages', 0);
++            }
++        }
++    }
++
++    public function test_editor_can_save_testimonials_but_cannot_publish(): void
++    {
++        $actor = User::factory()->create(['role' => 'editor']);
++        $operations = app(PageOperations::class);
++        $page = $operations->save($actor, [
++            'title' => 'Draft', 'slug' => 'draft-testimonials', 'template_key' => 'default',
++            'content_json' => ['sections' => ['testimonials' => ['heading' => 'Clientes que confían', 'items' => []]]],
++        ], draftOnly: true);
++        $this->assertSame('draft', $page->status);
++        $this->expectException(AuthorizationException::class);
++        $operations->publish($actor, $page);
++    }
++}

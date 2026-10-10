@@ -21,13 +21,10 @@
                 $sectionRegistry[$sectionKey]['templates'][] = $templateKey;
             }
 
-            if ($sectionRegistry[$sectionKey]['partialView'] === null) {
-                $candidatePath = resource_path("views/admin/pages/sections/{$templateKey}_{$sectionKey}.blade.php");
-                if (file_exists($candidatePath)) {
-                    $sectionRegistry[$sectionKey]['partialView'] = "admin.pages.sections.{$templateKey}_{$sectionKey}";
-                    $sectionRegistry[$sectionKey]['partialSourceTemplate'] = $templateKey;
-                }
-            }
+            $partial = app(\App\Support\AdminCapabilities::class)->sectionEditor($sectionKey);
+            $sectionRegistry[$sectionKey]['partialView'] = $partial;
+            $sectionRegistry[$sectionKey]['partialSourceTemplate'] = $partial ? substr(explode('.', $partial)[3], 0, -strlen('_'.$sectionKey)) : null;
+
         }
     }
 

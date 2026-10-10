@@ -18,7 +18,7 @@
             <p class="text-sm text-gray-500 mt-1">{{ __('editorial.history_hint') }}</p>
         </div>
         <nav aria-label="{{ __('editorial.history') }}" class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.'.$model->getTable().'.edit', $model) }}" class="{{ $secondaryButton }}">&larr; {{ __('editorial.back') }}</a>
+            <a href="{{ (app(\App\Support\AdminCapabilities::class)->liveEditor() ? app(\App\Support\AdminCapabilities::class)->contentUrl($model) : route('admin.'.$model->getTable().'.index')) }}" class="{{ $secondaryButton }}">&larr; {{ __('editorial.back') }}</a>
             <a href="{{ route('admin.editorial.calendar') }}" class="{{ $secondaryButton }}">{{ __('editorial.calendar') }}</a>
         </nav>
     </header>

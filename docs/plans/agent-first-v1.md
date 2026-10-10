@@ -1,10 +1,10 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0 y 1 implementadas y aceptadas con sus gates E2E. Fases 2–11 autorizadas, sin iniciar.
+**Estado:** fases 0–2 implementadas y aceptadas con sus gates E2E. Fases 3–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 7 — cierre de fase 1 con operaciones compartidas y E2E-01.
+**Revisión:** 8 — cierre de fase 2 con perfiles, descubrimiento y E2E-02.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
-**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
+**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)) y perfiles de fase 2 ([resultados](phase-2-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
 ## 1. Objetivo y valor del producto
 
@@ -63,7 +63,7 @@ Documentos base: [arquitectura](../concepts/architecture.md), [MCP](../operation
 
 ## 4. Perfiles propuestos
 
-Los nombres técnicos siguientes son propuestas, no configuración implementada.
+Los perfiles `full` y `essential` están implementados desde fase 2; essential sigue experimental hasta el cierre de fase 4. Las capacidades posteriores de esta tabla conservan su fase de entrega.
 
 | Capacidad | `full` — Completo | `essential` — Esencial |
 |---|---|---|
@@ -353,9 +353,9 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Implementar perfil central `full`/`essential`, predeterminado `full`, consulta local y descubrimiento MCP.
-- [ ] Introducir capacidades coherentes para rutas, enlaces y assets; esencial aún no se anuncia estable.
-- [ ] Adaptar AGENTS, skills y convenciones para que no exijan controles visuales en esencial.
+- [x] Implementar perfil central `full`/`essential`, predeterminado `full`, consulta local y descubrimiento MCP.
+- [x] Introducir capacidades coherentes para rutas, enlaces y assets; esencial aún no se anuncia estable.
+- [x] Adaptar AGENTS, skills y convenciones para que no exijan controles visuales en esencial.
 
 **E2E-02 — La misma solicitud produce los entregables correctos**
 
@@ -645,7 +645,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La autorización global habilita comenzar fase 2 tras este cierre; no requiere una nueva confirmación por fase.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La autorización global habilita comenzar fase 3 tras este cierre; no requiere una nueva confirmación por fase.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

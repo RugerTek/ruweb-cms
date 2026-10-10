@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 // JSON-RPC 2.0 MCP server endpoint
 Route::post('/rpc', [McpServerController::class, 'handle']);
 
+Route::get('/capabilities', [McpController::class, 'capabilities']);
+
 Route::get('/pages', [McpController::class, 'pagesList']);
 Route::get('/pages/{page}', [McpController::class, 'pagesGet']);
 Route::post('/pages/drafts', [McpController::class, 'pagesCreateDraft']);

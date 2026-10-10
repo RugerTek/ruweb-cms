@@ -13,6 +13,7 @@ use App\Models\Setting;
 use App\Models\Taxonomy;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Pages\PageOperations;
+use App\Support\AdminCapabilities;
 use App\Support\SiteUrl;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +25,13 @@ use Illuminate\Validation\Rule;
 
 class McpController extends Controller
 {
+    public function capabilities(Request $request): JsonResponse
+    {
+        $this->authorizeCmsEditor($request);
+
+        return response()->json(['data' => app(AdminCapabilities::class)->discovery()]);
+    }
+
     public function pagesList(Request $request): JsonResponse
     {
         $this->authorizeCmsEditor($request);

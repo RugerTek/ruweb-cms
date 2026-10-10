@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'profile_editor_unavailable' => 'El editor visual no está disponible en el perfil esencial.',
     'editor_locked_title' => 'Contenido en edición',
     'editor_locked_by' => ':name está editando este contenido.',
     'editor_locked_help' => 'Podrás abrir el editor cuando termine. Si cerró la ventana o perdió la conexión, el bloqueo se libera en un máximo de dos minutos.',

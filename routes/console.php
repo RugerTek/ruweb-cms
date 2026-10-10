@@ -1,7 +1,11 @@
 <?php
 
+use App\Models\Page;
+use App\Models\Post;
+use App\Support\AdminCapabilities;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -14,10 +18,14 @@ Schedule::command('snapshot:prune')->daily();
 
 // Public scope hides expired content immediately; scheduler records the transition.
 Artisan::command('cms:expire-content', function () {
-    foreach ([\App\Models\Page::class, \App\Models\Post::class] as $type) {
+    foreach ([Page::class, Post::class] as $type) {
         $type::where('status', 'published')->whereNotNull('expires_at')->where('expires_at', '<=', now())
             ->eachById(fn ($content) => $content->update(['status' => 'draft']));
     }
-    \Illuminate\Support\Facades\DB::table('editorial_drafts')->where('expires_at', '<=', now())->delete();
+    DB::table('editorial_drafts')->where('expires_at', '<=', now())->delete();
 })->purpose('Expire scheduled content and prune expired recovery drafts');
 Schedule::command('cms:expire-content')->everyMinute()->withoutOverlapping();
+
+Artisan::command('cms:capabilities', function () {
+    $this->line(json_encode(app(AdminCapabilities::class)->discovery(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+})->purpose('Discover deployment profile, capabilities and template contracts without secrets');

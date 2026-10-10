@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Middleware\EnsureAccountSession;
 use App\Http\Middleware\ProtectEditorialMutation;
 use App\Http\Middleware\ProtectLiveEditor;
+use App\Http\Middleware\RequireLiveEditor;
 use Illuminate\Support\Facades\Route;
 
 // Authenticated admin routes
@@ -42,8 +43,8 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         Route::match(['get', 'post', 'delete'], 'draft', [$controller, 'draft'])->name('draft');
         Route::post('restore/{version}', [$controller, 'restore'])->name('restore')->middleware(ProtectEditorialMutation::class);
         Route::post('review', [$controller, 'review'])->name('review');
-        Route::post('review/{review}/comments',[$controller,'comment'])->name('comment');
-        Route::post('review/{review}', [$controller, 'decide'])->name('decide')->middleware(\App\Http\Middleware\ProtectEditorialMutation::class);
+        Route::post('review/{review}/comments', [$controller, 'comment'])->name('comment');
+        Route::post('review/{review}', [$controller, 'decide'])->name('decide')->middleware(ProtectEditorialMutation::class);
         Route::post('approve-field', [$controller, 'approveField'])->name('approve-field')->middleware(ProtectEditorialMutation::class);
         Route::post('share', [$controller, 'share'])->name('share');
         Route::delete('share/{link}', [$controller, 'revoke'])->name('revoke');
@@ -73,18 +74,22 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
 
     Route::resource('pages', PageController::class)
         ->except(['show'])
-        ->middlewareFor(['edit', 'update', 'destroy'], ProtectLiveEditor::class);
-    Route::post('pages/{page}/translations/{locale}', [PageController::class, 'translate'])->name('pages.translate');
+        ->middlewareFor(['create', 'store'], RequireLiveEditor::class)
+        ->middlewareFor(['edit', 'update'], [RequireLiveEditor::class, ProtectLiveEditor::class])
+        ->middlewareFor('destroy', ProtectLiveEditor::class);
+    Route::post('pages/{page}/translations/{locale}', [PageController::class, 'translate'])->name('pages.translate')->middleware(RequireLiveEditor::class);
 
     Route::resource('posts', PostController::class)
         ->except(['show'])
-        ->middlewareFor(['edit', 'update', 'destroy'], ProtectLiveEditor::class);
-    Route::post('posts/{post}/translations/{locale}', [PostController::class, 'translate'])->name('posts.translate');
+        ->middlewareFor(['create', 'store'], RequireLiveEditor::class)
+        ->middlewareFor(['edit', 'update'], [RequireLiveEditor::class, ProtectLiveEditor::class])
+        ->middlewareFor('destroy', ProtectLiveEditor::class);
+    Route::post('posts/{post}/translations/{locale}', [PostController::class, 'translate'])->name('posts.translate')->middleware(RequireLiveEditor::class);
 
     Route::post('editor-locks/{type}/{id}/heartbeat', [EditorLockController::class, 'heartbeat'])
-        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.heartbeat');
+        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.heartbeat')->middleware(RequireLiveEditor::class);
     Route::post('editor-locks/{type}/{id}/release', [EditorLockController::class, 'release'])
-        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.release');
+        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.release')->middleware(RequireLiveEditor::class);
 
     Route::prefix('taxonomies/{type}')->name('taxonomies.')->group(function () {
         Route::get('/', [TaxonomyController::class, 'index'])->name('index');
@@ -100,7 +105,7 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
     Route::post('menus/{menu}/translations/{locale}', [MenuController::class, 'translate'])->name('menus.translate');
     Route::put('menus/{menu}/items', [MenuController::class, 'syncItems'])->name('menus.items.sync');
 
-    Route::post('pages/{page}/preview', [PageController::class, 'previewRender'])->name('pages.preview');
+    Route::post('pages/{page}/preview', [PageController::class, 'previewRender'])->name('pages.preview')->middleware(RequireLiveEditor::class);
 
     // Form submissions (admins and editors). One tab per form in config('cms.forms').
     Route::get('submissions/{form}', [SubmissionController::class, 'index'])->name('submissions.index')->where('form', '[a-z0-9-]+');
@@ -109,7 +114,7 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
     Route::post('submissions/{form}/{submission}/notes', [SubmissionController::class, 'note'])->name('submissions.notes')->where(['form' => '[a-z0-9-]+', 'submission' => '[0-9]+']);
     Route::post('submissions/{form}/{submission}/resend', [SubmissionController::class, 'resend'])->name('submissions.resend')->where(['form' => '[a-z0-9-]+', 'submission' => '[0-9]+']);
     Route::delete('submissions/{form}/{submission}', [SubmissionController::class, 'destroy'])->name('submissions.destroy')->where(['form' => '[a-z0-9-]+', 'submission' => '[0-9]+']);
-    Route::post('posts/{post}/preview', [PostController::class, 'previewRender'])->name('posts.preview');
+    Route::post('posts/{post}/preview', [PostController::class, 'previewRender'])->name('posts.preview')->middleware(RequireLiveEditor::class);
 
     // Settings (admin only)
     Route::middleware('role:admin')->group(function () {

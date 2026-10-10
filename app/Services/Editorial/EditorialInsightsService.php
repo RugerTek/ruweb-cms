@@ -5,6 +5,7 @@ namespace App\Services\Editorial;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Post;
+use App\Support\AdminCapabilities;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -89,9 +90,7 @@ class EditorialInsightsService
             'type' => $type,
             'model' => $record,
             'label' => $record->title,
-            'edit_url' => $type === 'page'
-                ? route('admin.pages.edit', $record)
-                : route('admin.posts.edit', $record),
+            'edit_url' => app(AdminCapabilities::class)->contentUrl($record),
             'type_label' => __('admin.editorial_type_'.$type),
         ];
     }
@@ -233,6 +232,10 @@ class EditorialInsightsService
     private function translationAction(string $type, Model $base, ?Model $translation, string $localeCode, string $state): ?array
     {
         if ($state === 'missing') {
+            if (! app(AdminCapabilities::class)->liveEditor()) {
+                return null;
+            }
+
             return [
                 'kind' => 'create',
                 'method' => 'post',
@@ -253,9 +256,7 @@ class EditorialInsightsService
             'label' => $state === 'outdated'
                 ? __('admin.action_update')
                 : __('admin.action_edit'),
-            'url' => $type === 'page'
-                ? route('admin.pages.edit', $translation)
-                : route('admin.posts.edit', $translation),
+            'url' => app(AdminCapabilities::class)->contentUrl($translation),
         ];
     }
 }

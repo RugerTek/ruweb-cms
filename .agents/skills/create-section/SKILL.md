@@ -6,8 +6,18 @@ description: Adds a new section to an existing page template in ruweb-cms — co
 # Add A Section To An Existing Template
 
 Read the "Adding A Section To An Existing Template" steps in
-[docs/content/templates.md](../../../docs/content/templates.md) and the repeater rules in
-[docs/admin/live-editor-ui-ux.md](../../../docs/admin/live-editor-ui-ux.md).
+[docs/content/templates.md](../../../docs/content/templates.md) ; read repeater UI rules in
+[docs/admin/live-editor-ui-ux.md](../../../docs/admin/live-editor-ui-ux.md) only for full.
+
+## Profile First
+
+Run `php artisan cms:capabilities` and read
+[docs/concepts/admin-profiles.md](../../../docs/concepts/admin-profiles.md) before choosing deliverables.
+`full` requires specialized editors for custom structured fields. In `essential`, omit specialized Live
+Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
+publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
+rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
+role/scope permissions are independent. Essential remains experimental until phase 4.
 
 ## Steps
 
@@ -16,7 +26,7 @@ Read the "Adding A Section To An Existing Template" steps in
 2. **Add the key** to that template's `sections`, in the position it renders.
 3. **Add its paths to `schema`** with the right flags. A repeated item list uses `items.*.field`.
 4. **Render it** in `resources/views/templates/{key}.blade.php`, guarded by `is_visible` and a content check.
-5. **Editor partial** `resources/views/admin/pages/sections/{template}_{section}.blade.php` when it needs more
+5. **Full only: editor partial** `resources/views/admin/pages/sections/{template}_{section}.blade.php` when it needs more
    than `heading` + `body`: one accordion, visibility switch in the header, and for repeaters the markup
    contract (`data-repeater`, item accordions or flat rows for single-field items, confirm-before-delete,
    green add button, reorder controls).

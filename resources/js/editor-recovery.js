@@ -27,19 +27,7 @@ export function chooseRecovery(local,server,now=Date.now()) {
     return candidates.sort((a,b)=>(b.updated_at||0)-(a.updated_at||0))[0]||null;
 }
 
-export async function refreshRecoveryMedia(selector, input, render, fetchItem) {
-    const id=String(input?.value || '');
-    const sequence=Number(selector.dataset.previewSequence || 0)+1;
-    selector.dataset.previewSequence=String(sequence);
-    render(selector,null);
-    if (input) input.value=id;
-    if (!id) return;
-    try {
-        const media=await fetchItem(id);
-        if (selector.dataset.previewSequence!==String(sequence) || String(input.value)!==id) return;
-        render(selector,media); input.value=id;
-    } catch (_) {}
-}
+export { refreshRecoveryMedia } from './media-selection-preview.js';
 
 export function applyRecoveryFields(form, entries) {
     const blocked=new Set(['_token','_method','_editor_lock','_editor_base','status','return']);

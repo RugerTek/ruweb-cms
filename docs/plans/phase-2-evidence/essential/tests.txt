@@ -1,0 +1,8 @@
+
+   PASS  Tests\Feature\DefaultTestimonialsTest
+  ✓ shared operations save testimonials and render square placeholder o… 0.68s
+  ✓ testimonial media and repeaters are validated by shared operations   0.01s
+  ✓ editor can save testimonials but cannot publish                      0.01s
+
+  Tests:    3 passed (28 assertions)
+  Duration: 0.77s

@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    @vite(['resources/js/admin.js'])
+    @vite([app(\App\Support\AdminCapabilities::class)->liveEditor() ? 'resources/js/admin.js' : 'resources/js/admin-essential.js'])
 </head>
 <body class="bg-[#0a0a0a] text-gray-100 min-h-screen flex items-center justify-center login-bg font-sans antialiased">
     <div class="w-full max-w-sm px-6">
