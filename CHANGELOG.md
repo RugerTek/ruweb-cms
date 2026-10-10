@@ -8,6 +8,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
+## 0.47.1 - 2026-10-10
+
+- **Errores de herramientas MCP:** los rechazos HTTP de los controladores se devuelven con `isError: true`, conservando el diagnóstico; se verifica el rechazo de ajustes no permitidos y recursos inexistentes sin mutación.
+- **MCP, correcciones de fase 0:** se corrigen los esquemas de herramientas sin argumentos, la paginación explícita y estable y la identificación de idioma/grupo de traducción; la creación valida idiomas instalados y slugs por idioma.
+- **Edición segura:** los parches de contenido conservan claves omitidas, reemplazan listas y permiten eliminar claves explícitamente; las escrituras se protegen con transacción y bloqueo. Se rechaza editar publicaciones por la herramienta de borradores para evitar despublicaciones accidentales.
+- **Ajustes protegidos y regresiones:** MCP oculta valores de tipo contraseña; se añaden pruebas funcionales y un recorrido HTTP con MySQL aislado para descubrimiento, contenido, permisos, panel, publicación y formularios con cola y correo local.
+
 ## 0.47.0 - 2026-10-10 (f337e7d)
 
 - **Seguridad de cuentas y acceso:** intercambio OAuth atómico y limitado, recuperación sin enumeración, confirmación del nuevo email y revocación de credenciales al cambiar identidad. Se incorporan segundo factor TOTP, códigos de recuperación, gestión de sesiones y claves MCP con nombre, permisos, vencimiento y revocación individual.

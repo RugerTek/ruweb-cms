@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'mcp_draft_required' => 'This operation only accepts drafts. The published version is unchanged; editing a pending version through MCP is not available yet.',
     'no_versions' => 'No saved versions yet.',
     'no_reviews' => 'No review requests yet.',
     'no_links' => 'No active preview links.',

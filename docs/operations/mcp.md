@@ -60,6 +60,11 @@ JSON-RPC 2.0 with `initialize`, `tools/list` and `tools/call`:
 
 Clients discover the tool list through `tools/list` rather than hardcoding it.
 
+A controller response with HTTP status >= 400 becomes a tool result with `isError: true` and retains
+its diagnostic in `content`. The RPC envelope may still use HTTP 200: clients must inspect `error`
+and `result.isError`, not only transport status. Successful controller responses set `isError: false`.
+REST keeps its original HTTP status (for example, 422 for a setting outside the writable allowlist).
+
 ## Tools
 
 Defined in `app/Mcp/ToolRegistry.php`:
@@ -73,7 +78,37 @@ Defined in `app/Mcp/ToolRegistry.php`:
 | Menus | `menus_list`, `menus_get`, `menus_create`, `menus_update`, `menus_sync_items`, `menus_delete` |
 
 Writes create or update **drafts**; publishing is its own call, and republishing keeps the original
-`published_at`. `template_key` enumerates `config('cms.templates')`, so an agent cannot invent a template.
+`published_at`. Updating a published page/post is rejected for every role, including administrators;
+it never silently unpublishes the record. Preparing a separate pending version through MCP is not yet
+available. Draft checking, partial merge, history and media changes run inside a transaction with a row lock.
+
+### Partial content edits
+
+`pages_update_draft.content_json` is a patch, not a full replacement. Omitted map keys survive;
+nonempty objects merge recursively, lists replace in full (including `[]` to clear a list), and `null`
+removes the corresponding key. At the patch root, `{}`/`[]` are a no-op. PHP decodes nested empty
+objects and empty lists identically: use `null` to remove a group, not an empty object. Never send a
+stale full document when changing one field. For example, `{"meta":{"description":"New copy"}}`
+keeps the SEO title and every section. `{"meta":{"description":null}}` removes just the description.
+`posts_update_draft.meta_json` follows the same patch rules; top-level `meta_json: null` clears all SEO.
+Scalar post content is replaced only when explicitly supplied. Concurrent patches serialize under a row
+lock; this does not yet provide optimistic conflict detection for two edits to the same key.
+
+### Locales and pagination
+
+Page/post responses include `locale` and `translation_group_id`. Creation accepts an installed `locale`,
+defaulting to the base language, and slug uniqueness is scoped to that language. A new record creates
+its own translation group; this is not a tool for linking or creating a translation of another record.
+Changing an existing record's locale is not supported by draft update.
+
+`pages_list`, `posts_list` and `media_list` accept `page` (integer >= 1) and `per_page` (1–100).
+Walk through `meta.last_page`; `meta.total` is the full count. Ordering is newest creation first with
+ID descending as a tie-breaker. This is offset pagination over a stable inventory, not a snapshot
+across concurrent inserts/deletes. Both REST and RPC use the explicitly supplied page.
+
+Zero-argument tools must serialize `inputSchema.properties` as an object (`{}`), never an array (`[]`).
+The two tools absent in the initial Codex test both used the invalid array shape; clients must receive valid schemas for all 22 tools.
+After a schema change, reconnect the client and open a fresh session to verify its discovered catalog. `template_key` enumerates `config('cms.templates')`, so an agent cannot invent a template.
 
 Setting an image field with no real asset: select the placeholder matching the slot's aspect ratio by its
 `placeholder_key` instead of inventing a URL or leaving the field empty
@@ -97,6 +132,10 @@ Keep REST and MCP aligned in authentication, authorization, serialization and va
 front doors to one controller layer.
 
 ## Writable Settings Allowlist
+
+Password-type settings are always returned with `value: null` and `redacted: true`, including for
+administrators, through list/get on both REST and RPC. Other settings return `redacted: false`.
+An absent secret value in a response is not evidence that the setting is unconfigured.
 
 `config('cms.mcp.settings_writable_keys')` is enforced, not documentation: today `site_name`,
 `site_description`, `site_favicon`, `admin_login_path`, `contact_phone`, `contact_whatsapp`, `contact_email`,

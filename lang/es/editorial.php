@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'mcp_draft_required' => 'Esta operación solo admite borradores. La publicación se conserva sin cambios; la edición de una versión pendiente por MCP todavía no está disponible.',
     'no_versions' => 'Todavía no hay versiones guardadas.',
     'no_reviews' => 'Todavía no hay solicitudes de revisión.',
     'no_links' => 'No hay enlaces de vista previa activos.',

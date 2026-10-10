@@ -104,6 +104,9 @@ class McpServerController extends Controller
         $response = $handler($request, $arguments);
 
         return [
+            // A valid tool call can fail at the application layer (e.g. 404/422).
+            // Keep the controller's diagnostic and expose failure to MCP clients.
+            'isError' => $response->getStatusCode() >= 400,
             'content' => [
                 [
                     'type' => 'text',

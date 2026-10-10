@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mcp\ContentPatch;
 use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Menu;
@@ -30,9 +31,10 @@ class McpController extends Controller
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', Rule::in(config('cms.statuses'))],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
         ])->validate();
 
-        $query = Page::query()->latest();
+        $query = Page::query()->latest()->orderByDesc('id');
 
         if (! empty($validated['status'])) {
             $query->where('status', $validated['status']);
@@ -42,7 +44,7 @@ class McpController extends Controller
             $query->where('title', 'like', '%'.$validated['search'].'%');
         }
 
-        $pages = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20));
+        $pages = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20), ['*'], 'page', $validated['page'] ?? 1);
 
         return response()->json([
             'data' => $pages->getCollection()->map(fn (Page $page) => $this->serializePage($page))->values(),
@@ -69,8 +71,9 @@ class McpController extends Controller
         $this->authorizeCmsEditor($request);
 
         $validated = Validator::make($request->all(), [
+            'locale' => ['sometimes', 'string', Rule::in(Locale::installedCodes())],
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:pages,slug'],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('pages', 'slug')->where('locale', $request->input('locale', Locale::baseCode()))],
             'template_key' => ['required', 'string', Rule::in(array_keys(config('cms.templates', [])))],
             'content_json' => ['nullable', 'array'],
             'content_json.meta' => ['nullable', 'array'],
@@ -99,42 +102,49 @@ class McpController extends Controller
 
     public function pagesUpdateDraft(Request $request, Page $page): JsonResponse
     {
-        if ($request->user()?->isEditor() && $page->status === 'published') {
-            throw new AuthorizationException(__('editorial.publish_forbidden'));
-        }
-        $this->authorizeCmsEditor($request);
-
-        $validated = Validator::make($request->all(), [
-            'title' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('pages', 'slug')->ignore($page->id)],
-            'template_key' => ['sometimes', 'string', Rule::in(array_keys(config('cms.templates', [])))],
-            'content_json' => ['sometimes', 'array'],
-            'content_json.meta' => ['nullable', 'array'],
-            'content_json.sections' => ['nullable', 'array'],
-            'featured_image' => ['nullable', 'integer', 'exists:media,id'],
-        ])->validate();
-
-        $featuredImageId = $validated['featured_image'] ?? null;
-        $hasFeaturedImage = array_key_exists('featured_image', $validated);
-        unset($validated['featured_image']);
-
-        $validated['status'] = 'draft';
-        $validated['updated_by'] = $request->user()->id;
-
-        $page->update($validated);
-
-        if ($hasFeaturedImage) {
-            $page->media()->wherePivot('collection', 'featured_image')->detach();
-            if ($featuredImageId) {
-                $page->attachMedia($featuredImageId, 'featured_image');
+        return DB::transaction(function () use ($request, $page) {
+            $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+            if ($page->status !== 'draft') {
+                throw new AuthorizationException(__('editorial.mcp_draft_required'));
             }
-        }
+            $this->authorizeCmsEditor($request);
 
-        app(EditorialHistory::class)->capture($page->fresh());
+            $validated = Validator::make($request->all(), [
+                'title' => ['sometimes', 'string', 'max:255'],
+                'slug' => ['sometimes', 'string', 'max:255', Rule::unique('pages', 'slug')->where('locale', $page->locale)->ignore($page->id)],
+                'template_key' => ['sometimes', 'string', Rule::in(array_keys(config('cms.templates', [])))],
+                'content_json' => ['sometimes', 'array'],
+                'content_json.meta' => ['nullable', 'array'],
+                'content_json.sections' => ['nullable', 'array'],
+                'featured_image' => ['nullable', 'integer', 'exists:media,id'],
+            ])->validate();
 
-        return response()->json([
-            'data' => $this->serializePage($page->fresh()),
-        ]);
+            $featuredImageId = $validated['featured_image'] ?? null;
+            $hasFeaturedImage = array_key_exists('featured_image', $validated);
+            unset($validated['featured_image']);
+
+            $validated['status'] = 'draft';
+            $validated['updated_by'] = $request->user()->id;
+
+            if (isset($validated['content_json'])) {
+                $validated['content_json'] = ContentPatch::apply($page->content_json ?? [], $validated['content_json']);
+            }
+
+            $page->update($validated);
+
+            if ($hasFeaturedImage) {
+                $page->media()->wherePivot('collection', 'featured_image')->detach();
+                if ($featuredImageId) {
+                    $page->attachMedia($featuredImageId, 'featured_image');
+                }
+            }
+
+            app(EditorialHistory::class)->capture($page->fresh());
+
+            return response()->json([
+                'data' => $this->serializePage($page->fresh()),
+            ]);
+        }, 3);
     }
 
     public function pagesPublish(Request $request, Page $page): JsonResponse
@@ -163,9 +173,10 @@ class McpController extends Controller
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', Rule::in(config('cms.statuses'))],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
         ])->validate();
 
-        $query = Post::query()->latest();
+        $query = Post::query()->latest()->orderByDesc('id');
 
         if (! empty($validated['status'])) {
             $query->where('status', $validated['status']);
@@ -178,7 +189,7 @@ class McpController extends Controller
             });
         }
 
-        $posts = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20));
+        $posts = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20), ['*'], 'page', $validated['page'] ?? 1);
 
         return response()->json([
             'data' => $posts->getCollection()->map(fn (Post $post) => $this->serializePost($post))->values(),
@@ -205,8 +216,9 @@ class McpController extends Controller
         $this->authorizeForUser($request->user(), 'create', Post::class);
 
         $validated = Validator::make($request->all(), [
+            'locale' => ['sometimes', 'string', Rule::in(Locale::installedCodes())],
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', 'unique:posts,slug'],
+            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('posts', 'slug')->where('locale', $request->input('locale', Locale::baseCode()))],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'string'],
             'featured_image' => ['nullable', 'integer', 'exists:media,id'],
@@ -236,43 +248,50 @@ class McpController extends Controller
 
     public function postsUpdateDraft(Request $request, Post $post): JsonResponse
     {
-        if ($request->user()?->isEditor() && $post->status === 'published') {
-            throw new AuthorizationException(__('editorial.publish_forbidden'));
-        }
-        $this->authorizeForUser($request->user(), 'update', $post);
-
-        $validated = Validator::make($request->all(), [
-            'title' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('posts', 'slug')->ignore($post->id)],
-            'excerpt' => ['sometimes', 'nullable', 'string', 'max:500'],
-            'content' => ['sometimes', 'nullable', 'string'],
-            'featured_image' => ['nullable', 'integer', 'exists:media,id'],
-            'meta_json' => ['sometimes', 'nullable', 'array'],
-            'meta_json.title' => ['nullable', 'string', 'max:255'],
-            'meta_json.description' => ['nullable', 'string', 'max:320'],
-        ])->validate();
-
-        $featuredImageId = $validated['featured_image'] ?? null;
-        $hasFeaturedImage = array_key_exists('featured_image', $validated);
-        unset($validated['featured_image']);
-
-        $validated['status'] = 'draft';
-        $validated['updated_by'] = $request->user()->id;
-
-        $post->update($validated);
-
-        if ($hasFeaturedImage) {
-            $post->media()->wherePivot('collection', 'featured_image')->detach();
-            if ($featuredImageId) {
-                $post->attachMedia($featuredImageId, 'featured_image');
+        return DB::transaction(function () use ($request, $post) {
+            $post = Post::query()->lockForUpdate()->findOrFail($post->id);
+            if ($post->status !== 'draft') {
+                throw new AuthorizationException(__('editorial.mcp_draft_required'));
             }
-        }
+            $this->authorizeForUser($request->user(), 'update', $post);
 
-        app(EditorialHistory::class)->capture($post->fresh());
+            $validated = Validator::make($request->all(), [
+                'title' => ['sometimes', 'string', 'max:255'],
+                'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('posts', 'slug')->where('locale', $post->locale)->ignore($post->id)],
+                'excerpt' => ['sometimes', 'nullable', 'string', 'max:500'],
+                'content' => ['sometimes', 'nullable', 'string'],
+                'featured_image' => ['nullable', 'integer', 'exists:media,id'],
+                'meta_json' => ['sometimes', 'nullable', 'array'],
+                'meta_json.title' => ['nullable', 'string', 'max:255'],
+                'meta_json.description' => ['nullable', 'string', 'max:320'],
+            ])->validate();
 
-        return response()->json([
-            'data' => $this->serializePost($post->fresh()),
-        ]);
+            $featuredImageId = $validated['featured_image'] ?? null;
+            $hasFeaturedImage = array_key_exists('featured_image', $validated);
+            unset($validated['featured_image']);
+
+            $validated['status'] = 'draft';
+            $validated['updated_by'] = $request->user()->id;
+
+            if (isset($validated['meta_json'])) {
+                $validated['meta_json'] = ContentPatch::apply($post->meta_json ?? [], $validated['meta_json']);
+            }
+
+            $post->update($validated);
+
+            if ($hasFeaturedImage) {
+                $post->media()->wherePivot('collection', 'featured_image')->detach();
+                if ($featuredImageId) {
+                    $post->attachMedia($featuredImageId, 'featured_image');
+                }
+            }
+
+            app(EditorialHistory::class)->capture($post->fresh());
+
+            return response()->json([
+                'data' => $this->serializePost($post->fresh()),
+            ]);
+        }, 3);
     }
 
     public function postsPublish(Request $request, Post $post): JsonResponse
@@ -301,10 +320,11 @@ class McpController extends Controller
             'search' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', 'string', Rule::in(['image', 'application'])],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
             'locale' => ['sometimes', 'string', Rule::in($this->mediaLocales())],
         ])->validate();
 
-        $query = Media::query()->with('translations')->latest();
+        $query = Media::query()->with('translations')->latest()->orderByDesc('id');
 
         if (! empty($validated['type'])) {
             $query->where('mime_type', 'like', $validated['type'].'/%');
@@ -321,7 +341,7 @@ class McpController extends Controller
             });
         }
 
-        $media = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20));
+        $media = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20), ['*'], 'page', $validated['page'] ?? 1);
 
         return response()->json([
             'data' => $media->getCollection()->map(fn (Media $item) => $this->serializeMedia($item, $validated['locale'] ?? null))->values(),
@@ -571,6 +591,8 @@ class McpController extends Controller
         return [
             'id' => $page->id,
             'title' => $page->title,
+            'locale' => $page->locale,
+            'translation_group_id' => $page->translation_group_id,
             'slug' => $page->slug,
             'url' => $page->url(),
             'template_key' => $page->template_key,
@@ -588,6 +610,8 @@ class McpController extends Controller
         return [
             'id' => $post->id,
             'title' => $post->title,
+            'locale' => $post->locale,
+            'translation_group_id' => $post->translation_group_id,
             'slug' => $post->slug,
             'url' => $post->url(),
             'excerpt' => $post->excerpt,
@@ -629,7 +653,8 @@ class McpController extends Controller
     {
         return [
             'key' => $setting->key,
-            'value' => Setting::get($setting->key),
+            'value' => $setting->type === 'password' ? null : Setting::get($setting->key),
+            'redacted' => $setting->type === 'password',
             'type' => $setting->type,
             'group' => $setting->group,
         ];
