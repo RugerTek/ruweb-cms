@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\CacheController;
 use App\Http\Controllers\Admin\ClaudeMcpController;
 use App\Http\Controllers\Admin\ContentStatusController;
+use App\Http\Controllers\Admin\CustomCodeController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeveloperToolsController;
 use App\Http\Controllers\Admin\EditorialControlController;
@@ -124,6 +125,11 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
 
     // Settings (admin only)
     Route::middleware('role:admin')->group(function () {
+        Route::post('custom-code/{id}/test-preview', \App\Http\Controllers\Admin\CustomCodePreviewController::class)->whereNumber('id')->name('custom-code.test-preview');
+        Route::resource('custom-code', CustomCodeController::class)->except(['show', 'destroy'])->parameters(['custom-code' => 'id']);
+        Route::post('custom-code/{id}/activate', [CustomCodeController::class, 'activate'])->whereNumber('id')->name('custom-code.activate');
+        Route::post('custom-code/{id}/deactivate', [CustomCodeController::class, 'deactivate'])->whereNumber('id')->name('custom-code.deactivate');
+        Route::post('custom-code/{id}/evaluate', [CustomCodeController::class, 'evaluate'])->whereNumber('id')->name('custom-code.evaluate');
         Route::resource('users', UserController::class)
             ->except(['show']);
 

@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'username', 'email', 'password', 'role'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'can_manage_custom_code'])]
 #[Hidden(['password', 'remember_token', 'mcp_api_key_hash', 'pending_email_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -35,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'two_factor_recovery_codes' => 'encrypted:array',
             'two_factor_confirmed_at' => 'datetime',
             'security_version' => 'integer',
+            'can_manage_custom_code' => 'boolean',
             'password' => 'hashed',
             'mcp_api_key_generated_at' => 'datetime',
             'mcp_api_key_last_used_at' => 'datetime',
@@ -98,6 +99,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function canManageCustomCode(): bool
+    {
+        return $this->isAdmin() && $this->can_manage_custom_code;
     }
 
     public function isEditor(): bool

@@ -63,6 +63,15 @@ return [
             'model' => Post::class,
             'label' => 'admin.content_type_post',
             'create_route' => 'admin.posts.create',
+            'custom_code_public' => true,
+        ],
+    ],
+
+    // Operational kill switch; CLI marker also works with cached config and without the DB.
+    'custom_code' => [
+        'enabled' => env('CMS_CUSTOM_CODE_ENABLED', true),
+        'indexes' => [
+            'blog' => ['label' => 'Blog', 'routes' => ['blog.index', 'localized.blog.index']],
         ],
     ],
 

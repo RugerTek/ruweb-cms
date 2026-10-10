@@ -31,6 +31,7 @@ class PageController extends Controller
             return view('welcome');
         }
 
+        $request->attributes->set('custom_code_target', app(\App\Support\CustomCodeDestinations::class)->forModel($page));
         return view($page->resolveTemplate(), compact('page'));
     }
 
@@ -65,6 +66,7 @@ class PageController extends Controller
 
         abort_if(! $page, 404);
 
+        $request->attributes->set('custom_code_target', app(\App\Support\CustomCodeDestinations::class)->forModel($page));
         return view($page->resolveTemplate(), compact('page'));
     }
 

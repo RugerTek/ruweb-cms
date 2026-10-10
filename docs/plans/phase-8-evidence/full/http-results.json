@@ -1,0 +1,14 @@
+{
+  "passed": [
+    "Discovery: 59 valid schemas; menus/settings callable",
+    "Controller 422/404 become MCP tool errors without changing settings",
+    "Pagination and invalid page-size rejection across all three inventories",
+    "Partial content preserves siblings; lists replace/clear; null removes keys",
+    "Explicit locales, linked translation identity and localized slug uniqueness",
+    "Public page content/SEO and post title/body preserved without session before/after rejected edits",
+    "Published pages/posts unchanged; read-only/draft/editor restrictions; invalid credential",
+    "Admin login/create/public render/SEO/image and MCP-to-panel content parity",
+    "Public form with CSRF/signed token/anti-spam reaches admin inbox"
+  ],
+  "draft_id": 115
+}

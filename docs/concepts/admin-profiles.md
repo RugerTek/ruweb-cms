@@ -12,8 +12,7 @@ catalog is identical in both profiles. Account roles and credential scopes autho
 ## Development delivery
 
 Both profiles require typed content schemas, frontend renderers, reusable operations and validation,
-permissions, publication guards, media by id, placeholders, localization and appropriate tests. Structured blocks, sanitized HTML and registered composition components are supported. Custom Code
-remains governed by a later phase.
+permissions, publication guards, media by id, placeholders, localization and appropriate tests. Structured blocks, sanitized HTML and registered composition components are supported. Custom Code uses the same dedicated operational panel and explicit permission in both profiles.
 
 In `full`, sections with fields beyond `heading`, `body` and `is_visible` require a specialized partial.
 The first existing partial for a shared section key in registry order is reused, exactly as in the Live
@@ -27,8 +26,7 @@ required only in full. Human operational lists and identity/security interfaces 
 ## Current rollout and transition
 
 Essential's operational panel passed [E2E-04](../plans/phase-4-results.md). Both profiles are supported
-for structured content and HTML composition. Custom Code and additional MCP workflows remain governed
-by their later roadmap gates. HTML/composed templates have an explicit agent-only editing contract in full;
+for structured content and HTML composition. Custom Code has a dedicated panel in both profiles; additional MCP workflows retain their later roadmap gates. HTML/composed templates have an explicit agent-only editing contract in full;
 the status, history and preview presentation preserves their content without a generic visual editor.
 
 Essential retains login, account security, users/roles, MCP access management, general settings,

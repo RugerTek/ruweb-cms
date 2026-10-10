@@ -13,8 +13,8 @@ class OAuthConcurrentExchangeTest extends TestCase
         mkdir($directory, 0700);
         $database = $directory.'/isolated.sqlite';
         $connection = new \PDO('sqlite:'.$database);
-        $connection->exec('CREATE TABLE oauth_authorization_codes (id INTEGER PRIMARY KEY, code TEXT, user_id INTEGER, client_id TEXT, redirect_uri TEXT, code_challenge TEXT, code_challenge_method TEXT, expires_at TEXT, used_at TEXT NULL, created_at TEXT)');
-        $connection->exec('CREATE TABLE oauth_access_tokens (id INTEGER PRIMARY KEY, token TEXT, user_id INTEGER, client_id TEXT, expires_at TEXT, revoked_at TEXT NULL, last_used_at TEXT NULL, created_at TEXT)');
+        $connection->exec('CREATE TABLE oauth_authorization_codes (id INTEGER PRIMARY KEY, code TEXT, user_id INTEGER, client_id TEXT, scope TEXT DEFAULT \'full\', redirect_uri TEXT, code_challenge TEXT, code_challenge_method TEXT, expires_at TEXT, used_at TEXT NULL, created_at TEXT)');
+        $connection->exec('CREATE TABLE oauth_access_tokens (id INTEGER PRIMARY KEY, token TEXT, user_id INTEGER, client_id TEXT, scope TEXT DEFAULT \'full\', expires_at TEXT, revoked_at TEXT NULL, last_used_at TEXT NULL, created_at TEXT)');
         $challenge = rtrim(strtr(base64_encode(hash('sha256', 'concurrent-verifier', true)), '+/', '-_'), '=');
         $statement = $connection->prepare('INSERT INTO oauth_authorization_codes (code,user_id,client_id,redirect_uri,code_challenge,code_challenge_method,expires_at) VALUES (?,1,?,?,?,?,?)');
         $statement->execute(['race-code', 'test-client', 'https://client.example/callback', $challenge, 'S256', now()->addMinute()->format('Y-m-d H:i:s')]);

@@ -10,6 +10,9 @@ class UpdateUserRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        if ($this->has('can_manage_custom_code')) {
+            $this->merge(['can_manage_custom_code' => $this->input('role') === 'admin' && $this->boolean('can_manage_custom_code')]);
+        }
         if ($this->has('username')) {
             $this->merge(['username' => Username::normalize($this->input('username'))]);
         }
@@ -28,6 +31,7 @@ class UpdateUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'username' => Username::rules($user?->id),
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'can_manage_custom_code' => ['sometimes', 'boolean'],
             'role' => ['required', 'string', 'in:'.implode(',', config('cms.roles', []))],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ];

@@ -49,6 +49,8 @@
                 @error('role') <p class="text-xs text-red-400 mt-1">{{ $message }}</p> @enderror
             </div>
 
+            @include('admin.users._custom-code-permission')
+
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-300 mb-1">{{ __('admin.field_new_password') }}</label>
                 <input type="password" id="password" name="password"

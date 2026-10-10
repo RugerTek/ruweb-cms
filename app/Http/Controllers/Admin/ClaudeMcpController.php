@@ -30,9 +30,10 @@ class ClaudeMcpController extends Controller
     {
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:100'],
-            'scope' => ['nullable', Rule::in(['full', 'read-only', 'draft-only'])],
+            'scope' => ['nullable', Rule::in(['full', 'read-only', 'draft-only', 'custom-code'])],
             'expires_at' => ['nullable', 'date', 'after:now'],
         ]);
+        abort_if(($validated['scope'] ?? null) === 'custom-code' && ! $request->user()->canManageCustomCode(), 403);
         $plainApiKey = McpApiKey::issue($request->user(), $validated['name'] ?? __('security.key_default'),
             $validated['scope'] ?? 'read-only', $validated['expires_at'] ?? null);
 

@@ -28,7 +28,7 @@ class McpServerController extends Controller
 {
     private const PROTOCOL_VERSION = '2024-11-05';
 
-    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions) {}
+    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode) {}
 
     public function handle(Request $request): JsonResponse
     {
@@ -112,6 +112,13 @@ class McpServerController extends Controller
 
         if (str_starts_with((string) $name, 'submissions_')) {
             Validator::make($arguments, ['form' => ['required', 'string', Rule::in(array_keys(config('cms.forms', [])))], 'id' => [$name === 'submissions_list' ? 'sometimes' : 'required', 'integer', 'min:1']])->validate();
+        }
+
+        if (in_array($name, ['custom_code_get', 'custom_code_activate', 'custom_code_deactivate'], true)) {
+            Validator::make($arguments, ['id' => ['required', 'integer', 'min:1']])->validate();
+        }
+        if ($name === 'custom_code_save') {
+            Validator::make($arguments, ['id' => ['sometimes', 'integer', 'min:1']])->validate();
         }
 
         $handler = $this->resolveHandler($name);
@@ -223,6 +230,14 @@ class McpServerController extends Controller
 
             'menus_delete' => fn ($req, $args) => $this->mcp->menusDelete($this->synth($req, $args), Menu::findOrFail($args['menu_id'])),
         ];
+
+        $handlers['custom_code_list'] = fn ($req, $args) => $this->customCode->index($this->synth($req, $args));
+        $handlers['custom_code_get'] = fn ($req, $args) => $this->customCode->show($this->synth($req, $args), $args['id']);
+        $handlers['custom_code_save'] = fn ($req, $args) => $this->customCode->save($this->synth($req, $this->without($args, 'id')), $args['id'] ?? null);
+        $handlers['custom_code_activate'] = fn ($req, $args) => $this->customCode->activate($this->synth($req, $this->without($args, 'id')), $args['id']);
+        $handlers['custom_code_deactivate'] = fn ($req, $args) => $this->customCode->deactivate($this->synth($req, $this->without($args, 'id')), $args['id']);
+        $handlers['custom_code_evaluate'] = fn ($req, $args) => $this->customCode->evaluate($this->synth($req, $args));
+        $handlers['custom_code_destinations'] = fn ($req, $args) => $this->customCode->destinations($this->synth($req, $args));
 
         $handlers['submissions_list'] = fn ($req, $args) => $this->submissions->index($this->synth($req, $args), $args['form']);
         $handlers['submissions_get'] = fn ($req, $args) => $this->submissions->show($this->synth($req, $args), $args['form'], $args['id']);

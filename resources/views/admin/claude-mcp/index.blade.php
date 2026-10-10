@@ -108,6 +108,7 @@
             <label for="key-scope" class="block">{{ __('security.scope') }}</label>
             <select id="key-scope" name="scope" class="w-full bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
                 @foreach(['read-only', 'draft-only', 'full'] as $scope)<option value="{{ $scope }}">{{ __('security.scope_'.$scope) }}</option>@endforeach
+                @if($user->canManageCustomCode())<option value="custom-code">{{ __('custom_code.credential_scope') }}</option>@endif
             </select>
             <label for="key-expiry" class="block">{{ __('security.key_expiry') }}</label>
             <input id="key-expiry" name="expires_at" type="datetime-local" class="bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
@@ -118,7 +119,7 @@
         <ul class="space-y-3">
             @forelse($apiKeys as $key)
             <li class="border-b border-white/10 pb-3">
-                <p>{{ $key->name }} · {{ __('security.scope_'.$key->scope) }}</p>
+                <p>{{ $key->name }} · {{ $key->scope === 'custom-code' ? __('custom_code.credential_scope') : __('security.scope_'.$key->scope) }}</p>
                 <p class="text-xs text-gray-400">{{ __('security.key_expiry') }}: {{ $key->expires_at?->format('Y-m-d H:i') ?? __('security.never') }} · {{ __('admin.mcp_api_key_last_used_at') }}: {{ $key->last_used_at?->format('Y-m-d H:i') ?? '—' }}</p>
                 @if($key->revoked_at)
                     <p class="text-gray-400">{{ __('security.revoked') }}</p>

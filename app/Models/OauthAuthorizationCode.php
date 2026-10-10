@@ -13,6 +13,7 @@ class OauthAuthorizationCode extends Model
         'code',
         'user_id',
         'client_id',
+        'scope',
         'redirect_uri',
         'code_challenge',
         'code_challenge_method',

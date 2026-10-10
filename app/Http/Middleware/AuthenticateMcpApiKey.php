@@ -29,6 +29,7 @@ class AuthenticateMcpApiKey
 
         if ($oauthToken) {
             $oauthToken->touchLastUsed();
+            $request->attributes->set('mcp_scope', $oauthToken->scope ?? 'full');
             $request->setUserResolver(fn () => $oauthToken->user);
 
             return $next($request);

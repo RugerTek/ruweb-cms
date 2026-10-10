@@ -13,6 +13,7 @@ class OauthAccessToken extends Model
         'token',
         'user_id',
         'client_id',
+        'scope',
         'expires_at',
         'last_used_at',
         'revoked_at',

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\McpContentController;
 use App\Http\Controllers\McpController;
+use App\Http\Controllers\McpCustomCodeController;
 use App\Http\Controllers\McpMediaController;
 use App\Http\Controllers\McpServerController;
 use App\Http\Controllers\McpSubmissionController;
@@ -69,3 +70,13 @@ Route::get('/submissions/{form}/{id}', [McpSubmissionController::class, 'show'])
 foreach (['assign', 'set_status', 'add_note', 'retry_notification'] as $action) {
     Route::post('/submissions/{form}/{id}/'.str_replace('_', '-', $action), [McpSubmissionController::class, 'write'])->defaults('action', $action)->whereNumber('id');
 }
+
+// Executable integrations require an explicit account permission and credential scope.
+Route::get('/custom-code', [McpCustomCodeController::class, 'index']);
+Route::get('/custom-code/destinations', [McpCustomCodeController::class, 'destinations']);
+Route::post('/custom-code/evaluate', [McpCustomCodeController::class, 'evaluate']);
+Route::post('/custom-code', [McpCustomCodeController::class, 'save']);
+Route::get('/custom-code/{id}', [McpCustomCodeController::class, 'show'])->whereNumber('id');
+Route::patch('/custom-code/{id}', [McpCustomCodeController::class, 'save'])->whereNumber('id');
+Route::post('/custom-code/{id}/activate', [McpCustomCodeController::class, 'activate'])->whereNumber('id');
+Route::post('/custom-code/{id}/deactivate', [McpCustomCodeController::class, 'deactivate'])->whereNumber('id');

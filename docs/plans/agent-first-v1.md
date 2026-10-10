@@ -1,8 +1,8 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–7 implementadas y aceptadas con sus gates E2E. Fases 8–11 autorizadas, sin iniciar.
+**Estado:** fases 0–8 implementadas y aceptadas con sus gates E2E. Fases 9–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 12 — composición HTML segura, componentes registrados y E2E-07 en ambos perfiles.
+**Revisión:** 13 — Custom Code con permiso específico, destinos estables, recuperación y E2E-08 en ambos perfiles.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
 **Entrega actual:** fases [0](phase-0-results.md), [1](phase-1-results.md), [2](phase-2-results.md), [3](phase-3-results.md), [4](phase-4-results.md), [5](phase-5-results.md), [6](phase-6-results.md) y [7](phase-7-results.md) aceptadas con resultados. El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
@@ -486,9 +486,9 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Snippets versionados, tipos/posiciones, orden y reglas exactas de inclusión/exclusión e idioma.
-- [ ] Pantalla en ambos perfiles y operaciones MCP con permiso específico; guardar separado de activar.
-- [ ] Apagado independiente del frontend, auditoría y diagnóstico de integraciones duplicadas.
+- [x] Snippets versionados, tipos/posiciones, orden y reglas exactas de inclusión/exclusión e idioma.
+- [x] Pantalla en ambos perfiles y operaciones MCP con permiso específico; guardar separado de activar.
+- [x] Apagado independiente del frontend, auditoría y diagnóstico de integraciones duplicadas.
 
 **E2E-08 — Aplicar código exactamente donde corresponde**
 
@@ -502,7 +502,9 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Aprobación:** matriz destino/idioma/posición automatizada, sin tráfico externo; exclusiones prevalecen y panel/MCP muestran las mismas reglas. La reversión devuelve el sitio a su estado anterior.
 
-**Reversión:** apagado global conservando snippets/versiones. Restauración de snapshots se completa en fase 10.
+**Reversión:** apagado global conservando snippets/versiones. El guard mínimo de restore deja el código inactivo y no recupera permisos; el gate completo de snapshots se conserva en fase 10.
+
+**Resultado:** fase aceptada en 0.54.0 con [evidencia](phase-8-results.md), E2E-08 real en ambos perfiles, permisos específicos, activación de versión exacta, destinos/idiomas/exclusiones, recuperación CLI sin frontend y revisión independiente sin hallazgos pendientes.
 
 ### Fase 9 — Identidad, recuperación y compatibilidad de clientes
 
@@ -655,7 +657,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). Fases 8–11 conservan sus gates y no se iniciaron.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). La fase 8 está aceptada con [evidencia](phase-8-results.md). Fases 9–11 conservan sus gates y no se iniciaron.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

@@ -303,3 +303,47 @@ Retain only `phase-seven-results.json`, `phase-seven-browser-*-results.json` and
 copied `.env`, generated config/routes caches and all private server/mail logs after guarded schema cleanup.
 Stop every server first. Run accumulated E2E-00/01 on full and E2E-03/05 in both profiles using their
 existing stages; preserve their sanitized results independently. Never point this fixture at a real database.
+
+## Phase eight: trusted browser snippets (E2E-08)
+
+Build the candidate **after the new Blade screens** with `npm run build`, then prepare independent full and
+essential disposable copies and fresh guarded MySQL fixtures as in phase seven. Copy the production build;
+exclude `.env`, `public/hot`, storage, cached config/routes and public storage links. Never use the real
+application/database. Set `PHASE8_PROFILE` to the copy's profile, `PHASE0_DATABASE`/`PHASE0_STORAGE` to its
+isolated fixture, and provision with `phase-zero-fixture.php` then `phase-eight-control.php identity`.
+The latter creates an explicit Custom Code credential and a second denied administrator; no existing full
+credential inherits executable permission. Use at least four `PHP_CLI_SERVER_WORKERS` to exercise concurrent
+HTTP requests, and run profiles sequentially on free loopback 8018.
+
+Start the guarded phase-zero router with `OAUTH_CLIENT_ID=e2e-phase8` and
+`OAUTH_ALLOWED_REDIRECT_URIS=http://127.0.0.1:8018/oauth-return`. The harness has these stages:
+
+1. `python3 tests/E2E/phase-eight-http.py initial` creates three templates and their English translations via
+   cookie-free editorial MCP, then pins an ordinary preview.
+2. `PHASE8_STAGE=create PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-eight-browser.cjs`
+   authors CSS through the real panel and activates the selected exact version.
+3. Run `phase-eight-http.py` with each stage `global`, `exact`, `pending`, `deactivated`, `reactivated`; after
+   **each** run execute the browser script without PHASE8_STAGE so it reads the private fixture's current stage.
+4. `php tests/E2E/phase-eight-control.php disable`, then browser with `PHASE8_STAGE=killed`; `enable`, then
+   browser with `PHASE8_STAGE=recovered`. Run HTTP `harmful`, browser current stage, CLI `disable`, then browser
+   `PHASE8_STAGE=harmful-killed`. The deliberate layout break is restricted to one disposable public page.
+5. Run `phase-eight-security.cjs` with the same Playwright environment: real HTTP rejects seven conflicting
+   OAuth query/body parameters, reads the panel CSS byte-for-byte via exact MCP version, and compares panel/MCP
+   evaluation output. Optional read-only `PHASE8_STAGE=capture-panel` refreshes desktop/mobile panel captures.
+
+All browser stages use Chromium, verify six destination/language documents, deterministic positions/order,
+one marker execution, exact translation scope, inert pending versions, preview/login/OAuth/admin exclusion,
+no horizontal overflow and 1440/390 captures. Global also executes an explicitly acknowledged test in an
+opaque-origin iframe and verifies parent-session document isolation. The eight synchronized same-key save
+requests and eight activation requests run against real independent HTTP workers/MySQL; results and audit
+counts prove one committed operation per key. Existing editorial scopes and a custom-code scoped administrator
+without the account grant are denied without mutation. Normal admin Google Fonts requests are blocked by
+Chromium and recorded as blocked assets; no external request is allowed, no tracking provider runs.
+
+Also verify `cms:custom-code disable|status|enable` in the isolated copy with an unreachable database port;
+this recovery path must not need the database or public frontend. Preserve only result JSON, representative
+screenshots and SHA-256 maps of the exact application source plus production build. The private fixture and
+manifest contain credentials/preview URLs; never retain them, raw HTTP traces or server/mail logs as evidence.
+Stop servers, execute guarded cleanup for each schema, remove the private `.env`, caches, manifests/logs and
+kill-switch marker, then delete disposable copies. Snapshot portability is an explicit phase 10 contract,
+not part of this acceptance claim.

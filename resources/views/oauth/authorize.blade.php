@@ -16,6 +16,11 @@
     <form method="POST" action="{{ route('oauth.authorize.submit') }}">
         @csrf
 
+        <input type="hidden" name="scope" value="{{ $scope }}">
+        @if($scope === 'custom-code')
+            <label class="block mb-4 text-sm text-amber-300"><input type="checkbox" name="custom_code_consent" value="1" required> {{ __('custom_code.consent') }}</label>
+            @error('custom_code_consent') <p class="text-red-400">{{ $message }}</p> @enderror
+        @endif
         {{-- OAuth hidden fields --}}
         <input type="hidden" name="response_type"         value="{{ $response_type }}">
         <input type="hidden" name="client_id"             value="{{ $client_id }}">

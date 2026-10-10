@@ -38,3 +38,12 @@ never with scattered `Setting::get()` calls.
 - Secrets use the `password` type: encrypted, never rendered back, preserved when submitted blank.
 - An empty value must degrade gracefully — hide the element rather than render an empty frame.
 - Keep the design generic: no client-specific defaults in the starter.
+
+
+## Trusted browser code
+
+Custom Code is a separate versioned surface, not a settings field. Read
+[docs/operations/custom-code.md](../../../docs/operations/custom-code.md) for browser snippets,
+exact locale/group destinations, dedicated account/credential permission and operational recovery.
+Discover capabilities and destinations, save a proposal, evaluate its exact version, then activate only the
+reviewed version with revision and operation_key. Never place server secrets or scripts in editorial HTML.

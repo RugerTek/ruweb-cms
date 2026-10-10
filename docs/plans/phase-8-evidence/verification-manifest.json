@@ -1,0 +1,48 @@
+{
+  "baseline_commit": "c7a7f13d9641ec1cf8c01a0dbe4f367cc141b507",
+  "baseline_version": "0.53.0",
+  "checks": {
+    "build": "passed",
+    "composer": {
+      "assertions": 4013,
+      "result": "passed",
+      "tests": 525
+    },
+    "conventions": "passed",
+    "e2e00_01": "full passed with real queue worker",
+    "e2e08": "full and essential passed on final frozen source, harness and build",
+    "javascript": {
+      "result": "passed",
+      "tests": 17
+    },
+    "snapshot_regression": {
+      "assertions": 171,
+      "result": "passed",
+      "tests": 33
+    }
+  },
+  "cleanup": "All fixture servers stopped; generated schemas and private copies deleted after artifact capture.",
+  "profile_override": {
+    "essential": "config/cms.php: admin_profile='essential'",
+    "full": "config/cms.php: admin_profile='full'"
+  },
+  "profiles": {
+    "essential": {
+      "all_other_candidate_sources_equal": true,
+      "json_artifacts": 16,
+      "production_vite_manifest_sha256": "2ff5cfbdacab20eb705b09a7d19df36157093a87956e2a2b2dd71cc7e2429670",
+      "public_documents_verified": 108,
+      "screenshots": 20,
+      "source_build_manifest_sha256": "425ed1f3158f592f5e7c4318bcbb6ecfa45140b8ab102deb0f7f85e8c42502b7"
+    },
+    "full": {
+      "all_other_candidate_sources_equal": true,
+      "json_artifacts": 18,
+      "production_vite_manifest_sha256": "2ff5cfbdacab20eb705b09a7d19df36157093a87956e2a2b2dd71cc7e2429670",
+      "public_documents_verified": 108,
+      "screenshots": 20,
+      "source_build_manifest_sha256": "9a81e93661b482a1b5424c26db906788267fbb9093e49f478e31dcbf625b5182"
+    }
+  },
+  "verified_at_utc": "2026-10-10T23:04:36.695245+00:00"
+}

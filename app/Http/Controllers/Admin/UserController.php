@@ -92,6 +92,9 @@ class UserController extends Controller
         }
         $revoke = isset($data['password']) || ($data['email'] ?? $user->email) !== $user->email
             || ($data['role'] ?? $user->role) !== $user->role;
+        if (($data['role'] ?? $user->role) !== 'admin') {
+            $data['can_manage_custom_code'] = false;
+        }
         $user->fill($data);
         if ($revoke) {
             app(\App\Services\Security\RevokeCredentials::class)->all($user);

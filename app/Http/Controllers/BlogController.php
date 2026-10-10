@@ -30,6 +30,7 @@ class BlogController extends Controller
             });
         }
 
+        $request->attributes->set('custom_code_target', ['type' => 'indexes', 'id' => 'blog', 'locale' => app()->getLocale()]);
         return view('blog.index', [
             'posts' => $query->paginate(9)->withQueryString(),
         ]);
@@ -60,6 +61,7 @@ class BlogController extends Controller
 
         abort_if(! $post, 404);
 
+        $request->attributes->set('custom_code_target', app(\App\Support\CustomCodeDestinations::class)->forModel($post));
         return view('blog.show', [
             'post' => $post,
             'page' => $post,

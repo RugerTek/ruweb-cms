@@ -13,11 +13,30 @@ class ToolRegistry
             ...self::phaseThreeTools(),
             ...self::editorialTools(),
             ...self::submissionTools(),
+            ...self::customCodeTools(),
             ...self::pageTools(),
             ...self::postTools(),
             ...self::mediaTools(),
             ...self::settingTools(),
             ...self::menuTools(),
+        ];
+    }
+
+    private static function customCodeTools(): array
+    {
+        $id = ['id' => ['type' => 'integer', 'minimum' => 1]];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64], 'operation_key' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 100]];
+        $ref = ['type' => 'object', 'properties' => ['type' => ['type' => 'string', 'enum' => [...array_keys(app(\App\Support\CustomCodeDestinations::class)->models()), 'indexes']], 'id' => ['type' => ['integer', 'string']], 'locale' => ['type' => 'string'], 'group' => ['type' => 'boolean']], 'required' => ['type', 'id', 'locale'], 'additionalProperties' => false];
+        $tool = fn ($name, $description, $properties = [], $required = []) => ['name' => 'custom_code_'.$name, 'description' => $description.' Requires the explicit custom-code credential scope and account custom-code permission in either profile.', 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
+
+        return [
+            $tool('list', 'List executable snippets and their active versions; reading never executes code.', ['page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]]),
+            $tool('get', 'Read a snippet with immutable versions, destination rules, revisions and authored audit events. History is paginated; version_id reads an exact historical payload.', $id + ['versions_page' => ['type' => 'integer', 'minimum' => 1], 'version_id' => ['type' => 'integer', 'minimum' => 1]], ['id']),
+            $tool('destinations', 'Discover bounded canonical destination references. Save these references, never site URLs or arbitrary wildcard paths.', ['type' => $ref['properties']['type'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]]),
+            $tool('save', 'Create a snippet or save an immutable pending version. Saving does not activate it. Updates require expected_revision; operation_key makes exact retries safe.', $id + $revision + ['name' => ['type' => 'string', 'maxLength' => 255], 'description' => ['type' => ['string', 'null'], 'maxLength' => 2000], 'type' => ['type' => 'string', 'enum' => ['html', 'css', 'javascript']], 'code' => ['type' => 'string', 'maxLength' => 65536], 'position' => ['type' => 'string', 'enum' => ['head_end', 'body_start', 'body_end']], 'sort_order' => ['type' => 'integer', 'minimum' => -10000, 'maximum' => 10000], 'rules' => ['type' => 'object', 'properties' => ['global' => ['type' => 'boolean'], 'include' => ['type' => 'array', 'maxItems' => 100, 'items' => $ref], 'exclude' => ['type' => 'array', 'maxItems' => 100, 'items' => $ref]], 'required' => ['global', 'include', 'exclude'], 'additionalProperties' => false]], ['name', 'type', 'code', 'position', 'sort_order', 'rules', 'operation_key']),
+            $tool('activate', 'Activate exactly version_id owned by this snippet. Exclusions prevail; unrelated newer pending versions remain pending.', $id + $revision + ['version_id' => ['type' => 'integer', 'minimum' => 1]], ['id', 'version_id', 'expected_revision', 'operation_key']),
+            $tool('deactivate', 'Stop serving the snippet while retaining its versions and audit history.', $id + $revision, ['id', 'expected_revision', 'operation_key']),
+            $tool('evaluate', 'Diagnose target matching and duplicate integrations without executing code. version_id evaluates one immutable proposal; omit it to inspect active snippets.', ['target' => $ref, 'version_id' => ['type' => 'integer', 'minimum' => 1], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], ['target']),
         ];
     }
 

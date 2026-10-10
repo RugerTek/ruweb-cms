@@ -277,6 +277,11 @@
                 </a>
             </li>
             @if(auth()->user()->isAdmin())
+            @if(auth()->user()->canManageCustomCode())
+            <li>
+                <a href="{{ route('admin.custom-code.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.custom-code.*') ? 'bg-sky-500/10 text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">{{ __('custom_code.title') }}</a>
+            </li>
+            @endif
             <li>
                 <a href="{{ route('admin.developer-tools.index') }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors

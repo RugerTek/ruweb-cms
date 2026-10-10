@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.53.0 - 2026-10-10
+## 0.54.0 - 2026-10-10
+
+- Gestor de Custom Code versionado para HTML/CSS/JavaScript en ambos perfiles, con operaciones compartidas panel/REST/MCP, permiso administrativo y scope específicos, propuestas separadas de la activación exacta, revisiones y auditoría.
+- Destinos estables por entidad e idioma, inclusión/exclusión con prioridad de exclusión y diagnóstico de referencias eliminadas; una evaluación por documento conserva posiciones y orden, sin ejecutar código en admin ni previews ordinarias.
+- Prueba ejecutable explícita en documento separado, diagnóstico de duplicaciones con integraciones dedicadas y apagado global por CLI/configuración independiente del frontend; snapshots conservan versiones inactivas sin recuperar permisos ni recibos.
+- E2E-08 real sobre MySQL/HTTP/Chromium en full y essential verifica selección, ejecución única, permisos, concurrencia, borradores y recuperación de layout; evidencia responsive y huellas exactas, suite completa, regresiones y revisión independiente aprobadas.
+
+## 0.53.0 - 2026-10-10 (c7a7f13)
 
 - Páginas HTML y lienzo sobre la misma entidad Page conservan SEO, idioma, publicación, historial y previews; composición ordenada combina fragmentos, callouts y acordeones registrados sin convertirlos a controles visuales.
 - Contrato DOM independiente del rich text conserva markup admitido y medios por ID, elimina ejecución editorial y limita complejidad; vocabulario CSS precompilado permite cambiar composición e interacción sin reconstruir assets.

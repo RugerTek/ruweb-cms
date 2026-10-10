@@ -29,3 +29,13 @@ Schedule::command('cms:expire-content')->everyMinute()->withoutOverlapping();
 Artisan::command('cms:capabilities', function () {
     $this->line(json_encode(app(AdminCapabilities::class)->discovery(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 })->purpose('Discover deployment profile, capabilities and template contracts without secrets');
+
+// No database or frontend request is needed to recover a broken public layout.
+Artisan::command('cms:custom-code {action=status : disable, enable or status}', function () {
+    $path = storage_path('app/private/custom-code.disabled');
+    $action = $this->argument('action');
+    if (! in_array($action, ['disable', 'enable', 'status'], true)) { $this->error('Use disable, enable or status.'); return 1; }
+    if ($action === 'disable') { if (! is_dir(dirname($path))) mkdir(dirname($path), 0750, true); file_put_contents($path, now()->toISOString(), LOCK_EX); }
+    if ($action === 'enable' && is_file($path)) unlink($path);
+    $this->line(app(\App\Support\CustomCodeRenderer::class)->enabled() ? 'Custom Code enabled.' : 'Custom Code disabled.');
+})->purpose('Recover public rendering by disabling all Custom Code without accessing the frontend');

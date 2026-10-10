@@ -29,6 +29,7 @@ App at `http://localhost:8000`, admin at `/admin`. The login path is the `admin_
 | New collection (products, cases…) | `create-collection` | [docs/content/collections.md](docs/content/collections.md) |
 | New public form | `create-form` | [docs/content/forms.md](docs/content/forms.md) |
 | Header, footer, business contact data | `create-layout-field` | [docs/admin/layout.md](docs/admin/layout.md) |
+| Trusted browser HTML/CSS/JavaScript snippets | `create-config` | [docs/operations/custom-code.md](docs/operations/custom-code.md) |
 | New setting or config value | `create-config` | [docs/admin/settings.md](docs/admin/settings.md) |
 | Translate content to another locale | `translate-content` | [docs/concepts/multilanguage.md](docs/concepts/multilanguage.md) |
 | Admin labels, `lang/` parity | `check-translations` | [docs/admin/translations.md](docs/admin/translations.md) |

@@ -315,3 +315,21 @@ Retry atomically reserves only failed/skipped delivery generations. Pending and 
 REST mirrors these tools at `GET /mcp/submissions/{form}`, `GET /mcp/submissions/{form}/{id}` and `POST /mcp/submissions/{form}/{id}/{assign|set-status|add-note|retry-notification}`. Missing records return 404, invalid input 422, stale/different retry inputs 409 (RPC `-32009`). Correct the named field or reread and merge before starting a new operation; retry a lost response with the exact same input/key.
 
 Role denial follows the existing JSON-RPC contract: HTTP 200 with `error.code: -32603` and the explicit authorization message; REST returns HTTP 403. Scope middleware denials return HTTP 403 and RPC `-32603`. Acceptance checks the exact code/message and unchanged data, rather than treating an arbitrary error as an authorization pass. Any global normalization belongs to phase 9 interoperability review.
+
+
+## Trusted Custom Code (phase 8)
+
+`custom_code_list`, `custom_code_get`, `custom_code_destinations`, `custom_code_evaluate`,
+`custom_code_save`, `custom_code_activate` and `custom_code_deactivate` are identical in both profiles.
+They require an administrator with explicit `can_manage_custom_code` and a separate `custom-code`
+credential; existing full editorial keys/tokens are denied without mutation. REST mirrors these at
+`GET/POST /mcp/custom-code`, `GET/PATCH /mcp/custom-code/{id}`, `GET /mcp/custom-code/destinations`,
+`POST /mcp/custom-code/evaluate`, and `POST /mcp/custom-code/{id}/{activate|deactivate}`.
+Get supports `versions_page` (20 per page) or an exact `version_id`; active_version is returned separately.
+
+Save creates a complete immutable proposal; activate requires the exact reviewed `version_id` plus current
+`expected_revision` and durable `operation_key`. All writes require operation_key, and edits/deactivation
+also require revision. Retries recover the original result; changed input or stale revision returns 409 /
+RPC -32009. Evaluate takes a stable `target` reference and optional proposal `version_id`, and never executes
+code. Account and scope denials follow the existing HTTP403 / RPC -32603 contract. Read the full
+[Custom Code contract](custom-code.md) before writing code, evaluating locale/group rules or recovering a frontend.

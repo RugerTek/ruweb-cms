@@ -23,19 +23,20 @@ class OAuthController extends Controller
 
         // If the user already has an active session, issue the code immediately
         $sessionRevoked = DB::table('admin_sessions')->where('id', hash('sha256', $request->session()->getId()))->whereNotNull('revoked_at')->exists();
-        if (! $sessionRevoked && Auth::check() && in_array(Auth::user()->role, config('cms.roles', ['admin', 'editor']))
+        if ($request->attributes->get('oauth_authorize_parameters')['scope'] !== 'custom-code' && ! $sessionRevoked && Auth::check() && in_array(Auth::user()->role, config('cms.roles', ['admin', 'editor']))
             && (int) $request->session()->get('security_version', 0) === (int) Auth::user()->security_version
             && (! Auth::user()->hasTwoFactor() || $request->session()->get('two_factor_passed') === Auth::id())) {
             return $this->issueAuthCode($request, Auth::user());
         }
 
         return view('oauth.authorize', [
-            'response_type' => $request->query('response_type'),
-            'client_id' => $request->query('client_id'),
-            'redirect_uri' => $request->query('redirect_uri'),
-            'code_challenge' => $request->query('code_challenge'),
-            'code_challenge_method' => $request->query('code_challenge_method'),
-            'state' => $request->query('state', ''),
+            'response_type' => $request->attributes->get('oauth_authorize_parameters')['response_type'],
+            'client_id' => $request->attributes->get('oauth_authorize_parameters')['client_id'],
+            'redirect_uri' => $request->attributes->get('oauth_authorize_parameters')['redirect_uri'],
+            'code_challenge' => $request->attributes->get('oauth_authorize_parameters')['code_challenge'],
+            'code_challenge_method' => $request->attributes->get('oauth_authorize_parameters')['code_challenge_method'],
+            'state' => $request->attributes->get('oauth_authorize_parameters')['state'],
+            'scope' => $request->attributes->get('oauth_authorize_parameters')['scope'],
         ]);
     }
 
@@ -65,6 +66,11 @@ class OAuthController extends Controller
             return back()->withErrors(['code' => __('security.invalid_code')])->withInput($request->except(['password', 'code']));
         }
 
+        if ($request->attributes->get('oauth_authorize_parameters')['scope'] === 'custom-code') {
+            abort_unless($user->canManageCustomCode(), 403);
+            $request->validate(['custom_code_consent' => ['accepted']]);
+        }
+
         return $this->issueAuthCode($request, $user);
     }
 
@@ -72,13 +78,15 @@ class OAuthController extends Controller
     {
         $code = bin2hex(random_bytes(32));
 
-        // For GET requests (auto-authorize from session) use query params; POST uses input
-        $get = fn (string $key, string $default = '') => $request->query($key) ?? $request->input($key, $default);
+        // Issuance uses exactly the parameters validated and consented to.
+        $parameters = $request->attributes->get('oauth_authorize_parameters');
+        $get = fn (string $key, string $default = '') => $parameters[$key] ?? $default;
 
         OauthAuthorizationCode::create([
             'code' => $code,
             'user_id' => $user->id,
             'client_id' => $get('client_id'),
+            'scope' => $get('scope', 'full'),
             'redirect_uri' => $get('redirect_uri'),
             'code_challenge' => $get('code_challenge'),
             'code_challenge_method' => $get('code_challenge_method'),
@@ -129,12 +137,14 @@ class OAuthController extends Controller
                 'token' => hash('sha256', $rawToken),
                 'user_id' => $authCode->user_id,
                 'client_id' => $authCode->client_id,
+                'scope' => $authCode->scope ?? 'full',
                 'expires_at' => now()->addSeconds(config('oauth.access_token_ttl', 28800)),
             ]);
 
             return response()->json([
                 'access_token' => $rawToken,
                 'token_type' => 'Bearer',
+                'scope' => $authCode->scope ?? 'full',
                 'expires_in' => config('oauth.access_token_ttl', 28800),
             ]);
         }, 3);
@@ -151,11 +161,21 @@ class OAuthController extends Controller
             'response_types_supported' => ['code'],
             'code_challenge_methods_supported' => ['S256'],
             'grant_types_supported' => ['authorization_code'],
+            'scopes_supported' => ['full', 'read-only', 'draft-only', 'custom-code'],
         ]);
     }
 
     private function validateAuthorizeRequest(Request $request): ?string
     {
+        $keys = ['response_type', 'client_id', 'redirect_uri', 'code_challenge', 'code_challenge_method', 'state', 'scope'];
+        $body = $request->isJson() ? $request->json()->all() : $request->request->all();
+        foreach ($keys as $key) {
+            if ($request->query->has($key) && array_key_exists($key, $body) && $request->query($key) !== $body[$key]) return 'invalid_request';
+        }
+        if (! in_array($request->input('scope', 'full'), ['full', 'read-only', 'draft-only', 'custom-code'], true)) {
+            return 'invalid_scope';
+        }
+
         if ($request->input('response_type') !== 'code') {
             return 'unsupported_response_type';
         }
@@ -182,6 +202,7 @@ class OAuthController extends Controller
             return 'invalid_request';
         }
 
+        $request->attributes->set('oauth_authorize_parameters', $request->only($keys) + ['scope' => 'full', 'state' => '']);
         return null;
     }
 }

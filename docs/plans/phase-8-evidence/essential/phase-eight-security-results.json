@@ -1,0 +1,9 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Panel-authored CSS read byte-for-byte through exact MCP version",
+    "Panel and MCP evaluate identical destination rules and diagnostics",
+    "Authenticated real HTTP rejects all seven conflicting query/body OAuth parameters before code issuance, including custom-code consent bypass"
+  ],
+  "conflicts_rejected": 7
+}

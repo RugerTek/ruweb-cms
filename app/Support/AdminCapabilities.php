@@ -106,7 +106,7 @@ final class AdminCapabilities
         return [
             'admin_profile' => $this->profile(),
             'stability' => 'stable',
-            'capabilities' => ['public_site' => true, 'mcp' => true, 'identity' => true, 'live_editor' => $this->liveEditor(), 'specialized_editor_delivery' => $this->liveEditor()],
+            'capabilities' => ['public_site' => true, 'mcp' => true, 'identity' => true, 'custom_code' => true, 'live_editor' => $this->liveEditor(), 'specialized_editor_delivery' => $this->liveEditor()],
             'authorization' => 'Independent of profile: account role and credential scope apply to every operation.',
             'block_formats' => ['structured', 'html', 'interactive'],
             'composition' => ['guide' => 'docs/content/composition.md', 'components' => config('cms.composition.components', []), 'html_rules' => app(CompositionHtmlSanitizer::class)->discovery()],
@@ -114,6 +114,7 @@ final class AdminCapabilities
             'registered_collections' => collect(config('cms.collections', []))->map(fn ($collection) => ['model' => class_basename($collection['model']), 'mcp_operations' => $collection['model'] === Post::class ? 'posts' : null])->all(),
             'schema_discovery' => ['tool' => 'cms_schema', 'content_types' => ['pages', 'posts']],
             'locales_discovery' => 'locales_list',
+            'custom_code' => ['tools' => ['custom_code_list', 'custom_code_get', 'custom_code_save', 'custom_code_activate', 'custom_code_deactivate', 'custom_code_evaluate', 'custom_code_destinations'], 'credential_scope' => 'custom-code', 'account_permission' => 'can_manage_custom_code', 'save_activates' => false, 'exact_version_activation' => true, 'exclusions_prevail' => true],
             'content_rules' => ['media_by_id', 'root_relative_internal_urls', 'published_only_public_queries', 'forms_defined_in_code'],
             'profile_guide' => 'docs/concepts/admin-profiles.md',
         ];

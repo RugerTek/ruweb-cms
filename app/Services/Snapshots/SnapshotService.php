@@ -32,6 +32,7 @@ class SnapshotService
     ];
 
     protected const EXCLUDED_TABLES = [
+        'custom_code_receipts',
         'mcp_api_keys',
         'admin_sessions',
         'cache',
@@ -51,6 +52,9 @@ class SnapshotService
     protected const TABLE_PRIORITY = [
         'migrations',
         'users',
+        'custom_code_snippets',
+        'custom_code_versions',
+        'custom_code_events',
         'settings',
         'pages',
         'posts',
@@ -399,6 +403,18 @@ class SnapshotService
                 DB::table('contact_submissions')->whereNotNull('notified_at')->update(['notification_status' => 'sent']);
             }
 
+            // A restore must never execute imported code or attach old receipts to reused IDs.
+            // Legacy archives without these tables also leave destination snippets inactive.
+            if (Schema::hasTable('custom_code_receipts')) DB::table('custom_code_receipts')->delete();
+            if (Schema::hasTable('custom_code_snippets')) {
+                DB::table('custom_code_snippets')->update(['state' => 'inactive', 'active_version_id' => null, 'generation' => DB::raw('generation + 1'), 'updated_at' => now()]);
+                if (Schema::hasTable('custom_code_events')) {
+                    foreach (DB::table('custom_code_snippets')->orderBy('id')->pluck('id') as $id) {
+                        DB::table('custom_code_events')->insert(['snippet_id' => $id, 'user_id' => null, 'action' => 'restore_inactive', 'version_id' => null, 'detail' => json_encode(['reason' => 'Explicit destination review and activation required after any snapshot restore.']), 'created_at' => now()]);
+                    }
+                }
+            }
+
             DB::commit();
         } catch (\Throwable $exception) {
             DB::rollBack();
@@ -417,6 +433,7 @@ class SnapshotService
                 $row[$field] = null;
             }
         }
+        if (array_key_exists('can_manage_custom_code', $row)) $row['can_manage_custom_code'] = false;
         if (array_key_exists('security_version', $row)) {
             $row['security_version'] = 0;
         }

@@ -1,0 +1,11 @@
+{
+  "passed": [
+    "Panel creates draft; cookie-free MCP reads exact data; draft absent publicly",
+    "MCP partial edit preserves siblings; reopened panel fields equal saved values exactly",
+    "Read-only write and editor publish rejected without record/publication changes",
+    "Authorized cookie-free MCP publication renders content and SEO without session",
+    "Independent REST fixture matches MCP effects, authorization rejections and public rendering"
+  ],
+  "panel_page_id": 119,
+  "rest_page_id": 120
+}

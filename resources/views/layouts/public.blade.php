@@ -1,3 +1,9 @@
+@php
+    $customCodeTarget = request()->attributes->get('custom_code_target');
+    $customCodeRenderer = app(\App\Support\CustomCodeRenderer::class);
+    $customCodeEvaluation = $customCodeTarget && ! ($isEditorPreview ?? false) && $customCodeRenderer->enabled()
+        ? $customCodeRenderer->evaluate($customCodeTarget) : null;
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -7,8 +13,10 @@
     <x-seo-meta :page="$page ?? null" :is-editor-preview="$isEditorPreview ?? false" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
+    {!! $customCodeRenderer->render($customCodeTarget, 'head_end', ($isEditorPreview ?? false), $customCodeEvaluation) !!}
 </head>
 <body class="min-h-screen flex flex-col bg-white text-gray-900 font-sans antialiased {{ auth()->check() && ! ($isEditorPreview ?? false) ? 'pt-9' : '' }}">
+    {!! $customCodeRenderer->render($customCodeTarget, 'body_start', ($isEditorPreview ?? false), $customCodeEvaluation) !!}
     @php($metaPixelId = \App\Models\Setting::get('meta_pixel_id'))
 
     @if($metaPixelId && ! ($isEditorPreview ?? false))
@@ -33,5 +41,6 @@
     @endif
 
     @stack('scripts')
+    {!! $customCodeRenderer->render($customCodeTarget, 'body_end', ($isEditorPreview ?? false), $customCodeEvaluation) !!}
 </body>
 </html>

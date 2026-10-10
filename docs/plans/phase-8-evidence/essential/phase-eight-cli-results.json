@@ -1,0 +1,26 @@
+{
+  "profile": "essential",
+  "database_unavailable": true,
+  "checks": [
+    {
+      "action": "disable",
+      "exit_code": 0,
+      "effective_state": "Custom Code disabled."
+    },
+    {
+      "action": "status",
+      "exit_code": 0,
+      "effective_state": "Custom Code disabled."
+    },
+    {
+      "action": "enable",
+      "exit_code": 0,
+      "effective_state": "Custom Code enabled."
+    },
+    {
+      "action": "disable",
+      "exit_code": 0,
+      "effective_state": "Custom Code disabled."
+    }
+  ]
+}
