@@ -18,10 +18,14 @@
             <p class="text-sm text-gray-500 mt-1">{{ __('editorial.history_hint') }}</p>
         </div>
         <nav aria-label="{{ __('editorial.history') }}" class="flex flex-wrap gap-2">
-            <a href="{{ (app(\App\Support\AdminCapabilities::class)->liveEditor() ? app(\App\Support\AdminCapabilities::class)->contentUrl($model) : route('admin.'.$model->getTable().'.index')) }}" class="{{ $secondaryButton }}">&larr; {{ __('editorial.back') }}</a>
+            <a href="{{ (($model instanceof \App\Models\Page && ! app(\App\Support\AdminCapabilities::class)->pageVisualEditor($model->template_key)) || ! app(\App\Support\AdminCapabilities::class)->liveEditor() ? route('admin.'.$model->getTable().'.index') : app(\App\Support\AdminCapabilities::class)->contentUrl($model)) }}" class="{{ $secondaryButton }}">&larr; {{ __('editorial.back') }}</a>
             <a href="{{ route('admin.editorial.calendar') }}" class="{{ $secondaryButton }}">{{ __('editorial.calendar') }}</a>
         </nav>
     </header>
+
+    @if($model instanceof \App\Models\Page && config('cms.templates.'.$model->template_key.'.visual_editor', true) === false)
+        <p role="status" class="rounded-lg border border-sky-500/20 bg-sky-500/10 p-4 text-sm text-sky-200">{{ __('admin.composition_editor_notice') }}</p>
+    @endif
 
     @if($errors->any())
         <div role="alert" class="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">

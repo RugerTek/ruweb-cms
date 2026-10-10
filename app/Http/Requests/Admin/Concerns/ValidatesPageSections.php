@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Admin\Concerns;
 
 use App\Models\Page;
+use App\Support\CompositionBlocks;
+use App\Support\CompositionHtmlSanitizer;
 use App\Support\LinkDestination;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
@@ -53,6 +55,8 @@ trait ValidatesPageSections
             $rules['content_json.'.$path] = match ($type) {
                 'boolean' => ['nullable', 'boolean'],
                 'media' => ['nullable', 'integer', 'exists:media,id'],
+                'composition_html' => ['nullable', 'string', 'max:'.CompositionHtmlSanitizer::MAX_BYTES],
+                'composition_blocks' => ['nullable', 'array', 'max:'.CompositionBlocks::MAX_BLOCKS],
                 'page_reference' => ['nullable', Rule::in([LinkDestination::CUSTOM, ...Page::whereNotNull('translation_group_id')->pluck('translation_group_id')->all()])],
                 'url' => ['nullable', 'string', 'max:2048', 'regex:'.LinkDestination::CUSTOM_URL_PATTERN],
                 default => ['nullable', 'string', 'max:'.($type === 'textarea' ? 100000 : 255)],

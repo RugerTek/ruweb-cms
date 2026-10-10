@@ -19,6 +19,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 |---|---|
 | [content/pages.md](content/pages.md) | The page entity: routing, publishing, page rules |
 | [content/templates.md](content/templates.md) | Registering templates and sections, template views, editor partials |
+| [content/composition.md](content/composition.md) | Safe HTML/canvas, typed blocks, registered components and precompiled styles |
 | [content/updating-content.md](content/updating-content.md) | Changing stored content without losing sibling keys |
 | [content/collections.md](content/collections.md) | Contract for a new collection type |
 | [content/blog-example.md](content/blog-example.md) | The shipped blog, as a worked example only |

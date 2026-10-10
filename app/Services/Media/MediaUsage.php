@@ -7,6 +7,8 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\Setting;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Support\CompositionHtmlSanitizer;
+use App\Support\PageComposition;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -34,6 +36,9 @@ class MediaUsage
         foreach ([Page::class, Post::class] as $model) {
             foreach ($model::query()->cursor() as $content) {
                 $data = $registry->copyForTranslation($content);
+                if ($content instanceof Page && in_array((int) $media->id, PageComposition::mediaIds($content->content_json ?? []), true)) {
+                    $references[] = ['type' => 'pages', 'id' => $content->id, 'label' => $content->title.' ('.$content->locale.')', 'field' => 'composition'];
+                }
                 foreach ($registry->forEntity($content) ?? [] as $path => $schema) {
                     if (($schema['type'] ?? null) !== 'media') {
                         continue;
@@ -64,6 +69,11 @@ class MediaUsage
         if (Schema::hasTable('editorial_drafts')) {
             foreach (DB::table('editorial_drafts')->where('expires_at', '>', now())->cursor() as $draft) {
                 foreach (json_decode($draft->payload, true) ?? [] as $entry) {
+                    if (is_array($entry) && count($entry) === 2 && is_string($entry[1])
+                        && in_array((int) $media->id, app(CompositionHtmlSanitizer::class)->mediaIds($entry[1]), true)) {
+                        $references[] = ['type' => 'draft', 'id' => $draft->id, 'label' => __('media_safety.draft'), 'field' => $draft->content_type.' #'.$draft->content_id];
+                        break;
+                    }
                     if (is_array($entry) && count($entry) === 2
                         && preg_match('/(?:image_id|media_id|featured_image)(?:\]|$)/', (string) $entry[0])
                         && (string) $entry[1] === (string) $media->id) {
@@ -87,6 +97,9 @@ class MediaUsage
                 return true;
             }
             if (is_string($value) && str_contains($value, (string) parse_url($media->url(), PHP_URL_PATH))) {
+                return true;
+            }
+            if ($key === 'html' && is_string($value) && in_array((int) $media->id, app(CompositionHtmlSanitizer::class)->mediaIds($value), true)) {
                 return true;
             }
         }

@@ -1,0 +1,35 @@
+// E2E07 real DOM, loaded build, native accordion, anonymous public and pinned preview.
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {chromium}=require(process.env.PLAYWRIGHT_PACKAGE); const storage=process.env.PHASE0_STORAGE,base='http://127.0.0.1:8018';
+const fixture=JSON.parse(fs.readFileSync(path.join(storage,'phase-seven-fixture.json'))); const stage=process.env.PHASE7_STAGE||fixture.stage;
+const manifest=JSON.parse(fs.readFileSync(path.join(storage,'manifest.json'))); assert.equal(manifest.database,process.env.PHASE0_DATABASE); assert(/^ruweb_phase0_[a-f0-9]{12}$/.test(manifest.database)); assert(!fs.existsSync('public/hot'));
+(async()=>{const browser=await chromium.launch({headless:true}); const context=await browser.newContext(); const page=await context.newPage();const errors=[],scripts=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.resourceType()==='script')scripts.push(new URL(r.url()).pathname)});await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());await context.addInitScript(()=>{window.e2eAttack=false});
+try{
+ if(stage==='full-ui'){
+  await page.goto(base+'/login');await page.locator('input[name=login]').fill('phase0@example.test');await page.locator('input[name=password]').fill('Phase0-Test-Only-2026!');await page.locator('button[type=submit]').click();
+  await page.goto(base+'/admin/pages/'+fixture.pages[2].id+'/edit'); assert(page.url().includes('/admin/editorial/pages/'));const notice=page.locator('[role=status]').filter({hasText:'MCP'});await notice.waitFor({state:'visible'});assert(!(await notice.innerText()).includes('admin.composition_editor_notice'));assert.equal(await page.locator('#editor-form').count(),0);
+  await page.setViewportSize({width:390,height:844});const sidebar=page.locator('#sidebar');if((await sidebar.boundingBox()).x>=0)await page.locator('#sidebar-toggle').click();assert((await sidebar.boundingBox()).x<0);await page.screenshot({path:path.join(storage,'phase-seven-full-compatibility.png'),fullPage:true});
+ }else{
+  assert.equal((await context.cookies()).length,0);
+  for(const width of [1440,390]){await page.setViewportSize({width,height:width===390?844:1000});
+   for(const item of [...fixture.pages,fixture.en]){assert.equal((await page.goto(new URL(item.url,base).href)).status(),200);await page.locator('#admitted').waitFor();
+    assert.equal(await page.evaluate(()=>window.e2eAttack),false);const columns=await page.locator('#grid-proof').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);assert.equal(columns,width===390?1:2);assert.equal(await page.locator('#admitted').getAttribute('onclick'),null);assert.equal(await page.locator('#admitted').getAttribute('style'),null);
+    for(const id of ['bad-protocol','encoded-protocol','data-protocol'])assert.equal(await page.locator('#'+id).getAttribute('href'),null);
+    assert.equal(await page.locator('.cms-composition script,.cms-composition svg,.cms-composition iframe').count(),0);
+    assert.equal((await page.locator('header').count())>0,item.template_key!=='empty');assert.equal((await page.locator('footer').count())>0,item.template_key!=='empty');assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'),new URL(item.url,base).href);assert.equal(await page.locator('html').getAttribute('lang'),item.locale);if(item.locale==='en'){assert.equal(await page.locator('.cms-composition h1').innerText(),'English composition');assert((await page.locator('title').innerText()).includes('Composition SEO English'));assert.equal(await page.locator('meta[name=description]').getAttribute('content'),'Distinct English composition description');assert((await page.locator('.cms-composition').innerText()).includes('Structured English'));assert((await page.locator('.cms-composition').innerText()).includes('Interactive English'));}
+    await page.waitForFunction(()=>[...document.images].filter(i=>i.src.includes('/storage/media/')).every(i=>i.complete&&i.naturalWidth>0));
+    const admittedImage=page.locator('#composition-image');assert.equal(await admittedImage.getAttribute('title'),'Admitted image title');assert.equal(await admittedImage.getAttribute('alt'),'Portable > composition image');const image=page.locator('img[src*="/storage/media/"]').first();assert(await image.getAttribute('srcset'));const response=await context.request.get(await image.getAttribute('src'));assert.equal(response.status(),200);assert((await response.body()).length>100);assert(response.headers()['content-type'].startsWith('image/'));
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert(!(await page.content()).includes('Hidden block should not render'));
+    if(item.template_key==='composed'){
+      assert.equal(await page.locator('[data-cms-accordion]').getAttribute('data-initialized'),'true');const details=page.locator('[data-cms-accordion] details');assert.equal(await details.count(),2);
+      const open=stage==='mutated'&&item.locale!=='en'?1:0;assert.equal(await details.nth(open).evaluate(el=>el.open),true);await details.nth(1-open).locator('summary').click();await page.waitForFunction(()=>[...document.querySelectorAll('[data-cms-accordion] details')].filter(d=>d.open).length===1);assert.equal(await details.nth(open).evaluate(el=>el.open),false);
+      if(item.locale!=='en')assert.equal(await page.locator('.cms-composition').innerText().then(t=>t.indexOf('Interactive')<t.indexOf('Composition')),stage==='mutated');
+    }
+    await page.screenshot({path:path.join(storage,`phase-seven-${fixture.profile}-${stage}-${item.locale}-${item.template_key}-${width}.png`),fullPage:true});
+   }
+   assert.equal((await page.goto(fixture.preview.url)).status(),200);assert((await page.content()).includes('Composition initial'));assert(!(await page.content()).includes('Composition changed'));assert.equal(await page.evaluate(()=>window.e2eAttack),false);
+  }
+ }
+ assert.deepEqual(errors,[]);assert(scripts.some(s=>s.startsWith(stage==='full-ui'?'/build/assets/admin-':'/build/assets/app-')));assert(!scripts.some(s=>s.includes('tiny')||s.includes('editor-engine')));
+ fs.writeFileSync(path.join(storage,`phase-seven-browser-${stage}-results.json`),JSON.stringify({profile:fixture.profile,stage,checks:stage==='full-ui'?['Full compatibility notice visible in actual admin']:['Desktop/mobile three templates and English composed render','DOM scripts/events/CSS/SVG/dangerous protocols inert; admitted markup retained','Responsive images decoded, fetched bytes and headers','Canonical, header/footer, no horizontal overflow','Distinct English HTML/component/interactive/title/SEO, lang and canonical; Spanish origin unchanged','Native accordion initializes loaded code and closes sibling on click','Pinned historical preview unchanged across later edits'],script_paths:[...new Set(scripts)],page_errors:errors},null,2));console.log('PASS E2E07 browser '+fixture.profile+' '+stage);
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Page;
 use App\Models\Post;
 
 /** Deployment capabilities only. Never authorizes an actor or a credential. */
@@ -24,6 +25,9 @@ final class AdminCapabilities
 
     public function requiresSectionEditor(array $template, string $section): bool
     {
+        if (($template['visual_editor'] ?? true) === false) {
+            return false;
+        }
         foreach (array_keys($template['schema'] ?? []) as $path) {
             $prefix = "sections.$section.";
             if (str_starts_with($path, $prefix) && ! in_array(substr($path, strlen($prefix)), ['heading', 'body', 'is_visible'], true)) {
@@ -49,6 +53,9 @@ final class AdminCapabilities
 
     public function contentUrl(object $model, ?string $returnUrl = null): string
     {
+        if ($model instanceof Page && ! $this->pageVisualEditor($model->template_key)) {
+            return route('admin.editorial.index', ['pages', $model->getKey()]);
+        }
         if (! $this->liveEditor() && ! in_array($model->getTable(), ['pages', 'posts'], true)) {
             foreach (config('cms.collections', []) as $type => $collection) {
                 if ($model instanceof $collection['model']) {
@@ -60,6 +67,11 @@ final class AdminCapabilities
         return $this->liveEditor()
             ? route('admin.'.$model->getTable().'.edit', [$model, 'return' => $returnUrl])
             : route('admin.editorial.index', [$model->getTable(), $model->getKey()]);
+    }
+
+    public function pageVisualEditor(string $template): bool
+    {
+        return $this->liveEditor() && (config("cms.templates.$template.visual_editor", true) !== false);
     }
 
     public function publicationState(object $model): string
@@ -85,7 +97,7 @@ final class AdminCapabilities
                 $partial = $this->sectionEditor($section);
                 $sections[$section] = [
                     'specialized_editor_required' => $this->liveEditor() && $specialized,
-                    'visual_editor_available' => $this->liveEditor() && (! $specialized || $partial !== null),
+                    'visual_editor_available' => $this->pageVisualEditor($key) && (! $specialized || $partial !== null),
                 ];
             }
             $templates[$key] = ['sections' => $sections, 'schema' => $template['schema'] ?? []];
@@ -96,7 +108,8 @@ final class AdminCapabilities
             'stability' => 'stable',
             'capabilities' => ['public_site' => true, 'mcp' => true, 'identity' => true, 'live_editor' => $this->liveEditor(), 'specialized_editor_delivery' => $this->liveEditor()],
             'authorization' => 'Independent of profile: account role and credential scope apply to every operation.',
-            'block_formats' => ['structured'],
+            'block_formats' => ['structured', 'html', 'interactive'],
+            'composition' => ['guide' => 'docs/content/composition.md', 'components' => config('cms.composition.components', []), 'html_rules' => app(CompositionHtmlSanitizer::class)->discovery()],
             'templates' => $templates,
             'registered_collections' => collect(config('cms.collections', []))->map(fn ($collection) => ['model' => class_basename($collection['model']), 'mcp_operations' => $collection['model'] === Post::class ? 'posts' : null])->all(),
             'schema_discovery' => ['tool' => 'cms_schema', 'content_types' => ['pages', 'posts']],

@@ -12,6 +12,7 @@ use App\Services\Content\TranslationOperations;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Pages\PageOperations;
 use App\Support\AdminCapabilities;
+use App\Support\PageComposition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,6 +57,7 @@ class PageController extends Controller
 
     public function store(StorePageRequest $request): RedirectResponse
     {
+        abort_unless(app(AdminCapabilities::class)->pageVisualEditor($request->input('template_key', 'default')), 422, __('admin.composition_editor_notice'));
         $page = app(PageOperations::class)->save($request->user(), $request->all());
 
         return redirect()
@@ -63,8 +65,11 @@ class PageController extends Controller
             ->with('success', __('admin.page_created'));
     }
 
-    public function edit(Request $request, Page $page): View
+    public function edit(Request $request, Page $page): View|RedirectResponse
     {
+        if (! app(AdminCapabilities::class)->pageVisualEditor($page->template_key)) {
+            return redirect()->route('admin.editorial.index', ['pages', $page->id]);
+        }
         app(EditorialHistory::class)->capture($page);
 
         return view('admin.pages.edit', [
@@ -78,6 +83,7 @@ class PageController extends Controller
 
     public function update(UpdatePageRequest $request, Page $page): RedirectResponse|JsonResponse
     {
+        abort_unless(app(AdminCapabilities::class)->pageVisualEditor($page->template_key) && app(AdminCapabilities::class)->pageVisualEditor($request->input('template_key', $page->template_key)), 422, __('admin.composition_editor_notice'));
         $staged = $request->user()->isEditor() && $page->status === 'published';
         $page = app(PageOperations::class)->save(
             $request->user(), $request->all(), $page,
@@ -100,6 +106,7 @@ class PageController extends Controller
         $page->title = $request->input('title', $page->title);
         $page->template_key = $request->input('template_key', $page->template_key);
         $page->content_json = $request->input('content_json', $page->content_json ?? []);
+        PageComposition::validateMedia($page->content_json ?? []);
         app()->setLocale($page->locale);
 
         $html = view($page->previewView(), $page->previewData() + ['isEditorPreview' => true])->render();

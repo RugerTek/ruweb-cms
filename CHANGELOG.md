@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.52.0 - 2026-10-10
+## 0.53.0 - 2026-10-10
+
+- Páginas HTML y lienzo sobre la misma entidad Page conservan SEO, idioma, publicación, historial y previews; composición ordenada combina fragmentos, callouts y acordeones registrados sin convertirlos a controles visuales.
+- Contrato DOM independiente del rich text conserva markup admitido y medios por ID, elimina ejecución editorial y limita complejidad; vocabulario CSS precompilado permite cambiar composición e interacción sin reconstruir assets.
+- Operaciones compartidas saneadas, propuestas sobre publicado, huellas de copy por identidad estable, restauración y protección de medios históricos preservan permisos, revisiones y traducciones en ambos perfiles; el panel completo comunica compatibilidad y evita conversiones genéricas.
+- E2E-07 sobre MySQL/HTTP/navegador reales verifica composición responsive, traducción inglesa distinta, ejecución editorial bloqueada, interacción sin rebuild, revisión/restauración y transición entre perfiles; regresiones de operación editorial y MCP quedan registradas con evidencia saneada.
+
+## 0.52.0 - 2026-10-10 (b2df53a)
 
 - Bandeja por MCP con búsqueda/listado/detalle, asignación, estados, notas y reintento de notificaciones mediante operaciones compartidas con el panel; formularios y campos siguen definidos por código, sin configurar destinos desde la bandeja.
 - Seguimiento exclusivo de credenciales full y roles admin/editor en ambos perfiles, lecturas sin mutaciones, resultados acotados recuperables y diagnóstico de entrega sin secretos del transporte.

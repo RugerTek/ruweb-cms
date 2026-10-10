@@ -6,6 +6,7 @@ use App\Http\Requests\Admin\Concerns\ValidatesPageSections;
 use App\Http\Requests\Admin\Concerns\ValidatesStaleTranslationFields;
 use App\Models\Locale;
 use App\Models\Page;
+use App\Support\PageComposition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,10 @@ final class PageInput
 
     public function validate(): array
     {
+        if (is_array($this->data['content_json'] ?? null)) {
+            $this->data['content_json'] = PageComposition::normalize($this->data['content_json']);
+            PageComposition::validateMedia($this->data['content_json']);
+        }
         if (! $this->preserveContent) {
             $this->prepareForValidation();
         }

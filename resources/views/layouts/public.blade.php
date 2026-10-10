@@ -20,13 +20,17 @@
     @endif
 
     @include('partials.admin-bar')
-    @include('partials.header')
+    @if(($page->template_key ?? null) !== 'empty')
+        @include('partials.header')
+    @endif
 
     <main class="flex-1">
         @yield('content')
     </main>
 
-    @include('partials.footer')
+    @if(($page->template_key ?? null) !== 'empty')
+        @include('partials.footer')
+    @endif
 
     @stack('scripts')
 </body>

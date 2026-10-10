@@ -256,3 +256,50 @@ Retain sanitized `phase-six-results.json`, browser result JSON and screenshots. 
 mail/server logs as private. Stop every server before guarded `phase-zero-cleanup.php`, remove copied `.env`
 and configuration caches, delete private logs/fixture files, and repeat accumulated E2E-00/01 in a separate fresh
 full fixture. Do not modify the repository's profile, production database or caches to run acceptance.
+
+## Phase seven: portable page composition (E2E-07)
+
+Build the candidate once, then prepare disposable full and essential copies with their own vendor,
+bootstrap caches, storage and never-used MySQL schemas using the phase-zero guard. Exclude `.git`, `.env`,
+`.env.*`, `node_modules`, `storage`, `public/storage`, **`public/hot`** and generated bootstrap caches.
+Privately copy the normal `.env` into each disposable copy only to obtain the local database account.
+Select the profile in that copy's versioned `config/cms.php`. Run profiles sequentially on loopback 8018.
+Use the copied production assets throughout; no development server or asset rebuild is allowed between
+initial publication and subsequent composition edits.
+
+After `phase-zero-fixture.php`, run `php tests/E2E/phase-five-control.php identity` for review identities.
+Start the copy with `phase-three-router.php`, then execute:
+
+```bash
+PHASE7_PROFILE=essential python3 tests/E2E/phase-seven-http.py
+PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-seven-browser.cjs
+PHASE7_PROFILE=essential python3 tests/E2E/phase-seven-http.py --mutate
+PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-seven-browser.cjs
+PHASE7_PROFILE=essential python3 tests/E2E/phase-seven-http.py --restore
+PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node tests/E2E/phase-seven-browser.cjs
+```
+
+Use `PHASE7_PROFILE=full` in the full copy. Keep `PHASE0_DATABASE` and `PHASE0_STORAGE` exported in every
+stage, as with earlier fixtures. Browser stages read the profile and stage from the private fixture.
+The harness discovers the same 52 MCP tools and the canonical `html`, `empty` and `composed` schemas;
+it creates, translates, publishes, proposes, reviews, restores and republishes using the existing tools.
+Translation receives distinct English HTML, component/interactive copy, title and SEO through MCP. The Spanish origin must remain unchanged; browser lang/canonical/English copy and media IDs are checked. Stable block IDs, ordered list semantics, registered structured media and interactive parameters are checked.
+The loaded compiled accordion is exercised by real summary clicks and must close its previously open sibling.
+The browser checks public and pinned historical preview at 1440 and 390 pixels, image bytes and response
+content type, decoded responsive images, SEO canonical, shared header/footer (intentionally absent on
+`empty`), no overflow and standalone `cms-grid-2` desktop/mobile columns. Script, event, inline CSS, SVG,
+iframe, encoded JavaScript and data URL attacks must remain inert in the actual DOM, while admitted content
+and permitted root-relative links remain visible. Public build SHA-256 must remain unchanged across edits.
+
+To verify essential-to-full compatibility, stop its server, change only the disposable profile to `full`,
+regenerate caches with `phase-two-control.php cache`, clear fixture leases with its `unlock` action and
+start a new server. Run `PHASE7_STAGE=full-ui PLAYWRIGHT_PACKAGE=/absolute/path/to/playwright node
+ tests/E2E/phase-seven-browser.cjs`. The actual admin editor URL must redirect to editorial history with
+the translated compatibility notice and no visual editor form. The sidebar is closed for the screenshot.
+No persistent workers run in this fixture; an actual deployment must restart them.
+
+Retain only `phase-seven-results.json`, `phase-seven-browser-*-results.json` and screenshots. The
+`phase-seven-fixture.json` contains a confidential preview URL: delete it with the credential manifest,
+copied `.env`, generated config/routes caches and all private server/mail logs after guarded schema cleanup.
+Stop every server first. Run accumulated E2E-00/01 on full and E2E-03/05 in both profiles using their
+existing stages; preserve their sanitized results independently. Never point this fixture at a real database.

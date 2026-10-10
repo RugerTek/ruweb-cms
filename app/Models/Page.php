@@ -9,6 +9,7 @@ use App\Contracts\Editorial\Seoable;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
 use App\Support\LinkDestination;
+use App\Support\PageComposition;
 use App\Support\SectionRichText;
 use App\Support\SiteUrl;
 use App\Traits\HasMedia;
@@ -75,6 +76,8 @@ class Page extends Model implements Mediable, Previewable, Publishable, Seoable
 
             return;
         }
+
+        $content = PageComposition::normalize($content);
 
         $schema = config('cms.templates.'.($this->template_key ?: 'default').'.schema', []);
         foreach ($schema as $path => $field) {

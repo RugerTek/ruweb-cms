@@ -49,6 +49,9 @@ The entity's featured image belongs to the shared media relationship, **not** in
   build absolute URLs at render time — content travels between domains through snapshots
   ([../operations/snapshots.md](../operations/snapshots.md)).
 
+HTML/canvas/composed pages retain this same shape; their fragments and block lists live under `sections`.
+See [composition](../content/composition.md) for the separate sanitized contract.
+
 ## Multilingual
 
 Each localized record has its own `content_json`. Never store `{ "es": "…", "en": "…" }` inside one field; the

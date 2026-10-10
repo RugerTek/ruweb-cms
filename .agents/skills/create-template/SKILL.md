@@ -41,3 +41,11 @@ role/scope permissions are independent. Essential’s operational panel passed p
 - A template with no view falls back to `templates.default` silently — check the file name matches the key.
 - Sections shared with another template should keep the same key so the editor partial is reused.
 - MCP exposes `template_key` as an enum of this config, so a new key is immediately agent-visible.
+
+## Agent-managed composition exception
+
+Registered HTML/composed formats with `visual_editor: false` use shared operations/MCP in both profiles.
+Do not create a source editor or route them to generic heading/body inputs. Provide status, history, preview
+and an explicit compatibility notice in full. Their sanitizer, semantic schema, media and translation
+contracts live in [docs/content/templates.md](../../../docs/content/templates.md). This exception applies
+only to explicitly registered composition formats, not ordinary custom structured sections.

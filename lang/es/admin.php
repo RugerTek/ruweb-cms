@@ -1055,4 +1055,9 @@ return [
     'media_metadata_saved' => 'Textos guardados.',
     'media_metadata_error' => 'No se pudieron guardar los textos. Tus cambios siguen aquí.',
     'media_metadata_invalid' => 'Selecciona idiomas activos y usa solamente alt y título.',
+    'template_html' => 'Página HTML',
+    'template_empty' => 'Lienzo HTML',
+    'template_composed' => 'Página compuesta',
+    'section_composition' => 'Composición',
+    'composition_editor_notice' => 'Esta plantilla se gestiona mediante MCP. Su HTML y bloques no tienen un editor visual compatible. Usá el estado, historial y vista previa para revisarlos; la edición aquí está deshabilitada.',
 ];

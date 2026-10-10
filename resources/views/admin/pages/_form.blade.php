@@ -7,6 +7,7 @@
 
     $sectionRegistry = [];
     foreach ($templates as $templateKey => $templateConfig) {
+        if (($templateConfig['visual_editor'] ?? true) === false) { continue; }
         foreach ($templateConfig['sections'] as $sectionKey) {
             if (!isset($sectionRegistry[$sectionKey])) {
                 $sectionRegistry[$sectionKey] = [
@@ -93,9 +94,10 @@
             <select name="template_key" id="template_key"
                     class="w-full bg-[#1a1a1a] border border-white/10 text-gray-400 text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50">
                 @foreach ($templates as $key => $tmpl)
-                    <option value="{{ $key }}" {{ $currentTemplate === $key ? 'selected' : '' }}>{{ __('admin.template_'.$key) }}</option>
+                    <option data-visual-editor="{{ ($tmpl['visual_editor'] ?? true) ? '1' : '0' }}" value="{{ $key }}" {{ $currentTemplate === $key ? 'selected' : '' }}>{{ __('admin.template_'.$key) }}</option>
                 @endforeach
             </select>
+            <p id="composition-editor-notice" class="hidden text-amber-300 text-xs mt-2" role="status">{{ __('admin.composition_editor_notice') }}</p>
             @error('template_key')
                 <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
             @enderror
@@ -272,12 +274,15 @@
             return;
         }
 
+        const compatible = templateSelect.selectedOptions[0]?.dataset.visualEditor !== '0';
+        document.getElementById('composition-editor-notice')?.classList.toggle('hidden', compatible);
+        document.querySelectorAll('[type="submit"]').forEach(button => button.disabled = !compatible);
         sectionBlocks.forEach((block) => {
             const templates = (block.dataset.templates || '')
                 .split(',')
                 .map((value) => value.trim())
                 .filter(Boolean);
-            const shouldShow = templates.includes(templateSelect.value);
+            const shouldShow = compatible && templates.includes(templateSelect.value);
             block.style.display = shouldShow ? '' : 'none';
             block.querySelectorAll('input, select, textarea').forEach(field => field.disabled = !shouldShow);
             block.querySelectorAll('[data-template-only]').forEach(group => {
@@ -288,6 +293,9 @@
         });
     }
 
+    document.getElementById('editor-form')?.addEventListener('submit', event => {
+        if (templateSelect?.selectedOptions[0]?.dataset.visualEditor === '0') event.preventDefault();
+    });
     templateSelect?.addEventListener('change', refreshVisibleSections);
     refreshVisibleSections();
 

@@ -5,6 +5,7 @@ namespace App\Services\Content;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Taxonomy;
+use App\Support\CompositionBlocks;
 use App\Support\SectionRichText;
 use Illuminate\Database\Eloquent\Model;
 
@@ -62,6 +63,9 @@ class ContentSchemaRegistry
         if ($flag === 'translatable') {
             $schema = $this->forEntity($entity) ?? [];
             foreach ($values as $path => $value) {
+                if (($schema[$path]['type'] ?? null) === 'composition_blocks' && is_array($value)) {
+                    $values[$path] = CompositionBlocks::translatableCopy($value);
+                }
                 $preset = $schema[$path]['rich_text'] ?? null;
                 if ($preset && is_string($value)) {
                     $values[$path] = SectionRichText::comparisonValue($value, $preset);

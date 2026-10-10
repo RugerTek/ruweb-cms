@@ -1,0 +1,17 @@
+{
+  "profile": "essential",
+  "checks": [
+    "52 existing tools discover canonical schemas in selected profile",
+    "HTML, empty and composed published through existing MCP",
+    "Distinct English HTML/component/interactive/SEO copy preserves block IDs, order and media; Spanish source unchanged",
+    "Reviewed exact composition proposal changes content, block order and interactive parameters without rebuild",
+    "Historical restore and explicit republish recover identity, order, media and interactive parameters with unchanged assets"
+  ],
+  "build_sha256": "a46d933cffd29067f89864e8107bf2fc2c35ee4f27fb828dede69ea23cb8c422",
+  "cookie_free_mcp": true,
+  "page_ids": [
+    109,
+    110,
+    111
+  ]
+}

@@ -1,10 +1,10 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–6 implementadas y aceptadas con sus gates E2E. Fases 7–11 autorizadas, sin iniciar.
+**Estado:** fases 0–7 implementadas y aceptadas con sus gates E2E. Fases 8–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 11 — seguimiento de formularios compartido, permisos operacionales y E2E-06 en ambos perfiles.
+**Revisión:** 12 — composición HTML segura, componentes registrados y E2E-07 en ambos perfiles.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
-**Entrega actual:** fase 0 ([resultados](phase-0-results.md)) y extracción de operaciones de páginas de fase 1 ([resultados](phase-1-results.md)) y perfiles de fase 2 ([resultados](phase-2-results.md)) y MCP de fase 3 ([resultados](phase-3-results.md)) y panel esencial de fase 4 ([resultados](phase-4-results.md)). El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
+**Entrega actual:** fases [0](phase-0-results.md), [1](phase-1-results.md), [2](phase-2-results.md), [3](phase-3-results.md), [4](phase-4-results.md), [5](phase-5-results.md), [6](phase-6-results.md) y [7](phase-7-results.md) aceptadas con resultados. El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
 ## 1. Objetivo y valor del producto
 
@@ -463,9 +463,9 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Implementar cuerpo HTML saneado, variantes con layout/lienzo y vocabulario de estilos.
-- [ ] Añadir composición de bloques con identidad estable, medios por id, idiomas, historial y un componente interactivo registrado.
-- [ ] Definir presentación en completo de contenido sin editor visual compatible.
+- [x] Implementar cuerpo HTML saneado, variantes con layout/lienzo y vocabulario de estilos.
+- [x] Añadir composición de bloques con identidad estable, medios por id, idiomas, historial y un componente interactivo registrado.
+- [x] Definir presentación en completo de contenido sin editor visual compatible.
 
 **E2E-07 — Rediseñar una landing sin generar un editor ni recompilar**
 
@@ -479,6 +479,8 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 **Aprobación:** capturas desktop/móvil, aserciones de DOM/comportamiento y huella del build sin cambios. No aparecen scripts editoriales ejecutables ni URLs de medios persistidas para saltarse el contrato.
 
 **Reversión:** desactivar escrituras nuevas conservando el renderer del formato ya publicado; restaurar la versión de contenido si procede.
+
+**Resultado:** fase aceptada con [evidencia](phase-7-results.md), 52 herramientas comunes, E2E-07 final en ambos perfiles, traducción inglesa distinta, build sin cambios durante operación y revisión independiente sin hallazgos pendientes.
 
 ### Fase 8 — Custom Code y selección de destinos
 
@@ -653,7 +655,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). Fase 7 no se inició; la autorización global conserva los gates por fase.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). Fases 8–11 conservan sus gates y no se iniciaron.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

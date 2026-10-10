@@ -37,7 +37,7 @@ Every template is one entry in `config('cms.templates')`:
 template translation-ready — a template without a complete schema cannot create translations
 ([../concepts/multilanguage.md](../concepts/multilanguage.md)). Repeaters use `*`: `items.*.title`.
 
-Shipped templates: `default`, `home`, `home-alt`, `contact`.
+Shipped templates: `default`, `home`, `home-alt`, `contact`, `html`, `empty`, `composed`.
 
 ## The View
 
@@ -99,3 +99,33 @@ UI, not part of the rendering contract.
 5. Seed placeholder media for any image field.
 6. Add `admin.*` translations for new labels in `es` and `en` ([../admin/translations.md](../admin/translations.md)).
 7. Existing pages keep working: a section missing from `content_json` renders as empty and must not fatal.
+
+## HTML and composed pages
+
+`html` renders `sections.content.html` inside the site layout; `empty` renders the same shape as a canvas
+without header/footer. Both retain the public document head, locale, SEO, assets, preview and publication
+rules. `composed` renders `sections.composition.blocks` inside the layout. Their `visual_editor: false`
+registry flag deliberately routes full-profile readers to status/history/preview and rejects generic editor
+mutations. They are managed through shared page operations/MCP. Switching a profile never converts them.
+
+HTML is an editorial fragment, not arbitrary executable source. Save operations and rendering sanitize it.
+Use `<img data-media-id="42" alt="Description" class="cms-media">`; the renderer resolves the current media
+URL and responsive variants. Persisted `src`, inline styles, event handlers and script tags are disallowed.
+Use root-relative internal links. No build is needed to edit copy or rearrange supported classes:
+
+- `cms-container`, `cms-section`, `cms-stack`, `cms-grid`, `cms-grid-2`, `cms-grid-3`, `cms-split` arrange sections;
+  grids collapse to one column below 768px.
+- `cms-card`, `cms-eyebrow`, `cms-title`, `cms-lead`, `cms-muted`, `cms-text-center` style content.
+- `cms-button`, `cms-button-secondary`, `cms-media`, `cms-gap-sm`, `cms-gap-lg` style links, images and spacing.
+
+Blocks are an ordered list with stable `id`, `type`, `version: 1` and optional `is_visible` (default true).
+`type: html` carries `html`; `structured` and `interactive` carry a registered `component` plus `params`.
+Only code may register component rules and views. `callout` accepts plain `heading`, `body` and `image_id`;
+`accordion` accepts plain `heading`, `items` of `question`/`answer` and nullable zero-based `initially_open`.
+The accordion ships as native keyboard-accessible details, with the registered client interaction closing
+other items when one opens. Editorial payloads never select executable code or arbitrary Blade views.
+
+The `composition_html` and `composition_blocks` schema types have semantic translation/media handling.
+Keep block ids, types, versions, visibility, component names and behavioral params across locales; translate
+HTML copy and component copy, remapping media only through editorial translation rules. The same contracts
+apply to history restoration and preview. Starter seeds do not create these optional templates or media slots.

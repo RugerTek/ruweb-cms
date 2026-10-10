@@ -66,7 +66,71 @@ return [
         ],
     ],
 
+    'composition' => [
+        'components' => [
+            'callout' => [
+                'type' => 'structured',
+                'translatable_paths' => ['heading', 'body'],
+                'view' => 'components.composition.callout',
+                'rules' => [
+                    'heading' => ['nullable', 'string', 'max:500'],
+                    'body' => ['nullable', 'string', 'max:10000'],
+                    'image_id' => ['nullable', 'integer', 'exists:media,id'],
+                ],
+            ],
+            'accordion' => [
+                'type' => 'interactive',
+                'translatable_paths' => ['heading', 'items.*.question', 'items.*.answer'],
+                'view' => 'components.composition.accordion',
+                'rules' => [
+                    'heading' => ['nullable', 'string', 'max:500'],
+                    'items' => ['required', 'array', 'min:1', 'max:50'],
+                    'items.*' => ['array:question,answer'],
+                    'items.*.question' => ['required', 'string', 'max:500'],
+                    'items.*.answer' => ['required', 'string', 'max:10000'],
+                    'initially_open' => ['nullable', 'integer', 'min:0', 'max:49'],
+                ],
+            ],
+        ],
+    ],
+
     'templates' => [
+        'html' => [
+            'name' => 'HTML page',
+            'visual_editor' => false,
+            'sections' => ['content'],
+            'schema' => [
+                'meta.title' => ['type' => 'text', 'translatable' => true],
+                'meta.description' => ['type' => 'textarea', 'translatable' => true],
+                'meta.featured_image' => ['type' => 'media', 'localized_media' => true],
+                'sections.content.is_visible' => ['type' => 'boolean', 'preserve' => true],
+                'sections.content.html' => ['type' => 'composition_html', 'translatable' => true],
+            ],
+        ],
+        'empty' => [
+            'name' => 'HTML canvas',
+            'visual_editor' => false,
+            'sections' => ['content'],
+            'schema' => [
+                'meta.title' => ['type' => 'text', 'translatable' => true],
+                'meta.description' => ['type' => 'textarea', 'translatable' => true],
+                'meta.featured_image' => ['type' => 'media', 'localized_media' => true],
+                'sections.content.is_visible' => ['type' => 'boolean', 'preserve' => true],
+                'sections.content.html' => ['type' => 'composition_html', 'translatable' => true],
+            ],
+        ],
+        'composed' => [
+            'name' => 'Composed page',
+            'visual_editor' => false,
+            'sections' => ['composition'],
+            'schema' => [
+                'meta.title' => ['type' => 'text', 'translatable' => true],
+                'meta.description' => ['type' => 'textarea', 'translatable' => true],
+                'meta.featured_image' => ['type' => 'media', 'localized_media' => true],
+                'sections.composition.is_visible' => ['type' => 'boolean', 'preserve' => true],
+                'sections.composition.blocks' => ['type' => 'composition_blocks', 'translatable' => true],
+            ],
+        ],
         'default' => [
             'name' => 'Default Page',
             'sections' => ['content'],

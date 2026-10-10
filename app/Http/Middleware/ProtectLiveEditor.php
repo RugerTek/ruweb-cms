@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Page;
 use App\Models\Post;
 use App\Services\Content\ContentEditLock;
+use App\Support\AdminCapabilities;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +18,12 @@ class ProtectLiveEditor
     {
         $content = $request->route('page') ?? $request->route('post');
         abort_unless($content instanceof Page || $content instanceof Post, 404);
+
+        // Agent-operated pages redirect to history; reading them must not reserve a visual editor lease.
+        if ($request->isMethod('GET') && $content instanceof Page
+            && ! app(AdminCapabilities::class)->pageVisualEditor($content->template_key)) {
+            return $next($request);
+        }
 
         if ($request->isMethod('GET') && $request->header('Sec-Fetch-Dest') === 'iframe') {
             return response(__('admin.editor_nested_blocked'), 403)

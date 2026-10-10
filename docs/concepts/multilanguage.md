@@ -86,6 +86,11 @@ contract. This does not change page fingerprints or automatically translate imag
 `template_key`. It excludes slugs, media ids, booleans, colors, layout and numeric config, publication status,
 timestamps and author ids. Changing the base slug does not outdate translations; changing copy does.
 
+HTML composition reviews one whole sanitized fragment per locale, including its admitted markup; no per-node
+source diff is promised. Composed structured/interactive blocks extract registered `translatable_paths` by
+stable block ID: block order, visibility, media IDs and behavior settings do not outdate translations.
+See [composition](../content/composition.md).
+
 ## Settings
 
 A setting has a global value in `settings.value`; a locale override lives in `setting_translations` and is read

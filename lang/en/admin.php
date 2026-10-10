@@ -1055,4 +1055,9 @@ return [
     'media_metadata_saved' => 'Texts saved.',
     'media_metadata_error' => 'Unable to save texts. Your changes are still here.',
     'media_metadata_invalid' => 'Select active languages and use only alt and title.',
+    'template_html' => 'HTML page',
+    'template_empty' => 'HTML canvas',
+    'template_composed' => 'Composed page',
+    'section_composition' => 'Composition',
+    'composition_editor_notice' => 'This template is managed through MCP. Its HTML and blocks have no compatible visual editor. Use the content status, history and preview to inspect it; editing here is disabled.',
 ];

@@ -41,3 +41,11 @@ role/scope permissions are independent. Essential’s operational panel passed p
   section ([docs/admin/live-editor-ui-ux.md](../../../docs/admin/live-editor-ui-ux.md), "Sections Backed By
   Admin Collections").
 - Is it a repeater? Fixed item count → no add/delete controls. Client-decided count → administrable repeater.
+
+## Agent-managed composition exception
+
+Registered HTML/composed formats with `visual_editor: false` use shared operations/MCP in both profiles.
+Do not create a source editor or route them to generic heading/body inputs. Provide status, history, preview
+and an explicit compatibility notice in full. Their sanitizer, semantic schema, media and translation
+contracts live in [docs/content/templates.md](../../../docs/content/templates.md). This exception applies
+only to explicitly registered composition formats, not ordinary custom structured sections.

@@ -16,7 +16,7 @@
         $editLabel = trans('admin.action_edit', [], $adminLocale) . ' post';
         $editTitle = trans('admin.action_edit', [], $adminLocale) . ' este post';
     } elseif (request()->routeIs('page.show', 'home') && isset($page)) {
-        $editHref = route('admin.pages.edit', ['page' => $page->id, 'return' => $currentUrl]);
+        $editHref = app(\App\Support\AdminCapabilities::class)->contentUrl($page, $currentUrl);
         $editLabel = trans('admin.action_edit', [], $adminLocale) . ' p' . "\u{00E1}" . 'gina';
         $editTitle = trans('admin.action_edit', [], $adminLocale) . ' esta p' . "\u{00E1}" . 'gina';
     } else {

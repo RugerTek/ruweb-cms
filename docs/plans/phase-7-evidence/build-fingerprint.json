@@ -1,0 +1,110 @@
+{
+  "files_sha256": {
+    "app/Support/CompositionBlocks.php": "63bcc429e8c2df6d810f9e9f6e8fca267cc4df4016b1325e1c34c1660fddd899",
+    "app/Support/CompositionHtmlSanitizer.php": "d99a74ca3a19228ab9e6ad523138ffb902996498ef0cdecb5005d3116cf0fdc0",
+    "app/Support/CompositionRenderer.php": "5803c7f667bdfac6bc317a100f7fee7e28f9375b1ecc8f7c4c2f0cf4373a081a",
+    "app/Support/PageComposition.php": "9c01f05970e6c69902fa74cfe76d9d8b81bf230102b58a54ed5bf61efa0b470a",
+    "app/Services/Editorial/EditorialHistory.php": "e18930c71ab280f29c02322a9e8d289925621212fa1875b78c26a807cf2a5d79",
+    "config/cms.php": "3213d1d442921bbf3bd79c386b94d4ec9c720167b8c7a2cda37cd9736c542014",
+    "resources/css/composition.css": "e51cd054f2bb498b7bd7e327963f92434a9319e4c0d06d1fa6516759a1e4e7fd",
+    "resources/js/composition.js": "d61197dceac239d5f02981309765f6f923cf6c9c509614a395e03d5e81ec53c5",
+    "tests/E2E/phase-seven-http.py": "3bf6ee7c96218233dd44a177768c7622b7f21a7411ad7fbfed25db1445ff485e",
+    "tests/E2E/phase-seven-browser.cjs": "f2de92bad7d03bd0ead66f163b6c5d2cc8ddf6436d40a159ffa188794789953d"
+  },
+  "build_sha256": "a46d933cffd29067f89864e8107bf2fc2c35ee4f27fb828dede69ea23cb8c422",
+  "manifest": {
+    "_admin-common-BGvvBtch.css": {
+      "file": "assets/admin-common-BGvvBtch.css",
+      "src": "_admin-common-BGvvBtch.css"
+    },
+    "_admin-common-BKWWS9lC.js": {
+      "file": "assets/admin-common-BKWWS9lC.js",
+      "name": "admin-common",
+      "dynamicImports": [
+        "resources/js/map-picker.js"
+      ],
+      "css": [
+        "assets/admin-common-BGvvBtch.css"
+      ]
+    },
+    "_chunk-DPI0Y_ll.js": {
+      "file": "assets/chunk-DPI0Y_ll.js",
+      "name": "chunk"
+    },
+    "node_modules/leaflet/dist/images/layers-2x.png": {
+      "file": "assets/layers-2x-Bpkbi35X.png",
+      "src": "node_modules/leaflet/dist/images/layers-2x.png"
+    },
+    "node_modules/leaflet/dist/images/layers.png": {
+      "file": "assets/layers-BWBAp2CZ.png",
+      "src": "node_modules/leaflet/dist/images/layers.png"
+    },
+    "node_modules/leaflet/dist/images/marker-icon.png": {
+      "file": "assets/marker-icon-hN30_KVU.png",
+      "src": "node_modules/leaflet/dist/images/marker-icon.png"
+    },
+    "resources/css/app.css": {
+      "file": "assets/app-kke07nZ7.css",
+      "name": "app",
+      "names": [
+        "app.css"
+      ],
+      "src": "resources/css/app.css",
+      "isEntry": true
+    },
+    "resources/js/admin-essential.js": {
+      "file": "assets/admin-essential-BjsAIwvq.js",
+      "name": "admin-essential",
+      "src": "resources/js/admin-essential.js",
+      "isEntry": true,
+      "imports": [
+        "_admin-common-BKWWS9lC.js"
+      ]
+    },
+    "resources/js/admin.js": {
+      "file": "assets/admin-C4iNl58l.js",
+      "name": "admin",
+      "src": "resources/js/admin.js",
+      "isEntry": true,
+      "imports": [
+        "_admin-common-BKWWS9lC.js"
+      ],
+      "dynamicImports": [
+        "resources/js/rich-text.js"
+      ]
+    },
+    "resources/js/app.js": {
+      "file": "assets/app-P6f_VT5F.js",
+      "name": "app",
+      "src": "resources/js/app.js",
+      "isEntry": true,
+      "imports": [
+        "_chunk-DPI0Y_ll.js"
+      ]
+    },
+    "resources/js/map-picker.js": {
+      "file": "assets/map-picker-Cps751Cc.js",
+      "name": "map-picker",
+      "src": "resources/js/map-picker.js",
+      "isDynamicEntry": true,
+      "imports": [
+        "_chunk-DPI0Y_ll.js"
+      ],
+      "assets": [
+        "assets/layers-BWBAp2CZ.png",
+        "assets/layers-2x-Bpkbi35X.png",
+        "assets/marker-icon-hN30_KVU.png"
+      ]
+    },
+    "resources/js/rich-text.js": {
+      "file": "assets/rich-text-DE--GJmh.js",
+      "name": "rich-text",
+      "src": "resources/js/rich-text.js",
+      "isDynamicEntry": true,
+      "imports": [
+        "_chunk-DPI0Y_ll.js"
+      ]
+    }
+  },
+  "final_e2e_completed_at": "2026-10-10T22:36:18.668831+00:00"
+}

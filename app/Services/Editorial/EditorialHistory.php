@@ -5,6 +5,7 @@ namespace App\Services\Editorial;
 use App\Models\Page;
 use App\Models\Post;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Support\PageComposition;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -84,6 +85,11 @@ class EditorialHistory
 
     public function storeProposal(Model $model, array $payload): int
     {
+        if ($model instanceof Page && is_array($payload['attributes']['content_json'] ?? null)) {
+            $payload['attributes']['content_json'] = PageComposition::normalize($payload['attributes']['content_json']);
+            PageComposition::validateMedia($payload['attributes']['content_json']);
+        }
+
         return $this->query($model)->insertGetId([
             'content_type' => $model->getTable(), 'content_id' => $model->id,
             'user_id' => EditorialActor::current()?->id, 'is_proposal' => true,
@@ -103,6 +109,10 @@ class EditorialHistory
             $this->capture($model);
             $payload = json_decode($row->payload, true);
             $attributes = array_intersect_key($payload['attributes'], array_flip($model->getFillable()));
+            if ($model instanceof Page && is_array($attributes['content_json'] ?? null)) {
+                $attributes['content_json'] = PageComposition::normalize($attributes['content_json']);
+                PageComposition::validateMedia($attributes['content_json']);
+            }
             // Restoring always creates a draft: a historical publication is never silently republished.
             $attributes['status'] = $asDraft ? 'draft' : $model->status;
             $attributes['updated_by'] = EditorialActor::current()?->id;
