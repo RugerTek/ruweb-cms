@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\McpApiKey;
-use App\Models\OauthAccessToken;
-use App\Models\OauthAuthorizationCode;
 use App\Models\User;
 use App\Notifications\VerifyPendingEmail;
 use App\Services\Security\Totp;
@@ -20,40 +18,8 @@ class AccountSecurityTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function oauthParameters(): array
-    {
-        config(['oauth.clients' => ['test-client' => ['redirect_uris' => ['https://client.example/callback']]]]);
-        return ['response_type' => 'code', 'client_id' => 'test-client', 'redirect_uri' => 'https://client.example/callback',
-            'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', 'verifier', true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256'];
-    }
 
-    public function test_oauth_code_is_claimed_once_and_bad_verifier_does_not_consume_it(): void
-    {
-        $user = User::factory()->create(['role' => 'admin']);
-        $params = $this->oauthParameters();
-        $code = OauthAuthorizationCode::create($params + ['code' => 'one-use', 'user_id' => $user->id, 'expires_at' => now()->addMinute()]);
-        $exchange = ['grant_type' => 'authorization_code', 'code' => $code->code, 'client_id' => 'test-client',
-            'redirect_uri' => $params['redirect_uri'], 'code_verifier' => 'bad'];
-        $this->postJson('/token', $exchange)->assertStatus(400);
-        $this->assertNull($code->fresh()->used_at);
-        $exchange['code_verifier'] = 'verifier';
-        $response = $this->postJson('/token', $exchange)->assertOk();
-        $response->assertHeader('Cache-Control', 'no-store, private')->assertHeader('Pragma', 'no-cache');
-        $this->assertNotNull($code->fresh()->used_at);
-        $this->postJson('/token', $exchange)->assertStatus(400)->assertJsonPath('error', 'invalid_grant');
-        $this->assertSame(1, OauthAccessToken::count());
-        $this->withToken($response->json('access_token'))->getJson('/mcp/pages')->assertOk();
-        $this->assertNotNull(OauthAccessToken::first()->last_used_at);
-    }
 
-    public function test_oauth_login_and_token_endpoints_are_rate_limited(): void
-    {
-        $params = $this->oauthParameters();
-        for ($i = 0; $i < 5; $i++) $this->post('/authorize', $params + ['email' => 'unknown@example.test', 'password' => 'bad'])->assertRedirect();
-        $this->post('/authorize', $params + ['email' => 'unknown@example.test', 'password' => 'bad'])->assertStatus(429);
-        for ($i = 0; $i < 30; $i++) $this->postJson('/token', [])->assertStatus(422);
-        $this->postJson('/token', [])->assertStatus(429);
-    }
 
     public function test_reset_request_has_identical_response_for_known_unknown_and_throttled_account(): void
     {
@@ -100,17 +66,15 @@ class AccountSecurityTest extends TestCase
         $this->get(str_replace('secret', 'tampered', $link))->assertForbidden();
     }
 
-    public function test_password_recovery_revokes_keys_oauth_codes_and_sessions(): void
+    public function test_password_recovery_revokes_keys_and_sessions(): void
     {
         $user = User::factory()->create(['role' => 'admin']);
         $legacy = $user->generateMcpApiKey();
         $named = McpApiKey::issue($user, 'Integration', 'full', null);
-        $access = OauthAccessToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'token'), 'client_id' => 'client', 'expires_at' => now()->addHour()]);
         DB::table('admin_sessions')->insert(['id' => 'other', 'user_id' => $user->id, 'last_active_at' => now()]);
         $token = Password::broker()->createToken($user);
         $this->post(route('admin.password.update'), ['email' => $user->email, 'token' => $token,
             'password' => 'new-safe-password', 'password_confirmation' => 'new-safe-password'])->assertRedirect(route('admin.login'));
-        $this->assertNotNull($access->fresh()->revoked_at);
         $this->assertNull($user->fresh()->mcp_api_key_hash);
         $this->assertNotNull(DB::table('admin_sessions')->where('id', 'other')->value('revoked_at'));
         $this->withToken($legacy)->getJson('/mcp/pages')->assertUnauthorized();
@@ -166,24 +130,6 @@ class AccountSecurityTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
-    public function test_oauth_requires_second_factor_and_revoked_session_cannot_auto_authorize(): void
-    {
-        $totp = app(Totp::class);
-        $user = User::factory()->create(['role' => 'admin']);
-        $user->forceFill(['two_factor_secret' => $totp->secret(), 'two_factor_confirmed_at' => now()])->save();
-        $params = $this->oauthParameters();
-        $this->post('/authorize', $params + ['email' => $user->email, 'password' => 'password'])->assertSessionHasErrors('code');
-        $this->assertSame(0, OauthAuthorizationCode::count());
-        $this->post('/authorize', $params + ['email' => $user->email, 'password' => 'password',
-            'code' => $totp->code($user->two_factor_secret, intdiv(now()->timestamp, 30))])->assertRedirect();
-        $this->assertSame(1, OauthAuthorizationCode::count());
-        $user->forceFill(['two_factor_secret' => null, 'two_factor_confirmed_at' => null])->save();
-        $this->actingAs($user)->get(route('admin.profile.index'))->assertOk();
-        $sessionId = session()->getId();
-        DB::table('admin_sessions')->where('user_id', $user->id)->update(['revoked_at' => now()]);
-        $this->withCookie(config('session.cookie'), $sessionId)->get('/authorize?'.http_build_query($params))->assertOk();
-        $this->assertSame(1, OauthAuthorizationCode::count());
-    }
 
     public function test_two_factor_challenge_is_rate_limited(): void
     {
@@ -216,20 +162,14 @@ class AccountSecurityTest extends TestCase
         $this->assertGreaterThan(0, $user->fresh()->security_version);
     }
 
-    public function test_individual_session_and_oauth_connection_revocation_are_owner_scoped(): void
+    public function test_individual_session_revocation_is_owner_scoped(): void
     {
         $user = User::factory()->create(['role' => 'admin']);
         $other = User::factory()->create(['role' => 'editor']);
         DB::table('admin_sessions')->insert(['id' => 'owned-session', 'user_id' => $user->id, 'last_active_at' => now()]);
         DB::table('admin_sessions')->insert(['id' => 'other-session', 'user_id' => $other->id, 'last_active_at' => now()]);
-        $connection = OauthAccessToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'own'), 'client_id' => 'client', 'expires_at' => now()->addHour()]);
-        $foreign = OauthAccessToken::create(['user_id' => $other->id, 'token' => hash('sha256', 'foreign'), 'client_id' => 'client', 'expires_at' => now()->addHour()]);
         $this->actingAs($user)->delete(route('admin.profile.sessions.destroy', 'other-session'), ['current_password' => 'password'])->assertNotFound();
         $this->delete(route('admin.profile.sessions.destroy', 'owned-session'), ['current_password' => 'password'])->assertRedirect();
-        $this->delete(route('admin.profile.connections.destroy', $foreign), ['current_password' => 'password'])->assertForbidden();
-        $this->delete(route('admin.profile.connections.destroy', $connection), ['current_password' => 'password'])->assertRedirect();
-        $this->assertNotNull($connection->fresh()->revoked_at);
-        $this->assertNull($foreign->fresh()->revoked_at);
         $this->assertNotNull(DB::table('admin_sessions')->where('id', 'owned-session')->value('revoked_at'));
     }
 

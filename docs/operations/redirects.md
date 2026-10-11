@@ -35,7 +35,7 @@ either way:
 Rules of resolution:
 
 - Only `GET` and `HEAD` are redirected or monitored.
-- Paths matching `cms.redirects.ignore_paths` are skipped entirely — the panel, `mcp`, the OAuth endpoints,
+- Paths matching `cms.redirects.ignore_paths` are skipped entirely — the panel, `mcp`,
   `storage`, `build`, `/up`. Add a path there rather than special-casing it in code.
 - Only `is_active` rules apply. Deactivating is the reversible way to switch one off.
 - The incoming query string is carried over when the rule's destination has none, so campaign parameters

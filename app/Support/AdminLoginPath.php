@@ -22,8 +22,6 @@ class AdminLoginPath
             'admin',
             'blog',
             'mcp',
-            'authorize',
-            'token',
             'up',
             'sitemap-xml',
         ];

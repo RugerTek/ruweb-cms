@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\McpApiKey;
-use App\Models\OauthAccessToken;
 use App\Models\User;
 use App\Services\Security\Totp;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,20 +51,6 @@ class AccountSecurityNavigationTest extends TestCase
         $this->assertNull($user->fresh()->two_factor_secret);
     }
 
-    public function test_revoking_connection_returns_to_security_and_removes_it_from_active_connections(): void
-    {
-        $user = User::factory()->create(['role' => 'admin']);
-        $connection = OauthAccessToken::create(['user_id' => $user->id, 'token' => hash('sha256', 'token'),
-            'client_id' => 'test-navigation-client', 'expires_at' => now()->addHour()]);
-        $profile = route('admin.profile.index', ['tab' => 'security']);
-        $this->actingAs($user)->from(route('admin.profile.index'))
-            ->delete(route('admin.profile.connections.destroy', $connection), ['current_password' => 'password'])
-            ->assertRedirect($profile);
-        $response = $this->get($profile);
-        $this->assertSecurityPanelVisible($response);
-        $response->assertDontSee('test-navigation-client')->assertSee(__('security.no_connections'));
-        $this->assertNotNull($connection->fresh()->revoked_at);
-    }
 
     public function test_failed_key_creation_preserves_permissions_and_expiry_without_issuing_a_key(): void
     {

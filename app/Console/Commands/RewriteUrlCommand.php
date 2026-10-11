@@ -22,7 +22,7 @@ class RewriteUrlCommand extends Command
     protected $description = 'Replace one site origin with another inside every stored text and JSON column.';
 
     /** Tables whose contents never carry site URLs and must not be touched. */
-    protected const SKIPPED = ['migrations', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'password_reset_tokens', 'oauth_access_tokens', 'oauth_authorization_codes', 'users'];
+    protected const SKIPPED = ['migrations', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'sessions', 'password_reset_tokens', 'users'];
 
     public function __construct(
         protected EnvironmentReportService $environment

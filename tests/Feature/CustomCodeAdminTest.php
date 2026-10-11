@@ -50,37 +50,6 @@ class CustomCodeAdminTest extends TestCase
         $this->actingAs($user->fresh())->post(route('admin.claude-mcp.api-key.generate'), ['scope' => 'custom-code'])->assertRedirect();
         $this->assertSame('custom-code', $user->mcpApiKeys()->first()->scope);
     }
-    public function test_oauth_custom_code_requires_consent_and_preserves_credential_scope(): void
-    {
-        config(['oauth.clients.test-client' => ['redirect_uris' => ['https://client.example/callback']]]);
-        $user = User::factory()->create(['role' => 'admin', 'can_manage_custom_code' => true, 'password' => 'test-password']);
-        $verifier = 'custom-code-test-verifier';
-        $input = ['response_type' => 'code', 'client_id' => 'test-client', 'redirect_uri' => 'https://client.example/callback',
-            'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='),
-            'code_challenge_method' => 'S256', 'scope' => 'custom-code'];
-        $this->actingAs($user)->get('/authorize?'.http_build_query($input))->assertOk()->assertSee(__('custom_code.consent'));
-        $credentials = ['email' => $user->email, 'password' => 'test-password'];
-        $this->post('/authorize', $input + $credentials)->assertSessionHasErrors('custom_code_consent');
-        $this->assertDatabaseCount('oauth_authorization_codes', 0);
-        $this->post('/authorize', $input + $credentials + ['custom_code_consent' => '1'])->assertRedirect();
-        $code = \App\Models\OauthAuthorizationCode::first();
-        $this->assertSame('custom-code', $code->scope);
-        $this->postJson('/token', ['grant_type' => 'authorization_code', 'code' => $code->code,
-            'redirect_uri' => $input['redirect_uri'], 'client_id' => 'test-client', 'code_verifier' => $verifier])
-            ->assertOk()->assertJsonPath('scope', 'custom-code');
-        $this->assertSame('custom-code', \App\Models\OauthAccessToken::first()->scope);
-    }
 
-    public function test_oauth_rejects_conflicting_query_and_body_authorization_parameters(): void
-    {
-        config(['oauth.clients.test-client' => ['redirect_uris' => ['https://client.example/callback']]]);
-        $user = User::factory()->create(['role' => 'admin', 'can_manage_custom_code' => true, 'password' => 'test-password']);
-        $input = ['response_type'=>'code', 'client_id'=>'test-client', 'redirect_uri'=>'https://client.example/callback', 'code_challenge'=>str_repeat('a',43), 'code_challenge_method'=>'S256', 'scope'=>'custom-code', 'state'=>'original'];
-        foreach (['scope'=>'full', 'client_id'=>'other-client', 'redirect_uri'=>'https://other.example/callback', 'code_challenge'=>str_repeat('b',43), 'code_challenge_method'=>'plain', 'response_type'=>'token', 'state'=>'changed'] as $key=>$changed) {
-            $this->travel(1)->minutes();
-            $this->postJson('/authorize?'.http_build_query($input), array_replace($input, [$key=>$changed]) + ['email'=>$user->email, 'password'=>'test-password'])->assertStatus(400)->assertJsonPath('error','invalid_request');
-            $this->assertDatabaseCount('oauth_authorization_codes',0);
-        }
-    }
 
 }

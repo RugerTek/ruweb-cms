@@ -26,7 +26,7 @@ $localePattern = implode('|', array_map(
     fn (string $code): string => preg_quote($code, '/'),
     $catalogLocales
 ));
-$reservedSlugs = 'admin|mcp|authorize|token|\.well-known';
+$reservedSlugs = 'admin|mcp';
 $reservedLocaleSlugs = implode('|', array_map(
     fn (string $code): string => preg_quote($code, '/').'$',
     $catalogLocales

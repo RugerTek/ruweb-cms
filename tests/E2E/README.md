@@ -1,3 +1,9 @@
+# Current authentication acceptance
+
+Run `python3 tests/E2E/api-key-only-http.py` for the current API-key-only HTTP acceptance. It creates a fresh
+SQLite database and isolated storage in a temporary directory, starts its own loopback server, checks MCP
+credentials/scopes and the admin login/key/revocation flow, and removes the fixture afterward.
+
 # Phase zero: isolated HTTP acceptance
 
 Requires PHP, Composer dependencies, Python 3, compiled Vite assets and a local MySQL account permitted to
@@ -315,8 +321,7 @@ The latter creates an explicit Custom Code credential and a second denied admini
 credential inherits executable permission. Use at least four `PHP_CLI_SERVER_WORKERS` to exercise concurrent
 HTTP requests, and run profiles sequentially on free loopback 8018.
 
-Start the guarded phase-zero router with `OAUTH_CLIENT_ID=e2e-phase8` and
-`OAUTH_ALLOWED_REDIRECT_URIS=http://127.0.0.1:8018/oauth-return`. The harness has these stages:
+Start the guarded phase-zero router. The harness has these stages:
 
 1. `python3 tests/E2E/phase-eight-http.py initial` creates three templates and their English translations via
    cookie-free editorial MCP, then pins an ordinary preview.
@@ -327,12 +332,11 @@ Start the guarded phase-zero router with `OAUTH_CLIENT_ID=e2e-phase8` and
 4. `php tests/E2E/phase-eight-control.php disable`, then browser with `PHASE8_STAGE=killed`; `enable`, then
    browser with `PHASE8_STAGE=recovered`. Run HTTP `harmful`, browser current stage, CLI `disable`, then browser
    `PHASE8_STAGE=harmful-killed`. The deliberate layout break is restricted to one disposable public page.
-5. Run `phase-eight-security.cjs` with the same Playwright environment: real HTTP rejects seven conflicting
-   OAuth query/body parameters, reads the panel CSS byte-for-byte via exact MCP version, and compares panel/MCP
+5. Run `phase-eight-security.cjs` with the same Playwright environment: reads the panel CSS byte-for-byte via exact MCP version, and compares panel/MCP
    evaluation output. Optional read-only `PHASE8_STAGE=capture-panel` refreshes desktop/mobile panel captures.
 
 All browser stages use Chromium, verify six destination/language documents, deterministic positions/order,
-one marker execution, exact translation scope, inert pending versions, preview/login/OAuth/admin exclusion,
+one marker execution, exact translation scope, inert pending versions, preview/login/admin exclusion,
 no horizontal overflow and 1440/390 captures. Global also executes an explicitly acknowledged test in an
 opaque-origin iframe and verifies parent-session document isolation. The eight synchronized same-key save
 requests and eight activation requests run against real independent HTTP workers/MySQL; results and audit
@@ -365,7 +369,7 @@ cached-profile transitions, but does not claim new agent authoring. The transiti
 HTTP worker because its original start/terminate recipe owns one server process. E2E04 runs real
 `cms:install`, real panel identity/credential creation, the restricted Codex MCP client and both profile
 browser stages. E2E09 full creates its expected draft through a real Codex MCP case before its native
-preview assertion; both profiles rerun 2FA, OAuth, password recovery and asynchronous HTTP/worker stages.
+preview assertion; both profiles rerun 2FA, password recovery and asynchronous HTTP/worker stages.
 E2E00/01 runs in both profiles: Full includes specialized visual editing; Essential checks the operational panel and authorized preview. E2E04 starts in essential and explicitly transitions to full.
 
 The PHP runtime needs its ordinary production ini semantics, including `short_open_tag=Off` for XML

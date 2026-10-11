@@ -14,6 +14,6 @@ class EvidenceRedaction(unittest.TestCase):
   clean=clients.sanitize('ruweb_mcp_fixture-secret http://127.0.0.1:8022/draft-preview/abc123 /draft-preview/abc123',['private fixture secret'])
   self.assertNotIn('ruweb_mcp_',clean);self.assertNotIn('abc123',clean)
  def test_nonsecret_token_named_source_paths_keep_checksum_identity(self):
-  hashes={'app/Models/OauthAccessToken.php':'c'*64,'app/Services/Security/PasswordRecovery.php':'d'*64,'tests/E2E/phase-nine-clients.py':'e'*64}
+  hashes={'app/Models/McpApiKey.php':'c'*64,'app/Services/Security/PasswordRecovery.php':'d'*64,'tests/E2E/phase-nine-clients.py':'e'*64}
   self.assertEqual(clients.sanitize(hashes,[]),hashes)
 if __name__=='__main__':unittest.main()

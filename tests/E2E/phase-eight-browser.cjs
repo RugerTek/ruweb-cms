@@ -66,8 +66,6 @@ assert.equal(manifest.database,process.env.PHASE0_DATABASE);assert(/^ruweb_phase
     }
     assert.equal((await page.goto(fixture.preview.url)).status(),200);await absent();await screenshot('preview',width);
     assert.equal((await page.goto(base+'/login')).status(),200);await absent();await screenshot('login',width);
-    const oauth=new URL('/authorize',base);oauth.search=new URLSearchParams({response_type:'code',client_id:process.env.PHASE8_OAUTH_CLIENT||'e2e-phase8',redirect_uri:process.env.PHASE8_OAUTH_REDIRECT||base+'/oauth-return',code_challenge:'a'.repeat(43),code_challenge_method:'S256',scope:'custom-code'}).toString();
-    assert.equal((await page.goto(oauth.href)).status(),200);assert.equal(await page.locator('input[name=email]').count(),1);await absent();await screenshot('oauth-consent',width);
    }
    await login();await page.goto(base+'/admin/custom-code');await absent();await screenshot('admin',390);
    if(stage==='global'){
@@ -85,7 +83,7 @@ assert.equal(manifest.database,process.env.PHASE0_DATABASE);assert(/^ruweb_phase
 
   }
   assert.deepEqual(errors,[]);assert(external.every(origin=>origin==='https://fonts.googleapis.com'));
-  fs.writeFileSync(path.join(storage,`phase-eight-browser-${stage}-results.json`),JSON.stringify({profile:fixture.profile,stage,checks:stage==='capture-test'?['Exact approved test executes in the separate opaque-origin frame, parent code remains inert, no horizontal overflow at desktop/mobile widths']:stage==='capture-panel'?['Read-only panel inspected at desktop and mobile widths, closed sidebar and no horizontal overflow']:stage==='create'?['CSS authored and exact version activated through the real panel','Desktop and mobile panel with no executable custom code']:['Six destination/locale documents show exact marker count and CSS state','Ordered head, body-start and body-end insertion in real DOM','Pending version stays inert; excludes and exact language identities prevail','Ordinary preview/login/OAuth consent/admin have no custom code','Desktop/mobile screenshots and no horizontal overflow','Local-only browser requests; no page errors'],blocked_external_assets:external, external_origins:[],page_errors:errors},null,2));
+  fs.writeFileSync(path.join(storage,`phase-eight-browser-${stage}-results.json`),JSON.stringify({profile:fixture.profile,stage,checks:stage==='capture-test'?['Exact approved test executes in the separate opaque-origin frame, parent code remains inert, no horizontal overflow at desktop/mobile widths']:stage==='capture-panel'?['Read-only panel inspected at desktop and mobile widths, closed sidebar and no horizontal overflow']:stage==='create'?['CSS authored and exact version activated through the real panel','Desktop and mobile panel with no executable custom code']:['Six destination/locale documents show exact marker count and CSS state','Ordered head, body-start and body-end insertion in real DOM','Pending version stays inert; excludes and exact language identities prevail','Ordinary preview/login/admin have no custom code','Desktop/mobile screenshots and no horizontal overflow','Local-only browser requests; no page errors'],blocked_external_assets:external, external_origins:[],page_errors:errors},null,2));
   console.log('PASS E2E08 browser '+fixture.profile+' '+stage);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

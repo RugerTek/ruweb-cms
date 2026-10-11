@@ -7,7 +7,6 @@ return [
     'permission' => 'Permitir gestionar código personalizado (solo administradores)',
     'permission_help' => 'Permiso explícito para gestionar y activar código confiable de navegador. Las credenciales editoriales no conceden este permiso.',
     'credential_scope' => 'Solo código personalizado',
-    'consent' => 'Autorizo explícitamente a esta conexión a gestionar y activar código confiable de navegador con mi permiso de código personalizado.',
     'saved' => 'Propuesta guardada. La versión activa sigue vigente.',
     'activated' => 'Versión activada.',
     'deactivated' => 'Snippet desactivado.',

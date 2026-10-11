@@ -71,7 +71,7 @@ class SnapshotPortabilitySecurityTest extends TestCase
         // A forged archive may list runtime credentials/receipts despite export exclusion.
         $manifest = $report->manifest;
         $injected = [];
-        foreach (['mcp_operation_receipts', 'editorial_operation_receipts', 'submission_operation_receipts', 'custom_code_receipts', 'oauth_access_tokens', 'oauth_authorization_codes', 'mcp_api_keys'] as $table) {
+        foreach (['mcp_operation_receipts', 'editorial_operation_receipts', 'submission_operation_receipts', 'custom_code_receipts', 'mcp_api_keys'] as $table) {
             $file = 'database/'.$table.'.jsonl';
             $manifest['database']['tables'][] = ['name' => $table, 'file' => $file, 'rows' => 1];
             $injected[$file] = '{"user_id":1,"token":"must-never-import"}\n';
@@ -91,7 +91,7 @@ class SnapshotPortabilitySecurityTest extends TestCase
         foreach (['mcp_operation_receipts', 'editorial_operation_receipts', 'submission_operation_receipts'] as $table) {
             $this->assertDatabaseCount($table, 0);
         }
-        foreach (['oauth_access_tokens', 'oauth_authorization_codes', 'mcp_api_keys', 'custom_code_receipts'] as $table) {
+        foreach (['mcp_api_keys', 'custom_code_receipts'] as $table) {
             $this->assertDatabaseCount($table, 0);
         }
         $this->assertDatabaseHas('submission_events', ['submission_id' => $submission->id, 'user_id' => null, 'action' => 'update']);

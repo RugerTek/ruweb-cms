@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Models\McpApiKey;
-use App\Models\OauthAccessToken;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -18,21 +17,6 @@ class AuthenticateMcpApiKey
 
         if (! $token) {
             return $this->unauthorizedResponse('Missing token.');
-        }
-
-        // Try OAuth access token first
-        $oauthToken = OauthAccessToken::with('user')
-            ->where('token', hash('sha256', $token))
-            ->whereNull('revoked_at')
-            ->where('expires_at', '>', now())
-            ->first();
-
-        if ($oauthToken) {
-            $oauthToken->touchLastUsed();
-            $request->attributes->set('mcp_scope', $oauthToken->scope ?? 'full');
-            $request->setUserResolver(fn () => $oauthToken->user);
-
-            return $next($request);
         }
 
         $key = McpApiKey::with('user')->where('key_hash', hash('sha256', $token))
@@ -50,7 +34,7 @@ class AuthenticateMcpApiKey
             return $this->unauthorizedResponse('Invalid token.');
         }
 
-        // Fall back to MCP API key
+        // Compatibility for legacy API keys that have not been migrated.
         $user = User::findByMcpApiKey($token);
 
         if ($user) {

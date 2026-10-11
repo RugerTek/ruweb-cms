@@ -64,17 +64,4 @@
             <button type="submit" class="border border-white/20 px-3 py-2 rounded-md">{{ __('security.revoke_others') }}</button>
         </form>
     </section>
-    <section class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-5">
-        <h2 class="font-semibold text-white mb-3">{{ __('security.connections') }}</h2>
-        @forelse($connections as $connection)
-            <p>{{ $connection->client_id }} · {{ __('security.key_expiry') }}: {{ $connection->expires_at->format('Y-m-d H:i') }}</p>
-            <form method="POST" action="{{ route('admin.profile.connections.destroy', $connection) }}" class="mt-3 space-y-2">
-                @csrf @method('DELETE')
-                @include('admin.profile._security-proof', ['prefix' => 'connection-'.$connection->id, 'withCode' => false])
-                <button type="submit" class="border border-red-500/30 text-red-300 px-3 py-2 rounded-md">{{ __('security.revoke') }}</button>
-            </form>
-        @empty
-            <p class="text-gray-400">{{ __('security.no_connections') }}</p>
-        @endforelse
-    </section>
 </div>

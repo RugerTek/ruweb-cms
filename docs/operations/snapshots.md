@@ -24,7 +24,7 @@ A snapshot contains:
 - `manifest.json` describing the origin and the table list
 - `checksums.json` with a SHA-256 per file
 
-A snapshot never contains source code, `vendor`, `.env`, application keys, cache, sessions, Live Editor leases, queue tables, OAuth tokens or password reset tokens.
+A snapshot never contains source code, `vendor`, `.env`, application keys, cache, sessions, Live Editor leases, queue tables or password reset tokens.
 
 The `migrations` table is exported for inspection but is **never written into the destination**. The destination keeps its own migration history so `php artisan migrate` stays truthful after a restore.
 
@@ -255,7 +255,7 @@ Media and localized metadata import before content regardless of a legacy manife
 Operation receipts (`mcp_operation_receipts`, `editorial_operation_receipts`,
 `submission_operation_receipts`, `custom_code_receipts`) are installation-local: export excludes them,
 import ignores even explicitly injected archive entries, and restore clears local receipts. Auth/session,
-OAuth, password-reset and preview tables follow the same import exclusion contract. Account credential
+password-reset and preview tables follow the same import exclusion contract. Account credential
 fields and Custom Code permission are scrubbed even in a re-checksummed archive; a partial archive
 cannot preserve a local Custom Code grant.
 

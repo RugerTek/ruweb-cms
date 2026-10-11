@@ -13,13 +13,8 @@ class ClaudeMcpController extends Controller
 {
     public function index(Request $request): View
     {
-        $clientId = array_key_first(config('oauth.clients', []));
-        $client = config('oauth.clients.'.$clientId, []);
-
         return view('admin.claude-mcp.index', [
             'mcpUrl' => rtrim(config('app.url'), '/').'/mcp/rpc',
-            'clientId' => $clientId ?? '',
-            'secret' => $client['secret'] ?? '',
             'user' => $request->user(),
             'apiKeys' => $request->user()->mcpApiKeys()->latest()->get(),
             'newApiKey' => session('new_mcp_api_key'),

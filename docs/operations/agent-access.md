@@ -24,34 +24,19 @@ revoke its predecessor from MCP. Creating a named key does not rotate other keys
 reactivated; issue a replacement. Losing a key's plaintext also requires a replacement. Reconnect the client
 after changing its credential; a cached catalog is not proof that its next operation is authorized.
 
-## OAuth
+## API-key authentication only
 
-`/.well-known/oauth-authorization-server`, `/authorize` and `/token` expose a preconfigured client flow.
-Configure `OAUTH_CLIENT_ID`, the exact allowlisted callback URI(s) and any client secret required by the
-external platform. Rüweb validates registered client ID, callback and S256 PKCE; it does not implement
-dynamic client registration, refresh tokens or client-information metadata registration. The configured
-secret displayed by the panel is legacy external-platform configuration; the server's code exchange uses
-PKCE rather than client-secret authentication. Do not claim confidential-client authentication here.
-Access tokens expire after the configured TTL (eight hours by default); authorize a new connection to renew.
-
-An existing authenticated, unrevoked session with a completed second factor can authorize ordinary scopes.
-A fresh browser signs in and supplies a second-factor proof when enrolled. The `custom-code` scope always
-requires explicit consent, account permission, password and second factor when enrolled. The same validated
-parameters are used at issuance; conflicting query/body parameters are rejected. `/token` is a machine
-endpoint excluded from Laravel 13 request-forgery middleware; the authorization POST remains protected.
-Successful token responses are `no-store` and `no-cache`.
-
-Revoke an OAuth connection from Profile > Security using the current password. The old token immediately
-fails authentication on the next request. A new authorization creates a distinct connection.
+API keys are the sole MCP and REST credentials. OAuth authorization, token exchange and discovery endpoints
+have been removed. Existing OAuth tokens no longer authenticate; create a named key in MCP and replace the
+client's bearer credential. No OAuth client ID, secret, callback or environment configuration is needed.
+Admin login, users, password recovery and two-factor authentication remain available.
 
 ## Client compatibility and limits
 
 Use [the phase 9 results](../plans/phase-9-results.md) for exact installed-client versions, evidence and the
 current gate status. Phase 9 was accepted with the owner’s explicit deferral of the real Claude test;
-Claude remains pending and uncertified. Codex API-key operation is verified in both profiles. Browser/HTTP
-OAuth verifies the server, not a client’s OAuth login. This exception does not relax phases 10–11.
-API-key configuration examples below do not certify an untested client release or OAuth
-login. Rüweb offers stateless JSON HTTP calls, not SSE subscriptions or general MCP background-task APIs.
+Claude remains pending and uncertified. Codex API-key operation is verified in both profiles. Historical OAuth evidence describes earlier releases and does not apply to this API-key-only release.
+API-key configuration examples below do not certify an untested client release. Rüweb offers stateless JSON HTTP calls, not SSE subscriptions or general MCP background-task APIs.
 It negotiates the supported `2024-11-05` protocol revision and announces only tools. `serverInfo.version`
 comes from `VERSION`; it is independent of the protocol revision. `ping` returns `{}` for every valid scope.
 
@@ -86,7 +71,7 @@ when required, then request an idempotent retry. No tool offers arbitrary SQL or
 
 With an authenticated session, use Profile > Security to revoke integrations or other sessions. For a lost
 password, use the login's password-recovery link and the mailbox verification procedure. A successful reset
-invalidates every session, named/legacy key, OAuth access token and unused authorization code.
+invalidates every session, named/legacy key.
 
 If email delivery is unavailable, an authorized operator with access to the installation can run:
 

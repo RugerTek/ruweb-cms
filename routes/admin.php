@@ -69,7 +69,6 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
     Route::post('profile/two-factor/recovery', [TwoFactorController::class, 'recovery'])->middleware('throttle:two-factor')->name('two-factor.recovery');
     Route::delete('profile/sessions/others', [AccountSessionsController::class, 'destroyOthers'])->name('profile.sessions.others');
     Route::delete('profile/sessions/{session}', [AccountSessionsController::class, 'destroy'])->name('profile.sessions.destroy');
-    Route::delete('profile/connections/{connection}', [AccountSessionsController::class, 'revokeConnection'])->name('profile.connections.destroy');
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('profile/information', [ProfileController::class, 'updateInformation'])->name('profile.information.update');
     Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');

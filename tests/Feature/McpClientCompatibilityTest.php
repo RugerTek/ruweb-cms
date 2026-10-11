@@ -11,12 +11,26 @@ class McpClientCompatibilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_machine_token_exchange_excludes_real_forgery_middleware_but_consent_does_not(): void
+    public function test_oauth_endpoints_and_schema_are_absent(): void
     {
-        // Laravel normally skips this middleware in tests; exercise its deployed branch.
-        $this->app->instance('env', 'local');
-        $this->postJson('/token', [])->assertUnprocessable()->assertJsonValidationErrors('grant_type');
-        $this->postJson('/authorize', [])->assertStatus(419);
+        $this->getJson('/.well-known/oauth-authorization-server')->assertNotFound();
+        $this->getJson('/authorize')->assertNotFound();
+        $this->postJson('/authorize', [])->assertStatus(405);
+        $this->postJson('/token', [])->assertStatus(405);
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasTable('oauth_access_tokens'));
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasTable('oauth_authorization_codes'));
+        $this->assertNull(config('oauth'));
+    }
+
+    public function test_browser_session_does_not_authenticate_mcp_and_panel_only_offers_keys(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($user)->getJson('/mcp/capabilities')->assertUnauthorized();
+        $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'ping'])->assertUnauthorized();
+        $this->get(route('admin.claude-mcp.index'))->assertOk()
+            ->assertSee(__('security.key_name'))->assertDontSee('mcp-client-id')->assertDontSee('mcp-secret');
+        $this->get(route('admin.profile.index', ['tab' => 'security']))->assertOk()
+            ->assertDontSee('/profile/connections/');
     }
 
     public function test_each_scope_can_initialize_and_ping_without_gaining_a_write(): void

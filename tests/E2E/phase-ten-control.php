@@ -119,7 +119,7 @@ try {
         $sent->forceFill(['notification_status' => 'sent', 'notified_at' => now()])->save();
         echo 'PASS notification generations seeded for import assertions';
     } elseif ($action === 'verify-import') {
-        foreach (['mcp_api_keys', 'oauth_access_tokens', 'oauth_authorization_codes', 'admin_sessions', 'editorial_preview_links', 'editorial_drafts', 'mcp_operation_receipts', 'editorial_operation_receipts', 'submission_operation_receipts', 'custom_code_receipts'] as $table) {
+        foreach (['mcp_api_keys', 'admin_sessions', 'editorial_preview_links', 'editorial_drafts', 'mcp_operation_receipts', 'editorial_operation_receipts', 'submission_operation_receipts', 'custom_code_receipts'] as $table) {
             if (Schema::hasTable($table) && DB::table($table)->count()) {
                 throw new RuntimeException('Restored operational authority: '.$table);
             }

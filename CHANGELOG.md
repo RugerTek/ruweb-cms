@@ -6,7 +6,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
-## 1.0.1 - 2026-10-10
+## 1.1.0 - 2026-10-10
+
+- MCP: autenticación exclusivamente por API keys; se eliminan OAuth, sus rutas de autorización/token/discovery, modelos, configuración y tablas del starter.
+- Panel MCP: conexión con URL y bearer key, sin client ID/secret ni conexiones OAuth en Perfil; login, usuarios, permisos, 2FA y recuperación permanecen operativos.
+- Pruebas y documentación: contrato actualizado y aceptación HTTP aislada en full/essential para claves válidas, ausentes, inválidas, expiradas y revocadas, permisos, panel, 2FA y recuperación; los tokens OAuth anteriores requieren reemplazo por una API key.
+
+## 1.0.1 - 2026-10-10 (697f997)
 
 - MCP: los rechazos de permisos (alcance de la credencial, rol o permiso de Custom Code) responden HTTP 200 con JSON-RPC `-32003` y `error.data.reason`, en lugar de `-32603`/HTTP 403, que los clientes mostraban como fallo interno o de transporte. REST mantiene 403.
 - Historial editorial: cada operación registra una única versión de su resultado (más el estado previo si faltaba); los guardados internos, medios y taxonomías ya no generan versiones intermedias.

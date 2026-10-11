@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Menu;
-use App\Models\OauthAccessToken;
 use App\Models\Setting;
 use App\Models\Page;
 use App\Models\Post;
@@ -133,20 +132,6 @@ class McpRestBindingTest extends TestCase
         $this->assertDatabaseMissing('menus', ['id' => $menu->id]);
     }
 
-    public function test_oauth_token_still_authenticates_before_bindings_and_policies(): void
-    {
-        $media = $this->media();
-        $post = Post::create(['title' => 'OAuth post', 'slug' => 'oauth-post', 'status' => 'draft', 'locale' => 'es']);
-        $token = OauthAccessToken::create([
-            'token' => hash('sha256', 'test-oauth-token'), 'user_id' => $this->editor->id,
-            'client_id' => 'test-client', 'expires_at' => now()->addHour(),
-        ]);
-        $this->withToken('test-oauth-token');
-        $this->getJson('/mcp/media/'.$media->id)->assertOk()->assertJsonPath('data.id', $media->id);
-        $this->getJson('/mcp/posts/'.$post->id)->assertOk()->assertJsonPath('data.id', $post->id);
-        $token->forceFill(['revoked_at' => now()])->save();
-        $this->getJson('/mcp/media/999999')->assertUnauthorized();
-    }
 
     public function test_media_list_searches_translations_and_setting_key_stays_a_string(): void
     {

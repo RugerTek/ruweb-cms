@@ -2,8 +2,6 @@
 
 // Guarded E2E identity recovery and asynchronous status assertions, never a production endpoint.
 use App\Models\ContactSubmission;
-use App\Models\OauthAccessToken;
-use App\Models\OauthAuthorizationCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -23,12 +21,10 @@ if ($action === 'recover') {
     $tester->setInputs(['Phase9-Recovered-Only-2026!']);
     if ($tester->execute(['email' => $user->email]) !== 0) throw new RuntimeException('Recovery command failed.');
     if ($user->mcpApiKeys()->whereNull('revoked_at')->exists()
-        || OauthAccessToken::where('user_id', $user->id)->whereNull('revoked_at')->exists()
-        || OauthAuthorizationCode::where('user_id', $user->id)->whereNull('used_at')->exists()
         || DB::table('admin_sessions')->where('user_id', $user->id)->whereNull('revoked_at')->exists()) {
         throw new RuntimeException('Recovery left account connections live.');
     }
-    echo "PASS real CLI recovery invalidates named keys, OAuth codes/tokens and sessions\n";
+    echo "PASS real CLI recovery invalidates named keys and sessions\n";
 } elseif ($action === 'worker') {
     Artisan::call('queue:work', ['--stop-when-empty' => true, '--sleep' => 0]);
     $result = json_decode(file_get_contents($storage.'/phase-nine-http-'.$profile.'-results.json'), true, flags: JSON_THROW_ON_ERROR);

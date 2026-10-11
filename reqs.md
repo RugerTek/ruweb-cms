@@ -72,7 +72,7 @@ Documento actualizado contra el código del repositorio. La fuente de verdad es 
 - Generación y revocación de API key MCP desde perfil.
 - Endpoints MCP para páginas, posts, media, settings y menús.
 - Endpoint MCP JSON-RPC en `/mcp/rpc`.
-- OAuth authorization code + PKCE para clientes configurados.
+- Autenticación MCP exclusivamente mediante API keys con nombre, alcance, expiración y revocación individual.
 
 ### Seguridad y controles ya presentes
 

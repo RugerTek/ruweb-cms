@@ -2,8 +2,6 @@
 
 namespace App\Services\Security;
 
-use App\Models\OauthAccessToken;
-use App\Models\OauthAuthorizationCode;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -15,8 +13,6 @@ class RevokeCredentials
     {
         DB::transaction(function () use ($user, $keepSession) {
             $user->mcpApiKeys()->whereNull('revoked_at')->update(['revoked_at' => now()]);
-            OauthAccessToken::where('user_id', $user->id)->whereNull('revoked_at')->update(['revoked_at' => now()]);
-            OauthAuthorizationCode::where('user_id', $user->id)->whereNull('used_at')->update(['used_at' => now()]);
             $user->forceFill(['mcp_api_key_hash' => null, 'mcp_api_key_generated_at' => null,
                 'mcp_api_key_last_used_at' => null, 'pending_email' => null,
                 'pending_email_token' => null, 'pending_email_expires_at' => null, 'remember_token' => Str::random(60)])->save();

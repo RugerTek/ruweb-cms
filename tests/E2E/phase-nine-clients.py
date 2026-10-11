@@ -4,7 +4,7 @@ PHASE0_STORAGE and PHASE0_DATABASE guard the disposable fixture. A private
 phase-nine-client-plan.json contains cases with name, key (manifest.keys),
 instructions, required_tools, and optional expected_final (exact JSON subset), expected_errors (tool: denial text).
 Run with codex or claude to select one client; default runs both sequentially.
-This verifies fixed bearer interoperability; it does not claim OAuth login.
+This verifies fixed bearer interoperability..
 """
 import json
 import os

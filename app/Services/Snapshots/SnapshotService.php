@@ -50,8 +50,6 @@ class SnapshotService
         'failed_jobs',
         'job_batches',
         'jobs',
-        'oauth_access_tokens',
-        'oauth_authorization_codes',
         'password_reset_tokens',
         'sessions',
     ];
@@ -394,7 +392,7 @@ class SnapshotService
                 DB::table('submission_events')->delete();
             }
             if (in_array('users', $tableNames, true)) {
-                foreach (['mcp_api_keys', 'admin_sessions', 'oauth_access_tokens', 'oauth_authorization_codes', 'password_reset_tokens', 'sessions'] as $credentials) {
+                foreach (['mcp_api_keys', 'admin_sessions', 'password_reset_tokens', 'sessions'] as $credentials) {
                     if (Schema::hasTable($credentials)) {
                         DB::table($credentials)->delete();
                     }

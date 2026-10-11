@@ -40,15 +40,14 @@ Authorization: Bearer <token>
   publish, unpublish an existing published row, or mutate media, settings or menus. Draft status is checked
   under a row lock within the mutation transaction, so concurrent publishing cannot bypass the scope.
   Unknown future RPC tools are denied for restricted keys until explicitly classified.
-- **OAuth 2.0** for external agent platforms needing delegated authorization, through
-  `/.well-known/oauth-authorization-server`, `/authorize` and `/token` (`routes/oauth.php`), configured with
-  `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET` and `OAUTH_ALLOWED_REDIRECT_URIS`.
+- API keys are the sole authentication method. Legacy OAuth tokens are rejected, and authorization,
+  token exchange and OAuth discovery endpoints are unavailable. Replace old OAuth integrations with named keys.
 
 Start with [connect and recover agent access](agent-access.md) for the panel-to-client workflow, compatibility
-and recovery procedures. See [account security](../admin/account-security.md) for OAuth throttling, second-factor enforcement and
+and recovery procedures. See [account security](../admin/account-security.md) for second-factor enforcement and
 credential revocation on password or identity changes.
 
-`mcp`, `authorize`, `token` and `.well-known` are reserved slugs, so no page can shadow them.
+`mcp` is reserved for the API.
 
 ## MCP Server Protocol
 

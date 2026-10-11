@@ -10,12 +10,10 @@ safe. Both `full` and `essential` expose the same operational panel and MCP cata
 An administrator grants `can_manage_custom_code` explicitly in **Users**, including to their own account.
 Every existing/new user starts without it; an editor cannot use it even with a stored flag. Browser actions
 require the administrator role and that flag. Agents additionally require a separately issued **custom-code**
-API-key/OAuth scope. Existing `full`, `draft-only` and `read-only` credentials never inherit this permission.
+API-key scope. Existing `full`, `draft-only` and `read-only` credentials never inherit this permission.
 Revoking the account flag immediately denies subsequent operations without deleting snippets.
 
-The MCP connection screen offers the dedicated scope only to permitted administrators. OAuth requests for
-`scope=custom-code` always show explicit consent, ask for credentials and honor existing second factor; an
-active browser session cannot silently authorize code. Existing OAuth codes/tokens migrate to `full`.
+The MCP connection screen offers the dedicated scope only to permitted administrators.
 A custom-code credential retains ordinary discovery/reads, but cannot mutate editorial content.
 
 ## Versioned operation
@@ -61,7 +59,7 @@ Their existing dedicated settings stay the single source of identifiers; diagnos
 Public controllers assign a request target only to resolved public Page/Post/index responses. One evaluation
 snapshot is shared by all three public-layout insertion points, including HTML/canvas templates. Sort order then
 snippet ID determines insertion order, with one insertion per snippet. This does not guarantee execution order
-of external asynchronous scripts. Admin, login, OAuth, API, errors, Live Editor and ordinary previews have no
+of external asynchronous scripts. Admin, login, API, errors, Live Editor and ordinary previews have no
 target and receive no snippets. Publication guards remain owned by their public controllers.
 
 ## Explicit executable test
@@ -87,8 +85,8 @@ remains an audited operation. Migrate before serving layouts with these hooks; s
 
 New persistent tables are `custom_code_snippets` (including active pointer, state, generation),
 `custom_code_versions` (complete immutable payload, author, fingerprint), `custom_code_events` (audit) and
-`custom_code_receipts` (actor-scoped retries). New permission fields are `users.can_manage_custom_code` and
-OAuth `scope` on authorization codes/access tokens. The existing generic snapshot pipeline discovers snippets/versions/audit automatically. A minimal guard
+`custom_code_receipts` (actor-scoped retries). The new permission field is `users.can_manage_custom_code`.
+The existing generic snapshot pipeline discovers snippets/versions/audit automatically. A minimal guard
 excludes and clears retry receipts, strips the user permission and restores every snippet **inactive with no
 active pointer**, including destination snippets when a legacy archive has no Custom Code tables. It records
 `restore_inactive` only in the snippet audit, without altering the content revision ledger. Import never grants

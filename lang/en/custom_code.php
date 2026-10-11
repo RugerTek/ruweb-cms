@@ -7,7 +7,6 @@ return [
     'permission' => 'Allow Custom Code management (administrators only)',
     'permission_help' => 'Explicit permission to manage and activate trusted browser code. Editorial credentials do not grant this permission.',
     'credential_scope' => 'Custom Code only',
-    'consent' => 'I explicitly authorize this connection to manage and activate trusted browser code using my Custom Code permission.',
     'saved' => 'Proposal saved. The active version is unchanged.',
     'activated' => 'Version activated.',
     'deactivated' => 'Snippet deactivated.',

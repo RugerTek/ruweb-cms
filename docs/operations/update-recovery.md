@@ -56,7 +56,7 @@ through phase 9 retains its existing migration files and adds these migrations:
 | `130000_create_submission_operation_receipts_table` | `contact_submissions.notification_claim`, `submission_events`, `submission_operation_receipts` |
 | `180000_create_custom_code_tables` | `custom_code_snippets`, `custom_code_versions`, `custom_code_events`, `custom_code_receipts` |
 | `220000_create_editorial_operation_receipts` | Nullable `editorial_versions.base_fingerprint`, `editorial_operation_receipts` |
-| `230001_add_custom_code_permissions` | `users.can_manage_custom_code` (default false), OAuth authorization-code/access-token `scope` (default full) |
+| `230001_add_custom_code_permissions` | `users.can_manage_custom_code` (default false) |
 
 These filenames all start with `2026_10_10_`. Existing editorial proposals get an unknown (`NULL`)
 base; the migration does not guess their original live content. Existing users receive no Custom Code

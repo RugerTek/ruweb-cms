@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\OauthAccessToken;
 use App\Models\User;
 use App\Notifications\VerifyPendingEmail;
 use App\Services\Security\RevokeCredentials;
@@ -24,8 +23,6 @@ class ProfileController extends Controller
             'sessions' => DB::table('admin_sessions')->where('user_id', $request->user()->id)
                 ->whereNull('revoked_at')->where('last_active_at', '>', now()->subMinutes(config('session.lifetime', 120)))->latest('last_active_at')->get(),
             'currentSession' => hash('sha256', $request->session()->getId()),
-            'connections' => OauthAccessToken::where('user_id', $request->user()->id)
-                ->whereNull('revoked_at')->where('expires_at', '>', now())->get(),
         ]);
     }
 

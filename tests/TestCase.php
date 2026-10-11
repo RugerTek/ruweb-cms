@@ -49,7 +49,6 @@ abstract class TestCase extends BaseTestCase
 
         Route::middleware('web')->group(base_path('routes/web.php'));
         Route::middleware('web')->group(base_path('routes/admin.php'));
-        Route::middleware('web')->group(base_path('routes/oauth.php'));
         Route::prefix('mcp')->middleware('mcp')->group(base_path('routes/mcp.php'));
 
         // Names are assigned fluently after the route is added, so the

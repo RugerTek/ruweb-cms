@@ -20,7 +20,7 @@ if action=='init':
   if '=' in line and not line.startswith('#'):
    key,value=line.split('=',1)
    if key in ['DB_HOST','DB_PORT','DB_USERNAME','DB_PASSWORD']:entries[key]=value
- entries.update(APP_KEY='base64:'+base64.b64encode(secrets.token_bytes(32)).decode(),APP_ENV='local',APP_DEBUG='false',APP_URL='http://127.0.0.1:8018',OAUTH_CLIENT_ID='e2e-phase9',OAUTH_CLIENT_SECRET='phase9-disposable-secret',OAUTH_ALLOWED_REDIRECT_URIS='http://127.0.0.1:8018/oauth-return',SESSION_DRIVER='file',CACHE_STORE='file',QUEUE_CONNECTION='database',MAIL_MAILER='log')
+ entries.update(APP_KEY='base64:'+base64.b64encode(secrets.token_bytes(32)).decode(),APP_ENV='local',APP_DEBUG='false',APP_URL='http://127.0.0.1:8018',SESSION_DRIVER='file',CACHE_STORE='file',QUEUE_CONNECTION='database',MAIL_MAILER='log')
  private(copy/'.env','\n'.join(key+'='+value for key,value in entries.items())+'\n')
  database='ruweb_phase0_'+secrets.token_hex(6)
  state={'run':str(run),'copy':str(copy),'storage':str(storage),'database':database,'source':str(source),'original_env_sha256':hashlib.sha256((source/'.env').read_bytes()).hexdigest()};private(STATE,json.dumps(state))

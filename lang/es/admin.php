@@ -693,15 +693,12 @@ return [
     'mcp_api_key_last_used_at' => 'Último uso',
 
     // Claude MCP
-    'claude_mcp_subtitle' => 'Conectá tu cuenta de claude.ai a este CMS.',
-    'claude_mcp_step1' => 'Abrí claude.ai y andá a Settings → Connectors → Add custom connector.',
-    'claude_mcp_step1_path' => 'claude.ai → Settings → Connectors → Add custom connector',
-    'claude_mcp_step2' => 'Ingresá los siguientes valores:',
+    'claude_mcp_subtitle' => 'Conectá tu cliente MCP con una API key.',
+    'claude_mcp_step1' => 'Creá una clave con nombre y los permisos que necesita tu integración.',
+    'claude_mcp_step2' => 'Configurá tu cliente con esta URL del servidor:',
     'claude_mcp_server_url' => 'URL del servidor MCP',
-    'claude_mcp_client_id' => 'OAuth Client ID',
-    'claude_mcp_client_secret' => 'OAuth Secret',
-    'claude_mcp_step3' => 'Completá el login en el popup que aparece.',
-    'claude_mcp_step3_hint' => 'Usá tu email y contraseña del CMS. Cada usuario se autentica individualmente.',
+    'claude_mcp_step3' => 'Enviá la API key en el encabezado Authorization: Bearer.',
+    'claude_mcp_step3_hint' => 'Copiá la clave al crearla; se muestra una sola vez.',
 
     // Developer tools
     'developer_tools' => 'Developer tools',

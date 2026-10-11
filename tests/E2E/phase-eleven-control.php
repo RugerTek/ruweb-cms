@@ -33,7 +33,7 @@ if ($action==='grant') {
     foreach($report['risks'] as $risk) {if($risk['severity']==='blocking')throw new RuntimeException('Blocking archive');if($risk['severity']==='warning')$accepted[]=$risk['key'];}
     $service->restore($archive,$accepted);$restored=Page::findOrFail($page->id);
     if($restored->title!==$before['title']||$restored->content_json!==$before['content_json'])throw new RuntimeException('Snapshot content mismatch');
-    foreach(['mcp_api_keys','oauth_access_tokens','editorial_preview_links','mcp_operation_receipts','editorial_operation_receipts','submission_operation_receipts','custom_code_receipts']as $table)if(DB::table($table)->count())throw new RuntimeException('Restored authority');
+    foreach(['mcp_api_keys','editorial_preview_links','mcp_operation_receipts','editorial_operation_receipts','submission_operation_receipts','custom_code_receipts']as $table)if(DB::table($table)->count())throw new RuntimeException('Restored authority');
     if(DB::table('custom_code_snippets')->whereNotNull('active_version_id')->exists()||User::where('can_manage_custom_code',true)->exists())throw new RuntimeException('Restored executable authority');
     echo json_encode(['snapshot_sha256'=>$sha,'mutated_content_restored'=>true,'authority_excluded'=>true,'snippets_inactive'=>true,'permission_removed'=>true,'accepted_warning_keys'=>$accepted],JSON_PRETTY_PRINT);
 } elseif ($action==='mail') {

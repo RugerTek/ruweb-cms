@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\OauthAccessToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -34,12 +33,4 @@ class AccountSessionsController extends Controller
         return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('success', __('security.session_revoked'));
     }
 
-    public function revokeConnection(Request $request, OauthAccessToken $connection)
-    {
-        $request->validate(['current_password' => ['required', 'current_password']]);
-        abort_unless($connection->user_id === $request->user()->id, 403);
-        $connection->update(['revoked_at' => now()]);
-
-        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('success', __('security.connection_revoked'));
-    }
 }

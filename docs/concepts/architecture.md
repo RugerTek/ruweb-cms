@@ -60,7 +60,7 @@ The page route is a catch-all with a slug pattern that excludes reserved prefixe
 **Admin.** `routes/admin.php` under auth + role middleware. Editing screens that need preview use the shared
 editor shell and a `previewRender` POST route; everything else is a plain controller + Blade form.
 
-**Integrations.** `routes/mcp.php` and `routes/oauth.php` expose the MCP surface
+**Integrations.** `routes/mcp.php` exposes the API-key-authenticated MCP surface
 ([../operations/mcp.md](../operations/mcp.md)).
 
 ## Where New Work Goes

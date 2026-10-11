@@ -24,7 +24,7 @@ for phase in phases:
   shutil.copytree(Path(os.environ['PHP83_VENDOR']),copy/'vendor');(copy/'node_modules').symlink_to(source/'node_modules')
   p=copy/'config/cms.php';p.write_text(re.sub(r"'admin_profile' => '(full|essential)'","'admin_profile' => '"+profile+"'",p.read_text(),count=1))
   database='ruweb_phase0_'+secrets.token_hex(6);env=envbase|{'PHASE0_DATABASE':database,'PHASE0_STORAGE':str(storage),'PHP_CLI_SERVER_WORKERS':'4',f'PHASE{phase}_PROFILE':profile}
-  entries=creds|{'APP_KEY':'base64:'+base64.b64encode(secrets.token_bytes(32)).decode(),'APP_ENV':'local','APP_DEBUG':'false','DB_CONNECTION':'mysql','DB_DATABASE':database,'APP_URL':'http://127.0.0.1:8018','OAUTH_CLIENT_ID':f'e2e-phase{phase}','OAUTH_ALLOWED_REDIRECT_URIS':'http://127.0.0.1:8018/oauth-return','SESSION_DRIVER':'file','CACHE_STORE':'file','QUEUE_CONNECTION':'database','MAIL_MAILER':'log'}
+  entries=creds|{'APP_KEY':'base64:'+base64.b64encode(secrets.token_bytes(32)).decode(),'APP_ENV':'local','APP_DEBUG':'false','DB_CONNECTION':'mysql','DB_DATABASE':database,'APP_URL':'http://127.0.0.1:8018','SESSION_DRIVER':'file','CACHE_STORE':'file','QUEUE_CONNECTION':'database','MAIL_MAILER':'log'}
   shutil.copy2(source/'.env.example',copy/'.env.example')
   if phase==2:
    fixture=copy/'tests/Fixtures/admin-profiles'
@@ -87,7 +87,7 @@ for phase in phases:
     if profile=='full':
      plan={'profile':profile,'cases':[{'name':'accumulated-draft','key':'full','required_tools':['cms_capabilities','cms_schema','pages_create_draft','pages_get','pages_update_draft'],'instructions':'Discover capabilities and default schema. Create one Spanish default DRAFT titled Phase Nine Codex initial, slug phase-nine-codex. Set sections.content.heading to Phase Nine Codex initial, body <p>Phase Nine initial body</p>, is_visible true. Read it and update with expected_revision to title and heading Phase Nine Codex updated, body <p>Phase Nine updated body</p>. Read updated page. Return JSON id,title,updated_heading,admin_profile. No publish.','expected_final':{'id':109,'title':'Phase Nine Codex updated','updated_heading':'Phase Nine Codex updated','admin_profile':profile}}]}
      (storage/'phase-nine-client-plan.json').write_text(json.dumps(plan));run(['python3','tests/E2E/phase-nine-clients.py','codex'])
-    browser('phase-nine');report['stages'].append({'wait_reason':'Real OAuth account limiter permits five posts per minute; each fresh challenge uses two posts','seconds':60});time.sleep(60);browser('phase-nine','oauth-final');php('phase-nine-control','recover');browser('phase-nine','recover');state.unlink()
+    browser('phase-nine');php('phase-nine-control','recover');browser('phase-nine','recover');state.unlink()
     http('phase-nine');php('phase-nine-control','worker');http('phase-nine','--complete');php('phase-nine-control','verify')
    report['status']='passed'
   except Exception as exc:
