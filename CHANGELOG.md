@@ -6,7 +6,12 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
-## 1.3.0 - 2026-10-11
+## 1.3.1 - 2026-10-11
+
+- El chequeo de convenciones y el hook pre-commit rechazan nuevos editores visuales en Essential sin una justificación explícita por archivo; conservan los editores heredados y permiten los nuevos en Full.
+- La detección distingue adiciones, cambios existentes e índice de Git; documentación, skill de revisión y pruebas cubren excepciones, renombres y formularios operativos.
+
+## 1.3.0 - 2026-10-11 (a36a9de)
 
 - `cms:install` pregunta por el perfil Full/Essential (también `--profile`), lo guarda en la configuración versionada y limpia los cachés de configuración y rutas.
 - El administrador inicial y los usuarios nuevos requieren un nombre de usuario único y normalizado; el perfil permite cambiarlo sin borrarlo. El ingreso acepta nombre de usuario o email.

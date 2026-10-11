@@ -59,6 +59,8 @@ class ProfileDevelopmentFixtureTest extends TestCase
                 copy($fixture.'/full/views/admin/pages/sections/_testimonial-item.blade.php', resource_path('views/admin/pages/sections/_profile-testimonial-item.blade.php'));
             } else {
                 unlink($partialPath);
+                // Essential delivers no new visual UI, including repeater helpers.
+                unlink(resource_path('views/admin/pages/sections/_profile-testimonial-item.blade.php'));
             }
             View::getFinder()->flush();
             $this->assertSame(0, Artisan::call('cms:check-conventions'), Artisan::output());

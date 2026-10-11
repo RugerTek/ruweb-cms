@@ -47,6 +47,12 @@ docs**:
 
 Highest-value checks, in order:
 
+0. **Unnecessary new visual UI in Essential**: inspect added files and new UI in existing files, including
+   JavaScript controls outside the guard's conventional Blade paths. Confirm the versioned profile, then
+   require a concrete per-file `essential-editor-justification` reason for guarded additions; assess whether
+   the user actually requested that exception or the interface is operational. Existing starter editors
+   alone are not a finding. Cite *admin-profiles.md — New visual editors in Essential*.
+
 1. **Editable copy hardcoded in a template**, or a media path instead of a media id.
 2. **A form whose structure leaked into the Live Editor** — field lists, validation, destinations exposed as
    editable — or an editor section linking to the dashboard instead of its submissions listing.
@@ -68,4 +74,5 @@ Highest-value checks, in order:
 
 One list, most severe first. Per finding: `file:line`, what breaks, and the doc rule it violates (name the
 section, e.g. *live-editor-ui-ux.md — Acceptance Checklist → Sections And Repeaters*). Say explicitly when a
-dimension was clean. Do not invent findings to fill the list.
+dimension was clean. Always report the profile, whether new specialized UI was introduced, and whether
+any per-file exception was substantively justified (or no exception was needed). Do not invent findings to fill the list.

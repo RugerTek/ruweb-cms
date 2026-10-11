@@ -23,6 +23,32 @@ partials remain on disk for returning to full; content does not depend on them. 
 schema/model, validation/operations, policy, public routing and tests; specialized editorial forms are
 required only in full. Human operational lists and identity/security interfaces remain necessary.
 
+## New visual editors in Essential
+
+`cms:check-conventions` and the pre-commit hook reject newly added specialized Blade editors in
+`resources/views/admin/pages/sections/` and new `_form`, `create` or `edit` views for pages, posts and registered
+collections (using their registry keys as view directories). Existing starter editors and edits to them
+remain valid. Full allows new editors. Operational admin forms outside these editorial paths remain valid.
+
+An intentional exception carries this single-line Blade comment in **each new file**:
+
+```blade
+{{-- essential-editor-justification: Operational form for credential rotation; required in both profiles. --}}
+```
+
+The reason must contain at least 20 characters and explain the concrete need, for example an operational
+workflow or a requested Full transition. A generic task approval is not a justification. The review must
+assess the reason; the linter only checks its presence. There is no global bypass or environment override.
+Keep using `config/cms.php` as the sole profile source. The guard uses the application's current profile,
+including a local profile choice not staged for commit; it does not infer deployment intent from Git.
+
+`--staged` compares the index with HEAD and reads the comment from the index, so an unstaged comment
+cannot approve a staged addition. `--since=<ref>` compares that ref with the working tree. Without flags,
+the check considers additions against HEAD plus nonignored untracked files, never all inherited editors.
+Renames are treated as new paths and require justification. Git/ref failures fail the guard in Essential.
+The check covers these conventional Blade paths; review must also identify specialized UI introduced
+elsewhere, including JavaScript controls or substantial new UI within an existing file.
+
 ## Current rollout and transition
 
 Essential's operational panel was accepted in [E2E-04](../plans/phase-4-results.md) (historical evidence; the

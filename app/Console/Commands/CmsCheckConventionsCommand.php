@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Support\AdminCapabilities;
+use App\Support\EssentialEditorGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 /**
  * Deterministic checks for the rules written in docs/. Every rule here is one a grep
@@ -35,6 +37,7 @@ class CmsCheckConventionsCommand extends Command
         $this->adminTranslationsMatch($scope);
         $this->registeredTemplatesHaveViews($scope);
         $this->registeredSectionsHaveEditors($scope);
+        $this->newEssentialEditorsAreJustified();
         $this->templatesDoNotHardcodeImages($scope);
         $this->seedersDoNotStoreAbsoluteUrls($scope);
         $this->versionMatchesChangelog($scope);
@@ -277,6 +280,29 @@ class CmsCheckConventionsCommand extends Command
                     $this->flag('section-editor-missing', "resources/views/admin/pages/sections/{$key}_{$section}.blade.php", "custom fields in '{$key}.{$section}' require an editor in full", 'docs/content/templates.md — Section Editor Partials');
                 }
             }
+        }
+    }
+
+    /** New specialized UI in Essential needs an explicit, reviewed reason. */
+    private function newEssentialEditorsAreJustified(): void
+    {
+        try {
+            $files = app(EssentialEditorGuard::class)->violations(
+                base_path(),
+                app(AdminCapabilities::class)->profile(),
+                (bool) $this->option('staged'),
+                $this->option('since'),
+                array_keys(config('cms.collections', [])),
+            );
+            foreach ($files as $file) {
+                $this->flag('essential-new-visual-editor', $file,
+                    'new visual editor in essential requires a per-file essential-editor-justification comment and review',
+                    'docs/concepts/admin-profiles.md — New visual editors in Essential');
+            }
+        } catch (ProcessFailedException $exception) {
+            $this->flag('essential-editor-git-scope', 'git',
+                'cannot determine new editor files; verify the git repository/ref before retrying',
+                'docs/concepts/admin-profiles.md — New visual editors in Essential');
         }
     }
 
