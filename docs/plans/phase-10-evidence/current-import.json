@@ -1,0 +1,799 @@
+{
+  "report": {
+    "manifest": {
+      "format": "ruweb-cms.appbackup",
+      "version": 2,
+      "created_at": "2026-10-11T01:21:13+00:00",
+      "app": {
+        "version": "0.54.1",
+        "laravel_version": "13.3.0",
+        "env": "local",
+        "url": "http://127.0.0.1:8018",
+        "commit": null
+      },
+      "database": {
+        "connection": "mysql",
+        "driver": "mysql",
+        "tables": [
+          {
+            "name": "migrations",
+            "file": "database/migrations.jsonl",
+            "rows": 43,
+            "checksum": "2fc56f855253870b7690b19cd6ad4df772c6ce362146aef03138246a8640e58b"
+          },
+          {
+            "name": "users",
+            "file": "database/users.jsonl",
+            "rows": 2,
+            "checksum": "b4beb8a63b7ce202c40ad1eebfd3a8920963fec1d6df2733f13821410c3daa8c"
+          },
+          {
+            "name": "custom_code_snippets",
+            "file": "database/custom_code_snippets.jsonl",
+            "rows": 1,
+            "checksum": "dc420ec072eac03d5bf34f6f593393c19d55e78ecf70f872f8e5152abfd1994c"
+          },
+          {
+            "name": "custom_code_versions",
+            "file": "database/custom_code_versions.jsonl",
+            "rows": 1,
+            "checksum": "ddada3d4c472c433d9f57b2ab714b0c9701f524fa2dd460f7c332e2f531fbc48"
+          },
+          {
+            "name": "custom_code_events",
+            "file": "database/custom_code_events.jsonl",
+            "rows": 4,
+            "checksum": "5bafe18572e873dc46bcad74db4bae8ddf52126073f23f280a8f118e765bee6b"
+          },
+          {
+            "name": "settings",
+            "file": "database/settings.jsonl",
+            "rows": 33,
+            "checksum": "e96178fa2fa2772bfe9a9bd4e4ff942f053f5d0136a598e7cb36b238a275cd99"
+          },
+          {
+            "name": "media",
+            "file": "database/media.jsonl",
+            "rows": 3,
+            "checksum": "2352ed2b8eef855dac4f9fa75acd6fa8f95234496f4e8518e034ff78ef4f372d"
+          },
+          {
+            "name": "media_translations",
+            "file": "database/media_translations.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "pages",
+            "file": "database/pages.jsonl",
+            "rows": 10,
+            "checksum": "34f3a55bd2e44b22b3b15e9198721376c9fb643d081c3049efdebdad77a922e6"
+          },
+          {
+            "name": "posts",
+            "file": "database/posts.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "taxonomies",
+            "file": "database/taxonomies.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "menus",
+            "file": "database/menus.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "menu_items",
+            "file": "database/menu_items.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "mediables",
+            "file": "database/mediables.jsonl",
+            "rows": 1,
+            "checksum": "18de4dcddaea57032ead39737fceb268e7ea3f91ea5b120ed68f1aefccc2c5be"
+          },
+          {
+            "name": "taxables",
+            "file": "database/taxables.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "contact_submission_notes",
+            "file": "database/contact_submission_notes.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "contact_submissions",
+            "file": "database/contact_submissions.jsonl",
+            "rows": 10,
+            "checksum": "77df91ec6ee553dce3496c00c6813d8ef0febd56d2481074e1209bd62a942608"
+          },
+          {
+            "name": "content_revisions",
+            "file": "database/content_revisions.jsonl",
+            "rows": 45,
+            "checksum": "177e30f429db10d1867f107b5dab4c2c69be685cd78a29d5a444aa506b050559"
+          },
+          {
+            "name": "editorial_review_comments",
+            "file": "database/editorial_review_comments.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "editorial_reviews",
+            "file": "database/editorial_reviews.jsonl",
+            "rows": 1,
+            "checksum": "ebfc9a998e59598a2a5e66a679ab4822e4f2f58af83b743a9b0ead73abcbbd84"
+          },
+          {
+            "name": "editorial_versions",
+            "file": "database/editorial_versions.jsonl",
+            "rows": 41,
+            "checksum": "11998a07372cc9bd780de361a55722c2c21d324b6ad7367af40dbba194aca734"
+          },
+          {
+            "name": "locales",
+            "file": "database/locales.jsonl",
+            "rows": 2,
+            "checksum": "d4b3b85dc9807d7b5eefc74739467b0dac69b0575bef0150f5bb2a7897ebe352"
+          },
+          {
+            "name": "not_found_hits",
+            "file": "database/not_found_hits.jsonl",
+            "rows": 5,
+            "checksum": "71b27435fc0239ac97f7d7237bfa45bf6f69fddd87f52b39ab6d19f36bb5e929"
+          },
+          {
+            "name": "redirects",
+            "file": "database/redirects.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "setting_translations",
+            "file": "database/setting_translations.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "submission_events",
+            "file": "database/submission_events.jsonl",
+            "rows": 0,
+            "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "excluded_tables": [
+          "custom_code_receipts",
+          "mcp_operation_receipts",
+          "editorial_operation_receipts",
+          "submission_operation_receipts",
+          "mcp_api_keys",
+          "admin_sessions",
+          "cache",
+          "cache_locks",
+          "content_edit_locks",
+          "editorial_drafts",
+          "editorial_preview_links",
+          "failed_jobs",
+          "job_batches",
+          "jobs",
+          "oauth_access_tokens",
+          "oauth_authorization_codes",
+          "password_reset_tokens",
+          "sessions"
+        ],
+        "migrations": [
+          "0001_01_01_000000_create_users_table",
+          "0001_01_01_000001_create_cache_table",
+          "0001_01_01_000002_create_jobs_table",
+          "2026_04_02_000001_create_media_table",
+          "2026_04_02_000002_create_mediables_table",
+          "2026_04_03_000001_create_pages_table",
+          "2026_04_03_000002_create_settings_table",
+          "2026_04_03_000003_create_posts_table",
+          "2026_04_03_204757_add_options_to_settings_table",
+          "2026_04_03_210000_add_mcp_api_key_to_users_table",
+          "2026_04_04_000001_create_taxonomies_table",
+          "2026_04_04_000002_create_taxables_table",
+          "2026_04_04_100001_create_menus_table",
+          "2026_04_04_100002_create_menu_items_table",
+          "2026_04_04_223023_create_oauth_access_tokens_table",
+          "2026_04_04_223023_create_oauth_authorization_codes_table",
+          "2026_04_14_204901_remove_social_and_footer_settings",
+          "2026_04_15_000001_add_image_optimization_fields_to_media_table",
+          "2026_04_27_120000_add_default_social_image_setting",
+          "2026_04_27_162418_consolidate_seo_settings_into_general",
+          "2026_05_15_000001_create_locales_and_setting_translations_table",
+          "2026_05_15_000002_backfill_multilanguage_columns",
+          "2026_05_15_000003_add_source_field_hashes",
+          "2026_05_17_000001_normalize_seo_meta_fields",
+          "2026_05_17_000002_add_admin_login_path_setting",
+          "2026_09_13_000001_add_placeholder_key_to_media_table",
+          "2026_09_13_000002_create_content_revisions_table",
+          "2026_09_14_000001_create_contact_submissions_table",
+          "2026_09_14_000002_add_security_settings",
+          "2026_09_15_000001_add_contact_header_and_footer_settings",
+          "2026_09_16_000001_create_redirects_table",
+          "2026_09_16_000002_create_not_found_hits_table",
+          "2026_10_05_000001_create_content_edit_locks_table",
+          "2026_10_05_000002_add_username_to_users_table",
+          "2026_10_06_000001_create_media_translations_table",
+          "2026_10_10_100001_add_submission_workflow",
+          "2026_10_10_100003_add_account_security_and_mcp_keys",
+          "2026_10_10_120000_create_mcp_operation_receipts_table",
+          "2026_10_10_130000_create_submission_operation_receipts_table",
+          "2026_10_10_150000_create_editorial_history",
+          "2026_10_10_180000_create_custom_code_tables",
+          "2026_10_10_220000_create_editorial_operation_receipts",
+          "2026_10_10_230001_add_custom_code_permissions"
+        ],
+        "schema": {
+          "migrations": [
+            "id",
+            "migration",
+            "batch"
+          ],
+          "users": [
+            "id",
+            "name",
+            "username",
+            "email",
+            "role",
+            "email_verified_at",
+            "password",
+            "remember_token",
+            "mcp_api_key_hash",
+            "mcp_api_key_generated_at",
+            "mcp_api_key_last_used_at",
+            "created_at",
+            "updated_at",
+            "pending_email",
+            "pending_email_token",
+            "pending_email_expires_at",
+            "two_factor_secret",
+            "two_factor_recovery_codes",
+            "two_factor_confirmed_at",
+            "two_factor_last_counter",
+            "security_version",
+            "can_manage_custom_code"
+          ],
+          "custom_code_snippets": [
+            "id",
+            "name",
+            "description",
+            "state",
+            "active_version_id",
+            "generation",
+            "created_at",
+            "updated_at"
+          ],
+          "custom_code_versions": [
+            "id",
+            "snippet_id",
+            "author_id",
+            "payload",
+            "fingerprint",
+            "created_at"
+          ],
+          "custom_code_events": [
+            "id",
+            "snippet_id",
+            "user_id",
+            "action",
+            "version_id",
+            "detail",
+            "created_at"
+          ],
+          "settings": [
+            "id",
+            "key",
+            "value",
+            "type",
+            "group",
+            "options",
+            "created_at",
+            "updated_at"
+          ],
+          "media": [
+            "id",
+            "filename",
+            "original_filename",
+            "path",
+            "mime_type",
+            "extension",
+            "size",
+            "width",
+            "height",
+            "variants",
+            "original_size",
+            "original_extension",
+            "original_mime_type",
+            "original_path",
+            "optimized_at",
+            "alt",
+            "title",
+            "placeholder_key",
+            "disk",
+            "uploaded_by",
+            "created_at",
+            "updated_at"
+          ],
+          "media_translations": [
+            "id",
+            "media_id",
+            "locale",
+            "alt",
+            "title",
+            "created_at",
+            "updated_at"
+          ],
+          "pages": [
+            "id",
+            "locale",
+            "translation_group_id",
+            "translation_status",
+            "source_fingerprint",
+            "source_field_hashes",
+            "title",
+            "slug",
+            "template_key",
+            "content_json",
+            "status",
+            "published_at",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at",
+            "expires_at"
+          ],
+          "posts": [
+            "id",
+            "locale",
+            "translation_group_id",
+            "translation_status",
+            "source_fingerprint",
+            "source_field_hashes",
+            "title",
+            "slug",
+            "excerpt",
+            "content",
+            "meta_json",
+            "status",
+            "published_at",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at",
+            "expires_at"
+          ],
+          "taxonomies": [
+            "id",
+            "locale",
+            "translation_group_id",
+            "translation_status",
+            "source_fingerprint",
+            "source_field_hashes",
+            "name",
+            "slug",
+            "type",
+            "parent_id",
+            "description",
+            "order",
+            "created_at",
+            "updated_at"
+          ],
+          "menus": [
+            "id",
+            "locale",
+            "name",
+            "slug",
+            "location",
+            "created_at",
+            "updated_at"
+          ],
+          "menu_items": [
+            "id",
+            "menu_id",
+            "parent_id",
+            "label",
+            "type",
+            "linkable_type",
+            "linkable_id",
+            "url",
+            "target",
+            "translation_status",
+            "order",
+            "created_at",
+            "updated_at"
+          ],
+          "mediables": [
+            "id",
+            "media_id",
+            "mediable_type",
+            "mediable_id",
+            "collection",
+            "order",
+            "created_at",
+            "updated_at"
+          ],
+          "taxables": [
+            "id",
+            "taxonomy_id",
+            "taxable_type",
+            "taxable_id",
+            "created_at",
+            "updated_at"
+          ],
+          "contact_submission_notes": [
+            "id",
+            "contact_submission_id",
+            "user_id",
+            "body",
+            "created_at",
+            "updated_at"
+          ],
+          "contact_submissions": [
+            "id",
+            "page_id",
+            "locale",
+            "name",
+            "email",
+            "phone",
+            "subject",
+            "message",
+            "ip",
+            "user_agent",
+            "referer",
+            "recaptcha_score",
+            "read_at",
+            "notified_at",
+            "created_at",
+            "updated_at",
+            "workflow_status",
+            "assigned_to",
+            "notification_status",
+            "notification_token",
+            "notification_email",
+            "notification_attempts",
+            "notification_error",
+            "notification_started_at",
+            "notification_failed_at",
+            "notification_claim"
+          ],
+          "content_revisions": [
+            "id",
+            "hash",
+            "parent_hash",
+            "entity_type",
+            "entity_id",
+            "action",
+            "user_id",
+            "created_at"
+          ],
+          "editorial_review_comments": [
+            "id",
+            "review_id",
+            "user_id",
+            "body",
+            "created_at",
+            "updated_at"
+          ],
+          "editorial_reviews": [
+            "id",
+            "content_type",
+            "content_id",
+            "requested_by",
+            "reviewer_id",
+            "version_id",
+            "fingerprint",
+            "state",
+            "comment",
+            "created_at",
+            "updated_at"
+          ],
+          "editorial_versions": [
+            "id",
+            "content_type",
+            "content_id",
+            "user_id",
+            "is_proposal",
+            "payload",
+            "fingerprint",
+            "created_at",
+            "updated_at",
+            "base_fingerprint"
+          ],
+          "locales": [
+            "id",
+            "code",
+            "name",
+            "is_base",
+            "is_active",
+            "is_public",
+            "sort_order",
+            "created_at",
+            "updated_at"
+          ],
+          "not_found_hits": [
+            "id",
+            "path",
+            "method",
+            "hit_count",
+            "referer",
+            "user_agent",
+            "ip_address",
+            "first_seen_at",
+            "last_seen_at",
+            "created_at",
+            "updated_at"
+          ],
+          "redirects": [
+            "id",
+            "source_path",
+            "target_url",
+            "status_code",
+            "is_active",
+            "hit_count",
+            "last_used_at",
+            "created_at",
+            "updated_at"
+          ],
+          "setting_translations": [
+            "id",
+            "setting_id",
+            "locale",
+            "value",
+            "created_at",
+            "updated_at"
+          ],
+          "submission_events": [
+            "id",
+            "user_id",
+            "form",
+            "submission_id",
+            "action",
+            "before",
+            "after",
+            "created_at"
+          ]
+        }
+      },
+      "uploads": {
+        "logical_root": "public",
+        "files": 16,
+        "bytes": 42092
+      },
+      "history": {
+        "head": "f3a19870dc5340b751d95a5b1abecc9db9d3a75fea139998f71970d65710a3c4",
+        "count": 45
+      }
+    },
+    "tables": [
+      {
+        "name": "users",
+        "file": "database/users.jsonl",
+        "rows": 2,
+        "checksum": "b4beb8a63b7ce202c40ad1eebfd3a8920963fec1d6df2733f13821410c3daa8c"
+      },
+      {
+        "name": "custom_code_snippets",
+        "file": "database/custom_code_snippets.jsonl",
+        "rows": 1,
+        "checksum": "dc420ec072eac03d5bf34f6f593393c19d55e78ecf70f872f8e5152abfd1994c"
+      },
+      {
+        "name": "custom_code_versions",
+        "file": "database/custom_code_versions.jsonl",
+        "rows": 1,
+        "checksum": "ddada3d4c472c433d9f57b2ab714b0c9701f524fa2dd460f7c332e2f531fbc48"
+      },
+      {
+        "name": "custom_code_events",
+        "file": "database/custom_code_events.jsonl",
+        "rows": 4,
+        "checksum": "5bafe18572e873dc46bcad74db4bae8ddf52126073f23f280a8f118e765bee6b"
+      },
+      {
+        "name": "settings",
+        "file": "database/settings.jsonl",
+        "rows": 33,
+        "checksum": "e96178fa2fa2772bfe9a9bd4e4ff942f053f5d0136a598e7cb36b238a275cd99"
+      },
+      {
+        "name": "media",
+        "file": "database/media.jsonl",
+        "rows": 3,
+        "checksum": "2352ed2b8eef855dac4f9fa75acd6fa8f95234496f4e8518e034ff78ef4f372d"
+      },
+      {
+        "name": "media_translations",
+        "file": "database/media_translations.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "pages",
+        "file": "database/pages.jsonl",
+        "rows": 10,
+        "checksum": "34f3a55bd2e44b22b3b15e9198721376c9fb643d081c3049efdebdad77a922e6"
+      },
+      {
+        "name": "posts",
+        "file": "database/posts.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "taxonomies",
+        "file": "database/taxonomies.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "menus",
+        "file": "database/menus.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "menu_items",
+        "file": "database/menu_items.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "mediables",
+        "file": "database/mediables.jsonl",
+        "rows": 1,
+        "checksum": "18de4dcddaea57032ead39737fceb268e7ea3f91ea5b120ed68f1aefccc2c5be"
+      },
+      {
+        "name": "taxables",
+        "file": "database/taxables.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "contact_submission_notes",
+        "file": "database/contact_submission_notes.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "contact_submissions",
+        "file": "database/contact_submissions.jsonl",
+        "rows": 10,
+        "checksum": "77df91ec6ee553dce3496c00c6813d8ef0febd56d2481074e1209bd62a942608"
+      },
+      {
+        "name": "content_revisions",
+        "file": "database/content_revisions.jsonl",
+        "rows": 45,
+        "checksum": "177e30f429db10d1867f107b5dab4c2c69be685cd78a29d5a444aa506b050559"
+      },
+      {
+        "name": "editorial_review_comments",
+        "file": "database/editorial_review_comments.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "editorial_reviews",
+        "file": "database/editorial_reviews.jsonl",
+        "rows": 1,
+        "checksum": "ebfc9a998e59598a2a5e66a679ab4822e4f2f58af83b743a9b0ead73abcbbd84"
+      },
+      {
+        "name": "editorial_versions",
+        "file": "database/editorial_versions.jsonl",
+        "rows": 41,
+        "checksum": "11998a07372cc9bd780de361a55722c2c21d324b6ad7367af40dbba194aca734"
+      },
+      {
+        "name": "locales",
+        "file": "database/locales.jsonl",
+        "rows": 2,
+        "checksum": "d4b3b85dc9807d7b5eefc74739467b0dac69b0575bef0150f5bb2a7897ebe352"
+      },
+      {
+        "name": "not_found_hits",
+        "file": "database/not_found_hits.jsonl",
+        "rows": 5,
+        "checksum": "71b27435fc0239ac97f7d7237bfa45bf6f69fddd87f52b39ab6d19f36bb5e929"
+      },
+      {
+        "name": "redirects",
+        "file": "database/redirects.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "setting_translations",
+        "file": "database/setting_translations.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "submission_events",
+        "file": "database/submission_events.jsonl",
+        "rows": 0,
+        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "risks": [
+      {
+        "key": "history_contained",
+        "severity": "info",
+        "message": "All 30 change(s) recorded here are included in the snapshot. Restoring is a clean fast-forward.",
+        "details": {
+          "total": 30,
+          "contained": 30,
+          "diverged": 0,
+          "changes": []
+        }
+      },
+      {
+        "key": "origin_url_differs",
+        "severity": "info",
+        "message": "Snapshot was taken from http://127.0.0.1:8018; this installation runs at http://127.0.0.1:8019. Stored URLs will be rewritten to the new origin during restore.",
+        "details": {
+          "snapshot": "http://127.0.0.1:8018",
+          "destination": "http://127.0.0.1:8019"
+        }
+      }
+    ],
+    "destination": {
+      "version": "0.54.1",
+      "driver": "mysql",
+      "url": "http://127.0.0.1:8019",
+      "laravel_version": "13.3.0",
+      "revisions": 30
+    }
+  },
+  "accepted_warning_keys": [],
+  "same_portable_manifest": true,
+  "operational_authority_not_restored": true,
+  "destination_profile": "essential",
+  "portable_history": {
+    "editorial_versions": {
+      "rows": 41,
+      "sha256": "ccdd04c808879b8faa8d0561283e5876c6c29531065c8a697e9e7d30ed009c2c"
+    },
+    "editorial_reviews": {
+      "rows": 1,
+      "sha256": "4f7da9ba866f5f2ac54c23cf48d8295605e077d44b578d86f1160f8cd468449d"
+    },
+    "editorial_review_comments": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "content_revisions": {
+      "rows": 45,
+      "sha256": "c10e80259c85208a6f22d616e5b69a1c303f13821e0a9f0c5157f604ab9253a6"
+    },
+    "custom_code_versions": {
+      "rows": 1,
+      "sha256": "8db6d2f241b797d1d95f29cc77e9cbc9c4be4f16e7a9e64f661875fdd4488eb8"
+    },
+    "contact_submission_notes": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "submission_events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "proposals": 2
+  },
+  "snapshot_sha256": "7155cfb0a58e6422173774caa0d9adcc165e7d44a442727c73ce771549d7acd7"
+}

@@ -1,0 +1,8 @@
+{
+  "code_ref": "f337e7d7b2eba14c9e6bcb2b1cb79a1978bb79a5",
+  "version": "0.47.0",
+  "baseline_identical": true,
+  "db_dump_sha256": "b5fb0921f8720f32646b56a8e364ce37e726087cf2c1ea032348747c89aa286c",
+  "inverse_migrations_used": false,
+  "artifacts": "exact git artifact + matching native SQL backup + public disk backup"
+}

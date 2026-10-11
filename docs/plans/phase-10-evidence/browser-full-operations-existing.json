@@ -1,0 +1,22 @@
+{
+  "stage": "full-operations",
+  "installation": "existing",
+  "checks": [
+    "Bilingual baseline URLs and draft/future publication remain correct",
+    "Human operational pages accessible"
+  ],
+  "screens": [
+    "full-operations-existing-spanish-1440.png",
+    "full-operations-existing-spanish-390.png",
+    "full-operations-existing-english-1440.png",
+    "full-operations-existing-english-390.png",
+    "full-operations-existing-dashboard-1440.png",
+    "full-operations-existing-dashboard-390.png",
+    "full-operations-existing-operations-1440.png",
+    "full-operations-existing-operations-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

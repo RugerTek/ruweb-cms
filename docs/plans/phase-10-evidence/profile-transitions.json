@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "full",
+    "config_cached": true,
+    "routes_cached": true,
+    "manifest_identical": true,
+    "server_restarted": true,
+    "queue_restart_and_worker": true
+  },
+  {
+    "profile": "essential",
+    "config_cached": true,
+    "routes_cached": true,
+    "manifest_identical": true,
+    "server_restarted": true,
+    "queue_restart_and_worker": true
+  },
+  {
+    "profile": "full",
+    "config_cached": true,
+    "routes_cached": true,
+    "manifest_identical": true,
+    "server_restarted": true,
+    "queue_restart_and_worker": true
+  }
+]

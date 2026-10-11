@@ -1,0 +1,19 @@
+{
+  "stage": "old-import",
+  "installation": "fresh",
+  "checks": [
+    "Bilingual baseline URLs and draft/future publication remain correct"
+  ],
+  "screens": [
+    "old-import-fresh-spanish-1440.png",
+    "old-import-fresh-spanish-390.png",
+    "old-import-fresh-english-1440.png",
+    "old-import-fresh-english-390.png",
+    "old-import-fresh-dashboard-1440.png",
+    "old-import-fresh-dashboard-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

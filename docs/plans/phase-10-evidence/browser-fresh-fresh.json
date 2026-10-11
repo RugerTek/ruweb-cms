@@ -1,0 +1,17 @@
+{
+  "stage": "fresh",
+  "installation": "fresh",
+  "checks": [
+    "Clean cms:install renders seeded homepage"
+  ],
+  "screens": [
+    "fresh-fresh-home-1440.png",
+    "fresh-fresh-home-390.png",
+    "fresh-fresh-dashboard-1440.png",
+    "fresh-fresh-dashboard-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

@@ -30,7 +30,7 @@
         <p class="text-sm text-gray-500 mt-0.5">{{ __('admin.developer_tools_subtitle') }}</p>
     </div>
 
-    <div class="flex gap-2 border-b border-white/[0.08]">
+    <div class="flex flex-wrap gap-2 border-b border-white/[0.08]">
         <a href="{{ route('admin.developer-tools.index', ['tab' => 'system']) }}"
            class="px-3 py-2 text-sm border-b-2 transition-colors {{ $activeTab === 'system' ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
             {{ __('admin.developer_tools_system') }}

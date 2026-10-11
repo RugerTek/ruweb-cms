@@ -1,0 +1,8 @@
+{
+  "old_ref": "f337e7d7b2eba14c9e6bcb2b1cb79a1978bb79a5",
+  "candidate_ref": "14b2a7871d1b40b0938089fdfea6d61452d7b415",
+  "old_snapshot_sha256": "63b6d70f483ae30c3cb29d0a6a4364a4ea46fe30bcd4478a4b97ff14a8f3e970",
+  "rollback_db_sha256": "d55aa51349c75aaab9943d9a53d41c725a5f26a7e030d612a9fbbdee780d6ff2",
+  "original_env_unchanged": true,
+  "fresh_install_real": true
+}

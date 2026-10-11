@@ -1,0 +1,26 @@
+{
+  "profile": "essential",
+  "cookie_free": true,
+  "checks": [
+    "Create/review-safe proposal/preview/explicit publish HTML canvas composed and English translation over cookie-free MCP",
+    "Activate exact local snippet version using explicit custom-code scope",
+    "Drafts remain 404 before publication"
+  ],
+  "pages": [
+    {
+      "id": 7,
+      "template": "html",
+      "locale": "es"
+    },
+    {
+      "id": 8,
+      "template": "empty",
+      "locale": "es"
+    },
+    {
+      "id": 9,
+      "template": "composed",
+      "locale": "es"
+    }
+  ]
+}

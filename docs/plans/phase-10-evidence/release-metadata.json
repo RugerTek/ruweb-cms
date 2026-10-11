@@ -1,0 +1,13 @@
+{
+  "closed_version": "0.54.2",
+  "tested_behavior_version": "0.54.1",
+  "functional_source_unchanged": true,
+  "changed_source_file": "VERSION",
+  "version_sha256": "9344871e852c4b6d582f8213b8f4d1b4beaad33182507c831972528b48577861",
+  "candidate_source_sha256": "118a0f7a655de9e70a15a4b7eac940c8a6372cd7467d3ae641f833017ea0187f",
+  "full_suite_retained": {
+    "passed": 542,
+    "assertions": 4178
+  },
+  "gate": "accepted by coordinator and independent Sol reviewer"
+}

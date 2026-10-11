@@ -1,0 +1,21 @@
+{
+  "composer_test": {
+    "passed": 542,
+    "assertions": 4178,
+    "seconds": 26.93
+  },
+  "conventions": "OK",
+  "diff_check": "OK",
+  "build": {
+    "modules": 116,
+    "milliseconds": 489,
+    "status": "pass"
+  },
+  "independent_review_tests": {
+    "passed": 74,
+    "assertions": 738
+  },
+  "source_sha256": "118a0f7a655de9e70a15a4b7eac940c8a6372cd7467d3ae641f833017ea0187f",
+  "served_assets_sha256": "64faee774a08514e092631ee511dc6a4567f8d4c3e864af3acad590cf32bbf54",
+  "harness_syntax": "pass"
+}

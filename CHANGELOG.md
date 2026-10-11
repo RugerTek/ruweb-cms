@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.54.1 - 2026-10-10
+## 0.54.2 - 2026-10-10
+
+- Snapshots excluyen y limpian recibos operativos, credenciales y claims de notificación; conservan historial portable sin reactivar envíos, permisos ni código personalizado.
+- Restauración valida nuevamente HTML, medios y uploads, e importa medios antes de contenido aunque el manifest antiguo declare otro orden; archivos manipulados con checksums válidos no eluden los controles.
+- Corregido el overflow móvil de las pestañas de Developer tools; documentados actualización con limpieza de vistas, transición de perfiles y recuperación conjunta de código, base y archivos.
+- E2E-10 aprobado con actualización real desde 0.47.0, instalación limpia, MySQL/HTTP/navegador, snapshots actuales/anteriores y rollback demostrado; suite de 542 pruebas y revisión independiente, con evidencia y límites explícitos.
+
+## 0.54.1 - 2026-10-10 (14b2a78)
 
 - Corregidos retorno y validación de Seguridad, conservación de ámbito/vencimiento de claves y estado de claves vencidas; credenciales de un solo uso y tokens OAuth se entregan sin caché.
 - Corregida la exclusión CSRF del intercambio OAuth para Laravel 13; consentimiento conserva su protección, MCP anuncia la versión real, acepta ping y diagnostica tipos RPC inválidos sin alterar permisos ni errores legacy.

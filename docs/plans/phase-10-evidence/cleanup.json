@@ -1,0 +1,11 @@
+{
+  "schemas_removed": 2,
+  "servers_stopped": [
+    8018,
+    8019
+  ],
+  "private_state_removed": true,
+  "private_sql_and_archives_removed": true,
+  "credentials_keys_sessions_private_logs_removed": true,
+  "original_env_hash_unchanged": true
+}

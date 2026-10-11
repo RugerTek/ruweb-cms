@@ -47,6 +47,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 | Doc | Owns |
 |---|---|
 | [operations/snapshots.md](operations/snapshots.md) | `.appbackup` format, risks, restore, housekeeping |
+| [operations/update-recovery.md](operations/update-recovery.md) | Additive updates, profile transitions, legacy proposal recovery and coordinated code/database/files rollback |
 | [operations/maintenance.md](operations/maintenance.md) | Operational commands |
 | [operations/redirects.md](operations/redirects.md) | 301/302 rules for old paths, the 404 monitor, CSV import |
 | [operations/custom-code.md](operations/custom-code.md) | Trusted browser snippets, exact destinations, dedicated permissions, activation and recovery |

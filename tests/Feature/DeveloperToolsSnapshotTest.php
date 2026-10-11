@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ContentRevision;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Post;
@@ -11,10 +10,11 @@ use App\Models\User;
 use App\Services\Snapshots\SnapshotException;
 use App\Services\Snapshots\SnapshotHousekeeping;
 use App\Services\Snapshots\SnapshotService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -30,6 +30,9 @@ class DeveloperToolsSnapshotTest extends TestCase
 
         // The snapshot root is an isolated temp directory set up by TestCase.
         Storage::fake('public');
+        // Text fixtures represent a deployment that explicitly allows text uploads.
+        config(['cms.upload.allowed_extensions' => [...config('cms.upload.allowed_extensions'), 'txt'],
+            'cms.upload.allowed_document_mimes' => [...config('cms.upload.allowed_document_mimes'), 'text/plain']]);
     }
 
     public function test_admin_can_view_developer_tools(): void
@@ -132,7 +135,7 @@ class DeveloperToolsSnapshotTest extends TestCase
             'mime_type' => 'image/svg+xml', 'extension' => 'svg', 'size' => 11, 'disk' => 'public',
             'alt' => 'Original base',
         ]);
-        Storage::disk('public')->put($media->path, '<svg></svg>');
+        Storage::disk('public')->put($media->path, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
         $archive = app(SnapshotService::class)->create('before-media-translations');
         $legacyArchive = $this->copyArchiveWithMutatedManifest($archive, function (array $manifest): array {
             $manifest['database']['tables'] = array_values(array_filter(
@@ -185,7 +188,7 @@ class DeveloperToolsSnapshotTest extends TestCase
         $archive = app(SnapshotService::class)->create('migrations-kept');
 
         // Simulate a destination that already ran a newer migration.
-        \Illuminate\Support\Facades\DB::table('migrations')->insert([
+        DB::table('migrations')->insert([
             'migration' => '2099_01_01_000000_future_migration',
             'batch' => 99,
         ]);
@@ -437,7 +440,7 @@ class DeveloperToolsSnapshotTest extends TestCase
             'created_by' => $admin->id,
         ]);
         // Bypass the sanitizer so the row really carries an absolute origin, as legacy data does.
-        \Illuminate\Support\Facades\DB::table('posts')->where('id', $post->id)->update([
+        DB::table('posts')->where('id', $post->id)->update([
             'content' => '<p><img src="http://localhost:8000/storage/media/a.webp"><a href="https://external.test/x">out</a></p>',
         ]);
         Page::query()->create([
@@ -449,7 +452,7 @@ class DeveloperToolsSnapshotTest extends TestCase
             'status' => 'draft',
             'created_by' => $admin->id,
         ]);
-        $this->assertStringContainsString('http:\\/\\/localhost:8000', (string) \Illuminate\Support\Facades\DB::table('pages')->value('content_json'));
+        $this->assertStringContainsString('http:\\/\\/localhost:8000', (string) DB::table('pages')->value('content_json'));
 
         $archive = app(SnapshotService::class)->create('urls');
 
@@ -457,8 +460,8 @@ class DeveloperToolsSnapshotTest extends TestCase
         $result = app(SnapshotService::class)->restore($archive);
 
         $this->assertSame(['from' => 'http://localhost:8000', 'to' => 'https://proyecto.com'], $result['url_rewritten']);
-        $content = (string) \Illuminate\Support\Facades\DB::table('posts')->value('content');
-        $this->assertStringContainsString('https://proyecto.com/storage/media/a.webp', $content);
+        $content = (string) DB::table('posts')->value('content');
+        $this->assertStringContainsString('/storage/media/a.webp', $content);
         $this->assertStringContainsString('https://external.test/x', $content);
         $this->assertStringNotContainsString('localhost:8000', $content);
         $this->assertSame('See https://proyecto.com/blog now', Page::query()->first()->content_json['sections']['content']['body']);
@@ -470,13 +473,13 @@ class DeveloperToolsSnapshotTest extends TestCase
         $post = Post::query()->create([
             'locale' => 'es', 'title' => 'A', 'slug' => 'a', 'content' => 'plain', 'status' => 'draft', 'created_by' => $admin->id,
         ]);
-        \Illuminate\Support\Facades\DB::table('posts')->where('id', $post->id)->update(['content' => 'see http://old.test/p']);
+        DB::table('posts')->where('id', $post->id)->update(['content' => 'see http://old.test/p']);
 
         $this->assertSame(0, Artisan::call('cms:rewrite-url', ['--from' => 'http://old.test', '--to' => 'https://new.test', '--dry-run' => true]));
-        $this->assertSame('see http://old.test/p', \Illuminate\Support\Facades\DB::table('posts')->value('content'));
+        $this->assertSame('see http://old.test/p', DB::table('posts')->value('content'));
 
         $this->assertSame(0, Artisan::call('cms:rewrite-url', ['--from' => 'http://old.test', '--to' => 'https://new.test']));
-        $this->assertSame('see https://new.test/p', \Illuminate\Support\Facades\DB::table('posts')->value('content'));
+        $this->assertSame('see https://new.test/p', DB::table('posts')->value('content'));
     }
 
     public function test_srcset_builds_variant_urls_from_paths_at_render_time(): void

@@ -83,7 +83,7 @@ shows the effective state. These commands do not use the database or public fron
 workers/releases until recovery is reviewed; record CLI actions in deployment logs. Individual deactivation
 remains an audited operation. Migrate before serving layouts with these hooks; snippets remain off until activated.
 
-## Snapshot contract and phase 10 boundary
+## Snapshot contract
 
 New persistent tables are `custom_code_snippets` (including active pointer, state, generation),
 `custom_code_versions` (complete immutable payload, author, fingerprint), `custom_code_events` (audit) and
@@ -93,4 +93,4 @@ excludes and clears retry receipts, strips the user permission and restores ever
 active pointer**, including destination snippets when a legacy archive has no Custom Code tables. It records
 `restore_inactive` only in the snippet audit, without altering the content revision ledger. Import never grants
 user permission or restores tokens. The local kill-switch marker is operational deployment state,
-not portable content. Phase 10 retains the full schema migration, cross-install compatibility and end-to-end snapshot portability gate; these fail-closed safeguards do not claim that gate has passed.
+not portable content. Phase 10 verifies the full schema migration, cross-install compatibility and snapshot portability; see [its results](../plans/phase-10-results.md) and the [snapshot import contract](snapshots.md#import-validation-and-portable-operation-history).

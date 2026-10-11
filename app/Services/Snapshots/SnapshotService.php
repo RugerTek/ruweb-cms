@@ -2,7 +2,11 @@
 
 namespace App\Services\Snapshots;
 
+use App\Models\Page;
+use App\Services\Media\SvgSanitizer;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\PageComposition;
+use App\Support\RichTextSanitizer;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
@@ -33,6 +37,9 @@ class SnapshotService
 
     protected const EXCLUDED_TABLES = [
         'custom_code_receipts',
+        'mcp_operation_receipts',
+        'editorial_operation_receipts',
+        'submission_operation_receipts',
         'mcp_api_keys',
         'admin_sessions',
         'cache',
@@ -56,10 +63,10 @@ class SnapshotService
         'custom_code_versions',
         'custom_code_events',
         'settings',
-        'pages',
-        'posts',
         'media',
         'media_translations',
+        'pages',
+        'posts',
         'taxonomies',
         'menus',
         'menu_items',
@@ -225,6 +232,7 @@ class SnapshotService
 
         $allTables = $this->manifestTables($manifest);
         $this->assertRestoreTablesAreSafe($allTables);
+        $this->validateUploads($extractDir);
 
         $tables = array_values(array_filter(
             $allTables,
@@ -353,6 +361,12 @@ class SnapshotService
 
     protected function restoreDatabase(string $extractDir, array $tables, ?UrlRewriter $rewriter = null): void
     {
+        // Archives, including older formats, do not own dependency order. Composition
+        // validation needs the imported media rows before it normalizes page blocks.
+        $tables = collect($tables)->sortBy(fn (array $table): array => [
+            ($priority = array_search($table['name'], self::TABLE_PRIORITY, true)) === false ? 999 : $priority,
+            $table['name'],
+        ])->values()->all();
         $this->setForeignKeyChecks(false);
         DB::beginTransaction();
 
@@ -370,6 +384,14 @@ class SnapshotService
             if (in_array('contact_submissions', $tableNames, true) && ! in_array('contact_submission_notes', $tableNames, true)
                 && Schema::hasTable('contact_submission_notes')) {
                 DB::table('contact_submission_notes')->delete();
+            }
+            foreach (['custom_code_receipts', 'mcp_operation_receipts', 'editorial_operation_receipts', 'submission_operation_receipts'] as $receipts) {
+                if (Schema::hasTable($receipts)) {
+                    DB::table($receipts)->delete();
+                }
+            }
+            if (in_array('contact_submissions', $tableNames, true) && ! in_array('submission_events', $tableNames, true) && Schema::hasTable('submission_events')) {
+                DB::table('submission_events')->delete();
             }
             if (in_array('users', $tableNames, true)) {
                 foreach (['mcp_api_keys', 'admin_sessions', 'oauth_access_tokens', 'oauth_authorization_codes', 'password_reset_tokens', 'sessions'] as $credentials) {
@@ -401,11 +423,26 @@ class SnapshotService
                     'notification_error' => 'Delivery queue was reset during snapshot restore.',
                 ]);
                 DB::table('contact_submissions')->whereNotNull('notified_at')->update(['notification_status' => 'sent']);
+                DB::table('contact_submissions')->update(['notification_token' => null, 'notification_claim' => null, 'notification_started_at' => null]);
+            }
+
+            if (Schema::hasTable('submission_events')) {
+                DB::table('submission_events')->whereNotNull('user_id')->whereNotIn('user_id', DB::table('users')->select('id'))->update(['user_id' => null]);
+            }
+            // Even a partial/legacy archive must not retain a destination grant.
+            if (Schema::hasColumn('users', 'can_manage_custom_code')) {
+                DB::table('users')->update(['can_manage_custom_code' => false]);
+            }
+
+            foreach (DB::table('pages')->select('content_json')->cursor() as $page) {
+                PageComposition::validateMedia(json_decode($page->content_json ?? '{}', true, 512, JSON_THROW_ON_ERROR) ?? []);
             }
 
             // A restore must never execute imported code or attach old receipts to reused IDs.
             // Legacy archives without these tables also leave destination snippets inactive.
-            if (Schema::hasTable('custom_code_receipts')) DB::table('custom_code_receipts')->delete();
+            if (Schema::hasTable('custom_code_receipts')) {
+                DB::table('custom_code_receipts')->delete();
+            }
             if (Schema::hasTable('custom_code_snippets')) {
                 DB::table('custom_code_snippets')->update(['state' => 'inactive', 'active_version_id' => null, 'generation' => DB::raw('generation + 1'), 'updated_at' => now()]);
                 if (Schema::hasTable('custom_code_events')) {
@@ -433,7 +470,9 @@ class SnapshotService
                 $row[$field] = null;
             }
         }
-        if (array_key_exists('can_manage_custom_code', $row)) $row['can_manage_custom_code'] = false;
+        if (array_key_exists('can_manage_custom_code', $row)) {
+            $row['can_manage_custom_code'] = false;
+        }
         if (array_key_exists('security_version', $row)) {
             $row['security_version'] = 0;
         }
@@ -466,7 +505,8 @@ class SnapshotService
                         $row['security_version'] = random_int(1000000, 2000000000);
                     }
                 }
-                $batch[] = $rewriter ? $rewriter->rewriteRow($row) : $row;
+                $row = $rewriter ? $rewriter->rewriteRow($row) : $row;
+                $batch[] = $this->normalizeEditorialRow($table, $row);
 
                 if (count($batch) >= 500) {
                     DB::table($table)->insert($batch);
@@ -479,6 +519,65 @@ class SnapshotService
             }
         } finally {
             fclose($handle);
+        }
+    }
+
+    /** Query-builder imports must use the same HTML boundary as ordinary writes. */
+    protected function normalizeEditorialRow(string $table, array $row): array
+    {
+        if ($table === 'pages' && isset($row['content_json'])) {
+            $page = new Page;
+            $page->template_key = $row['template_key'] ?? 'default';
+            $page->content_json = $row['content_json'];
+            $row['content_json'] = $page->getAttributes()['content_json'];
+        }
+        if ($table === 'submission_events' && isset($row['user_id']) && ! DB::table('users')->where('id', $row['user_id'])->exists()) {
+            $row['user_id'] = null;
+        }
+        if ($table === 'media') {
+            if (($row['disk'] ?? 'public') !== 'public') {
+                throw new SnapshotException('Snapshot media must use the public disk.');
+            }
+            foreach (['path', 'original_path'] as $field) {
+                if (! empty($row[$field])) {
+                    $this->assertSafePath($row[$field]);
+                }
+            }
+            foreach (json_decode($row['variants'] ?? '[]', true, 512, JSON_THROW_ON_ERROR) ?? [] as $variant) {
+                if (isset($variant['path'])) {
+                    $this->assertSafePath($variant['path']);
+                }
+            }
+        }
+        if ($table === 'posts' && isset($row['content'])) {
+            $row['content'] = app(RichTextSanitizer::class)->sanitize($row['content']);
+        }
+
+        return $row;
+    }
+
+    /** Checksums establish integrity, not trust: validate public files before replacing anything. */
+    protected function validateUploads(string $extractDir): void
+    {
+        if (! is_dir($extractDir.'/uploads')) {
+            return;
+        }
+        foreach (File::allFiles($extractDir.'/uploads', true) as $file) {
+            $extension = strtolower($file->getExtension());
+            $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getPathname());
+            $allowedMimes = array_merge(config('cms.upload.allowed_image_mimes', []), config('cms.upload.allowed_document_mimes', []));
+            $max = str_starts_with((string) $mime, 'image/') ? config('cms.upload.image_max_size') : config('cms.upload.document_max_size');
+            if (! in_array($extension, config('cms.upload.allowed_extensions', []), true)
+                || ! in_array($mime, $allowedMimes, true) || $file->getSize() > $max * 1024) {
+                throw new SnapshotException('Invalid public upload in snapshot: '.$file->getRelativePathname());
+            }
+            if ($extension === 'svg' || $mime === 'image/svg+xml') {
+                try {
+                    app(SvgSanitizer::class)->sanitize($file->getContents());
+                } catch (\InvalidArgumentException $exception) {
+                    throw new SnapshotException('Unsafe SVG upload in snapshot: '.$file->getRelativePathname(), 0, $exception);
+                }
+            }
         }
     }
 
@@ -529,9 +628,17 @@ class SnapshotService
         }
 
         try {
+            $seen = [];
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $name = $zip->getNameIndex($i);
                 $this->assertSafePath($name);
+                if (isset($seen[$name])) {
+                    throw new SnapshotException('Duplicate archive path rejected.');
+                }
+                $seen[$name] = true;
+                if ($zip->getExternalAttributesIndex($i, $system, $attributes) && (($attributes >> 16) & 0170000) === 0120000) {
+                    throw new SnapshotException('Archive symlinks are not permitted.');
+                }
             }
 
             if (! $zip->extractTo($extractDir)) {
@@ -577,7 +684,7 @@ class SnapshotService
             throw new SnapshotException('Snapshot checksums.json is invalid.');
         }
 
-        $actualFiles = collect(File::allFiles($extractDir))
+        $actualFiles = collect(File::allFiles($extractDir, true))
             ->map(fn ($file): string => str_replace('\\', '/', $file->getRelativePathname()))
             ->reject(fn (string $relativePath): bool => $relativePath === 'checksums.json')
             ->sort()
@@ -933,7 +1040,7 @@ class SnapshotService
 
     protected function assertSafePath(?string $path): void
     {
-        if ($path === null || $path === '' || str_starts_with($path, '/') || str_contains($path, '\\') || str_contains($path, '..')) {
+        if ($path === null || $path === '' || str_starts_with($path, '/') || str_contains($path, '\\') || str_contains($path, '..') || str_contains($path, ':') || str_contains($path, chr(0))) {
             throw new SnapshotException("Unsafe archive path rejected: {$path}");
         }
     }

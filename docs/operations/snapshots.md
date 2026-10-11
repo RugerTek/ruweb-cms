@@ -240,3 +240,40 @@ Queue jobs are excluded. Restored submissions with queued, sending or retrying n
 failed with a reset-queue diagnostic and a cleared delivery token; the inbox offers a manual retry.
 Already notified submissions remain sent. This also prevents stale destination jobs from claiming
 restored notifications with the old generation token.
+
+## Import validation and portable operation history
+
+Checksums detect changed bytes against the archive's declared checksums; they do not authenticate an
+archive that an operator can edit and re-checksum. Import therefore applies destination policy again:
+Page/Post content normalization and HTML sanitization, media references and disk-relative media paths,
+upload MIME/extension/size limits, and inert SVG validation. Invalid content causes the database
+transaction to roll back; rejected upload bytes are checked before any replacement. A structurally
+compatible old archive can still require correction when its uploads violate the destination's current
+upload policy. Inspect the actual archive, not just its declared application version.
+
+Media and localized metadata import before content regardless of a legacy manifest's table order.
+Operation receipts (`mcp_operation_receipts`, `editorial_operation_receipts`,
+`submission_operation_receipts`, `custom_code_receipts`) are installation-local: export excludes them,
+import ignores even explicitly injected archive entries, and restore clears local receipts. Auth/session,
+OAuth, password-reset and preview tables follow the same import exclusion contract. Account credential
+fields and Custom Code permission are scrubbed even in a re-checksummed archive; a partial archive
+cannot preserve a local Custom Code grant.
+
+Submission events and notes are portable history. Unknown event actors become null; an archive predating
+submission events clears destination events that would otherwise attach to reused submission ids.
+Every restored notification loses its claim and generation token. Already sent rows remain sent;
+queued/sending/retrying rows become failed and require an explicit retry. Existing destination jobs are
+not purged by content restore, but their old tokens cannot claim restored rows. A worker rehearsal covers
+both reused pending and sent ids: no stale delivery occurs, and only explicit pending retry creates a new
+queue job and sends once.
+
+Custom Code payloads and authored history travel, but snippets restore inactive, with no active version
+pointer and a new generation. The `restore_inactive` event belongs only to snippet audit; no content
+revision marker is added. Destination profile and the local operational kill switch are deployment
+configuration and remain local. Review and explicitly activate an exact code version only after the
+restored destination, identities and rules have been checked.
+
+This is content recovery, not coordinated deployment rollback. Database commit precedes public-file
+replacement; a filesystem failure after that commit requires recovery from the pre-restore backup and
+inspection of files. See [update and coordinated recovery](update-recovery.md) for the tested code,
+native database and file recovery procedure and its limits.

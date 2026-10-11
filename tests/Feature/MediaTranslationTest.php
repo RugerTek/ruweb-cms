@@ -136,7 +136,7 @@ class MediaTranslationTest extends TestCase
     {
         Storage::fake('public');
         $media = $this->media();
-        Storage::disk('public')->put($media->path, '<svg></svg>');
+        Storage::disk('public')->put($media->path, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
         $media->translations()->create(['locale' => 'en', 'alt' => 'Landscape', 'title' => 'Cover']);
         $archive = app(SnapshotService::class)->create('media-translations');
         $media->translations()->update(['alt' => 'Modified']);

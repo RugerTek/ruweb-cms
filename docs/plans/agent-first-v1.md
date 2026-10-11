@@ -1,10 +1,10 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–9 implementadas y aceptadas; fase 9 con excepción explícita para Claude pendiente. Fases 10–11 autorizadas, sin iniciar.
+**Estado:** fases 0–10 implementadas y aceptadas; fase 9 conserva la excepción explícita de Claude pendiente. Fase 11 autorizada, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 15 — Fase 9 aceptada; el propietario aplaza la prueba real de Claude sin certificarla ni reducir los gates 10–11.
+**Revisión:** 16 — Fase 10 aceptada con actualización, snapshots, transiciones, piloto y rollback probados; se conserva el aplazamiento explícito de Claude y el gate de fase 11.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
-**Entrega actual:** fases [0](phase-0-results.md), [1](phase-1-results.md), [2](phase-2-results.md), [3](phase-3-results.md), [4](phase-4-results.md), [5](phase-5-results.md), [6](phase-6-results.md) [7](phase-7-results.md), [8](phase-8-results.md) y [9](phase-9-results.md) aceptadas con resultados; fase 9 conserva la excepción explícita de Claude. El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
+**Entrega actual:** fases [0](phase-0-results.md), [1](phase-1-results.md), [2](phase-2-results.md), [3](phase-3-results.md), [4](phase-4-results.md), [5](phase-5-results.md), [6](phase-6-results.md) [7](phase-7-results.md), [8](phase-8-results.md) , [9](phase-9-results.md) y [10](phase-10-results.md) aceptadas con resultados; fase 9 conserva la excepción explícita de Claude. El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
 ## 1. Objetivo y valor del producto
 
@@ -538,9 +538,9 @@ La excepción permite continuar y conserva íntegros los gates 10–11.
 
 **Trabajo**
 
-- [ ] Actualizar copia aislada de un sitio 0.47.0 e instalar otro desde cero.
-- [ ] Probar todos los cambios de perfil y snapshots anteriores/actuales; ensayar rollback de código y datos.
-- [ ] Pilotar un sitio en esencial y repetir los flujos MCP en completo; registrar incidencias e intervención necesaria.
+- [x] Actualizar copia aislada de un sitio 0.47.0 e instalar otro desde cero.
+- [x] Probar todos los cambios de perfil y snapshots anteriores/actuales; ensayar rollback de código y datos.
+- [x] Pilotar un sitio en esencial y repetir los flujos MCP en completo; registrar incidencias e intervención necesaria.
 
 **E2E-10 — Un sitio existente atraviesa la migración y vuelve a ser recuperable**
 
@@ -555,6 +555,8 @@ La excepción permite continuar y conserva íntegros los gates 10–11.
 **Aprobación:** comparación de manifiestos sin diferencias inesperadas, recorridos públicos/administrativos/MCP correctos y rollback demostrado. Piloto sin incidencias bloqueantes abiertas.
 
 **Reversión:** restaurar el conjunto de código, datos y archivos validado antes del cambio.
+
+**Resultado:** fase aceptada en 0.54.2 con [resultados y evidencia](phase-10-results.md): actualización real de 0.47.0, instalación limpia, transiciones cacheadas, piloto MCP full/essential, import actual/antiguo, rechazo incompatible y rollback coordinado pasan. No se afirma atomicidad DB/filesystem; PHP mínimo 8.3 sigue en fase 11 y Claude conserva su aplazamiento explícito.
 
 ### Fase 11 — Candidato y publicación de 1.0.0
 
@@ -664,7 +666,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). La fase 8 está aceptada con [evidencia](phase-8-results.md). La fase 9 está aceptada con [resultados y excepción explícita](phase-9-results.md); Claude queda pendiente de seguimiento y no certificado por aplazamiento autorizado del propietario. Las fases 10–11 no se iniciaron.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). La fase 8 está aceptada con [evidencia](phase-8-results.md). La fase 9 está aceptada con [resultados y excepción explícita](phase-9-results.md); Claude queda pendiente de seguimiento y no certificado por aplazamiento autorizado del propietario. La fase 10 está aceptada con [resultados](phase-10-results.md); la fase 11 está autorizada y aún no se inició.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan
