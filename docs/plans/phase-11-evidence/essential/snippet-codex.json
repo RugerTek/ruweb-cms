@@ -1,0 +1,112 @@
+{
+  "client": "codex",
+  "case": "phase11-snippet",
+  "profile": "essential",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "custom_code_save",
+      "status": "completed",
+      "arguments": {
+        "name": "Phase11 exact destination",
+        "code": "window.__phase11Snippet=(window.__phase11Snippet||0)+1;",
+        "description": "Local acceptance marker.",
+        "operation_key": "phase11-essential-save",
+        "position": "body_end",
+        "rules": {
+          "global": false,
+          "include": [
+            {
+              "type": "pages",
+              "id": 7,
+              "locale": "es",
+              "group": false
+            }
+          ],
+          "exclude": []
+        },
+        "sort_order": 0,
+        "type": "javascript"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 1, \"name\": \"Phase11 exact destination\", \"description\": \"Local acceptance marker.\", \"state\": \"draft\", \"active_version_id\": null, \"generation\": 1, \"created_at\": \"2026-10-11 01:34:04\", \"updated_at\": \"2026-10-11 01:34:04\", \"versions_total\": 1, \"versions_page\": 1, \"versions_last_page\": 1, \"active_version\": null, \"revision\": \"572b74772a94a59cdb89357aecc5f14afea735b78891304cf2a0df881b446247\", \"versions\": [{\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}], \"events\": [{\"id\": 1, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"save\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:34:04\"}]}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "custom_code_activate",
+      "status": "completed",
+      "arguments": {
+        "id": 1,
+        "version_id": 1,
+        "expected_revision": "572b74772a94a59cdb89357aecc5f14afea735b78891304cf2a0df881b446247",
+        "operation_key": "phase11-essential-activate"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 1, \"name\": \"Phase11 exact destination\", \"description\": \"Local acceptance marker.\", \"state\": \"active\", \"active_version_id\": 1, \"generation\": 2, \"created_at\": \"2026-10-11 01:34:04\", \"updated_at\": \"2026-10-11 01:34:08\", \"versions_total\": 1, \"versions_page\": 1, \"versions_last_page\": 1, \"active_version\": {\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}, \"revision\": \"35d86fc380b59971c78c957de4d6a2ed1536fdbceeb3a26a584f6cbe4d1c2b00\", \"versions\": [{\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}], \"events\": [{\"id\": 2, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"activate\", \"version_id\": 1, \"detail\": \"{\\\"fingerprint\\\": \\\"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\\\"}\", \"created_at\": \"2026-10-11 01:34:08\"}, {\"id\": 1, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"save\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:34:04\"}]}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "custom_code_get",
+      "status": "completed",
+      "arguments": {
+        "id": 1
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 1, \"name\": \"Phase11 exact destination\", \"description\": \"Local acceptance marker.\", \"state\": \"active\", \"active_version_id\": 1, \"generation\": 2, \"created_at\": \"2026-10-11 01:34:04\", \"updated_at\": \"2026-10-11 01:34:08\", \"versions_total\": 1, \"versions_page\": 1, \"versions_last_page\": 1, \"active_version\": {\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}, \"revision\": \"35d86fc380b59971c78c957de4d6a2ed1536fdbceeb3a26a584f6cbe4d1c2b00\", \"versions\": [{\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}], \"events\": [{\"id\": 2, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"activate\", \"version_id\": 1, \"detail\": \"{\\\"fingerprint\\\": \\\"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\\\"}\", \"created_at\": \"2026-10-11 01:34:08\"}, {\"id\": 1, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"save\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:34:04\"}]}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "custom_code_evaluate",
+      "status": "completed",
+      "arguments": {
+        "version_id": 1,
+        "target": {
+          "type": "pages",
+          "id": 7,
+          "locale": "es",
+          "group": false
+        }
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"target\": {\"type\": \"pages\", \"id\": 7, \"locale\": \"es\", \"group\": false}, \"snippets\": [{\"id\": 1, \"version_id\": 1, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"payload\": {\"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"applies\": true, \"diagnostics\": [], \"code_read\": {\"bytes\": 55, \"sha256\": \"322d8f4d6dd83571ae8e95960d284cda7cec05747d08f8cf32690ad41c4a6b9c\", \"recovery\": \"custom_code_get with id and version_id\"}}], \"enabled\": true, \"warning\": \"Trusted browser code is visible to visitors and can execute real external events. This is not a sandbox.\", \"total\": 1, \"page\": 1, \"per_page\": 20, \"last_page\": 1}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "active": true,
+    "restricted": true,
+    "snippet_id": 1,
+    "version_id": 1
+  }
+}

@@ -34,7 +34,7 @@ def save(fixture,checks):
     for check in checks:print('PASS '+check,flush=True)
 if '--mutate' not in sys.argv and '--restore' not in sys.argv:
     assert rpc('cms_capabilities')['admin_profile']==profile
-    status,raw=request('/mcp/rpc',{'jsonrpc':'2.0','id':2,'method':'tools/list'}); assert status==200 and len(json.loads(raw)['result']['tools'])==52
+    status,raw=request('/mcp/rpc',{'jsonrpc':'2.0','id':2,'method':'tools/list'}); assert status==200 and len(json.loads(raw)['result']['tools'])==59
     for template in ('html','empty','composed'):
         schema=rpc('cms_schema',{'type':'pages','template_key':template}); assert schema['schema']
     mid=manifest['media_id']

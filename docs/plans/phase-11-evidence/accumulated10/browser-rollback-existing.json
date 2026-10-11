@@ -1,0 +1,19 @@
+{
+  "stage": "rollback",
+  "installation": "existing",
+  "checks": [
+    "Bilingual baseline URLs and draft/future publication remain correct"
+  ],
+  "screens": [
+    "rollback-existing-spanish-1440.png",
+    "rollback-existing-spanish-390.png",
+    "rollback-existing-english-1440.png",
+    "rollback-existing-english-390.png",
+    "rollback-existing-dashboard-1440.png",
+    "rollback-existing-dashboard-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

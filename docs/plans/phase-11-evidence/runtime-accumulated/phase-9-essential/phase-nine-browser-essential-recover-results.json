@@ -1,0 +1,15 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Old password denied; replacement password still requires second factor",
+    "Consumed recovery code rejected; next unused recovery code signs in",
+    "All prior draft/full/read/replacement/OAuth credentials deny reads and writes after recovery",
+    "New integration created through panel after recovery succeeds"
+  ],
+  "screenshots": [
+    "phase-nine-essential-recovered-mcp-1440.png",
+    "phase-nine-essential-recovered-mcp-390.png"
+  ],
+  "page_errors": [],
+  "external_origins": []
+}

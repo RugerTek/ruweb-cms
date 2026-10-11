@@ -1,0 +1,23 @@
+{
+  "profile": "essential",
+  "stage": "reactivated",
+  "checks": [
+    "Six destination/locale documents show exact marker count and CSS state",
+    "Ordered head, body-start and body-end insertion in real DOM",
+    "Pending version stays inert; excludes and exact language identities prevail",
+    "Ordinary preview/login/OAuth consent/admin have no custom code",
+    "Desktop/mobile screenshots and no horizontal overflow",
+    "Local-only browser requests; no page errors"
+  ],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "external_origins": [],
+  "page_errors": []
+}

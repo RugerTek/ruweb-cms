@@ -1,0 +1,26 @@
+{
+  "profile": "essential",
+  "cookie_free_mcp": true,
+  "checks": [
+    "Three published templates and exact English sibling translations created through editorial MCP",
+    "Ordinary preview pinned before snippet activation",
+    "Eight synchronized HTTP save retries and eight activation retries return identical results with one version and one activation event per operation",
+    "Custom-code scoped administrator without explicit account permission is denied without mutation",
+    "Panel-created active CSS is readable through MCP",
+    "Four exact JavaScript versions activated by explicit code credential",
+    "Editorial full/editor/draft/read credentials all rejected before executable mutation",
+    "Exact English identity activated; Spanish sibling excluded by locale identity",
+    "Immutable pending code saved while previously activated version remains selected",
+    "Individual deactivation/reactivation preserves selected historical version",
+    "Individual deactivation/reactivation preserves selected historical version",
+    "Deliberate isolated public-layout disruption activated for one exact destination"
+  ],
+  "page_ids": [
+    109,
+    110,
+    111,
+    112,
+    113,
+    114
+  ]
+}

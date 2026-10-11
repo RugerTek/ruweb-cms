@@ -82,8 +82,10 @@ Defined in `app/Mcp/ToolRegistry.php`:
 
 Writes create or update **drafts**; publishing is its own call, and republishing keeps the original
 `published_at`. Updating a published page/post is rejected for every role, including administrators;
-it never silently unpublishes the record. Preparing a separate pending version through MCP is not yet
-available. Draft checking, partial merge, history and media changes run inside a transaction with a row lock.
+it never silently unpublishes the record. For published changes, `content_propose` prepares a separate
+immutable version and `content_review_request` / `content_review_decide` review and apply that exact proposal
+under the editorial workflow described below. Draft checking, partial merge, history and media changes run
+inside a transaction with a row lock.
 
 ### Partial content edits
 
@@ -297,8 +299,9 @@ to clear retirement). This administrator/full operation sets retirement without 
 publication. Public pages, posts and sitemap honor expiry even before the minute scheduler materializes a draft.
 
 The migration adds `editorial_versions.base_fingerprint` and the new `editorial_operation_receipts` table. Existing proposals without a known base are rejected for new review requests/approval: read current content and create a fresh proposal/review instead. Ordinary version history and restoration remain available. `editorial_operation_receipts` contains actor-scoped retry results, not preview URLs/tokens.
-Snapshot inclusion/exclusion for these receipts is an explicit phase 10 decision; do not assume a retry receipt
-is portable editorial content.
+Operation receipts are installation-local: snapshots exclude them and restore clears local receipts, even
+when an archive supplies those tables. Editorial versions/reviews remain portable content; see
+[snapshots.md](snapshots.md) and [update-recovery.md](update-recovery.md).
 
 
 ## Submission follow-up (phase 6)
@@ -309,7 +312,7 @@ is portable editorial content.
 
 `submissions_assign {assigned_to}` assigns an administrator/editor or clears with null; `submissions_set_status {workflow_status}` changes follow-up state; `submissions_add_note {body}` appends an internal note (nonblank, at most 5000 characters); `submissions_retry_notification` requests a delivery retry. All four require `form`, `id`, current 64-character `expected_revision` and a durable `operation_key`. Account administrators and editors may operate the inbox, but **only full-scope credentials permit follow-up and retry**. Read-only and draft-only credentials may read within those account roles; editorial credentials do not gain notification or workflow permissions. Both profiles expose the same tools. Visitor fields, form fields/validation and notification destinations cannot be changed by these tools.
 
-Panel and transports delegate to `SubmissionOperations` with an explicit actor. Row locks reject stale revisions; actor-scoped receipts serialize identical retries and return their original result. Changing input with an existing key conflicts. Workflow, assignment, notes and retry requests record their actor in `submission_events`; notes also retain their author. Internal notes never enter public pages or outgoing mail. New `submission_operation_receipts` and `submission_events` tables are operational records; snapshot portability is reviewed in phase 10.
+Panel and transports delegate to `SubmissionOperations` with an explicit actor. Row locks reject stale revisions; actor-scoped receipts serialize identical retries and return their original result. Changing input with an existing key conflicts. Workflow, assignment, notes and retry requests record their actor in `submission_events`; notes also retain their author. Internal notes never enter public pages or outgoing mail. `submission_operation_receipts` is installation-local and excluded from snapshots. `submission_events` history travels with submissions, with valid destination actors or null; restored delivery claims/generations are cleared and pending deliveries become failed, requiring explicit review/retry. See [snapshots.md](snapshots.md).
 
 Retry atomically reserves only failed/skipped delivery generations. Pending and sent generations cannot enqueue again; query the latest delivery state after worker processing. Mail remains controlled by the existing enabled flag, page notification configuration and deployed transport. Delivery uses the real queue with four attempts and backoff; no MCP tool configures a transport or recipient. A provider accepting mail before a connection/worker failure cannot guarantee exactly-once delivery. Failed deliveries expose state/attempts without leaking transport exceptions; repair transport/configuration through its authorized operational path, reread revision and request a retry.
 

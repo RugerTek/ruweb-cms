@@ -1,0 +1,174 @@
+{
+  "client": "codex",
+  "case": "phase11-submissions",
+  "profile": "essential",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "submissions_list",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "search": "phase11-essential@visitor.test"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"form\": \"contact\", \"submissions\": [{\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:36:44.000000Z\", \"workflow_status\": \"new\", \"assigned_to\": null, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": null, \"revision\": \"08a4757991edbfcd9bd71d0ccf3b03a39bd177a98e70f341caf881946b3582dd\", \"truncated_fields\": []}], \"page\": 1, \"per_page\": 20, \"total\": 1, \"last_page\": 1}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "submissions_get",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "id": 2
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:36:44.000000Z\", \"workflow_status\": \"new\", \"assigned_to\": null, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": null, \"revision\": \"08a4757991edbfcd9bd71d0ccf3b03a39bd177a98e70f341caf881946b3582dd\", \"truncated_fields\": [], \"notes\": [], \"notes_pagination\": {\"page\": 1, \"per_page\": 20, \"total\": 0, \"last_page\": 1}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "submissions_assign",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "id": 2,
+        "assigned_to": 1,
+        "expected_revision": "08a4757991edbfcd9bd71d0ccf3b03a39bd177a98e70f341caf881946b3582dd",
+        "operation_key": "phase11-essential-assign-2-user1-20261010"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:37:18.000000Z\", \"workflow_status\": \"new\", \"assigned_to\": 1, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"revision\": \"927a87dd069cb23420d70a2a555d19cb593b1225876dfcb1e02b97e120d9c973\", \"truncated_fields\": [], \"notes\": [], \"notes_pagination\": {\"page\": 1, \"per_page\": 20, \"total\": 0, \"last_page\": 1}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "submissions_get",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "id": 2
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:37:18.000000Z\", \"workflow_status\": \"new\", \"assigned_to\": 1, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"revision\": \"927a87dd069cb23420d70a2a555d19cb593b1225876dfcb1e02b97e120d9c973\", \"truncated_fields\": [], \"notes\": [], \"notes_pagination\": {\"page\": 1, \"per_page\": 20, \"total\": 0, \"last_page\": 1}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "submissions_set_status",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "id": 2,
+        "expected_revision": "927a87dd069cb23420d70a2a555d19cb593b1225876dfcb1e02b97e120d9c973",
+        "operation_key": "phase11-essential-progress-2-20261010",
+        "workflow_status": "in_progress"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:37:23.000000Z\", \"workflow_status\": \"in_progress\", \"assigned_to\": 1, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"revision\": \"3e1316c3aee836cc031840d261fef9dbae3ea9889f60a345e4b015fd4133d3af\", \"truncated_fields\": [], \"notes\": [], \"notes_pagination\": {\"page\": 1, \"per_page\": 20, \"total\": 0, \"last_page\": 1}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "submissions_get",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "id": 2
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:37:23.000000Z\", \"workflow_status\": \"in_progress\", \"assigned_to\": 1, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"revision\": \"3e1316c3aee836cc031840d261fef9dbae3ea9889f60a345e4b015fd4133d3af\", \"truncated_fields\": [], \"notes\": [], \"notes_pagination\": {\"page\": 1, \"per_page\": 20, \"total\": 0, \"last_page\": 1}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "submissions_add_note",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "id": 2,
+        "expected_revision": "3e1316c3aee836cc031840d261fef9dbae3ea9889f60a345e4b015fd4133d3af",
+        "operation_key": "phase11-essential-note-2-20261010",
+        "body": "Seguimiento piloto fase11"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:37:23.000000Z\", \"workflow_status\": \"in_progress\", \"assigned_to\": 1, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"revision\": \"68a9528fc2e41530feeb9d8614d754bb4da072112e95d0fc383bb5a62093bbd1\", \"truncated_fields\": [], \"notes\": [{\"id\": 1, \"body\": \"Seguimiento piloto fase11\", \"author\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"created_at\": \"2026-10-11T01:37:28.000000Z\"}], \"notes_pagination\": {\"page\": 1, \"per_page\": 20, \"total\": 1, \"last_page\": 1}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "submissions_get",
+      "status": "completed",
+      "arguments": {
+        "form": "contact",
+        "id": 2
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 2, \"page_id\": 10, \"locale\": \"es\", \"name\": \"Phase11 Visitor\", \"email\": \"phase11-essential@visitor.test\", \"phone\": null, \"subject\": null, \"message\": \"Solicitud piloto fase11\", \"ip\": \"127.0.0.1\", \"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36\", \"referer\": \"http://127.0.0.1:8023/phase11-contact\", \"recaptcha_score\": 0.9, \"read_at\": null, \"notified_at\": \"2026-10-11T01:36:44.000000Z\", \"created_at\": \"2026-10-11T01:36:05.000000Z\", \"updated_at\": \"2026-10-11T01:37:23.000000Z\", \"workflow_status\": \"in_progress\", \"assigned_to\": 1, \"notification_status\": \"sent\", \"notification_attempts\": 1, \"notification_started_at\": \"2026-10-11T01:36:44.000000Z\", \"notification_failed_at\": null, \"assignee\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"revision\": \"68a9528fc2e41530feeb9d8614d754bb4da072112e95d0fc383bb5a62093bbd1\", \"truncated_fields\": [], \"notes\": [{\"id\": 1, \"body\": \"Seguimiento piloto fase11\", \"author\": {\"id\": 1, \"name\": \"Phase Ten\", \"role\": \"admin\"}, \"created_at\": \"2026-10-11T01:37:28.000000Z\"}], \"notes_pagination\": {\"page\": 1, \"per_page\": 20, \"total\": 1, \"last_page\": 1}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "processed": true,
+    "mail_sent": true,
+    "submission_id": 2,
+    "attempts": 1,
+    "assigned_to": 1,
+    "workflow_status": "in_progress",
+    "note": "Seguimiento piloto fase11",
+    "note_count": 1
+  }
+}

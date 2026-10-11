@@ -1,0 +1,13 @@
+{
+  "candidate_version": "0.54.2",
+  "baseline_ref": "2b65a272f25470d89b0edbd70f7e6b0a8820d41e",
+  "product_and_build_identity_sha256": "2bd554acdcbe5023a5c70702729765992cc40f3afcb8a21156c79e44827c06ee",
+  "local_artifact_path": "/var/folders/88/zkqjgk4x2911mq910dsjlzg40000gn/T/ruweb-cms-candidate-0.54.2-2bd554acdcbe.tar",
+  "artifact_sha256": "403dbe241eda196a0100414ced67d39a7bfc7c098f2d6e4b1d4e7cd57298c6bf",
+  "files": 666,
+  "dependencies": "Install from included composer/package lockfiles; vendor/node_modules are not included",
+  "normalized_tar_headers": true,
+  "includes_environment_example_only": true,
+  "production_credentials_or_snapshots_included": false,
+  "published_remotely": false
+}

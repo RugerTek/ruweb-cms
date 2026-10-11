@@ -1,0 +1,121 @@
+[
+  {
+    "phase": 0,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 5,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 5,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 6,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 8,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 8,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 6,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 3,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 3,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 7,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 7,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 9,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 9,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 0,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 2,
+    "profile": "full",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 2,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  },
+  {
+    "phase": 4,
+    "profile": "essential",
+    "status": "passed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": null
+  }
+]

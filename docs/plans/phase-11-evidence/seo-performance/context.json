@@ -1,0 +1,25 @@
+{
+  "baseline_ref": "f337e7d7b2eba14c9e6bcb2b1cb79a1978bb79a5",
+  "candidate_ref": "2b65a272f25470d89b0edbd70f7e6b0a8820d41e",
+  "php": "8.5.4",
+  "node": "v24.13.1",
+  "profiles": [
+    {
+      "stage": "baseline-047-full",
+      "portable_manifest_identical": true
+    },
+    {
+      "stage": "candidate-full",
+      "portable_manifest_identical": true
+    },
+    {
+      "stage": "candidate-essential",
+      "portable_manifest_identical": true
+    }
+  ],
+  "build_mode": "npm run build; no Vite dev server",
+  "server": "PHP CLI loopback 8030; same MySQL schema; sequential",
+  "timing": "7 warmed navigations in fresh contexts; cold browser cache; no throttling; no external traffic",
+  "baseline_content": "phase-ten-control baseline bilingual published ES/EN plus draft/future; same installed media bytes",
+  "dependencies": "shared source vendor/node_modules; locked dependency files unchanged from baseline"
+}

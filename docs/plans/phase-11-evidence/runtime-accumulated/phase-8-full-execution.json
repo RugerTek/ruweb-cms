@@ -1,0 +1,212 @@
+{
+  "phase": 8,
+  "profile": "full",
+  "runtime": "PHP 8.3",
+  "stages": [
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-fixture.php"
+      ],
+      "exit_code": 0,
+      "output": "Isolated MySQL fixture ready: ruweb_phase0_d66ffc7e35b3\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-eight-control.php",
+        "identity"
+      ],
+      "exit_code": 0,
+      "output": "PASS explicit Custom Code account permission and separate test credential\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-eight-http.py",
+        "initial"
+      ],
+      "exit_code": 0,
+      "output": "PASS Three published templates and exact English sibling translations created through editorial MCP\nPASS Ordinary preview pinned before snippet activation\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full create\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-eight-http.py",
+        "global"
+      ],
+      "exit_code": 0,
+      "output": "PASS Eight synchronized HTTP save retries and eight activation retries return identical results with one version and one activation event per operation\nPASS Custom-code scoped administrator without explicit account permission is denied without mutation\nPASS Panel-created active CSS is readable through MCP\nPASS Four exact JavaScript versions activated by explicit code credential\nPASS Editorial full/editor/draft/read credentials all rejected before executable mutation\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full global\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-eight-http.py",
+        "exact"
+      ],
+      "exit_code": 0,
+      "output": "PASS Exact English identity activated; Spanish sibling excluded by locale identity\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full exact\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-eight-http.py",
+        "pending"
+      ],
+      "exit_code": 0,
+      "output": "PASS Immutable pending code saved while previously activated version remains selected\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full pending\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-eight-http.py",
+        "deactivated"
+      ],
+      "exit_code": 0,
+      "output": "PASS Individual deactivation/reactivation preserves selected historical version\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full deactivated\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-eight-http.py",
+        "reactivated"
+      ],
+      "exit_code": 0,
+      "output": "PASS Individual deactivation/reactivation preserves selected historical version\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full reactivated\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-eight-control.php",
+        "disable"
+      ],
+      "exit_code": 0,
+      "output": "Custom Code disabled.\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full killed\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-eight-control.php",
+        "enable"
+      ],
+      "exit_code": 0,
+      "output": "Custom Code enabled.\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full recovered\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-eight-http.py",
+        "harmful"
+      ],
+      "exit_code": 0,
+      "output": "PASS Deliberate isolated public-layout disruption activated for one exact destination\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full harmful\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-eight-control.php",
+        "disable"
+      ],
+      "exit_code": 0,
+      "output": "Custom Code disabled.\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 browser full harmful-killed\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-eight-security.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E08 real HTTP OAuth conflicting parameters\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-cleanup.php"
+      ],
+      "exit_code": 0,
+      "output": "Removed isolated fixture database and credentials: ruweb_phase0_d66ffc7e35b3\n"
+    }
+  ],
+  "status": "passed",
+  "cleanup": "guarded schema dropped, process stopped, private copy removed"
+}

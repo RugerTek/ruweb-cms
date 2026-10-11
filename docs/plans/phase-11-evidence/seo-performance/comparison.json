@@ -1,0 +1,269 @@
+{
+  "status": "pass",
+  "criteria_status": "Technical criteria adopted for this validation; not previously agreed owner budgets or production CWV",
+  "criteria": {
+    "requests": "No increase; current baseline4",
+    "public_and_static_bytes": "At most4KiB additional uncompressed bytes per same fixture; small fixed allowance for precompiled composition vocabulary/runtime, inspect resource-by-resource",
+    "timing_medians": "At most baseline+max(25ms,50%baseline) for TTFB/FCP/LCP; localhost scheduling/frame noise allowance,7 samples; diagnostic lab only",
+    "cls": "Median at most0.01; observed0 in every individual sample",
+    "semantics": "Exact SEO, publication,sitemap,layout assertions; no editor asset requests"
+  },
+  "results": [
+    {
+      "stage": "candidate-full",
+      "url": "/upgrade-baseline",
+      "width": 1440,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.528052621310516,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 22.80000001192093,
+          "candidate": 21.599999994039536,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 48,
+          "candidate": 44,
+          "allowance_ms": 25
+        },
+        "lcp_ms": {
+          "baseline": 56,
+          "candidate": 52,
+          "allowance_ms": 28.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    },
+    {
+      "stage": "candidate-full",
+      "url": "/en/upgrade-baseline-en",
+      "width": 1440,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.5334806444394717,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 25.599999994039536,
+          "candidate": 23.600000008940697,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 60,
+          "candidate": 48,
+          "allowance_ms": 30.0
+        },
+        "lcp_ms": {
+          "baseline": 60,
+          "candidate": 52,
+          "allowance_ms": 30.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    },
+    {
+      "stage": "candidate-full",
+      "url": "/upgrade-baseline",
+      "width": 390,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.528052621310516,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 25,
+          "candidate": 17.400000005960464,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 52,
+          "candidate": 48,
+          "allowance_ms": 26.0
+        },
+        "lcp_ms": {
+          "baseline": 56,
+          "candidate": 48,
+          "allowance_ms": 28.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    },
+    {
+      "stage": "candidate-full",
+      "url": "/en/upgrade-baseline-en",
+      "width": 390,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.5334806444394717,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 20.200000002980232,
+          "candidate": 17.799999997019768,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 52,
+          "candidate": 48,
+          "allowance_ms": 26.0
+        },
+        "lcp_ms": {
+          "baseline": 52,
+          "candidate": 48,
+          "allowance_ms": 26.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    },
+    {
+      "stage": "candidate-essential",
+      "url": "/upgrade-baseline",
+      "width": 1440,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.528052621310516,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 22.80000001192093,
+          "candidate": 24.299999997019768,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 48,
+          "candidate": 52,
+          "allowance_ms": 25
+        },
+        "lcp_ms": {
+          "baseline": 56,
+          "candidate": 56,
+          "allowance_ms": 28.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    },
+    {
+      "stage": "candidate-essential",
+      "url": "/en/upgrade-baseline-en",
+      "width": 1440,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.5334806444394717,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 25.599999994039536,
+          "candidate": 21.200000002980232,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 60,
+          "candidate": 52,
+          "allowance_ms": 30.0
+        },
+        "lcp_ms": {
+          "baseline": 60,
+          "candidate": 52,
+          "allowance_ms": 30.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    },
+    {
+      "stage": "candidate-essential",
+      "url": "/upgrade-baseline",
+      "width": 390,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.528052621310516,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 25,
+          "candidate": 19.200000002980232,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 52,
+          "candidate": 44,
+          "allowance_ms": 26.0
+        },
+        "lcp_ms": {
+          "baseline": 56,
+          "candidate": 48,
+          "allowance_ms": 28.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    },
+    {
+      "stage": "candidate-essential",
+      "url": "/en/upgrade-baseline-en",
+      "width": 390,
+      "byte_delta": 2193,
+      "static_byte_delta": 2154,
+      "byte_delta_percent": 1.5334806444394717,
+      "timings": {
+        "ttfb_ms": {
+          "baseline": 20.200000002980232,
+          "candidate": 19,
+          "allowance_ms": 25
+        },
+        "fcp_ms": {
+          "baseline": 52,
+          "candidate": 44,
+          "allowance_ms": 26.0
+        },
+        "lcp_ms": {
+          "baseline": 52,
+          "candidate": 48,
+          "allowance_ms": 26.0
+        }
+      },
+      "checks": {
+        "requests_not_increased": true,
+        "public_bytes_within_4kib_allowance": true,
+        "static_bytes_within_4kib_allowance": true,
+        "cls_at_most_0_01": true,
+        "timing_medians_within_noise_allowance": true
+      }
+    }
+  ]
+}

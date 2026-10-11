@@ -1,0 +1,298 @@
+{
+  "client": "codex",
+  "case": "phase11-workflow",
+  "profile": "full",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "content_versions",
+      "status": "completed",
+      "arguments": {
+        "id": 7,
+        "type": "pages"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"versions\": [{\"id\": 16, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"created_at\": \"2026-10-11 01:32:43\", \"updated_at\": \"2026-10-11 01:32:43\", \"base_fingerprint\": null}, {\"id\": 15, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"5b13637dd0018778aa6933273b7dded7a84a361fd7986d568f2577c5a14a7b4d\", \"created_at\": \"2026-10-11 01:32:37\", \"updated_at\": \"2026-10-11 01:32:37\", \"base_fingerprint\": null}, {\"id\": 14, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"b1908b9d7f42a488a840a64552a4967ba792edcbb678fa8725ed87b7c5f13df2\", \"created_at\": \"2026-10-11 01:32:37\", \"updated_at\": \"2026-10-11 01:32:37\", \"base_fingerprint\": null}, {\"id\": 13, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"fcf23a554a0a4695921239cfd327665d81ce079615c92561fc8857de3bb6e8f3\", \"created_at\": \"2026-10-11 01:32:37\", \"updated_at\": \"2026-10-11 01:32:37\", \"base_fingerprint\": null}, {\"id\": 12, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"f77dee07ce26fc0435040ccd3dc871e70dd10597de39792485b286ec525a6c18\", \"created_at\": \"2026-10-11 01:32:37\", \"updated_at\": \"2026-10-11 01:32:37\", \"base_fingerprint\": null}], \"meta\": {\"total\": 5, \"current_page\": 1, \"per_page\": 20, \"last_page\": 1}, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"fe9d6208-9b63-433f-9fc2-fe4e91a433a2\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:32:43.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:32:37.000000Z\", \"updated_at\": \"2026-10-11T01:32:43.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "fields": [
+          "id",
+          "revision",
+          "title",
+          "status"
+        ]
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"title\": \"Entrega final\", \"status\": \"published\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_propose",
+      "status": "completed",
+      "arguments": {
+        "id": 7,
+        "type": "pages",
+        "changes": {
+          "title": "Entrega revisada"
+        },
+        "expected_revision": "754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9",
+        "operation_key": "phase11-full-1791682492155-l7qhhfjbxsc-propose"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"version\": {\"id\": 35, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": true, \"fingerprint\": \"393c2cc8ef75232905da06f2403b15b10570edd529dc4f582808114382ba1796\", \"created_at\": \"2026-10-11 01:34:54\", \"updated_at\": \"2026-10-11 01:34:54\", \"base_fingerprint\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\"}, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "fields": [
+          "id",
+          "revision",
+          "title",
+          "status"
+        ]
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"title\": \"Entrega final\", \"status\": \"published\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_review_request",
+      "status": "completed",
+      "arguments": {
+        "id": 7,
+        "type": "pages",
+        "version_id": 35,
+        "reviewer_id": 1,
+        "expected_revision": "754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9",
+        "operation_key": "phase11-full-1791682492155-l7qhhfjbxsc-request"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"review\": {\"id\": 1, \"content_type\": \"pages\", \"content_id\": 7, \"requested_by\": 1, \"reviewer_id\": 1, \"version_id\": 35, \"fingerprint\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"state\": \"pending\", \"comment\": null, \"created_at\": \"2026-10-11 01:34:59\", \"updated_at\": \"2026-10-11 01:34:59\"}, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "fields": [
+          "id",
+          "revision",
+          "title",
+          "status"
+        ]
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"title\": \"Entrega final\", \"status\": \"published\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_review_decide",
+      "status": "completed",
+      "arguments": {
+        "id": 7,
+        "type": "pages",
+        "review_id": 1,
+        "state": "approved",
+        "expected_revision": "754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9",
+        "operation_key": "phase11-full-1791682492155-l7qhhfjbxsc-approve"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"review\": {\"id\": 1, \"content_type\": \"pages\", \"content_id\": 7, \"requested_by\": 1, \"reviewer_id\": 1, \"version_id\": 35, \"fingerprint\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"state\": \"approved\", \"comment\": null, \"created_at\": \"2026-10-11 01:34:59\", \"updated_at\": \"2026-10-11 01:35:05\"}, \"revision\": \"4113685acf47b5d3a44436c4d909670d45ee7eea36c88e01cefd039ba2936bb4\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "fields": [
+          "id",
+          "revision",
+          "title",
+          "status"
+        ]
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"4113685acf47b5d3a44436c4d909670d45ee7eea36c88e01cefd039ba2936bb4\", \"title\": \"Entrega revisada\", \"status\": \"published\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_restore",
+      "status": "completed",
+      "arguments": {
+        "id": 7,
+        "type": "pages",
+        "version_id": 16,
+        "mode": "draft",
+        "expected_revision": "4113685acf47b5d3a44436c4d909670d45ee7eea36c88e01cefd039ba2936bb4",
+        "operation_key": "phase11-full-1791682492155-l7qhhfjbxsc-restore"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"version\": {\"id\": 41, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"13473c0b5c412cfc9458a10665eb7c8b8a9593b6e56ce5039e292c887446a6b3\", \"created_at\": \"2026-10-11 01:35:10\", \"updated_at\": \"2026-10-11 01:35:10\", \"base_fingerprint\": null}, \"content\": {\"type\": \"pages\", \"id\": 7, \"status\": \"draft\"}, \"revision\": \"13473c0b5c412cfc9458a10665eb7c8b8a9593b6e56ce5039e292c887446a6b3\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "fields": [
+          "id",
+          "revision",
+          "title",
+          "status"
+        ]
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"13473c0b5c412cfc9458a10665eb7c8b8a9593b6e56ce5039e292c887446a6b3\", \"title\": \"Entrega final\", \"status\": \"draft\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_publish",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "expected_revision": "13473c0b5c412cfc9458a10665eb7c8b8a9593b6e56ce5039e292c887446a6b3"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"fe9d6208-9b63-433f-9fc2-fe4e91a433a2\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:32:43.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:32:37.000000Z\", \"updated_at\": \"2026-10-11T01:35:15.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "fields": [
+          "id",
+          "revision",
+          "title",
+          "status"
+        ]
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"754e0a4b35679fdaeaed84de85622d10a4665fb9de3edb1ced96fc66982851f9\", \"title\": \"Entrega final\", \"status\": \"published\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "reviewed": true,
+    "restored": true,
+    "published": true,
+    "original_version_id": 16,
+    "landing_id": 7
+  }
+}

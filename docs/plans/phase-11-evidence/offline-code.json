@@ -1,0 +1,56 @@
+[
+  {
+    "profile": "full",
+    "database_unreachable": "127.0.0.1:1",
+    "checks": [
+      {
+        "action": "disable",
+        "exit_code": 0,
+        "output": "Custom Code disabled."
+      },
+      {
+        "action": "status",
+        "exit_code": 0,
+        "output": "Custom Code disabled."
+      },
+      {
+        "action": "enable",
+        "exit_code": 0,
+        "output": "Custom Code enabled."
+      },
+      {
+        "action": "status",
+        "exit_code": 0,
+        "output": "Custom Code enabled."
+      }
+    ],
+    "cleanup": true
+  },
+  {
+    "profile": "essential",
+    "database_unreachable": "127.0.0.1:1",
+    "checks": [
+      {
+        "action": "disable",
+        "exit_code": 0,
+        "output": "Custom Code disabled."
+      },
+      {
+        "action": "status",
+        "exit_code": 0,
+        "output": "Custom Code disabled."
+      },
+      {
+        "action": "enable",
+        "exit_code": 0,
+        "output": "Custom Code enabled."
+      },
+      {
+        "action": "status",
+        "exit_code": 0,
+        "output": "Custom Code enabled."
+      }
+    ],
+    "cleanup": true
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "profile": "essential",
+  "stage": "full-ui",
+  "checks": [
+    "Full compatibility notice visible in actual admin"
+  ],
+  "script_paths": [
+    "/build/assets/admin-DcYWJpR6.js",
+    "/build/assets/admin-common-C93g3TUz.js"
+  ],
+  "page_errors": []
+}

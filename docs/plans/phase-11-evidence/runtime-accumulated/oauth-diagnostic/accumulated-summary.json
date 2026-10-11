@@ -1,0 +1,9 @@
+[
+  {
+    "phase": 9,
+    "profile": "essential",
+    "status": "failed",
+    "cleanup": "guarded schema dropped, process stopped, private copy removed",
+    "failure": "['node', 'tests/E2E/phase-nine-browser.cjs'] failed: FAIL E2E09 identity browser: OAuth authorization did not redirect: 429\nToo Many Requests\n+ actual - expected\n\n+ '/authorize'\n- '/oauth-return'\n\n"
+  }
+]

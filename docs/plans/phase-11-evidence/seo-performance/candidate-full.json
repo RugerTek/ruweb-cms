@@ -1,0 +1,536 @@
+{
+  "stage": "candidate-full",
+  "chromium": "151.0.7922.34",
+  "checks": [
+    "Metadata/canonical/hreflang/x-default/OG/locale match bilingual stored values",
+    "Published content renders; draft and future404; sitemap includes bilingual and excludes unpublished",
+    "Anonymous1440/390 no overflow; local rendered images loaded; no browser errors",
+    "Public requests exclude editor-engine/editor-ui/TinyMCE/admin/CodeMirror"
+  ],
+  "blocked_external_origins": [],
+  "rows": [
+    {
+      "url": "/upgrade-baseline",
+      "width": 1440,
+      "semantics": {
+        "lang": "es",
+        "title": "Migration SEO ES — Rüweb",
+        "description": "Preserved description",
+        "canonical": "http://127.0.0.1:8030/upgrade-baseline",
+        "alternates": [
+          {
+            "lang": "es",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          },
+          {
+            "lang": "en",
+            "url": "http://127.0.0.1:8030/en/upgrade-baseline-en"
+          },
+          {
+            "lang": "x-default",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          }
+        ],
+        "ogTitle": "Migration SEO ES",
+        "ogImage": "http://127.0.0.1:8030/storage/media/2026/10/5201f7ff-5e0f-4485-b3cc-2b88d5d7a084.webp",
+        "heading": [
+          "Migration SEO ES",
+          "Migration baseline ES"
+        ],
+        "overflow": false,
+        "images": []
+      },
+      "resources": [
+        {
+          "path": "/upgrade-baseline",
+          "status": 200,
+          "bytes": 5183,
+          "type": "document",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-CtpY7xNK.css",
+          "status": 200,
+          "bytes": 103061,
+          "type": "stylesheet",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/chunk-DPI0Y_ll.js",
+          "status": 200,
+          "bytes": 685,
+          "type": "script",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-P6f_VT5F.js",
+          "status": 200,
+          "bytes": 36780,
+          "type": "script",
+          "encoding": "identity"
+        }
+      ],
+      "request_count": 4,
+      "uncompressed_resource_bytes": 145709,
+      "samples": [
+        {
+          "ttfb_ms": 24.400000005960464,
+          "domContentLoaded_ms": 50.8999999910593,
+          "load_ms": 50.8999999910593,
+          "fcp_ms": 48,
+          "lcp_ms": 52,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 21.599999994039536,
+          "domContentLoaded_ms": 58,
+          "load_ms": 58,
+          "fcp_ms": 56,
+          "lcp_ms": 60,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 21.30000001192093,
+          "domContentLoaded_ms": 42.79999999701977,
+          "load_ms": 42.79999999701977,
+          "fcp_ms": 44,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 26.900000005960464,
+          "domContentLoaded_ms": 51.79999999701977,
+          "load_ms": 51.79999999701977,
+          "fcp_ms": 52,
+          "lcp_ms": 56,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 16.5,
+          "domContentLoaded_ms": 43.599999994039536,
+          "load_ms": 43.599999994039536,
+          "fcp_ms": 44,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 22.700000002980232,
+          "domContentLoaded_ms": 44.29999999701977,
+          "load_ms": 44.29999999701977,
+          "fcp_ms": 44,
+          "lcp_ms": 52,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 13.700000002980232,
+          "domContentLoaded_ms": 34.70000000298023,
+          "load_ms": 34.70000000298023,
+          "fcp_ms": 36,
+          "lcp_ms": 40,
+          "cls": 0
+        }
+      ],
+      "median": {
+        "ttfb_ms": 21.599999994039536,
+        "domContentLoaded_ms": 44.29999999701977,
+        "load_ms": 44.29999999701977,
+        "fcp_ms": 44,
+        "lcp_ms": 52,
+        "cls": 0
+      },
+      "screenshot": "candidate-full-es-1440.png"
+    },
+    {
+      "url": "/en/upgrade-baseline-en",
+      "width": 1440,
+      "semantics": {
+        "lang": "en",
+        "title": "Migration SEO EN — Rüweb",
+        "description": "English description",
+        "canonical": "http://127.0.0.1:8030/en/upgrade-baseline-en",
+        "alternates": [
+          {
+            "lang": "es",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          },
+          {
+            "lang": "en",
+            "url": "http://127.0.0.1:8030/en/upgrade-baseline-en"
+          },
+          {
+            "lang": "x-default",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          }
+        ],
+        "ogTitle": "Migration SEO EN",
+        "heading": [
+          "Migration SEO EN",
+          "Migration baseline EN"
+        ],
+        "overflow": false,
+        "images": []
+      },
+      "resources": [
+        {
+          "path": "/en/upgrade-baseline-en",
+          "status": 200,
+          "bytes": 4675,
+          "type": "document",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-CtpY7xNK.css",
+          "status": 200,
+          "bytes": 103061,
+          "type": "stylesheet",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/chunk-DPI0Y_ll.js",
+          "status": 200,
+          "bytes": 685,
+          "type": "script",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-P6f_VT5F.js",
+          "status": 200,
+          "bytes": 36780,
+          "type": "script",
+          "encoding": "identity"
+        }
+      ],
+      "request_count": 4,
+      "uncompressed_resource_bytes": 145201,
+      "samples": [
+        {
+          "ttfb_ms": 23.600000008940697,
+          "domContentLoaded_ms": 46.599999994039536,
+          "load_ms": 46.599999994039536,
+          "fcp_ms": 48,
+          "lcp_ms": 52,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 21.700000002980232,
+          "domContentLoaded_ms": 45.29999999701977,
+          "load_ms": 45.29999999701977,
+          "fcp_ms": 44,
+          "lcp_ms": 52,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 26.599999994039536,
+          "domContentLoaded_ms": 53.8999999910593,
+          "load_ms": 53.8999999910593,
+          "fcp_ms": 56,
+          "lcp_ms": 56,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 26.099999994039536,
+          "domContentLoaded_ms": 48.79999999701977,
+          "load_ms": 48.900000005960464,
+          "fcp_ms": 48,
+          "lcp_ms": 52,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 29.100000008940697,
+          "domContentLoaded_ms": 53.099999994039536,
+          "load_ms": 53.099999994039536,
+          "fcp_ms": 52,
+          "lcp_ms": 56,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 17.299999997019768,
+          "domContentLoaded_ms": 42.400000005960464,
+          "load_ms": 42.400000005960464,
+          "fcp_ms": 44,
+          "lcp_ms": 44,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 23.599999994039536,
+          "domContentLoaded_ms": 47.29999999701977,
+          "load_ms": 47.29999999701977,
+          "fcp_ms": 48,
+          "lcp_ms": 56,
+          "cls": 0
+        }
+      ],
+      "median": {
+        "ttfb_ms": 23.600000008940697,
+        "domContentLoaded_ms": 47.29999999701977,
+        "load_ms": 47.29999999701977,
+        "fcp_ms": 48,
+        "lcp_ms": 52,
+        "cls": 0
+      },
+      "screenshot": "candidate-full-en-1440.png"
+    },
+    {
+      "url": "/upgrade-baseline",
+      "width": 390,
+      "semantics": {
+        "lang": "es",
+        "title": "Migration SEO ES — Rüweb",
+        "description": "Preserved description",
+        "canonical": "http://127.0.0.1:8030/upgrade-baseline",
+        "alternates": [
+          {
+            "lang": "es",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          },
+          {
+            "lang": "en",
+            "url": "http://127.0.0.1:8030/en/upgrade-baseline-en"
+          },
+          {
+            "lang": "x-default",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          }
+        ],
+        "ogTitle": "Migration SEO ES",
+        "ogImage": "http://127.0.0.1:8030/storage/media/2026/10/5201f7ff-5e0f-4485-b3cc-2b88d5d7a084.webp",
+        "heading": [
+          "Migration SEO ES",
+          "Migration baseline ES"
+        ],
+        "overflow": false,
+        "images": []
+      },
+      "resources": [
+        {
+          "path": "/upgrade-baseline",
+          "status": 200,
+          "bytes": 5183,
+          "type": "document",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-CtpY7xNK.css",
+          "status": 200,
+          "bytes": 103061,
+          "type": "stylesheet",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/chunk-DPI0Y_ll.js",
+          "status": 200,
+          "bytes": 685,
+          "type": "script",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-P6f_VT5F.js",
+          "status": 200,
+          "bytes": 36780,
+          "type": "script",
+          "encoding": "identity"
+        }
+      ],
+      "request_count": 4,
+      "uncompressed_resource_bytes": 145709,
+      "samples": [
+        {
+          "ttfb_ms": 17.200000002980232,
+          "domContentLoaded_ms": 36.5,
+          "load_ms": 37.29999999701977,
+          "fcp_ms": 48,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 26.900000005960464,
+          "domContentLoaded_ms": 57.70000000298023,
+          "load_ms": 57.80000001192093,
+          "fcp_ms": 56,
+          "lcp_ms": 60,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 21.200000002980232,
+          "domContentLoaded_ms": 43.70000000298023,
+          "load_ms": 43.70000000298023,
+          "fcp_ms": 44,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 14.599999994039536,
+          "domContentLoaded_ms": 33,
+          "load_ms": 34,
+          "fcp_ms": 48,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 17.400000005960464,
+          "domContentLoaded_ms": 39.29999999701977,
+          "load_ms": 39.29999999701977,
+          "fcp_ms": 40,
+          "lcp_ms": 44,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 21.799999997019768,
+          "domContentLoaded_ms": 43.79999999701977,
+          "load_ms": 43.79999999701977,
+          "fcp_ms": 40,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 17,
+          "domContentLoaded_ms": 37.400000005960464,
+          "load_ms": 38.5,
+          "fcp_ms": 52,
+          "lcp_ms": 52,
+          "cls": 0
+        }
+      ],
+      "median": {
+        "ttfb_ms": 17.400000005960464,
+        "domContentLoaded_ms": 39.29999999701977,
+        "load_ms": 39.29999999701977,
+        "fcp_ms": 48,
+        "lcp_ms": 48,
+        "cls": 0
+      },
+      "screenshot": "candidate-full-es-390.png"
+    },
+    {
+      "url": "/en/upgrade-baseline-en",
+      "width": 390,
+      "semantics": {
+        "lang": "en",
+        "title": "Migration SEO EN — Rüweb",
+        "description": "English description",
+        "canonical": "http://127.0.0.1:8030/en/upgrade-baseline-en",
+        "alternates": [
+          {
+            "lang": "es",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          },
+          {
+            "lang": "en",
+            "url": "http://127.0.0.1:8030/en/upgrade-baseline-en"
+          },
+          {
+            "lang": "x-default",
+            "url": "http://127.0.0.1:8030/upgrade-baseline"
+          }
+        ],
+        "ogTitle": "Migration SEO EN",
+        "heading": [
+          "Migration SEO EN",
+          "Migration baseline EN"
+        ],
+        "overflow": false,
+        "images": []
+      },
+      "resources": [
+        {
+          "path": "/en/upgrade-baseline-en",
+          "status": 200,
+          "bytes": 4675,
+          "type": "document",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-CtpY7xNK.css",
+          "status": 200,
+          "bytes": 103061,
+          "type": "stylesheet",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/chunk-DPI0Y_ll.js",
+          "status": 200,
+          "bytes": 685,
+          "type": "script",
+          "encoding": "identity"
+        },
+        {
+          "path": "/build/assets/app-P6f_VT5F.js",
+          "status": 200,
+          "bytes": 36780,
+          "type": "script",
+          "encoding": "identity"
+        }
+      ],
+      "request_count": 4,
+      "uncompressed_resource_bytes": 145201,
+      "samples": [
+        {
+          "ttfb_ms": 19.799999997019768,
+          "domContentLoaded_ms": 52,
+          "load_ms": 52,
+          "fcp_ms": 52,
+          "lcp_ms": 56,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 22.799999997019768,
+          "domContentLoaded_ms": 44.099999994039536,
+          "load_ms": 44.19999998807907,
+          "fcp_ms": 44,
+          "lcp_ms": 52,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 17.799999997019768,
+          "domContentLoaded_ms": 37.5,
+          "load_ms": 38.599999994039536,
+          "fcp_ms": 48,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 17.700000002980232,
+          "domContentLoaded_ms": 39.29999999701977,
+          "load_ms": 39.29999999701977,
+          "fcp_ms": 40,
+          "lcp_ms": 44,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 16.799999997019768,
+          "domContentLoaded_ms": 37.6000000089407,
+          "load_ms": 38.6000000089407,
+          "fcp_ms": 48,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 16.80000001192093,
+          "domContentLoaded_ms": 44.19999998807907,
+          "load_ms": 44.19999998807907,
+          "fcp_ms": 44,
+          "lcp_ms": 48,
+          "cls": 0
+        },
+        {
+          "ttfb_ms": 25.799999997019768,
+          "domContentLoaded_ms": 56,
+          "load_ms": 56,
+          "fcp_ms": 56,
+          "lcp_ms": 64,
+          "cls": 0
+        }
+      ],
+      "median": {
+        "ttfb_ms": 17.799999997019768,
+        "domContentLoaded_ms": 44.099999994039536,
+        "load_ms": 44.19999998807907,
+        "fcp_ms": 48,
+        "lcp_ms": 48,
+        "cls": 0
+      },
+      "screenshot": "candidate-full-en-390.png"
+    }
+  ],
+  "sitemap": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"\n        xmlns:xhtml=\"http://www.w3.org/1999/xhtml\">\n\n    \n    <url>\n        <loc>http://127.0.0.1:8030</loc>\n                            <xhtml:link rel=\"alternate\" hreflang=\"es\" href=\"http://127.0.0.1:8030\" />\n                                    <lastmod>2026-10-11T01:32:37+00:00</lastmod>\n                <changefreq>daily</changefreq>\n        <priority>1.0</priority>\n    </url>\n\n    \n        <url>\n        <loc>http://127.0.0.1:8030/contacto</loc>\n                <xhtml:link rel=\"alternate\" hreflang=\"es\" href=\"http://127.0.0.1:8030/contacto\" />\n                <lastmod>2026-10-11T01:32:37+00:00</lastmod>\n        <changefreq>weekly</changefreq>\n        <priority>0.8</priority>\n    </url>\n        <url>\n        <loc>http://127.0.0.1:8030/upgrade-baseline</loc>\n                <xhtml:link rel=\"alternate\" hreflang=\"es\" href=\"http://127.0.0.1:8030/upgrade-baseline\" />\n                <xhtml:link rel=\"alternate\" hreflang=\"en\" href=\"http://127.0.0.1:8030/en/upgrade-baseline-en\" />\n                <lastmod>2026-10-11T01:32:37+00:00</lastmod>\n        <changefreq>weekly</changefreq>\n        <priority>0.8</priority>\n    </url>\n        <url>\n        <loc>http://127.0.0.1:8030/en/upgrade-baseline-en</loc>\n                <xhtml:link rel=\"alternate\" hreflang=\"es\" href=\"http://127.0.0.1:8030/upgrade-baseline\" />\n                <xhtml:link rel=\"alternate\" hreflang=\"en\" href=\"http://127.0.0.1:8030/en/upgrade-baseline-en\" />\n                <lastmod>2026-10-11T01:32:37+00:00</lastmod>\n        <changefreq>weekly</changefreq>\n        <priority>0.8</priority>\n    </url>\n    \n    \n    <url>\n        <loc>http://127.0.0.1:8030/blog</loc>\n                <changefreq>daily</changefreq>\n        <priority>0.6</priority>\n    </url>\n\n    \n    \n</urlset>\n"
+}

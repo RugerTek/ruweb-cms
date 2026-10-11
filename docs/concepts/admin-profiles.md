@@ -26,7 +26,7 @@ required only in full. Human operational lists and identity/security interfaces 
 ## Current rollout and transition
 
 Essential's operational panel passed [E2E-04](../plans/phase-4-results.md). Both profiles are supported
-for structured content and HTML composition. Custom Code has a dedicated panel in both profiles; additional MCP workflows retain their later roadmap gates. HTML/composed templates have an explicit agent-only editing contract in full;
+for structured content and HTML composition. Custom Code has a dedicated panel in both profiles; the implemented MCP editorial, submissions, snippets and recovery workflows share the same server contracts. Final release acceptance is tracked in [phase 11](../plans/agent-first-v1.md#fase-11--candidato-y-publicación-de-100). HTML/composed templates have an explicit agent-only editing contract in full;
 the status, history and preview presentation preserves their content without a generic visual editor.
 
 Essential retains login, account security, users/roles, MCP access management, general settings,

@@ -1,0 +1,51 @@
+{
+  "reason": "Earlier accepted E2E02/04 reports had no executed-copy hash capture, so those exact cases were repeated using the final integrated runner; these reports replace the earlier accepted runs.",
+  "runtime": "PHP 8.3.35 rebuilt from retained bottles with same relocated executable SHA; rebuilt platform requirements all success",
+  "runs": [
+    {
+      "phase": 2,
+      "profile": "full",
+      "execution_report": "phase-2-full-execution.json",
+      "execution_report_sha256": "eeefb602783507631930246bfc52071d3968b80e3896b7a7bcee6233fecade23",
+      "capture_method": "integrated runner captured private copy app/config/resources/routes/database/lang/public/build bytes after profile/historical fixture preparation, before fixture boot",
+      "captured_files": 433,
+      "differences_from_source": [
+        "config/cms.php",
+        "resources/views/templates/default.blade.php",
+        "lang/en/admin.php",
+        "lang/es/admin.php"
+      ],
+      "result": "passed",
+      "cleanup": "guarded schema dropped, process stopped, private copy removed"
+    },
+    {
+      "phase": 2,
+      "profile": "essential",
+      "execution_report": "phase-2-essential-execution.json",
+      "execution_report_sha256": "ca956b89fd8b906ee5d73bb9bd9ba0e3ffe1bdb01a809b5770afe096ed2f5fdf",
+      "capture_method": "integrated runner captured private copy app/config/resources/routes/database/lang/public/build bytes after profile/historical fixture preparation, before fixture boot",
+      "captured_files": 431,
+      "differences_from_source": [
+        "config/cms.php",
+        "resources/views/templates/default.blade.php",
+        "lang/en/admin.php",
+        "lang/es/admin.php"
+      ],
+      "result": "passed",
+      "cleanup": "guarded schema dropped, process stopped, private copy removed"
+    },
+    {
+      "phase": 4,
+      "profile": "essential",
+      "execution_report": "phase-4-essential-execution.json",
+      "execution_report_sha256": "c9b75f730888ec64b3f9c632783d599b7a497f501ee3a51b9e4fe756b57b63c5",
+      "capture_method": "integrated runner captured private copy app/config/resources/routes/database/lang/public/build bytes after profile/historical fixture preparation, before fixture boot",
+      "captured_files": 431,
+      "differences_from_source": [
+        "config/cms.php"
+      ],
+      "result": "passed",
+      "cleanup": "guarded schema dropped, process stopped, private copy removed"
+    }
+  ]
+}

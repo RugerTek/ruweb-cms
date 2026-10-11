@@ -1,0 +1,26 @@
+{
+  "profile": "full",
+  "cookie_free": "[redacted]",
+  "checks": [
+    "Repeat proposal/review/approved publication via same MCP in full",
+    "Historical content restore returns draft until explicit republish",
+    "Explicit code deactivation preserves immutable versions/history"
+  ],
+  "pages": [
+    {
+      "id": 7,
+      "template": "html",
+      "locale": "es"
+    },
+    {
+      "id": 8,
+      "template": "empty",
+      "locale": "es"
+    },
+    {
+      "id": 9,
+      "template": "composed",
+      "locale": "es"
+    }
+  ]
+}

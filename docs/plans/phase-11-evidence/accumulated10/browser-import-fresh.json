@@ -1,0 +1,29 @@
+{
+  "stage": "import",
+  "installation": "fresh",
+  "checks": [
+    "Bilingual baseline URLs and draft/future publication remain correct",
+    "Human operational pages accessible",
+    "Imported new content keeps media and restored snippets execute zero times"
+  ],
+  "screens": [
+    "import-fresh-spanish-1440.png",
+    "import-fresh-spanish-390.png",
+    "import-fresh-english-1440.png",
+    "import-fresh-english-390.png",
+    "import-fresh-dashboard-1440.png",
+    "import-fresh-dashboard-390.png",
+    "import-fresh-operations-1440.png",
+    "import-fresh-operations-390.png",
+    "import-fresh-html-1440.png",
+    "import-fresh-html-390.png",
+    "import-fresh-empty-1440.png",
+    "import-fresh-empty-390.png",
+    "import-fresh-composed-1440.png",
+    "import-fresh-composed-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

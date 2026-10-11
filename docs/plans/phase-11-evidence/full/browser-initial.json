@@ -1,0 +1,73 @@
+{
+  "profile": "full",
+  "checks": [
+    {
+      "width": 1440,
+      "path": "/phase11-landing",
+      "anonymous": true,
+      "marker": 1,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/en/phase11-landing-en",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "en",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/phase11-canvas",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/phase11-landing",
+      "anonymous": true,
+      "marker": 1,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en/phase11-landing-en",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "en",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/phase11-canvas",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "pinned_preview": true,
+      "snippet_excluded": true
+    },
+    {
+      "editorial_scope_custom_code_denied": true
+    },
+    {
+      "public_browser_submission": true,
+      "csrf": true,
+      "signed_honeypot": true,
+      "recaptcha_boundary": "Google only mocked in guarded router",
+      "throttle_route": true,
+      "mail_initial": "queued",
+      "submission_id": 2
+    }
+  ],
+  "blocked_external_origins": [
+    "https://www.google.com"
+  ],
+  "production_cwv_claim": false
+}

@@ -1,0 +1,214 @@
+{
+  "stage": "identity",
+  "checks": [
+    "First installed administrator logs in and creates an editor through UI",
+    "Editor logs in and issues own draft-only credential through UI"
+  ],
+  "script_requests": [
+    "/build/assets/admin-essential-BWTeQRq-.js",
+    "/build/assets/admin-common-C93g3TUz.js"
+  ],
+  "page_errors": [],
+  "network_trace": [
+    {
+      "path": "/login",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/login",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/users",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/users/create",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/users",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin/users/2/edit",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/login",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/claude-mcp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/admin/claude-mcp/api-key",
+      "status": 302,
+      "method": "POST"
+    },
+    {
+      "path": "/admin/claude-mcp",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C6rEK52G.css",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-essential-BWTeQRq-.js",
+      "status": 200,
+      "method": "GET"
+    },
+    {
+      "path": "/build/assets/admin-common-C93g3TUz.js",
+      "status": 200,
+      "method": "GET"
+    }
+  ]
+}

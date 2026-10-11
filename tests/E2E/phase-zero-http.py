@@ -15,6 +15,8 @@ manifest = json.loads((storage / 'manifest.json').read_text())
 base = 'http://127.0.0.1:8018'
 client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 results = []
+profile = os.environ.get('PHASE0_PROFILE', 'full')
+assert profile in ('full', 'essential')
 
 def request(path, data=None, token=None, method=None):
     headers = {}
@@ -152,22 +154,32 @@ assert status == 200
 csrf = token_from(html)
 status, raw = request('/login', {'_token':csrf, 'email':'phase0@example.test', 'password':'Phase0-Test-Only-2026!'})
 assert status == 200, ('login',status,raw[:200])
-status, html = request('/admin/pages/create')
-assert status == 200 and 'template_key' in html
-csrf = token_from(html)
-status, raw = request('/admin/pages', {'_token':csrf,'title':'Panel baseline','slug':'panel-baseline','locale':'es','template_key':'home','status':'published','featured_image':manifest['media_id'],'content_json':{'meta':{'title':'Panel baseline SEO','description':'Panel baseline description'},'sections':{'hero':{'heading':'Panel baseline hero','body':'Panel baseline body','image_id':manifest['media_id'],'is_visible':True}}}})
-assert status == 200, ('admin create',status,raw[:300])
-with urllib.request.urlopen(base + '/panel-baseline') as response:
-    status, html = response.status, response.read().decode()
-assert status == 200 and all(x in html for x in ['Panel baseline hero','Panel baseline body','Panel baseline SEO','Panel baseline description','<img'])
-image_url = re.search(r'<img[^>]*src="([^"]+)"', html).group(1)
-assert urllib.parse.urlparse(image_url).hostname == '127.0.0.1'
-with urllib.request.urlopen(image_url) as response:
-    assert response.status == 200 and response.headers['Content-Type'].startswith('image/') and len(response.read()) > 0
-assert rpc('pages_list', {'search':'Panel baseline'})['data'][0]['status']=='published'
-status, html = request('/admin/pages/'+str(draft_id)+'/edit')
-assert status == 200 and 'Preserved heading' in html and 'Preserved body' in html
-passed('Admin login/create/public render/SEO/image and MCP-to-panel content parity')
+if profile == 'full':
+    status, html = request('/admin/pages/create')
+    assert status == 200 and 'template_key' in html
+    csrf = token_from(html)
+    status, raw = request('/admin/pages', {'_token':csrf,'title':'Panel baseline','slug':'panel-baseline','locale':'es','template_key':'home','status':'published','featured_image':manifest['media_id'],'content_json':{'meta':{'title':'Panel baseline SEO','description':'Panel baseline description'},'sections':{'hero':{'heading':'Panel baseline hero','body':'Panel baseline body','image_id':manifest['media_id'],'is_visible':True}}}})
+    assert status == 200, ('admin create',status,raw[:300])
+    with urllib.request.urlopen(base + '/panel-baseline') as response:
+        status, html = response.status, response.read().decode()
+    assert status == 200 and all(x in html for x in ['Panel baseline hero','Panel baseline body','Panel baseline SEO','Panel baseline description','<img'])
+    image_url = re.search(r'<img[^>]*src="([^"]+)"', html).group(1)
+    assert urllib.parse.urlparse(image_url).hostname == '127.0.0.1'
+    with urllib.request.urlopen(image_url) as response:
+        assert response.status == 200 and response.headers['Content-Type'].startswith('image/') and len(response.read()) > 0
+    assert rpc('pages_list', {'search':'Panel baseline'})['data'][0]['status']=='published'
+    status, html = request('/admin/pages/'+str(draft_id)+'/edit')
+    assert status == 200 and 'Preserved heading' in html and 'Preserved body' in html
+    passed('Admin login/create/public render/SEO/image and MCP-to-panel content parity')
+else:
+    assert request('/admin/pages/create')[0] == 404
+    assert request('/admin/pages/'+str(draft_id)+'/edit')[0] == 404
+    assert request('/admin/pages')[0] == 200
+    status, html = request('/admin/content/pages/'+str(draft_id))
+    assert status == 200 and 'HTTP draft' in html
+    status, html = request('/admin/content/pages/'+str(draft_id)+'/preview')
+    assert status == 200 and 'Preserved heading' in html and 'Preserved body' in html
+    passed('Essential operational content panel; specialized visual create/edit routes excluded and Full-covered')
 
 status, html = request('/contacto')
 assert status == 200

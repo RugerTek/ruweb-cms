@@ -1,0 +1,67 @@
+{
+  "phase": 5,
+  "profile": "full",
+  "runtime": "PHP 8.3",
+  "stages": [
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-fixture.php"
+      ],
+      "exit_code": 0,
+      "output": "Isolated MySQL fixture ready: ruweb_phase0_1da8536a68fa\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-five-control.php",
+        "identity"
+      ],
+      "exit_code": 0,
+      "output": "E2E05 identities ready\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-five-http.py"
+      ],
+      "exit_code": 0,
+      "output": "PASS Bearer proposal retry, public unchanged, exact pinned anonymous preview, comments and reviewer/scope restrictions\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-five-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E05 browser full proposal\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-five-http.py",
+        "--complete"
+      ],
+      "exit_code": 0,
+      "output": "PASS Assigned reviewer approval applies exact proposal publicly\nPASS Proposal created on older base cannot be submitted using refreshed current revision\nPASS Stale review cannot overwrite a newer approved base\nPASS Historical draft restore, review without publication, explicit republish and preview revocation\n2026-10-11T02:44:25.000000ZPASS Anonymous preview expires under isolated controlled clock\n2026-10-11T01:49:25.948267ZPASS Scheduled withdrawal hides public URL and sitemap at controlled clock boundary\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-five-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E05 browser full restored\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-cleanup.php"
+      ],
+      "exit_code": 0,
+      "output": "Removed isolated fixture database and credentials: ruweb_phase0_1da8536a68fa\n"
+    }
+  ],
+  "status": "passed",
+  "cleanup": "guarded schema dropped, process stopped, private copy removed"
+}

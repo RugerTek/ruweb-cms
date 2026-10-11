@@ -1,0 +1,31 @@
+{
+  "stage": "essential",
+  "installation": "existing",
+  "checks": [
+    "Bilingual baseline URLs and draft/future publication remain correct",
+    "Human operational pages accessible",
+    "MCP-created HTML/canvas/composed pages render media with scripts sanitized"
+  ],
+  "screens": [
+    "essential-existing-spanish-1440.png",
+    "essential-existing-spanish-390.png",
+    "essential-existing-english-1440.png",
+    "essential-existing-english-390.png",
+    "essential-existing-dashboard-1440.png",
+    "essential-existing-dashboard-390.png",
+    "essential-existing-operations-1440.png",
+    "essential-existing-operations-390.png",
+    "essential-existing-html-1440.png",
+    "essential-existing-html-390.png",
+    "essential-existing-empty-1440.png",
+    "essential-existing-empty-390.png",
+    "essential-existing-composed-1440.png",
+    "essential-existing-composed-390.png",
+    "essential-existing-pages-1440.png",
+    "essential-existing-pages-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

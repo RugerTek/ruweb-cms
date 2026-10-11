@@ -48,6 +48,8 @@ assert(!fs.existsSync('public/hot'));
     const row = page.locator('tr').filter({ hasText: 'E2E06 Browser Visitor' });
     assert.equal(await row.count(), 1);
     await row.locator('a[href*="/admin/submissions/contact/"]').first().click();
+    await page.waitForURL('**/admin/submissions/contact/*');
+    await page.waitForLoadState('networkidle');
     assert((await page.content()).includes('E2E06 delivery body'));
     if (stage === 'submit') {
       const id = Number(new URL(page.url()).pathname.split('/').pop());

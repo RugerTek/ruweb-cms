@@ -1,0 +1,11 @@
+{
+  "passed": [
+    "Essential cookie-free MCP creates draft; MCP reads exact data; draft absent publicly",
+    "MCP partial edit preserves siblings; Essential operational panel and authorized preview show stored values",
+    "Read-only write and editor publish rejected without record/publication changes",
+    "Authorized cookie-free MCP publication renders content and SEO without session",
+    "Independent REST fixture matches MCP effects, authorization rejections and public rendering"
+  ],
+  "panel_page_id": 112,
+  "rest_page_id": 113
+}

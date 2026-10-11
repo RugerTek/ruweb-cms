@@ -50,7 +50,7 @@ revision/conflict checks, previews, approval and restore through the existing ed
 The documented `cms-*` vocabulary ships in the normal frontend build. Copy, layout tokens, block order and
 registered component params can change without rebuilding assets. Arbitrary Tailwind classes stored only in
 the database are discarded. Additional custom CSS/JS belongs to the separately authorized Custom Code
-surface planned for phase 8; it is not executable editorial HTML.
+surface implemented in both profiles; see [Custom Code](../operations/custom-code.md). Editorial HTML remains sanitized and non-executable.
 
 Automatic validation covers structure, supported URLs/attributes, media IDs, component params and limits.
 Agents/operators still review heading hierarchy, useful link labels, alternate text, keyboard interaction,

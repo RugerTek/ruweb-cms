@@ -1,0 +1,19 @@
+{
+  "stage": "baseline",
+  "installation": "existing",
+  "checks": [
+    "Bilingual baseline URLs and draft/future publication remain correct"
+  ],
+  "screens": [
+    "baseline-existing-spanish-1440.png",
+    "baseline-existing-spanish-390.png",
+    "baseline-existing-english-1440.png",
+    "baseline-existing-english-390.png",
+    "baseline-existing-dashboard-1440.png",
+    "baseline-existing-dashboard-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

@@ -1,0 +1,715 @@
+
+   INFO  Configuration cache cleared successfully.
+
+
+   PASS  Tests\Unit\CompositionBlocksTest
+  ✓ order identity and visibility survive normalization                  0.05s
+  ✓ duplicate ids are rejected                                           0.01s
+  ✓ unknown nested parameters are rejected
+  ✓ unregistered component is rejected
+  ✓ wrong component type is rejected
+  ✓ interactive parameters are validated                                 0.01s
+  ✓ unsupported block version is rejected                                0.01s
+  ✓ list size and order contract are enforced                            0.01s
+  ✓ media discovery includes hidden blocks and structured media
+
+   PASS  Tests\Unit\CompositionHtmlSanitizerTest
+  ✓ fragment retains structure and only precompiled tokens               0.02s
+  ✓ executable and foreign markup is removed without losing allowed copy
+  ✓ media has only semantic ids and no persisted sources
+  ✓ urls normalize and obfuscated or protocol relative urls are removed
+  ✓ parser boundary cannot escape sanitization                           0.01s
+  ✓ size limit is enforced
+  ✓ depth limit is enforced
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true                                                    0.01s
+
+   PASS  Tests\Unit\VersionFileTest
+  ✓ version file matches latest changelog entry
+
+   PASS  Tests\Feature\AccountSecurityNavigationTest
+  ✓ enrollment returns to visible security panel and displays recovery…  0.11s
+  ✓ failed security form keeps its panel visible without a query string  0.01s
+  ✓ revoking connection returns to security and removes it from active…  0.01s
+  ✓ failed key creation preserves permissions and expiry without issuin… 0.01s
+  ✓ key list marks expired credentials and does not display stored secr… 0.01s
+  ✓ new key is displayed once with browser storage disabled              0.01s
+
+   PASS  Tests\Feature\AccountSecurityTest
+  ✓ oauth code is claimed once and bad verifier does not consume it      0.01s
+  ✓ oauth login and token endpoints are rate limited                     1.09s
+  ✓ reset request has identical response for known unknown and throttle… 1.08s
+  ✓ email change requires password confirmation and signed one use link  0.03s
+  ✓ expired or tampered pending email link is rejected                   0.01s
+  ✓ password recovery revokes keys oauth codes and sessions              0.02s
+  ✓ password change keeps current session but invalidates stale session  0.01s
+  ✓ totp matches rfc vector and cannot be replayed                       0.02s
+  ✓ two factor enrollment and login challenge are complete               0.03s
+  ✓ oauth requires second factor and revoked session cannot auto author… 0.02s
+  ✓ two factor challenge is rate limited                                 0.01s
+  ✓ password change cancels pending email verification                   0.01s
+  ✓ administrator password reset revokes existing credentials            0.01s
+  ✓ individual session and oauth connection revocation are owner scoped  0.02s
+  ✓ two factor recovery login disable and expired challenge              0.02s
+
+   PASS  Tests\Feature\AdminAnalyticsTest
+  ✓ admin can access analytics page                                      0.02s
+  ✓ editor cannot access analytics page                                  0.01s
+  ✓ admin can save valid analytics values                                0.01s
+  ✓ invalid google tag input is rejected                                 0.02s
+  ✓ invalid meta pixel input is rejected                                 0.01s
+  ✓ full search console html tag is rejected                             0.01s
+
+   PASS  Tests\Feature\AdminBarCreationTest
+  ✓ public bar offers page and post creation with current url with data… 0.02s
+  ✓ public bar offers page and post creation with current url with data… 0.01s
+  ✓ guest and live preview do not offer creation                         0.02s
+  ✓ collection registry adds future types and omits missing routes       0.01s
+  ✓ collection creation policy filters the menu                          0.01s
+  ✓ create save and editor keep the public origin with data set #0       0.03s
+  ✓ create save and editor keep the public origin with data set #1       0.02s
+  ✓ post translation retains origin and rejects external return targets  0.02s
+
+   PASS  Tests\Feature\AdminCacheRefreshTest
+  ✓ admin can refresh application cache                                  0.02s
+  ✓ editor cannot refresh application cache                              0.01s
+  ✓ admin bar shows refresh cache button only for admins                 0.03s
+  ✓ admin bar uses admin locale on public pages                          0.02s
+
+   PASS  Tests\Feature\AdminDashboardTest
+  ✓ dashboard shows editorial counts and translation coverage            0.02s
+  ✓ dashboard shows pending tasks and hides completed by default         0.02s
+  ✓ dashboard hides translation widgets for monolingual sites            0.01s
+
+   PASS  Tests\Feature\AdminLayoutScreensTest
+  ✓ header screen shows own fields and shortcuts                         0.02s
+  ✓ footer screen shows own fields and shortcuts                         0.02s
+  ✓ header update saves cta with internal page and shared logo           0.03s
+  ✓ header update saves custom destination and new tab                   0.02s
+  ✓ header cta requires a label when enabled                             0.02s
+  ✓ header update rejects unsafe cta url                                 0.02s
+  ✓ footer update saves rich tagline copyright and sanitised credit      0.02s
+  ✓ footer blank rich text is stored as null                             0.02s
+  ✓ editors cannot open layout screens                                   0.02s
+  ✓ sidebar lists header and footer for admins only                      0.02s
+  ✓ public admin bar offers edit layout dropdown to admins               0.03s
+  ✓ header and footer groups are hidden from settings tabs               0.02s
+
+   PASS  Tests\Feature\AdminMediaFiltersTest
+  ✓ month filter limits results to that month                            0.02s
+  ✓ month filter options list only months with media                     0.01s
+  ✓ invalid month filter is ignored                                      0.01s
+  ✓ empty result from filters shows the no results state                 0.01s
+  ✓ empty library without filters shows the upload prompt                0.01s
+  ✓ month filter combines with type and search                           0.01s
+
+   PASS  Tests\Feature\AdminPostPermissionsTest
+  ✓ editor can create post                                               0.01s
+  ✓ editor cannot delete post                                            0.01s
+  ✓ admin can delete post                                                0.01s
+
+   PASS  Tests\Feature\AdminProfilePageTest
+  ✓ profile page uses information and security tabs without mcp api key  0.01s
+  ✓ claude mcp page contains mcp api key management                      0.01s
+
+   PASS  Tests\Feature\AdminProfilesTest
+  ✓ default and invalid profiles are explicit                            0.01s
+  ✓ local rest and rpc discovery match for both profiles and read scope… 0.03s
+  ✓ essential has no editor routes links or assets and keeps public dat… 0.05s
+  ✓ custom fields require editors only in full                           0.02s
+  ✓ shared section editor detection matches existing registry            0.01s
+
+   PASS  Tests\Feature\AdminSeoEditorTest
+  ✓ page editor uses unified seo fields                                  0.01s
+  ✓ post editor uses unified seo fields                                  0.01s
+
+   PASS  Tests\Feature\AdminSettingsTest
+  ✓ admin settings show login url field                                  0.01s
+  ✓ admin can customize login path                                       0.01s
+  ✓ admin login path rejects reserved segments                           0.01s
+  ✓ admin login path rejects reserved segments case insensitively        0.01s
+  ✓ admin login path rejects base locale page slug collisions            0.01s
+
+   PASS  Tests\Feature\AdminSubmissionsTest
+  ✓ index lists submissions with tabs counts and filters                 0.02s
+  ✓ show marks the submission as read and shows metadata                 0.01s
+  ✓ delete removes the submission                                        0.01s
+  ✓ unknown form is not found and guests are kept out                    0.01s
+  ✓ sidebar shows unread badge                                           0.01s
+  ✓ security settings tab exposes recaptcha fields                       0.02s
+  ✓ contact page editor shows form section controls                      0.03s
+
+   PASS  Tests\Feature\AdminTranslationsTest
+  ✓ all spanish and english namespaces have identical keys               0.01s
+  ✓ homepage settings translation keys exist in spanish and english      0.01s
+
+   PASS  Tests\Feature\AdminUserManagementTest
+  ✓ editor cannot access user management routes                          0.01s
+  ✓ admin can create user with role                                      0.01s
+  ✓ admin cannot delete own account                                      0.01s
+  ✓ admin cannot demote own role                                         0.01s
+
+   PASS  Tests\Feature\AuthAndMediaSmokeTest
+  ✓ guest admin routes render public 404 for unauthenticated visitors    0.01s
+  ✓ default login path serves the login page                             0.01s
+  ✓ custom login path serves the login page                              0.01s
+  ✓ admin can upload media file                                          0.01s
+  ✓ admin can upload multiple media files                                0.01s
+  ✓ invalid file in batch rejects entire upload                          0.01s
+
+   PASS  Tests\Feature\BlogPublicTest
+  ✓ blog index lists only published posts                                0.03s
+  ✓ blog show returns 404 for unpublished post                           0.01s
+  ✓ blog index can filter posts by category                              0.03s
+
+   PASS  Tests\Feature\BrevoMailConfigurationTest
+  ✓ enabling mail without a key preserves the configured default with d… 0.01s
+  ✓ enabling mail without a key preserves the configured default with d… 0.01s
+  ✓ enabling mail without a key preserves the configured default with d… 0.01s
+  ✓ whitespace only keys do not select brevo                             0.01s
+  ✓ effective keys select brevo and database key takes precedence with…  0.01s
+  ✓ effective keys select brevo and database key takes precedence with…  0.01s
+  ✓ effective keys select brevo and database key takes precedence with…  0.01s
+  ✓ effective keys select brevo and database key takes precedence with…  0.01s
+  ✓ disabled mail does not override the default even with a key          0.01s
+  ✓ notification uses real array transport when enabled without a key    0.01s
+  ✓ failed notification is logged and remains unnotified                 0.01s
+
+   PASS  Tests\Feature\CmsInstallAssetCheckTest
+  ✓ missing vite manifest is reported as not built                       0.01s
+  ✓ vite manifest marks the assets as built                              0.01s
+  ✓ manifest inside the vite directory is also detected                  0.01s
+
+   PASS  Tests\Feature\CompositionFrontendTest
+  ✓ html and canvas keep seo but only html has site layout               0.02s
+  ✓ media markers resolve and components escape saved copy               0.01s
+
+   PASS  Tests\Feature\CompositionOperationsTest
+  ✓ bearer fragment is sanitized media is protected and translation rev… 0.02s
+  ✓ public html edits use proposals and restore sanitizes historical pa… 0.02s
+  ✓ stable blocks survive reordering and generic full editor cannot con… 0.02s
+  ✓ block copy fingerprint ignores order visibility media and behavior   0.01s
+  ✓ malformed composition returns validation errors and null patch remo… 0.01s
+  ✓ html reference is kept by history after all current content unlinks… 0.02s
+
+   PASS  Tests\Feature\ContactFormTest
+  ✓ contact page renders the form with editor labels                     0.02s
+  ✓ valid submission is stored with metadata and redirects with success  0.02s
+  ✓ invalid submission returns translated errors and stores nothing      0.02s
+  ✓ honeypot hits are dropped silently                                   0.02s
+  ✓ recaptcha is enforced when keys are configured                       0.03s
+  ✓ missing recaptcha token is rejected when enabled                     0.02s
+  ✓ notification email is sent when enabled in the editor                0.02s
+  ✓ notification is skipped when disabled or mail off                    0.02s
+  ✓ submissions are rate limited per ip                                  0.03s
+  ✓ localized route exists for non base locales                          0.02s
+  ✓ validation retry preserves valid token and new forms defer instant…  0.02s
+
+   PASS  Tests\Feature\ContactSettingsTest
+  ✓ contact tab renders fields and social repeater                       0.02s
+  ✓ admin saves contact data and social links in order                   0.02s
+  ✓ contact validation rejects unknown network bad url and bad coordina… 0.01s
+  ✓ public footer renders contact socials menu and copyright             0.03s
+  ✓ public footer hides empty blocks                                     0.02s
+  ✓ social networks catalog ships icons for every entry                  0.01s
+
+   PASS  Tests\Feature\ContentRevisionLedgerTest
+  ✓ content writes append revisions with chained parents                 0.01s
+  ✓ menu item bursts coalesce into one revision per menu                 0.01s
+  ✓ without recording suppresses the ledger                              0.01s
+  ✓ prune keeps a minimum and removes only old rows                      0.01s
+
+   PASS  Tests\Feature\ConventionsTest
+  ✓ the repository satisfies its documented conventions                  0.01s
+
+   PASS  Tests\Feature\CustomCodeAdminTest
+  ✓ admin permission is explicit and independent of profile              0.02s
+  ✓ panel saves a proposal and activation is separate                    0.02s
+  ✓ custom code key cannot be issued without account permission          0.01s
+  ✓ oauth custom code requires consent and preserves credential scope    0.01s
+  ✓ oauth rejects conflicting query and body authorization parameters    0.01s
+
+   PASS  Tests\Feature\CustomCodeRenderingTest
+  ✓ public canvas exact locale groups exclusion and missing reference f… 0.02s
+  ✓ validation rechecks exact versions and cli recovery needs no fronte… 0.01s
+  ✓ executable preview requires explicit ack and is separate from ordin… 0.02s
+  ✓ executable preview can read old exact version but rejects other sni… 0.04s
+
+   PASS  Tests\Feature\DeveloperToolsSnapshotTest
+  ✓ admin can view developer tools                                       0.03s
+  ✓ non admin cannot access developer tools                              0.01s
+  ✓ snapshot create command generates backup file                        0.03s
+  ✓ download uses site name in backup filename                           0.03s
+  ✓ restore replaces database and uploads                                0.07s
+  ✓ snapshot without media translations clears destination overrides     0.08s
+  ✓ manifest does not contain schema qualified table names               0.03s
+  ✓ restore rejects schema qualified table names                         0.04s
+  ✓ restore keeps destination migration history                          0.06s
+  ✓ inspect reports legacy format as warning and restore requires accep… 0.07s
+  ✓ inspect blocks when destination lacks a table                        0.04s
+  ✓ restore command fails on unaccepted warning and succeeds with yes    0.08s
+  ✓ admin upload flow reviews then restores                              0.10s
+  ✓ review rejects unknown or malformed tokens                           0.02s
+  ✓ prune removes stale transients and keeps newest pre restore backups  0.14s
+  ✓ manifest records version migrations and schema                       0.03s
+  ✓ newer snapshot is blocking                                           0.04s
+  ✓ older snapshot warns and lists missing migrations                    0.04s
+  ✓ snapshot with unknown migrations or columns is blocking              0.04s
+  ✓ snapshot without version warns                                       0.04s
+  ✓ restore rewrites origin urls in text and json columns                0.07s
+  ✓ rewrite url command updates live rows                                0.02s
+  ✓ srcset builds variant urls from paths at render time                 0.01s
+  ✓ history contained is reported as a clean fast forward                0.04s
+  ✓ diverged history warns and lists the changes that would be lost      0.08s
+  ✓ snapshot without ledger warns about unknown history                  0.05s
+  ✓ snapshot paths stay inside the configured root                       0.03s
+
+   PASS  Tests\Feature\DocsReferencesTest
+  ✓ every markdown link in the docs resolves                             0.02s
+  ✓ repository paths mentioned in the docs exist                         0.01s
+  ✓ every skill declares a usable name and description                   0.01s
+  ✓ the agent entry point is reachable under both names                  0.01s
+  ✓ both agents find the skills in a fresh clone                         0.02s
+
+   PASS  Tests\Feature\EditorNavigationTest
+  ✓ page editor returns to frontend page when opened from public bar     0.05s
+  ✓ post editor returns to frontend post when opened from public bar     0.04s
+  ✓ blog post admin bar shows only post edit button                      0.04s
+  ✓ editor ignores external return urls                                  0.02s
+
+   PASS  Tests\Feature\EditorUnsavedChangesGuardTest
+  ✓ editor ships the unsaved changes copy to the client                  0.57s
+  ✓ editor has a back link and the shared modal to guard it              0.57s
+  ✓ leave warning strings exist in every admin locale                    0.53s
+
+   PASS  Tests\Feature\EditorialContractTest
+  ✓ pages and posts implement editorial contracts                        0.01s
+  ✓ pages keep the shared publication contract                           0.01s
+  ✓ posts keep the shared publication contract                           0.01s
+  ✓ entities expose seo metadata from their existing storage             0.01s
+  ✓ public pages and posts render seo from the shared contract           0.04s
+
+   PASS  Tests\Feature\EditorialWorkflowTest
+  ✓ full versions restore as draft without rewriting ledger with data s… 0.02s
+  ✓ full versions restore as draft without rewriting ledger with data s… 0.02s
+  ✓ recovery is user scoped conflict aware and never publishes with dat… 0.01s
+  ✓ recovery is user scoped conflict aware and never publishes with dat… 0.01s
+  ✓ editor stages live changes and only assigned reviewer applies exact… 0.02s
+  ✓ editor stages live changes and only assigned reviewer applies exact… 0.02s
+  ✓ shared preview expires revokes and has safe headers with data set #… 0.02s
+  ✓ shared preview expires revokes and has safe headers with data set #… 0.02s
+  ✓ shared publication scope excludes future and expired content with d… 0.01s
+  ✓ shared publication scope excludes future and expired content with d… 0.01s
+  ✓ first programmatic update captures preexisting content and restore…  0.01s
+  ✓ stale review cannot overwrite newer content                          0.01s
+  ✓ expiry command records unpublication and prunes recovery             0.01s
+  ✓ translation review shows changed source and approves only selected…  0.02s
+  ✓ real editor bearer cannot publish or unpublish live content with da… 0.01s
+  ✓ real editor bearer cannot publish or unpublish live content with da… 0.02s
+  ✓ staged proposals replace repeaters preserve omitted media and previ… 0.02s
+  ✓ removed base fields are visible and individually acknowledgeable     0.01s
+
+   PASS  Tests\Feature\EssentialContentStatusTest
+  ✓ lists preview and history show current content without writes        0.03s
+  ✓ states match public visibility and all locales can be searched       0.02s
+  ✓ registered collection policy and read only editorial boundary        0.05s
+
+   PASS  Tests\Feature\EssentialOperationalScreensTest
+  ✓ operational screens keep the essential entrypoint and navigation     0.06s
+  ✓ settings rich text stays an escaped native field and retains saniti… 0.02s
+  ✓ registry navigation and policy control collection visibility         0.02s
+  ✓ developer tools stays on diagnostics even when requesting an advanc… 0.06s
+  ✓ diagnostics and calendar link to content status                      0.01s
+  ✓ essential retains role restrictions                                  0.02s
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                        0.01s
+
+   PASS  Tests\Feature\FormSecurityWorkflowTest
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ incomplete or invalid recaptcha success is rejected with data set #… 0.02s
+  ✓ unpublished future other locale wrong template and hidden page are…  0.03s
+  ✓ missing forged expired future and unbound tokens are rejected        0.02s
+  ✓ missing page cannot submit and hostname does not trust the host hea… 0.02s
+  ✓ inbox assigns changes state stores escaped notes and filters         0.04s
+  ✓ assignment and notes validate and unauthorized role is rejected      0.02s
+  ✓ notifications queue retry resend and ignore duplicate or stale jobs  0.04s
+  ✓ worker retries transport failure and exhaustion remains actionable   0.02s
+  ✓ live sending lease releases retry and expired timeout is reclaimed   0.02s
+
+   PASS  Tests\Feature\HomeLogoCarouselTest
+  ✓ seeder fills the carousel with four square placeholders              0.54s
+  ✓ public home renders each logo more than once so the loop is seamles… 0.54s
+  ✓ logos without an image are skipped                                   0.55s
+  ✓ carousel is hidden when there are no logos                           0.54s
+  ✓ editor persists one entry per row when logos are submitted           0.54s
+  ✓ editor exposes the logo repeater for the home template               0.57s
+  ✓ each logo row is its own collapsed accordion with item controls      0.57s
+  ✓ item headers use the label with a numbered fallback                  0.58s
+  ✓ editor ships the shared confirmation modal instead of a native dial… 0.57s
+  ✓ placeholder installer exposes a square placeholder for logos         0.54s
+
+   PASS  Tests\Feature\LiveEditorSafetyTest
+  ✓ another user cannot open save or delete reserved content with data…  0.06s
+  ✓ another user cannot open save or delete reserved content with data…  0.05s
+  ✓ heartbeat renews and only the owner can release with data set #0     0.06s
+  ✓ heartbeat renews and only the owner can release with data set #1     0.05s
+  ✓ expired editor cannot save or renew and a new user can enter with d… 0.06s
+  ✓ expired editor cannot save or renew and a new user can enter with d… 0.06s
+  ✓ reopening rotates the token and old document cannot release it with… 0.06s
+  ✓ reopening rotates the token and old document cannot release it with… 0.05s
+  ✓ editor cannot be framed and frame request does not acquire a lock w… 0.05s
+  ✓ editor cannot be framed and frame request does not acquire a lock w… 0.04s
+  ✓ preview omits admin bar and spacing while public page keeps them wi… 0.02s
+  ✓ preview omits admin bar and spacing while public page keeps them wi… 0.05s
+  ✓ locks are independent between records types and locales and survive… 0.06s
+  ✓ non editor submission is compatible only when no live editor owns c… 0.05s
+  ✓ same user in another browser session cannot take or release the loc… 0.05s
+  ✓ snapshots do not export active editor tokens                         0.07s
+
+   PASS  Tests\Feature\LiveEditorUiTest
+  ✓ each template preserves initial values and exposes shared controls…  0.05s
+  ✓ each template preserves initial values and exposes shared controls…  0.04s
+  ✓ each template preserves initial values and exposes shared controls…  0.05s
+  ✓ each template preserves initial values and exposes shared controls…  0.04s
+  ✓ section presets strip unsupported markup on write and render         0.01s
+  ✓ emphasis only renders the allowed token and escapes title html       0.01s
+  ✓ cta resolves its page family in the active locale and falls back     0.01s
+  ✓ invalid destination is rejected and empty repeaters are persisted    0.01s
+  ✓ owner can delete using the token from the actual delete form         0.05s
+  ✓ entry context survives locale links and creation of a translation    0.06s
+  ✓ reordering a stale item cannot silently acknowledge an unchanged la… 0.02s
+  ✓ initial rich text normalization is not a translation review          0.01s
+  ✓ normalizing legacy paragraphs does not mark translations outdated    0.01s
+
+   PASS  Tests\Feature\McpApiKeyAuthTest
+  ✓ user can generate and revoke mcp api key from claude mcp             0.01s
+  ✓ mcp endpoint requires valid api key                                  0.01s
+  ✓ mcp endpoint authenticates with user api key                         0.01s
+
+   PASS  Tests\Feature\McpBoundedResponseTest
+  ✓ large editorial strings are explicitly clipped and readable in rang… 0.02s
+  ✓ adversarial json keys and arrays stay bounded without clipping revi… 0.01s
+
+   PASS  Tests\Feature\McpClientCompatibilityTest
+  ✓ machine token exchange excludes real forgery middleware but consent… 0.01s
+  ✓ each scope can initialize and ping without gaining a write           0.02s
+  ✓ malformed request types return protocol diagnostics instead of serv… 0.01s
+  ✓ missing and wrong selector types are recoverable protocol errors in… 0.15s
+  ✓ every advertised required argument is checked before dispatch        0.10s
+  ✓ advertised selector enums and bounds keep field diagnostics          0.01s
+
+   PASS  Tests\Feature\McpCustomCodeTest
+  ✓ rest and rpc share pending versions and exact activation with data…  0.02s
+  ✓ rest and rpc share pending versions and exact activation with data…  0.02s
+  ✓ editorial credentials cannot read or activate executable code        0.04s
+  ✓ validation stale revisions and retry conflicts survive transport ad… 0.02s
+  ✓ destination discovery and evaluation match both transports without…  0.02s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ executable type wrappers positions and server templates reject with… 0.01s
+  ✓ discovery lists the same tools and registered destination types in…  0.01s
+  ✓ evaluation is paginated and code recovered from exact version        0.02s
+
+   PASS  Tests\Feature\McpKeyScopesTest
+  ✓ multiple named keys preserve one another and revoke individually     0.02s
+  ✓ expired and revoked migrated keys cannot use legacy fallback         0.01s
+  ✓ read only scope blocks every rest and rpc write                      0.01s
+  ✓ draft only scope can create and edit drafts but cannot publish or u… 0.02s
+  ✓ key owner cannot revoke another users key                            0.01s
+
+   PASS  Tests\Feature\McpLayoutOperationsTest
+  ✓ layout contact values use canonical rows and typed sanitization      0.02s
+  ✓ batch failure and stale revision preserve every value                0.02s
+  ✓ menus reject cross language targets and cycles without loss          0.02s
+  ✓ menu revision conflicts and creation retries preserve identity       0.02s
+  ✓ same site cta urls are portable from rest rpc and panel              0.02s
+  ✓ malformed menu revision has recoverable field error on rest and rpc  0.02s
+
+   PASS  Tests\Feature\McpPhaseThreeTest
+  ✓ schema and locale discovery are available to restricted credentials  0.02s
+  ✓ locale install and configuration are atomic and preserve base        0.01s
+  ✓ rpc retries and stale revisions remain protocol errors               0.04s
+  ✓ generic rpc translation publication and preview tools are callable   0.10s
+  ✓ creation retries and revision conflicts for pages and posts          0.04s
+  ✓ translation groups and source acknowledgements for pages and posts   0.05s
+  ✓ restricted scopes reject new writes on both transports without muta… 0.02s
+  ✓ scheduling and unpublishing require administrator and full scope     0.03s
+
+   PASS  Tests\Feature\McpPhaseZeroTest
+  ✓ discovery serializes object schemas and list tools are callable      0.02s
+  ✓ controller rejections are tool errors and do not mutate settings     0.01s
+  ✓ secret settings are redacted in both transports                      0.02s
+  ✓ partial patch preserves siblings replaces lists and explicitly remo… 0.03s
+  ✓ published pages and posts are unchanged for admin and editor on bot… 0.02s
+  ✓ locale is explicit and slug uniqueness is scoped to locale           0.04s
+  ✓ pagination covers more than one hundred records without duplicates   0.37s
+
+   PASS  Tests\Feature\McpRestBindingTest
+  ✓ rest get returns the requested media record                          0.02s
+  ✓ rest patch updates only the requested existing media                 0.01s
+  ✓ rest locale writes translation and get resolves per field fallback   0.02s
+  ✓ unknown and inactive locales and invalid text do not update the ass… 0.02s
+  ✓ missing records are 404 and authentication runs before binding       0.01s
+  ✓ other implicit model parameters resolve and mutate the requested re… 0.02s
+  ✓ token permissions are used even when a browser admin is logged in    0.02s
+  ✓ oauth token still authenticates before bindings and policies         0.01s
+  ✓ media list searches translations and setting key stays a string      0.01s
+  ✓ rpc metadata tool accepts locale and keeps the same record           0.01s
+
+   PASS  Tests\Feature\McpSubmissionsTest
+  ✓ reads do not mark read and full editor writes share panel state wit… 0.03s
+  ✓ reads do not mark read and full editor writes share panel state wit… 0.03s
+  ✓ credentials and roles are independent and denials do not mutate      0.02s
+  ✓ mutations require revision key and report stale or changed retries   0.01s
+  ✓ registered forms and bounded inputs are enforced without arbitrary…  0.01s
+  ✓ large visitor text and notes are recoverable without leaking transp… 0.02s
+
+   PASS  Tests\Feature\MediaJsonSerializationTest
+  ✓ media show response includes computed url for selector preview       0.01s
+
+   PASS  Tests\Feature\MediaOperationsTest
+  ✓ upload ticket retries return same asset and changed input conflicts  0.01s
+  ✓ ticket is bound to credential and expires                            0.01s
+  ✓ metadata patch preserves other fields and rejects stale base         0.01s
+  ✓ delete rollback keeps the record and every file                      0.01s
+  ✓ upload rollback cleans files for all batch members                   0.01s
+  ✓ second batch persistence failure rolls back first asset and files    0.01s
+  ✓ all uploads are validated before any asset is stored                 0.01s
+  ✓ multipart service reuses usage protection                            0.01s
+  ✓ usage responses are paginated without reducing deletion protection   0.02s
+
+   PASS  Tests\Feature\MediaOptimizationTest
+  ✓ upload jpg is converted to webp and generates variants               0.26s
+  ✓ upload respects keep original true                                   0.12s
+  ✓ upload svg is not converted or variant processed                     0.01s
+  ✓ upload gif keeps original format but stores dimensions               0.01s
+  ✓ media convert webp dry run does not change db or files               0.01s
+  ✓ generate variants force replaces variants and audit health runs      0.36s
+
+   PASS  Tests\Feature\MediaSafetyTest
+  ✓ active svg uploads are rejected without storing files with data set… 0.02s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ active svg uploads are rejected without storing files with data set… 0.01s
+  ✓ inert svg gradients survive and entities are rejected
+  ✓ safe svg upload is canonicalized and stored                          0.01s
+  ✓ section references block admin and orphan cleanup deletion           0.01s
+  ✓ localized settings and pivots block deletion                         0.01s
+  ✓ unused deletion removes variants and original                        0.01s
+  ✓ restorable versions keep media after current content unlinks it      0.01s
+
+   PASS  Tests\Feature\MediaTranslationTest
+  ✓ editor can save multiple languages without duplicating the asset     0.01s
+  ✓ empty translation inherits each field and clearing both removes ove… 0.02s
+  ✓ legacy updates preserve secondary text and json exposes both versio… 0.01s
+  ✓ library search matches translated text and uses requested content l… 0.01s
+  ✓ invalid metadata is rejected atomically                              0.02s
+  ✓ public image component resolves locale escapes alt and respects exp… 0.01s
+  ✓ library renders only editable languages and metadata help            0.01s
+  ✓ translation writes record a revision for the same media              0.01s
+  ✓ snapshots restore translations and delete cascades to metadata       0.07s
+  ✓ guest cannot update translations                                     0.02s
+
+   PASS  Tests\Feature\MultilanguagePublicTest
+  ✓ schema resolves page and type based entities                         0.01s
+  ✓ setting localized cache is scoped by locale                          0.01s
+  ✓ localized page routes and fallbacks                                  0.02s
+  ✓ localized blog views use localized routes and public strings         0.06s
+  ✓ fingerprint ignores slug and media but tracks text                   0.01s
+  ✓ editorial control reports missing translation                        0.01s
+  ✓ translation save clears review and reaches published state           0.02s
+  ✓ outdated state when base content changes                             0.01s
+  ✓ taxonomy translation helpers work without publication state          0.01s
+  ✓ translate action creates draft without inheriting published at       0.01s
+  ✓ language can be added from settings                                  0.01s
+  ✓ pages index lists one row per translation group                      0.01s
+  ✓ posts index lists one row per translation group                      0.02s
+  ✓ post translate action creates draft translation                      0.02s
+  ✓ taxonomy translate action creates translation                        0.01s
+  ✓ editorial control offers create and update actions                   0.01s
+  ✓ editorial control lists editorial completeness issues                0.01s
+  ✓ menus index shows missing language actions                           0.01s
+  ✓ taxonomies index shows language actions                              0.01s
+  ✓ menu translate action copies items and remaps internal links         0.01s
+  ✓ localized menu taxonomy item uses localized blog route               0.01s
+
+   PASS  Tests\Feature\OAuthConcurrentExchangeTest
+  ✓ concurrent exchange creates only one token                           0.11s
+
+   PASS  Tests\Feature\PageOperationRetryTest
+  ✓ transaction retry after a model event keeps the revision ledger      0.04s
+
+   PASS  Tests\Feature\PageOperationsTest
+  ✓ explicit actor controls permissions and authorship despite another…  0.04s
+  ✓ invalid input rolls back all content history and restores actor      0.01s
+  ✓ locked save rechecks fingerprint and draft status                    0.01s
+  ✓ partial input cannot change the locale used to validate slug         0.02s
+  ✓ remote null patch removes a normalized browser field                 0.01s
+  ✓ stale fingerprint cannot overwrite a saved page                      0.01s
+  ✓ bearer identity controls history with an unrelated session           0.01s
+
+   PASS  Tests\Feature\PhaseFiveEditorialTest
+  ✓ published changes are pinned reviewed and restorable with author an… 0.06s
+  ✓ published changes are pinned reviewed and restorable with author an… 0.06s
+  ✓ published changes are pinned reviewed and restorable with author an… 0.12s
+  ✓ published changes are pinned reviewed and restorable with author an… 0.12s
+  ✓ agent and human conflicts and cross entity versions fail without lo… 0.03s
+  ✓ agent and human conflicts and cross entity versions fail without lo… 0.03s
+  ✓ agent and human conflicts and cross entity versions fail without lo… 0.03s
+  ✓ agent and human conflicts and cross entity versions fail without lo… 0.03s
+  ✓ read scope lists history but cannot propose and previews expire      0.02s
+  ✓ publication dates are protected and expiry withdraws public content  0.03s
+  ✓ large unicode version and comment ranges recover exact values with…  0.04s
+  ✓ post proposal replaces categories preserves tags and restores histo… 0.04s
+  ✓ draft scope can restore as proposal preserving publication until as… 0.02s
+  ✓ active browser lease blocks agent changes without creating receipts… 0.01s
+  ✓ review request rejects stale proposal base from agent panel and res… 0.03s
+  ✓ new editorial inputs fail with field diagnostics without mutation    0.02s
+
+   PASS  Tests\Feature\PlaceholderMediaSeedingTest
+  ✓ every placeholder stub ships with the repository                     0.01s
+  ✓ install creates every placeholder with webp and variants             0.53s
+  ✓ running twice does not duplicate placeholders                        0.53s
+  ✓ missing files are restored without replacing the record              0.66s
+  ✓ force rebuilds placeholders that are already present                 1.06s
+  ✓ seeded homepage fills every media slot with the horizontal placehol… 0.53s
+  ✓ homepage seeder does not duplicate the featured image attachment     0.53s
+  ✓ artisan command seeds the placeholders                               0.53s
+  ✓ placeholders show up in the admin media library                      0.54s
+
+   PASS  Tests\Feature\PostOperationsTest
+  ✓ explicit actor controls permissions history and restores session     0.01s
+  ✓ patch preserves scalar and seo siblings and clears explicit null     0.02s
+  ✓ locked scope rejects persisted publication and invalid associations… 0.01s
+  ✓ publication schedule and translation are shared operations           0.01s
+  ✓ editor changes to live post stage a proposal                         0.01s
+
+   PASS  Tests\Feature\PostRichTextContentTest
+  ✓ the model sanitizes content on write                                 0.01s
+  ✓ content submitted through the admin form is sanitized                0.02s
+  ✓ the public page renders rich text as markup                          0.07s
+  ✓ legacy plain text posts keep their line breaks                       0.07s
+  ✓ a script in stored content never reaches the public page             0.07s
+  ✓ the editor form marks the content field as rich text                 0.01s
+
+   PASS  Tests\Feature\ProfileDevelopmentFixtureTest
+  ✓ the same custom section operates in each profile with appropriate e… 0.65s
+
+   PASS  Tests\Feature\PublicAnalyticsRenderingTest
+  ✓ public pages render no analytics when not configured                 0.02s
+  ✓ public pages render all configured integrations                      0.02s
+  ✓ admin pages do not render public analytics snippets                  0.02s
+
+   PASS  Tests\Feature\RedirectsTest
+  ✓ unmatched path follows an active rule                                0.02s
+  ✓ inactive rule is ignored and the 404 is recorded                     0.02s
+  ✓ trailing slash and query string do not break the match               0.01s
+  ✓ a rule wins over a live page                                         0.02s
+  ✓ repeated 404s increment a single row                                 0.02s
+  ✓ admin paths are never monitored                                      0.02s
+  ✓ only admins reach the screen                                         0.04s
+  ✓ rules and the monitor are separate tabs                              0.05s
+  ✓ a 404 row prefills the rule form                                     0.04s
+  ✓ admin creates a rule with a normalized source                        0.02s
+  ✓ a rule pointing at itself is rejected                                0.02s
+  ✓ a rule that closes a loop is rejected                                0.02s
+  ✓ csv import creates updates and skips rows                            0.02s
+  ✓ admin clears the not found monitor                                   0.03s
+
+   PASS  Tests\Feature\RichTextSanitizerTest
+  ✓ it keeps the markup the editor preset produces                       0.01s
+  ✓ it removes scripts entirely                                          0.01s
+  ✓ it strips event handler attributes                                   0.01s
+  ✓ it rejects javascript urls
+  ✓ it rejects data urls on images
+  ✓ it keeps relative and anchor links
+  ✓ it hardens links that open a new tab                                 0.01s
+  ✓ it unwraps unknown elements but keeps their text
+  ✓ it keeps embeds from allowed hosts only                              0.01s
+  ✓ it adds lazy loading and an alt to images                            0.01s
+  ✓ plain text content is left untouched                                 0.01s
+  ✓ it handles null and empty values
+  ✓ it stores links and images pointing at this site as root relative
+
+   PASS  Tests\Feature\SeoMetaMigrationTest
+  ✓ migration moves og fields into unified seo fields                    0.01s
+  ✓ migration does not overwrite existing seo fields                     0.01s
+
+   PASS  Tests\Feature\SettingsDefaultsTest
+  ✓ settings seeder sets default branding values                         0.01s
+
+   PASS  Tests\Feature\SnapshotAccountSecurityTest
+  ✓ snapshot does not transfer credentials and rejects old array sessio… 0.08s
+
+   PASS  Tests\Feature\SnapshotCustomCodeTest
+  ✓ snapshot preserves code but never activates or grants permission an… 0.07s
+  ✓ legacy archive without code tables still disables destination code…  0.07s
+
+   PASS  Tests\Feature\SnapshotFeatureLifecycleTest
+  ✓ restore invalidates pending deliveries and local editorial sessions  0.07s
+
+   PASS  Tests\Feature\SnapshotNotificationQueueTest
+  ✓ destination worker cannot revive restored deliveries and only expli… 0.11s
+
+   PASS  Tests\Feature\SnapshotPortabilitySecurityTest
+  ✓ receipts are not portable and submission audit and delivery are res… 0.07s
+  ✓ rechecksummed account grants and html are normalized on restore      0.08s
+  ✓ rechecksummed html cannot reference missing media and failure rolls… 0.06s
+  ✓ rechecksummed executable svg is rejected before database or upload…  0.04s
+  ✓ legacy submission archive clears destination audit attached to reus… 0.08s
+  ✓ rechecksummed media paths cannot escape the public disk              0.07s
+  ✓ restore orders source media before composition even for legacy mani… 0.08s
+
+   PASS  Tests\Feature\StaleTranslationFieldsTest
+  ✓ stale translatable fields detects the changed field                  0.01s
+  ✓ saving stale translation without changes fails validation            0.01s
+  ✓ saving stale translation with changed field passes                   0.03s
+  ✓ saving stale translation with acknowledged field passes              0.02s
+
+   PASS  Tests\Feature\SubmissionOperationsTest
+  ✓ after commit queue failure is caught and recorded durably            0.02s
+  ✓ reads preserve unread and bound personal data                        0.01s
+  ✓ note retries are attributed once and audited even after a later cha… 0.01s
+  ✓ stale revision rejects mutation after a note is added                0.01s
+  ✓ operation key cannot be reused for different payload                 0.01s
+  ✓ assignment rejects nonoperational roles and notes reject whitespace  0.01s
+  ✓ client is denied without mutating data                               0.01s
+  ✓ panel read and delete are audited and notes cascade                  0.01s
+  ✓ reclaimed attempt cannot be overwritten by late success or failure   0.02s
+  ✓ obsolete exhausted job cannot fail an active lease or sent delivery  0.01s
+  ✓ expired lease can be failed but old generations cannot change it     0.01s
+
+   PASS  Tests\Feature\UsernameLoginTest
+  ✓ username email and legacy email sign in with data set #0             0.01s
+  ✓ username email and legacy email sign in with data set #1             0.01s
+  ✓ username email and legacy email sign in with data set #2             0.01s
+  ✓ existing accounts without a username still sign in with email        0.01s
+  ✓ email and username share failed attempts                             1.06s
+  ✓ username never bypasses password verification and invalid payload i… 0.22s
+  ✓ profile can set normalize keep and clear a username                  0.02s
+  ✓ profile and user admin reject case insensitive duplicate and email…  0.02s
+  ✓ admin can create update and find users by username                   0.02s
+
+  Tests:    545 passed (6290 assertions)
+  Duration: 28.91s

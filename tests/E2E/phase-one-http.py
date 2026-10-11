@@ -18,6 +18,8 @@ admin = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cook
 # A separate opener deliberately has no cookie processor: MCP/REST must authenticate independently.
 api = urllib.request.build_opener()
 results = []
+profile = os.environ.get('PHASE0_PROFILE', 'full')
+assert profile in ('full', 'essential')
 
 
 def request(path, data=None, key=None, method=None, panel=False):
@@ -96,15 +98,21 @@ status, html = request('/login', panel=True)
 assert status == 200
 status, html = request('/login', {'_token': Fields(html).values['_token'],
                                 'email': 'phase0@example.test', 'password': 'Phase0-Test-Only-2026!'}, panel=True)
-assert status == 200 and request('/admin/pages/create', panel=True)[0] == 200
+assert status == 200
 status, html = request('/admin/pages/create', panel=True)
+assert status == (200 if profile == 'full' else 404)
 initial = {'meta': {'title': 'E2E01 SEO preserved', 'description': 'E2E01 initial description'},
            'sections': {'content': {'heading': 'E2E01 heading preserved',
                                     'body': '<p>E2E01 initial body</p>', 'is_visible': True}}}
-status, html = request('/admin/pages', {'_token': Fields(html).values['_token'], 'title': 'E2E01 panel draft',
-                                      'slug': 'e2e01-panel', 'locale': 'es', 'template_key': 'default',
-                                      'status': 'draft', 'content_json': initial}, panel=True)
-assert status == 200, ('panel create', status, html[:300])
+if profile == 'full':
+    status, html = request('/admin/pages', {'_token': Fields(html).values['_token'], 'title': 'E2E01 panel draft',
+                                          'slug': 'e2e01-panel', 'locale': 'es', 'template_key': 'default',
+                                          'status': 'draft', 'content_json': initial}, panel=True)
+    assert status == 200, ('panel create', status, html[:300])
+else:
+    created = rpc('pages_create_draft', {'title': 'E2E01 panel draft', 'slug': 'e2e01-panel',
+                  'locale': 'es', 'template_key': 'default', 'content_json': initial})
+    assert created['status'] == 'draft'
 status, raw = request('/mcp/pages?search=E2E01%20panel%20draft', key='full')
 rows = json.loads(raw)['data']
 assert status == 200 and len(rows) == 1, (status, rows)
@@ -112,7 +120,7 @@ page_id = rows[0]['id']
 before = rpc('pages_get', {'page_id': page_id})
 assert before['status'] == 'draft' and before['content_json'] == initial
 assert request('/e2e01-panel')[0] == 404
-passed('Panel creates draft; cookie-free MCP reads exact data; draft absent publicly')
+passed(('Full panel' if profile == 'full' else 'Essential cookie-free MCP') + ' creates draft; MCP reads exact data; draft absent publicly')
 
 patch = {'title': 'E2E01 edited title', 'content_json': {'meta': {'description': 'E2E01 edited description'},
           'sections': {'content': {'body': '<p>E2E01 edited body</p>'}}}}
@@ -121,16 +129,25 @@ expected['meta']['description'] = patch['content_json']['meta']['description']
 expected['sections']['content']['body'] = patch['content_json']['sections']['content']['body']
 updated = rpc('pages_update_draft', dict(patch, page_id=page_id))
 assert updated['title'] == patch['title'] and updated['content_json'] == expected
-status, html = request('/admin/pages/' + str(page_id) + '/edit', panel=True)
-assert status == 200
-fields = Fields(html, form_id='editor-form').values
-for name, value in {'title': patch['title'], 'slug': 'e2e01-panel',
-                    'content_json[meta][title]': expected['meta']['title'],
-                    'content_json[meta][description]': expected['meta']['description'],
-                    'content_json[sections][content][heading]': expected['sections']['content']['heading'],
-                    'content_json[sections][content][body]': expected['sections']['content']['body']}.items():
-    assert fields.get(name) == value, (name, fields.get(name), value)
-passed('MCP partial edit preserves siblings; reopened panel fields equal saved values exactly')
+if profile == 'full':
+    status, html = request('/admin/pages/' + str(page_id) + '/edit', panel=True)
+    assert status == 200
+    fields = Fields(html, form_id='editor-form').values
+    for name, value in {'title': patch['title'], 'slug': 'e2e01-panel',
+                        'content_json[meta][title]': expected['meta']['title'],
+                        'content_json[meta][description]': expected['meta']['description'],
+                        'content_json[sections][content][heading]': expected['sections']['content']['heading'],
+                        'content_json[sections][content][body]': expected['sections']['content']['body']}.items():
+        assert fields.get(name) == value, (name, fields.get(name), value)
+    passed('MCP partial edit preserves siblings; reopened panel fields equal saved values exactly')
+else:
+    assert request('/admin/pages/' + str(page_id) + '/edit', panel=True)[0] == 404
+    status, html = request('/admin/content/pages/' + str(page_id), panel=True)
+    assert status == 200 and patch['title'] in html
+    status, html = request('/admin/content/pages/' + str(page_id) + '/preview', panel=True)
+    assert status == 200 and all(value in html for value in ['E2E01 SEO preserved',
+        'E2E01 edited description', 'E2E01 heading preserved', 'E2E01 edited body'])
+    passed('MCP partial edit preserves siblings; Essential operational panel and authorized preview show stored values')
 
 stable = rpc('pages_get', {'page_id': page_id})
 denied_patch = {'title': 'E2E01 forbidden title', 'content_json': {'meta': {'description': 'E2E01 forbidden SEO'}}}

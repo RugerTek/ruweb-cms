@@ -1,0 +1,49 @@
+{
+  "phase": 0,
+  "profile": "full",
+  "runtime": "PHP 8.3",
+  "stages": [
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-fixture.php"
+      ],
+      "exit_code": 0,
+      "output": "Isolated MySQL fixture ready: ruweb_phase0_9183c3782323\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-zero-http.py"
+      ],
+      "exit_code": 0,
+      "output": "PASS Discovery: 59 valid schemas; menus/settings callable\nPASS Controller 422/404 become MCP tool errors without changing settings\nPASS Pagination and invalid page-size rejection across all three inventories\nPASS Partial content preserves siblings; lists replace/clear; null removes keys\nPASS Explicit locales, linked translation identity and localized slug uniqueness\nPASS Public page content/SEO and post title/body preserved without session before/after rejected edits\nPASS Published pages/posts unchanged; read-only/draft/editor restrictions; invalid credential\nPASS Admin login/create/public render/SEO/image and MCP-to-panel content parity\nPASS Public form with CSRF/signed token/anti-spam reaches admin inbox\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-worker.php"
+      ],
+      "exit_code": 0,
+      "output": "PASS real queue delivered form notification to local test mail log\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-one-http.py"
+      ],
+      "exit_code": 0,
+      "output": "PASS Panel creates draft; cookie-free MCP reads exact data; draft absent publicly\nPASS MCP partial edit preserves siblings; reopened panel fields equal saved values exactly\nPASS Read-only write and editor publish rejected without record/publication changes\nPASS Authorized cookie-free MCP publication renders content and SEO without session\nPASS Independent REST fixture matches MCP effects, authorization rejections and public rendering\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-cleanup.php"
+      ],
+      "exit_code": 0,
+      "output": "Removed isolated fixture database and credentials: ruweb_phase0_9183c3782323\n"
+    }
+  ],
+  "status": "passed",
+  "cleanup": "guarded schema dropped, process stopped, private copy removed"
+}

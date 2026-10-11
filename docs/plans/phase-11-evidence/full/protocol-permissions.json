@@ -1,0 +1,223 @@
+{
+  "profile": "full",
+  "field_diagnostics": [
+    {
+      "tool": "pages_get",
+      "input": {},
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "page_id": [
+            "The page_id field is required."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "pages_get",
+      "input": {
+        "page_id": []
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "page_id": [
+            "The page_id field must be integer."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "pages_get",
+      "input": {
+        "page_id": true
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "page_id": [
+            "The page_id field must be integer."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "posts_get",
+      "input": {},
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "post_id": [
+            "The post_id field is required."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "posts_get",
+      "input": {
+        "post_id": []
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "post_id": [
+            "The post_id field must be integer."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "posts_get",
+      "input": {
+        "post_id": true
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "post_id": [
+            "The post_id field must be integer."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "media_get",
+      "input": {},
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "media_id": [
+            "The media_id field is required."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "media_get",
+      "input": {
+        "media_id": []
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "media_id": [
+            "The media_id field must be integer."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "media_get",
+      "input": {
+        "media_id": true
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "media_id": [
+            "The media_id field must be integer."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "settings_get",
+      "input": {},
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "key": [
+            "The key field is required."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "settings_get",
+      "input": {
+        "key": []
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "key": [
+            "The key field must be string."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "settings_get",
+      "input": {
+        "key": true
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "key": [
+            "The key field must be string."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "menus_get",
+      "input": {},
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "menu_id": [
+            "The menu_id field is required."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "menus_get",
+      "input": {
+        "menu_id": []
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "menu_id": [
+            "The menu_id field must be integer."
+          ]
+        }
+      }
+    },
+    {
+      "tool": "menus_get",
+      "input": {
+        "menu_id": true
+      },
+      "diagnostic": {
+        "code": -32602,
+        "message": "Validation failed.",
+        "data": {
+          "menu_id": [
+            "The menu_id field must be integer."
+          ]
+        }
+      }
+    }
+  ],
+  "editorial_scope_denied": true,
+  "custom_scope_without_account_permission_denied": true,
+  "separate_account_permission_required": true
+}

@@ -1,0 +1,7 @@
+{
+  "profile": "full",
+  "checks": [
+    "Final OAuth code exchange requires unused second factor, returns no-store and Pragma no-cache, and issues working bearer token"
+  ],
+  "external_origins": []
+}

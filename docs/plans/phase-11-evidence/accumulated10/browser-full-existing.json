@@ -1,0 +1,31 @@
+{
+  "stage": "full",
+  "installation": "existing",
+  "checks": [
+    "Bilingual baseline URLs and draft/future publication remain correct",
+    "Human operational pages accessible",
+    "MCP-created HTML/canvas/composed pages render media with scripts sanitized"
+  ],
+  "screens": [
+    "full-existing-spanish-1440.png",
+    "full-existing-spanish-390.png",
+    "full-existing-english-1440.png",
+    "full-existing-english-390.png",
+    "full-existing-dashboard-1440.png",
+    "full-existing-dashboard-390.png",
+    "full-existing-operations-1440.png",
+    "full-existing-operations-390.png",
+    "full-existing-html-1440.png",
+    "full-existing-html-390.png",
+    "full-existing-empty-1440.png",
+    "full-existing-empty-390.png",
+    "full-existing-composed-1440.png",
+    "full-existing-composed-390.png",
+    "full-existing-pages-1440.png",
+    "full-existing-pages-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ]
+}

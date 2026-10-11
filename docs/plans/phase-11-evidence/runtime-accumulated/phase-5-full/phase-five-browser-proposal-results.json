@@ -1,0 +1,11 @@
+{
+  "profile": "full",
+  "stage": "proposal",
+  "anonymous": true,
+  "checks": [
+    "Original public content and canonical",
+    "Desktop and mobile rendering",
+    "Exact pinned proposal preview before approval"
+  ],
+  "page_errors": []
+}

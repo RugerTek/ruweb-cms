@@ -167,9 +167,9 @@ The browser creates an editor account through the first administrator's session,
 that editor and issues its own draft-only credential. The real Sol 6.1 Codex CLI then discovers
 MCP, creates/reads/updates a draft using revision checks and receives an explicit publication
 denial. The client uses an ephemeral home with only this fixture server and a copied existing
-authentication file; it does not edit global configuration. The explicit CLI sandbox/approval
-bypass permits MCP tool calls in this isolated acceptance run, whose prompt permits only the
-fixture MCP tools. It is not a deployment setting.
+authentication file; it does not edit global configuration. Its read-only sandbox disables shell
+and execution tools and exposes only six fixture MCP tools, explicitly approved in that private
+configuration. The client performs acceptance operations only; it does not implement product code.
 
 The essential browser stage checks preserved operational routes, readonly listing/status,
 authenticated native preview, anonymous draft 404, a real media search, canonical site-name
@@ -347,3 +347,34 @@ manifest contain credentials/preview URLs; never retain them, raw HTTP traces or
 Stop servers, execute guarded cleanup for each schema, remove the private `.env`, caches, manifests/logs and
 kill-switch marker, then delete disposable copies. Snapshot portability is an explicit phase 10 contract,
 not part of this acceptance claim.
+
+
+## Phase eleven: accumulated candidate regressions on actual PHP 8.3
+
+`phase-eleven-accumulated.py` copies the current candidate into a private temporary directory for each
+phase/profile, copies an independently installed vendor tree, selects the profile only in that copy,
+and creates a never-used schema through the existing guard. Set `PHP83_BIN` to the directory containing
+the isolated actual PHP 8.3 runtime and `PHP83_VENDOR` to its independently installed vendor directory.
+`PHASE11_PHASES` selects comma-separated phases (0 means E2E00 plus E2E01); `PHASE11_PROFILES` selects
+profiles. All original acceptance requests remain on loopback 8018 and run sequentially. Stop any
+other fixture on that port first. Production assets are copied from the candidate; `public/hot` is excluded.
+
+E2E02 copies the versioned deterministic historical delivery from `tests/Fixtures/admin-profiles` into
+the disposable default template, editor partials and translations. It reruns real HTTP, browser and
+cached-profile transitions, but does not claim new agent authoring. The transition process uses one
+HTTP worker because its original start/terminate recipe owns one server process. E2E04 runs real
+`cms:install`, real panel identity/credential creation, the restricted Codex MCP client and both profile
+browser stages. E2E09 full creates its expected draft through a real Codex MCP case before its native
+preview assertion; both profiles rerun 2FA, OAuth, password recovery and asynchronous HTTP/worker stages.
+E2E00/01 runs in both profiles: Full includes specialized visual editing; Essential checks the operational panel and authorized preview. E2E04 starts in essential and explicitly transitions to full.
+
+The PHP runtime needs its ordinary production ini semantics, including `short_open_tag=Off` for XML
+rendering, a sufficient memory limit, and all dependencies/extensions reported by
+`composer check-platform-reqs`. Composer installation, the full suite, JavaScript suite, build and
+conventions are separate isolated gates; a configured Composer platform version does not prove runtime.
+
+The runner retains only result JSON and screenshots under
+`docs/plans/phase-11-evidence/runtime-accumulated`, stops its server group, drops its guarded schema and
+destroys its private copy. `.env`, credential/preview manifests, auth/config, server/mail/client logs and
+recovery codes stay private and are deleted. Every completed fixture verifies the original `.env` hash.
+E2E10 update/snapshot/rollback and the new E2E11 pilot remain separate cumulative gates.

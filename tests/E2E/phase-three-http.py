@@ -75,7 +75,7 @@ def multipart(ticket, image):
 def assert_hidden(page):
     assert request(urllib.parse.urlparse(page['url']).path, key=None)[0] == 404
     status, sitemap, _ = request('/sitemap.xml', key=None)
-    assert status == 200 and page['url'].encode() not in sitemap
+    assert status == 200 and page['url'].encode() not in sitemap, (status, page['url'])
 
 
 def verify_public(page, heading, alt):

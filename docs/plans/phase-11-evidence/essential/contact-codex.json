@@ -1,0 +1,247 @@
+{
+  "client": "codex",
+  "case": "phase11-contact",
+  "profile": "essential",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "pages_create_draft",
+      "status": "completed",
+      "arguments": {
+        "locale": "es",
+        "template_key": "contact",
+        "title": "Contacto piloto",
+        "slug": "phase11-contact",
+        "content_json": {
+          "meta": {
+            "title": "Contacto piloto",
+            "description": "Formulario de la entrega"
+          },
+          "sections": {
+            "intro": {
+              "heading": "Solicitar información",
+              "body": "<p>Consulta del piloto</p>",
+              "is_visible": true
+            },
+            "form": {
+              "is_visible": true,
+              "heading": "Enviar consulta",
+              "labels": {
+                "name": "Nombre",
+                "email": "Email",
+                "phone": "Teléfono",
+                "subject": "Asunto",
+                "message": "Mensaje"
+              },
+              "button_label": "Enviar",
+              "success_message": "Consulta recibida",
+              "subject_options": [
+                {
+                  "label": "Servicio piloto"
+                }
+              ],
+              "notify_enabled": true,
+              "notify_email": "phase11-mail@example.test"
+            }
+          }
+        }
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 10, \"revision\": \"29c0b889405caa3b5f7c2bd5b05fac0a3d34cd0024294d57163d487572c6793b\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Contacto piloto\", \"locale\": \"es\", \"translation_group_id\": \"2ae4ff54-50af-4aba-8c3a-719a9080e064\", \"slug\": \"phase11-contact\", \"url\": \"/phase11-contact\", \"template_key\": \"contact\", \"status\": \"draft\", \"published_at\": null, \"content_json\": {\"meta\": {\"title\": \"Contacto piloto\", \"description\": \"Formulario de la entrega\"}, \"sections\": {\"form\": {\"labels\": {\"name\": \"Nombre\", \"email\": \"Email\", \"phone\": \"Teléfono\", \"message\": \"Mensaje\", \"subject\": \"Asunto\"}, \"heading\": \"Enviar consulta\", \"is_visible\": true, \"button_label\": \"Enviar\", \"notify_email\": \"phase11-mail@example.test\", \"notify_enabled\": true, \"subject_options\": [{\"label\": \"Servicio piloto\"}], \"success_message\": \"Consulta recibida\"}, \"intro\": {\"body\": \"<p>Consulta del piloto</p>\", \"heading\": \"Solicitar información\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:34:08.000000Z\", \"updated_at\": \"2026-10-11T01:34:08.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_preview",
+      "status": "completed",
+      "arguments": {
+        "type": "pages",
+        "id": 10,
+        "expected_revision": "29c0b889405caa3b5f7c2bd5b05fac0a3d34cd0024294d57163d487572c6793b"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"link\": {\"id\": 4, \"content_type\": \"pages\", \"content_id\": 10, \"version_id\": 29, \"user_id\": 1, \"expires_at\": \"2026-10-11 02:34:11\", \"revoked_at\": null, \"created_at\": \"2026-10-11 01:34:11\", \"updated_at\": \"2026-10-11 01:34:11\"}, \"preview_url\": \"[redacted]\", \"url\": \"[redacted preview]\", \"expires_at\": \"2026-10-11 02:34:11\", \"revision\": \"29c0b889405caa3b5f7c2bd5b05fac0a3d34cd0024294d57163d487572c6793b\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_publish",
+      "status": "completed",
+      "arguments": {
+        "page_id": 10,
+        "expected_revision": "29c0b889405caa3b5f7c2bd5b05fac0a3d34cd0024294d57163d487572c6793b"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 10, \"revision\": \"d97705c0113dc03015b1b0ca6de2951ef9e6e413151c8fcd1664899e05617a48\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Contacto piloto\", \"locale\": \"es\", \"translation_group_id\": \"2ae4ff54-50af-4aba-8c3a-719a9080e064\", \"slug\": \"phase11-contact\", \"url\": \"/phase11-contact\", \"template_key\": \"contact\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:34:14.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Contacto piloto\", \"description\": \"Formulario de la entrega\"}, \"sections\": {\"form\": {\"labels\": {\"name\": \"Nombre\", \"email\": \"Email\", \"phone\": \"Teléfono\", \"message\": \"Mensaje\", \"subject\": \"Asunto\"}, \"heading\": \"Enviar consulta\", \"is_visible\": true, \"button_label\": \"Enviar\", \"notify_email\": \"phase11-mail@example.test\", \"notify_enabled\": true, \"subject_options\": [{\"label\": \"Servicio piloto\"}], \"success_message\": \"Consulta recibida\"}, \"intro\": {\"body\": \"<p>Consulta del piloto</p>\", \"heading\": \"Solicitar información\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:34:08.000000Z\", \"updated_at\": \"2026-10-11T01:34:14.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_translate",
+      "status": "completed",
+      "arguments": {
+        "id": 10,
+        "locale": "en",
+        "type": "pages"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 11, \"revision\": \"f7c954d37b76ccba5db6e6f8f84976fdb037a8e264f0bea9c6dcc8c7921c614d\", \"translation_status\": \"needs_review\", \"stale_fields\": [], \"title\": \"Contacto piloto\", \"locale\": \"en\", \"translation_group_id\": \"2ae4ff54-50af-4aba-8c3a-719a9080e064\", \"slug\": \"phase11-contact\", \"url\": \"/en/phase11-contact\", \"template_key\": \"contact\", \"status\": \"draft\", \"published_at\": null, \"content_json\": {\"meta\": {\"title\": \"Contacto piloto\", \"description\": \"Formulario de la entrega\"}, \"sections\": {\"form\": {\"labels\": {\"name\": \"Nombre\", \"email\": \"Email\", \"phone\": \"Teléfono\", \"message\": \"Mensaje\", \"subject\": \"Asunto\"}, \"heading\": \"Enviar consulta\", \"is_visible\": true, \"button_label\": \"Enviar\", \"notify_email\": \"phase11-mail@example.test\", \"notify_enabled\": true, \"subject_options\": [{\"label\": \"Servicio piloto\"}], \"success_message\": \"Consulta recibida\"}, \"intro\": {\"body\": \"<p>Consulta del piloto</p>\", \"heading\": \"Solicitar información\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:34:16.000000Z\", \"updated_at\": \"2026-10-11T01:34:16.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_update_draft",
+      "status": "completed",
+      "arguments": {
+        "page_id": 11,
+        "expected_revision": "f7c954d37b76ccba5db6e6f8f84976fdb037a8e264f0bea9c6dcc8c7921c614d",
+        "title": "Pilot contact",
+        "slug": "phase11-contact-en",
+        "content_json": {
+          "meta": {
+            "title": "Pilot contact",
+            "description": "Delivery form"
+          },
+          "sections": {
+            "intro": {
+              "heading": "Request information",
+              "body": "<p>Pilot enquiry</p>"
+            },
+            "form": {
+              "heading": "Send enquiry",
+              "labels": {
+                "name": "Name",
+                "email": "Email",
+                "phone": "Phone",
+                "subject": "Subject",
+                "message": "Message"
+              },
+              "button_label": "Send",
+              "success_message": "Enquiry received",
+              "subject_options": [
+                {
+                  "label": "Pilot service"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 11, \"revision\": \"f14237b1ea3fb36901287711c88509707d31239705a930bf9251ac0af89e3ad7\", \"translation_status\": \"needs_review\", \"stale_fields\": [], \"title\": \"Pilot contact\", \"locale\": \"en\", \"translation_group_id\": \"2ae4ff54-50af-4aba-8c3a-719a9080e064\", \"slug\": \"phase11-contact-en\", \"url\": \"/en/phase11-contact-en\", \"template_key\": \"contact\", \"status\": \"draft\", \"published_at\": null, \"content_json\": {\"meta\": {\"title\": \"Pilot contact\", \"description\": \"Delivery form\"}, \"sections\": {\"form\": {\"labels\": {\"name\": \"Name\", \"email\": \"Email\", \"phone\": \"Phone\", \"message\": \"Message\", \"subject\": \"Subject\"}, \"heading\": \"Send enquiry\", \"is_visible\": true, \"button_label\": \"Send\", \"notify_email\": \"phase11-mail@example.test\", \"notify_enabled\": true, \"subject_options\": [{\"label\": \"Pilot service\"}], \"success_message\": \"Enquiry received\"}, \"intro\": {\"body\": \"<p>Pilot enquiry</p>\", \"heading\": \"Request information\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:34:16.000000Z\", \"updated_at\": \"2026-10-11T01:34:20.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_preview",
+      "status": "completed",
+      "arguments": {
+        "type": "pages",
+        "id": 11,
+        "expected_revision": "f14237b1ea3fb36901287711c88509707d31239705a930bf9251ac0af89e3ad7"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"link\": {\"id\": 5, \"content_type\": \"pages\", \"content_id\": 11, \"version_id\": 33, \"user_id\": 1, \"expires_at\": \"2026-10-11 02:34:23\", \"revoked_at\": null, \"created_at\": \"2026-10-11 01:34:23\", \"updated_at\": \"2026-10-11 01:34:23\"}, \"preview_url\": \"[redacted]\", \"url\": \"[redacted preview]\", \"expires_at\": \"2026-10-11 02:34:23\", \"revision\": \"f14237b1ea3fb36901287711c88509707d31239705a930bf9251ac0af89e3ad7\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_publish",
+      "status": "completed",
+      "arguments": {
+        "page_id": 11,
+        "expected_revision": "f14237b1ea3fb36901287711c88509707d31239705a930bf9251ac0af89e3ad7"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 11, \"revision\": \"2cd9b8203cb5a4cf09f6ad4a4a4c502a533ea0627fb35e05211758b47e5e88f2\", \"translation_status\": \"needs_review\", \"stale_fields\": [], \"title\": \"Pilot contact\", \"locale\": \"en\", \"translation_group_id\": \"2ae4ff54-50af-4aba-8c3a-719a9080e064\", \"slug\": \"phase11-contact-en\", \"url\": \"/en/phase11-contact-en\", \"template_key\": \"contact\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:34:26.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Pilot contact\", \"description\": \"Delivery form\"}, \"sections\": {\"form\": {\"labels\": {\"name\": \"Name\", \"email\": \"Email\", \"phone\": \"Phone\", \"message\": \"Message\", \"subject\": \"Subject\"}, \"heading\": \"Send enquiry\", \"is_visible\": true, \"button_label\": \"Send\", \"notify_email\": \"phase11-mail@example.test\", \"notify_enabled\": true, \"subject_options\": [{\"label\": \"Pilot service\"}], \"success_message\": \"Enquiry received\"}, \"intro\": {\"body\": \"<p>Pilot enquiry</p>\", \"heading\": \"Request information\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:34:16.000000Z\", \"updated_at\": \"2026-10-11T01:34:26.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 10
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 10, \"revision\": \"d97705c0113dc03015b1b0ca6de2951ef9e6e413151c8fcd1664899e05617a48\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Contacto piloto\", \"locale\": \"es\", \"translation_group_id\": \"2ae4ff54-50af-4aba-8c3a-719a9080e064\", \"slug\": \"phase11-contact\", \"url\": \"/phase11-contact\", \"template_key\": \"contact\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:34:14.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Contacto piloto\", \"description\": \"Formulario de la entrega\"}, \"sections\": {\"form\": {\"labels\": {\"name\": \"Nombre\", \"email\": \"Email\", \"phone\": \"Teléfono\", \"message\": \"Mensaje\", \"subject\": \"Asunto\"}, \"heading\": \"Enviar consulta\", \"is_visible\": true, \"button_label\": \"Enviar\", \"notify_email\": \"phase11-mail@example.test\", \"notify_enabled\": true, \"subject_options\": [{\"label\": \"Servicio piloto\"}], \"success_message\": \"Consulta recibida\"}, \"intro\": {\"body\": \"<p>Consulta del piloto</p>\", \"heading\": \"Solicitar información\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:34:08.000000Z\", \"updated_at\": \"2026-10-11T01:34:14.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 11
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 11, \"revision\": \"2cd9b8203cb5a4cf09f6ad4a4a4c502a533ea0627fb35e05211758b47e5e88f2\", \"translation_status\": \"needs_review\", \"stale_fields\": [], \"title\": \"Pilot contact\", \"locale\": \"en\", \"translation_group_id\": \"2ae4ff54-50af-4aba-8c3a-719a9080e064\", \"slug\": \"phase11-contact-en\", \"url\": \"/en/phase11-contact-en\", \"template_key\": \"contact\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:34:26.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Pilot contact\", \"description\": \"Delivery form\"}, \"sections\": {\"form\": {\"labels\": {\"name\": \"Name\", \"email\": \"Email\", \"phone\": \"Phone\", \"message\": \"Message\", \"subject\": \"Subject\"}, \"heading\": \"Send enquiry\", \"is_visible\": true, \"button_label\": \"Send\", \"notify_email\": \"phase11-mail@example.test\", \"notify_enabled\": true, \"subject_options\": [{\"label\": \"Pilot service\"}], \"success_message\": \"Enquiry received\"}, \"intro\": {\"body\": \"<p>Pilot enquiry</p>\", \"heading\": \"Request information\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:34:16.000000Z\", \"updated_at\": \"2026-10-11T01:34:26.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "forms_published": true,
+    "contact_id": 10,
+    "english_contact_id": 11,
+    "contact_path": "/phase11-contact",
+    "english_contact_path": "/en/phase11-contact-en"
+  }
+}

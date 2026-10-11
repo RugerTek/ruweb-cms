@@ -1,0 +1,62 @@
+{
+  "profile": "essential",
+  "checks": [
+    {
+      "width": 1440,
+      "path": "/phase11-landing",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/en/phase11-landing-en",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "en",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/phase11-canvas",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/phase11-landing",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en/phase11-landing-en",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "en",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/phase11-canvas",
+      "anonymous": true,
+      "marker": 0,
+      "lang": "es",
+      "overflow": false
+    },
+    {
+      "old_password_denied": "[redacted]",
+      "replacement_password_login": "[redacted]",
+      "prior_keys_denied": true
+    }
+  ],
+  "blocked_external_origins": [
+    "https://fonts.googleapis.com"
+  ],
+  "production_cwv_claim": false
+}

@@ -1,0 +1,85 @@
+{
+  "client": "codex",
+  "case": "phase11-verify-linked",
+  "profile": "essential",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 8
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 8, \"revision\": \"9517be648e2783a8a203914f85beb9fff2c7ec221dc2533381142e5d45fa08ba\", \"translation_status\": \"needs_review\", \"stale_fields\": [\"sections.content.html\"], \"title\": \"Final delivery\", \"locale\": \"en\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing-en\", \"url\": \"/en/phase11-landing-en\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:26.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Final delivery\", \"description\": \"Bilingual acceptance landing\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Final delivery</h1><p>Bilingual pilot service</p><img data-media-id=\\\"1\\\" alt=\\\"Pilot media\\\"><a href=\\\"/en/phase11-contact-en\\\">Request information</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:17.000000Z\", \"updated_at\": \"2026-10-11T01:37:42.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"eafd94d7e871c3ffec5ee8d8f82d77072f70dbd60e522fc1f14b443453325d29\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final conectada\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/phase11-contact\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:39:50.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "linked_forms": true,
+    "published": true,
+    "pages": [
+      {
+        "id": 7,
+        "status": "published",
+        "locale": "es",
+        "href": "/phase11-contact",
+        "media_ids": [
+          1
+        ],
+        "seo": {
+          "title": "Entrega final",
+          "description": "Landing de prueba bilingüe"
+        },
+        "html": "<section class=\"cms-container cms-section cms-stack\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\"1\" alt=\"Medio del piloto\"><a href=\"/phase11-contact\">Solicitar información</a></section>"
+      },
+      {
+        "id": 8,
+        "status": "published",
+        "locale": "en",
+        "href": "/en/phase11-contact-en",
+        "media_ids": [
+          1
+        ],
+        "seo": {
+          "title": "Final delivery",
+          "description": "Bilingual acceptance landing"
+        },
+        "html": "<section class=\"cms-container cms-section cms-stack\"><h1>Final delivery</h1><p>Bilingual pilot service</p><img data-media-id=\"1\" alt=\"Pilot media\"><a href=\"/en/phase11-contact-en\">Request information</a></section>",
+        "translation_status": "needs_review",
+        "stale_fields": [
+          "sections.content.html"
+        ]
+      }
+    ],
+    "original_retention_verified": false,
+    "reason": "No original baseline available for comparison."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Bearer proposal retry, public unchanged, exact pinned anonymous preview, comments and reviewer/scope restrictions",
+    "Assigned reviewer approval applies exact proposal publicly",
+    "Proposal created on older base cannot be submitted using refreshed current revision",
+    "Stale review cannot overwrite a newer approved base",
+    "Historical draft restore, review without publication, explicit republish and preview revocation",
+    "Anonymous preview expires under isolated controlled clock",
+    "Scheduled withdrawal hides public URL and sitemap at controlled clock boundary"
+  ],
+  "cookie_free_mcp": "[redacted]"
+}

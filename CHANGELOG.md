@@ -2,13 +2,16 @@
 
 Este changelog empieza **desde el primer snapshot funcional** del proyecto y se mantiene **por commit**.
 
-- Esquema: **SemVer** (pre-1.0): `0.MINOR.PATCH`
+- Esquema: **SemVer**; versiones previas a 1.0 siguen `0.MINOR.PATCH`.
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
-## Unreleased
+## 1.0.0 - 2026-10-10
 
-## 0.54.2 - 2026-10-10
+- MCP valida argumentos requeridos, tipos JSON y límites anunciados antes del dispatcher; getters sin selector devuelven diagnósticos recuperables por campo en lugar de errores 500.
+- Candidato final probado con PHP 8.3 real, recorridos acumulados y piloto Codex conectado desde el panel en ambos perfiles; guía de operación/recovery y criterios comparativos de SEO/rendimiento reproducibles.
+
+## 0.54.2 - 2026-10-10 (2b65a27)
 
 - Snapshots excluyen y limpian recibos operativos, credenciales y claims de notificación; conservan historial portable sin reactivar envíos, permisos ni código personalizado.
 - Restauración valida nuevamente HTML, medios y uploads, e importa medios antes de contenido aunque el manifest antiguo declare otro orden; archivos manipulados con checksums válidos no eluden los controles.

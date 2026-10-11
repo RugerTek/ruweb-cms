@@ -1,0 +1,70 @@
+{
+  "client": "codex",
+  "case": "phase11-deactivate",
+  "profile": "essential",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "custom_code_get",
+      "status": "completed",
+      "arguments": {
+        "id": 1
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 1, \"name\": \"Phase11 exact destination\", \"description\": \"Local acceptance marker.\", \"state\": \"active\", \"active_version_id\": 1, \"generation\": 2, \"created_at\": \"2026-10-11 01:34:04\", \"updated_at\": \"2026-10-11 01:34:08\", \"versions_total\": 1, \"versions_page\": 1, \"versions_last_page\": 1, \"active_version\": {\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}, \"revision\": \"35d86fc380b59971c78c957de4d6a2ed1536fdbceeb3a26a584f6cbe4d1c2b00\", \"versions\": [{\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}], \"events\": [{\"id\": 2, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"activate\", \"version_id\": 1, \"detail\": \"{\\\"fingerprint\\\": \\\"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\\\"}\", \"created_at\": \"2026-10-11 01:34:08\"}, {\"id\": 1, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"save\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:34:04\"}]}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "custom_code_deactivate",
+      "status": "completed",
+      "arguments": {
+        "id": 1,
+        "expected_revision": "35d86fc380b59971c78c957de4d6a2ed1536fdbceeb3a26a584f6cbe4d1c2b00",
+        "operation_key": "phase11-essential-off"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 1, \"name\": \"Phase11 exact destination\", \"description\": \"Local acceptance marker.\", \"state\": \"inactive\", \"active_version_id\": 1, \"generation\": 3, \"created_at\": \"2026-10-11 01:34:04\", \"updated_at\": \"2026-10-11 01:40:02\", \"versions_total\": 1, \"versions_page\": 1, \"versions_last_page\": 1, \"active_version\": {\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}, \"revision\": \"d75fffd5665c6d5715b361f0889cd90b9fe285d534bff8a9f23fa7f99671eb5a\", \"versions\": [{\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}], \"events\": [{\"id\": 3, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"deactivate\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:40:02\"}, {\"id\": 2, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"activate\", \"version_id\": 1, \"detail\": \"{\\\"fingerprint\\\": \\\"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\\\"}\", \"created_at\": \"2026-10-11 01:34:08\"}, {\"id\": 1, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"save\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:34:04\"}]}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "custom_code_get",
+      "status": "completed",
+      "arguments": {
+        "id": 1
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 1, \"name\": \"Phase11 exact destination\", \"description\": \"Local acceptance marker.\", \"state\": \"inactive\", \"active_version_id\": 1, \"generation\": 3, \"created_at\": \"2026-10-11 01:34:04\", \"updated_at\": \"2026-10-11 01:40:02\", \"versions_total\": 1, \"versions_page\": 1, \"versions_last_page\": 1, \"active_version\": {\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}, \"revision\": \"d75fffd5665c6d5715b361f0889cd90b9fe285d534bff8a9f23fa7f99671eb5a\", \"versions\": [{\"id\": 1, \"snippet_id\": 1, \"author_id\": 1, \"payload\": {\"code\": \"window.__phase11Snippet=(window.__phase11Snippet||0)+1;\", \"name\": \"Phase11 exact destination\", \"type\": \"javascript\", \"rules\": {\"global\": false, \"exclude\": [], \"include\": [{\"id\": 7, \"type\": \"pages\", \"group\": false, \"locale\": \"es\"}]}, \"position\": \"body_end\", \"sort_order\": 0, \"description\": \"Local acceptance marker.\"}, \"fingerprint\": \"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\", \"created_at\": \"2026-10-11 01:34:04\"}], \"events\": [{\"id\": 3, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"deactivate\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:40:02\"}, {\"id\": 2, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"activate\", \"version_id\": 1, \"detail\": \"{\\\"fingerprint\\\": \\\"2d8412b5dea2dc516f560df525e60bdb0c4dd669bac6ddd699fd4a682a068d44\\\"}\", \"created_at\": \"2026-10-11 01:34:08\"}, {\"id\": 1, \"snippet_id\": 1, \"user_id\": 1, \"action\": \"save\", \"version_id\": 1, \"detail\": \"[]\", \"created_at\": \"2026-10-11 01:34:04\"}]}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "inactive": true,
+    "snippet_id": 1,
+    "no_active_pointer": false,
+    "active_version_id": 1
+  }
+}

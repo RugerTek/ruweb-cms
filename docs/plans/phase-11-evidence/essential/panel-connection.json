@@ -1,0 +1,10 @@
+{
+  "profile": "essential",
+  "real_clean_install": true,
+  "operator_login": true,
+  "keys_issued_in_panel": [
+    "full",
+    "custom-code"
+  ],
+  "secrets_retained": "[redacted]"
+}

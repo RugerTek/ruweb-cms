@@ -1,0 +1,10 @@
+{
+    "snapshot_sha256": "cfdc76dc98d167aef11b6839818ea0003e1ff67fa288e12f8b1f8a4fd344ff64",
+    "mutated_content_restored": true,
+    "authority_excluded": true,
+    "snippets_inactive": true,
+    "permission_removed": true,
+    "accepted_warning_keys": [
+        "diverged_history"
+    ]
+}

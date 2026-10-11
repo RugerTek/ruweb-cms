@@ -1,0 +1,17 @@
+{
+  "profile": "full",
+  "stage": "create",
+  "checks": [
+    "CSS authored and exact version activated through the real panel",
+    "Desktop and mobile panel with no executable custom code"
+  ],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "external_origins": [],
+  "page_errors": []
+}

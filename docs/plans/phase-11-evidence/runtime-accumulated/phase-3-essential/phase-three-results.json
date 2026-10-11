@@ -1,0 +1,14 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Cookie-free REST/RPC discovery and configured template schema",
+    "Locale configuration uses real authorized endpoint",
+    "Binary multipart upload, actual optimized variants, retry receipt and localized metadata",
+    "Draft creation retry, translation group, partial edits and stale revision rejection",
+    "Batch layout settings normalize own-site URLs and localize shared footer copy",
+    "Localized menus, public draft/sitemap exclusion, preview access and protected media deletion",
+    "Published ES/EN URLs, SEO canonical/hreflang, sitemap and real responsive image bytes",
+    "Scheduled public visibility and sitemap cross the injected clock boundary"
+  ],
+  "cookie_free_mcp": true
+}

@@ -1,0 +1,262 @@
+{
+  "client": "codex",
+  "case": "phase11-workflow",
+  "profile": "essential",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:33:15.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_versions",
+      "status": "completed",
+      "arguments": {
+        "id": 7,
+        "type": "pages"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"versions\": [{\"id\": 16, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"created_at\": \"2026-10-11 01:33:15\", \"updated_at\": \"2026-10-11 01:33:15\", \"base_fingerprint\": null}, {\"id\": 15, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"15881699335d5bb7a7c92ce09204ba62dd7a918f4f01390bfa8c8aff12cda0a8\", \"created_at\": \"2026-10-11 01:33:07\", \"updated_at\": \"2026-10-11 01:33:07\", \"base_fingerprint\": null}, {\"id\": 14, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"add8074591245ff19ef96c2ce0bd820a919a21e35f8ab89c681d0f4019b2c66b\", \"created_at\": \"2026-10-11 01:33:07\", \"updated_at\": \"2026-10-11 01:33:07\", \"base_fingerprint\": null}, {\"id\": 13, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"5bec5635361e254e93ce4c1c7e0786ab049939344e9f1769234d45caa684b53b\", \"created_at\": \"2026-10-11 01:33:07\", \"updated_at\": \"2026-10-11 01:33:07\", \"base_fingerprint\": null}, {\"id\": 12, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"4654c064d4a685df4d918d7dfcbb9691a0e0090ca274eb960ddd9840f1c61902\", \"created_at\": \"2026-10-11 01:33:07\", \"updated_at\": \"2026-10-11 01:33:07\", \"base_fingerprint\": null}], \"meta\": {\"total\": 5, \"current_page\": 1, \"per_page\": 20, \"last_page\": 1}, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:33:15.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_propose",
+      "status": "completed",
+      "arguments": {
+        "changes": {
+          "title": "Entrega revisada"
+        },
+        "expected_revision": "5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6",
+        "id": 7,
+        "operation_key": "phase11-essential-mv35j6is-qs8woct4eo-exmcet9xfx-propose",
+        "type": "pages"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"version\": {\"id\": 35, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": true, \"fingerprint\": \"dbb27cdc28c3d501b13a58155b7cb764d1f27ad83007573690579ece58ff269d\", \"created_at\": \"2026-10-11 01:35:54\", \"updated_at\": \"2026-10-11 01:35:54\", \"base_fingerprint\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\"}, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:33:15.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_review_request",
+      "status": "completed",
+      "arguments": {
+        "expected_revision": "5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6",
+        "id": 7,
+        "operation_key": "phase11-essential-mv35j6is-qs8woct4eo-exmcet9xfx-review-request",
+        "reviewer_id": 1,
+        "type": "pages",
+        "version_id": 35
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"review\": {\"id\": 1, \"content_type\": \"pages\", \"content_id\": 7, \"requested_by\": 1, \"reviewer_id\": 1, \"version_id\": 35, \"fingerprint\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"state\": \"pending\", \"comment\": null, \"created_at\": \"2026-10-11 01:35:58\", \"updated_at\": \"2026-10-11 01:35:58\"}, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:33:15.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_review_decide",
+      "status": "completed",
+      "arguments": {
+        "expected_revision": "5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6",
+        "id": 7,
+        "operation_key": "phase11-essential-mv35j6is-qs8woct4eo-exmcet9xfx-review-approve",
+        "review_id": 1,
+        "state": "approved",
+        "type": "pages"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"review\": {\"id\": 1, \"content_type\": \"pages\", \"content_id\": 7, \"requested_by\": 1, \"reviewer_id\": 1, \"version_id\": 35, \"fingerprint\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"state\": \"approved\", \"comment\": null, \"created_at\": \"2026-10-11 01:35:58\", \"updated_at\": \"2026-10-11 01:36:03\"}, \"revision\": \"b18b2fbee62ab4d09093d1fe4966f35162fd97d320dd860a3b88acff9cb729d0\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"b18b2fbee62ab4d09093d1fe4966f35162fd97d320dd860a3b88acff9cb729d0\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega revisada\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:36:03.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "content_restore",
+      "status": "completed",
+      "arguments": {
+        "expected_revision": "b18b2fbee62ab4d09093d1fe4966f35162fd97d320dd860a3b88acff9cb729d0",
+        "id": 7,
+        "mode": "draft",
+        "operation_key": "phase11-essential-mv35j6is-qs8woct4eo-exmcet9xfx-restore-draft",
+        "type": "pages",
+        "version_id": 16
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"version\": {\"id\": 41, \"content_type\": \"pages\", \"content_id\": 7, \"user_id\": 1, \"is_proposal\": false, \"fingerprint\": \"c3a5c952fca1b6506b25d46868b85a9548a5cf39d2de05ac31e0da91ecf9aa6e\", \"created_at\": \"2026-10-11 01:36:07\", \"updated_at\": \"2026-10-11 01:36:07\", \"base_fingerprint\": null}, \"content\": {\"type\": \"pages\", \"id\": 7, \"status\": \"draft\"}, \"revision\": \"c3a5c952fca1b6506b25d46868b85a9548a5cf39d2de05ac31e0da91ecf9aa6e\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"c3a5c952fca1b6506b25d46868b85a9548a5cf39d2de05ac31e0da91ecf9aa6e\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"draft\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:36:07.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_publish",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7,
+        "expected_revision": "c3a5c952fca1b6506b25d46868b85a9548a5cf39d2de05ac31e0da91ecf9aa6e"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:36:11.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 7
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 7, \"revision\": \"5b5e1ff80408571e698635be982585c25361c98ad9bf12994cc123db80b2ccb6\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Entrega final\", \"locale\": \"es\", \"translation_group_id\": \"32b030d8-77a4-4068-b058-23747d64e553\", \"slug\": \"phase11-landing\", \"url\": \"/phase11-landing\", \"template_key\": \"html\", \"status\": \"published\", \"published_at\": \"2026-10-11T01:33:15.000000Z\", \"content_json\": {\"meta\": {\"title\": \"Entrega final\", \"description\": \"Landing de prueba bilingüe\"}, \"sections\": {\"content\": {\"html\": \"<section class=\\\"cms-container cms-section cms-stack\\\"><h1>Entrega final</h1><p>Servicio bilingüe para el piloto</p><img data-media-id=\\\"1\\\" alt=\\\"Medio del piloto\\\"><a href=\\\"/contacto\\\">Solicitar información</a></section>\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:33:07.000000Z\", \"updated_at\": \"2026-10-11T01:36:11.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "reviewed": true,
+    "restored": true,
+    "published": true,
+    "original_version_id": 16,
+    "landing_id": 7
+  }
+}

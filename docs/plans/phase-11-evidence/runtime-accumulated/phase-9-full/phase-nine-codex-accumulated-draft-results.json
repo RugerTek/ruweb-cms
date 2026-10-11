@@ -1,0 +1,141 @@
+{
+  "client": "codex",
+  "case": "accumulated-draft",
+  "profile": "full",
+  "authentication": "named-api-key",
+  "isolated_config": true,
+  "exit_code": 0,
+  "validated": true,
+  "calls": [
+    {
+      "tool": "cms_schema",
+      "status": "completed",
+      "arguments": {
+        "type": "pages",
+        "template_key": "default"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"type\": \"pages\", \"template_key\": \"default\", \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.content.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.content.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.content.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"section-body\"}}, \"locales\": [{\"code\": \"es\", \"name\": \"es\", \"is_base\": true, \"is_active\": true, \"is_public\": true}, {\"code\": \"en\", \"name\": \"en\", \"is_base\": false, \"is_active\": true, \"is_public\": true}], \"rules\": {\"translatable\": \"Translate visible text.\", \"preserve\": \"Copy unchanged.\", \"remap\": \"Use an equivalent translated internal record; never silently link to base-language content.\", \"localized_media\": \"Keep or replace with a valid media ID; localize metadata separately.\", \"revision\": \"Send expected_revision from the latest read. A stale revision returns 409; read and merge before retry.\", \"retry\": \"Use operation_key for draft creation. Retry identical input; reusing it for different input returns 409.\", \"publication\": \"Draft edits reject published records. Publication and scheduling require an admin and full credential scope.\"}, \"example\": {\"title\": \"Example\", \"slug\": \"example\", \"template_key\": \"default\", \"locale\": \"es\", \"content_json\": {\"meta\": {\"title\": \"Example\", \"description\": \"Example description\"}, \"sections\": {}}, \"operation_key\": \"example-draft-1\"}}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "cms_capabilities",
+      "status": "completed",
+      "arguments": {},
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"admin_profile\": \"full\", \"stability\": \"stable\", \"capabilities\": {\"public_site\": true, \"mcp\": true, \"identity\": true, \"custom_code\": true, \"live_editor\": true, \"specialized_editor_delivery\": true}, \"authorization\": \"[redacted]\", \"block_formats\": [\"structured\", \"html\", \"interactive\"], \"composition\": {\"guide\": \"docs/content/composition.md\", \"components\": {\"callout\": {\"type\": \"structured\", \"translatable_paths\": [\"heading\", \"body\"], \"view\": \"components.composition.callout\", \"rules\": {\"heading\": [\"nullable\", \"string\", \"max:500\"], \"body\": [\"nullable\", \"string\", \"max:10000\"], \"image_id\": [\"nullable\", \"integer\", \"exists:media,id\"]}}, \"accordion\": {\"type\": \"interactive\", \"translatable_paths\": [\"heading\", \"items.*.question\", \"items.*.answer\"], \"view\": \"components.composition.accordion\", \"rules\": {\"heading\": [\"nullable\", \"string\", \"max:500\"], \"items\": [\"required\", \"array\", \"min:1\", \"max:50\"], \"items.*\": [\"array:question,answer\"], \"items.*.question\": [\"required\", \"string\", \"max:500\"], \"items.*.answer\": [\"required\", \"string\", \"max:10000\"], \"initially_open\": [\"nullable\", \"integer\", \"min:0\", \"max:49\"]}}}, \"html_rules\": {\"tags\": [\"section\", \"article\", \"div\", \"span\", \"p\", \"br\", \"hr\", \"h1\", \"h2\", \"h3\", \"h4\", \"h5\", \"h6\", \"strong\", \"b\", \"em\", \"i\", \"u\", \"s\", \"a\", \"ul\", \"ol\", \"li\", \"blockquote\", \"figure\", \"figcaption\", \"img\", \"table\", \"thead\", \"tbody\", \"tfoot\", \"tr\", \"th\", \"td\", \"pre\", \"code\"], \"attributes\": {\"*\": [\"class\", \"id\", \"title\"], \"a\": [\"href\", \"target\", \"rel\"], \"img\": [\"data-media-id\", \"alt\"], \"th\": [\"colspan\", \"rowspan\", \"scope\"], \"td\": [\"colspan\", \"rowspan\"]}, \"classes\": [\"cms-container\", \"cms-section\", \"cms-stack\", \"cms-grid\", \"cms-grid-2\", \"cms-grid-3\", \"cms-card\", \"cms-eyebrow\", \"cms-title\", \"cms-lead\", \"cms-muted\", \"cms-button\", \"cms-button-secondary\", \"cms-text-center\", \"cms-media\", \"cms-split\", \"cms-gap-sm\", \"cms-gap-lg\"], \"styles\": [], \"limits\": {\"bytes\": 200000, \"nodes\": 5000, \"depth\": 40}, \"media\": {\"tag\": \"img\", \"attribute\": \"data-media-id\", \"type\": \"positive_integer\"}, \"links\": {\"schemes\": [\"http\", \"https\", \"mailto\", \"tel\"], \"internal\": \"root_relative\", \"anchors\": true}, \"locale_strategy\": \"whole_fragment\"}}, \"templates\": {\"html\": {\"sections\": {\"content\": {\"specialized_editor_required\": false, \"visual_editor_available\": false}}, \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.content.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.content.html\": {\"type\": \"composition_html\", \"translatable\": true}}}, \"empty\": {\"sections\": {\"content\": {\"specialized_editor_required\": false, \"visual_editor_available\": false}}, \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.content.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.content.html\": {\"type\": \"composition_html\", \"translatable\": true}}}, \"composed\": {\"sections\": {\"composition\": {\"specialized_editor_required\": false, \"visual_editor_available\": false}}, \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.composition.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.composition.blocks\": {\"type\": \"composition_blocks\", \"translatable\": true}}}, \"default\": {\"sections\": {\"content\": {\"specialized_editor_required\": false, \"visual_editor_available\": true}}, \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.content.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.content.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.content.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"section-body\"}}}, \"home\": {\"sections\": {\"hero\": {\"specialized_editor_required\": true, \"visual_editor_available\": true}, \"features\": {\"specialized_editor_required\": true, \"visual_editor_available\": true}, \"cta\": {\"specialized_editor_required\": true, \"visual_editor_available\": true}}, \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.hero.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.hero.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.hero.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"short-description\"}, \"sections.hero.image_id\": {\"type\": \"media\", \"localized_media\": true}, \"sections.features.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.features.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.features.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"section-body\"}, \"sections.features.logos.*.image_id\": {\"type\": \"media\", \"localized_media\": true}, \"sections.features.logos.*.label\": {\"type\": \"text\", \"translatable\": true}, \"sections.cta.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.cta.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.cta.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"short-description\"}, \"sections.cta.button_label\": {\"type\": \"text\", \"translatable\": true}, \"sections.cta.button_page\": {\"type\": \"page_reference\", \"preserve\": true}, \"sections.cta.button_url\": {\"type\": \"url\", \"preserve\": true}, \"sections.cta.button_new_tab\": {\"type\": \"boolean\", \"preserve\": true}}}, \"home-alt\": {\"sections\": {\"hero\": {\"specialized_editor_required\": true, \"visual_editor_available\": true}, \"features\": {\"specialized_editor_required\": false, \"visual_editor_available\": true}, \"cta\": {\"specialized_editor_required\": true, \"visual_editor_available\": true}}, \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.hero.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.hero.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.hero.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"short-description\"}, \"sections.hero.image_id\": {\"type\": \"media\", \"localized_media\": true}, \"sections.features.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.features.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.features.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"section-body\"}, \"sections.cta.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.cta.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.cta.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"short-description\"}, \"sections.cta.button_label\": {\"type\": \"text\", \"translatable\": true}, \"sections.cta.button_page\": {\"type\": \"page_reference\", \"preserve\": true}, \"sections.cta.button_url\": {\"type\": \"url\", \"preserve\": true}, \"sections.cta.button_new_tab\": {\"type\": \"boolean\", \"preserve\": true}}}, \"contact\": {\"sections\": {\"intro\": {\"specialized_editor_required\": false, \"visual_editor_available\": true}, \"form\": {\"specialized_editor_required\": true, \"visual_editor_available\": true}}, \"schema\": {\"meta.title\": {\"type\": \"text\", \"translatable\": true}, \"meta.description\": {\"type\": \"textarea\", \"translatable\": true}, \"meta.featured_image\": {\"type\": \"media\", \"localized_media\": true}, \"sections.intro.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.intro.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.intro.body\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"short-description\"}, \"sections.form.is_visible\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.form.heading\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.labels.name\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.labels.email\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.labels.phone\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.labels.subject\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.labels.message\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.button_label\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.success_message\": {\"type\": \"textarea\", \"translatable\": true, \"rich_text\": \"short-description\"}, \"sections.form.subject_options.*.label\": {\"type\": \"text\", \"translatable\": true}, \"sections.form.notify_enabled\": {\"type\": \"boolean\", \"preserve\": true}, \"sections.form.notify_email\": {\"type\": \"text\", \"preserve\": true}}}}, \"registered_collections\": {\"posts\": {\"model\": \"Post\", \"mcp_operations\": \"posts\"}}, \"schema_discovery\": {\"tool\": \"cms_schema\", \"content_types\": [\"pages\", \"posts\"]}, \"locales_discovery\": \"locales_list\", \"custom_code\": {\"tools\": [\"custom_code_list\", \"custom_code_get\", \"custom_code_save\", \"custom_code_activate\", \"custom_code_deactivate\", \"custom_code_evaluate\", \"custom_code_destinations\"], \"credential_scope\": \"custom-code\", \"account_permission\": \"can_manage_custom_code\", \"save_activates\": false, \"exact_version_activation\": true, \"exclusions_prevail\": true}, \"content_rules\": [\"media_by_id\", \"root_relative_internal_urls\", \"published_only_public_queries\", \"forms_defined_in_code\"], \"profile_guide\": \"docs/concepts/admin-profiles.md\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_create_draft",
+      "status": "completed",
+      "arguments": {
+        "title": "Phase Nine Codex initial",
+        "slug": "phase-nine-codex",
+        "template_key": "default",
+        "locale": "es",
+        "content_json": {
+          "sections": {
+            "content": {
+              "heading": "Phase Nine Codex initial",
+              "body": "<p>Phase Nine initial body</p>",
+              "is_visible": true
+            }
+          }
+        },
+        "operation_key": "phase-nine-codex-initial-draft-1"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 109, \"revision\": \"7f7dad4ccd58693817955a74f61b8b8de68edf4c90c10f7dfbb9f189759a7051\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Phase Nine Codex initial\", \"locale\": \"es\", \"translation_group_id\": \"c0144a4a-1849-44ae-8ef5-168d48b9a767\", \"slug\": \"phase-nine-codex\", \"url\": \"/phase-nine-codex\", \"template_key\": \"default\", \"status\": \"draft\", \"published_at\": null, \"content_json\": {\"sections\": {\"content\": {\"body\": \"<p>Phase Nine initial body</p>\", \"heading\": \"Phase Nine Codex initial\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:50:38.000000Z\", \"updated_at\": \"2026-10-11T01:50:38.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 109
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 109, \"revision\": \"7f7dad4ccd58693817955a74f61b8b8de68edf4c90c10f7dfbb9f189759a7051\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Phase Nine Codex initial\", \"locale\": \"es\", \"translation_group_id\": \"c0144a4a-1849-44ae-8ef5-168d48b9a767\", \"slug\": \"phase-nine-codex\", \"url\": \"/phase-nine-codex\", \"template_key\": \"default\", \"status\": \"draft\", \"published_at\": null, \"content_json\": {\"sections\": {\"content\": {\"body\": \"<p>Phase Nine initial body</p>\", \"heading\": \"Phase Nine Codex initial\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:50:38.000000Z\", \"updated_at\": \"2026-10-11T01:50:38.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_update_draft",
+      "status": "completed",
+      "arguments": {
+        "page_id": 109,
+        "expected_revision": "7f7dad4ccd58693817955a74f61b8b8de68edf4c90c10f7dfbb9f189759a7051",
+        "title": "Phase Nine Codex updated",
+        "content_json": {
+          "sections": {
+            "content": {
+              "heading": "Phase Nine Codex updated",
+              "body": "<p>Phase Nine updated body</p>"
+            }
+          }
+        }
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 109, \"revision\": \"fe7793f9bb88151ec719c64c0af65f66fa64d3531f09ab699b59d3452d6feeb5\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Phase Nine Codex updated\", \"locale\": \"es\", \"translation_group_id\": \"c0144a4a-1849-44ae-8ef5-168d48b9a767\", \"slug\": \"phase-nine-codex\", \"url\": \"/phase-nine-codex\", \"template_key\": \"default\", \"status\": \"draft\", \"published_at\": null, \"content_json\": {\"sections\": {\"content\": {\"body\": \"<p>Phase Nine updated body</p>\", \"heading\": \"Phase Nine Codex updated\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:50:38.000000Z\", \"updated_at\": \"2026-10-11T01:50:45.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    },
+    {
+      "tool": "pages_get",
+      "status": "completed",
+      "arguments": {
+        "page_id": 109
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"data\": {\"id\": 109, \"revision\": \"fe7793f9bb88151ec719c64c0af65f66fa64d3531f09ab699b59d3452d6feeb5\", \"translation_status\": null, \"stale_fields\": [], \"title\": \"Phase Nine Codex updated\", \"locale\": \"es\", \"translation_group_id\": \"c0144a4a-1849-44ae-8ef5-168d48b9a767\", \"slug\": \"phase-nine-codex\", \"url\": \"/phase-nine-codex\", \"template_key\": \"default\", \"status\": \"draft\", \"published_at\": null, \"content_json\": {\"sections\": {\"content\": {\"body\": \"<p>Phase Nine updated body</p>\", \"heading\": \"Phase Nine Codex updated\", \"is_visible\": true}}}, \"featured_image\": null, \"created_at\": \"2026-10-11T01:50:38.000000Z\", \"updated_at\": \"2026-10-11T01:50:45.000000Z\"}}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null
+    }
+  ],
+  "final": {
+    "id": 109,
+    "title": "Phase Nine Codex updated",
+    "updated_heading": "Phase Nine Codex updated",
+    "admin_profile": "full"
+  }
+}

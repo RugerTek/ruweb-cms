@@ -1,0 +1,29 @@
+
+> test
+> node --test tests/JavaScript/*.test.mjs
+
+✔ Essential operational dependency graph excludes every specialized editor and TinyMCE (1.471042ms)
+✔ Full retains rich text and visual editor controls (1.483625ms)
+✔ recovery picks newest retained local or server draft and ignores expired browser copies (0.425291ms)
+✔ recovery rebuilds added deleted and reordered repeater rows from structured field names (0.2625ms)
+✔ recovery clears absent selections preserves publication and refreshes media after assigning recovered ids (0.124292ms)
+✔ late media lookup cannot overwrite a recovered id and failed lookups preserve recovery references (0.58625ms)
+✔ preview guard blocks every link activation and script navigation while preserving refresh and widgets (1.48375ms)
+✔ lease loss disables all saves and keeps unsaved content and leave protection (11.15275ms)
+✔ a short connection failure is tolerated, but expiry disables saving (0.821208ms)
+✔ renewal keeps the editor available beyond the original expiry (0.636416ms)
+✔ pagehide releases the token and a cached editor cannot resume saving (0.39175ms)
+✔ server rejection during save preserves pending changes and disables retry (0.754ms)
+✔ out-of-order preview responses cannot replace the latest preview (0.590792ms)
+✔ publishing preserves newer edits and the next save keeps the published status (0.553334ms)
+✔ language switching preserves drafts and sends only changed languages together (1.558417ms)
+✔ failed saves retain all language drafts and display validation errors (0.686583ms)
+✔ cancelling unsaved confirmation keeps the current asset and navigation is guarded (0.388208ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.792041

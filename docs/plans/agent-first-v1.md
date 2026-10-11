@@ -1,8 +1,8 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–10 implementadas y aceptadas; fase 9 conserva la excepción explícita de Claude pendiente. Fase 11 autorizada, sin iniciar.
+**Estado:** fases 0–11 implementadas y aceptadas; entrega local 1.0.0 autorizada tras revisión independiente. Claude conserva el aplazamiento explícito del propietario y no está certificado.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 16 — Fase 10 aceptada con actualización, snapshots, transiciones, piloto y rollback probados; se conserva el aplazamiento explícito de Claude y el gate de fase 11.
+**Revisión:** 17 — Fase 11 aceptada: PHP 8.3 real, acumulados/piloto en ambos perfiles, matriz completa, fingerprints y criterios SEO comparativos; cierre local 1.0.0. Claude sigue aplazado.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
 **Entrega actual:** fases [0](phase-0-results.md), [1](phase-1-results.md), [2](phase-2-results.md), [3](phase-3-results.md), [4](phase-4-results.md), [5](phase-5-results.md), [6](phase-6-results.md) [7](phase-7-results.md), [8](phase-8-results.md) , [9](phase-9-results.md) y [10](phase-10-results.md) aceptadas con resultados; fase 9 conserva la excepción explícita de Claude. El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
@@ -16,13 +16,13 @@ La versión **1.0.0** se publicará cuando los perfiles acordados puedan operar 
 
 ### Resultados esperados
 
-- [ ] Conservar el frontend público y las capacidades actuales del CMS.
-- [ ] Mantener el comportamiento actual por defecto en instalaciones existentes.
-- [ ] Crear páginas, secciones y colecciones sin desarrollar su interfaz editorial cuando el perfil no la requiere.
-- [ ] Administrar el sitio por MCP sin depender de una sesión del backoffice.
-- [ ] Permitir estructura visual flexible mediante bloques controlados, sin confundir contenido con ejecución arbitraria de código.
-- [ ] Compartir reglas, permisos y operaciones entre panel, MCP y herramientas operativas.
-- [ ] Conservar seguridad, SEO, idiomas, medios, formularios, historial y portabilidad entre dominios.
+- [x] Conservar el frontend público y las capacidades actuales del CMS.
+- [x] Mantener el comportamiento actual por defecto en instalaciones existentes.
+- [x] Crear páginas, secciones y colecciones sin desarrollar su interfaz editorial cuando el perfil no la requiere.
+- [x] Administrar el sitio por MCP sin depender de una sesión del backoffice.
+- [x] Permitir estructura visual flexible mediante bloques controlados, sin confundir contenido con ejecución arbitraria de código.
+- [x] Compartir reglas, permisos y operaciones entre panel, MCP y herramientas operativas.
+- [x] Conservar seguridad, SEO, idiomas, medios, formularios, historial y portabilidad entre dominios.
 
 ## 2. Alcance y límites
 
@@ -562,9 +562,9 @@ La excepción permite continuar y conserva íntegros los gates 10–11.
 
 **Trabajo**
 
-- [ ] Congelar contratos y resolver bloqueos del piloto.
-- [ ] Completar guía de actualización, operación, limitaciones y recuperación.
-- [ ] Ejecutar los E2E acumulados sobre la revisión candidata exacta y los dos perfiles.
+- [x] Congelar contratos y resolver bloqueos del piloto.
+- [x] Completar guía de actualización, operación, limitaciones y recuperación.
+- [x] Ejecutar los E2E acumulados sobre la revisión candidata exacta y los dos perfiles.
 
 **E2E-11 — Entrega completa reproducible**
 
@@ -573,7 +573,7 @@ La excepción permite continuar y conserva íntegros los gates 10–11.
 3. Obtener previews, revisar, publicar y comprobar el sitio desde navegador sin sesión, en escritorio y móvil.
 4. Recibir un formulario, procesarlo por MCP y comprobar correo; modificar contenido mediante revisión y restaurar una versión.
 5. Verificar exclusiones del snippet, desactivarlo y recorrer una recuperación de acceso y de snapshot.
-6. Repetir en el otro perfil; ejecutar también la suite determinista completa y comprobar los presupuestos acordados de SEO/rendimiento.
+6. Repetir en el otro perfil; ejecutar también la suite determinista completa y comprobar los criterios de aceptación comparativa adoptados para SEO/rendimiento, documentados en fase 11.
 
 **Aprobación:** todos los recorridos y la matriz de aceptación pasan, la evidencia permite reproducirlos y el propietario dispone de un informe de salida. No se aprueba por número de herramientas ni por capturas aisladas.
 
@@ -581,6 +581,8 @@ La excepción permite continuar y conserva íntegros los gates 10–11.
 
 **Reversión:** conservar el artefacto y copia de datos previos del piloto; documentar la recuperación antes de cualquier despliegue real.
 
+
+**Resultado:** fase 11 aceptada para 1.0.0 local: 17 ejecuciones acumuladas, piloto ambos perfiles, 545 pruebas PHP 8.3/6290 aserciones y JavaScript17; guía final, matriz y procedencia exacta verificadas independientemente. Claude sigue aplazado. Artefacto definitivo se construye desde el commit local y los assets aprobados.
 
 ## 9. Política de datos, despliegue y reversión
 
@@ -626,7 +628,7 @@ La excepción permite continuar y conserva íntegros los gates 10–11.
 
 La CI debe combinar pruebas unitarias de operaciones con pruebas funcionales de rutas y perfiles. Ejecutar la suite completa y convenciones antes de cada commit de implementación según las reglas actuales; añadir pruebas de navegador donde el comportamiento visual o la ausencia de editor lo requiera. Validar migraciones y concurrencia en MySQL además de las pruebas rápidas en SQLite.
 
-No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: establecer una línea base reproducible en fase 0 y acordar umbrales antes del piloto.
+No se fijaron umbrales numéricos antes del piloto. En fase 11, bajo la autonomía autorizada por el propietario, se adoptan criterios técnicos de aceptación comparativa sobre la base real 0.47.0: [mediciones, justificación y límites de laboratorio](phase-11-seo-performance.md). Estos criterios no se presentan como acuerdos anteriores ni como mediciones de Core Web Vitals de producción.
 
 ## 12. Riesgos y decisiones que evita este plan
 
@@ -666,7 +668,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). La fase 8 está aceptada con [evidencia](phase-8-results.md). La fase 9 está aceptada con [resultados y excepción explícita](phase-9-results.md); Claude queda pendiente de seguimiento y no certificado por aplazamiento autorizado del propietario. La fase 10 está aceptada con [resultados](phase-10-results.md); la fase 11 está autorizada y aún no se inició.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). La fase 8 está aceptada con [evidencia](phase-8-results.md). La fase 9 está aceptada con [resultados y excepción explícita](phase-9-results.md); Claude queda pendiente de seguimiento y no certificado por aplazamiento autorizado del propietario. La fase 10 está aceptada con [resultados](phase-10-results.md); la fase 11 está aceptada tras revisión independiente de los [resultados](phase-11-results.md), matriz, fuentes/assets y evidencia saneada. Se autoriza el cierre local 1.0.0; push, tag y despliegue remoto no forman parte de esta entrega.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan

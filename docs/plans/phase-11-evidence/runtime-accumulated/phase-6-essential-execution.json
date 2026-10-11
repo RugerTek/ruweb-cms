@@ -1,0 +1,119 @@
+{
+  "phase": 6,
+  "profile": "essential",
+  "runtime": "PHP 8.3",
+  "stages": [
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-fixture.php"
+      ],
+      "exit_code": 0,
+      "output": "Isolated MySQL fixture ready: ruweb_phase0_4ec96b4224dc\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-six-control.php",
+        "identity"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-six-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E06 browser essential submit\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-six-http.py"
+      ],
+      "exit_code": 0,
+      "output": "PASS Cookie-free discovery/read with explicit private-inbox role/scope and expired/invalid credential denials\nPASS MCP assignment/note/status, eight concurrent idempotent notes, stale conflict, invalid CSRF/form token and unpublished page rejection\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-six-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E06 browser essential tracked\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-six-control.php",
+        "fail-worker"
+      ],
+      "exit_code": 0,
+      "output": "PASS real worker exhausts four transport failures and retains submission\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-six-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E06 browser essential failed\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-six-http.py",
+        "--recover"
+      ],
+      "exit_code": 0,
+      "output": "PASS Four exhausted worker attempts expose observable failure while preserving the visitor submission\nPASS Eight concurrent real MySQL retry receipts and repeated active retry reserve only one recovered delivery\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-six-control.php",
+        "deliver-worker"
+      ],
+      "exit_code": 0,
+      "output": "PASS recovered real worker delivers exactly once to local mail log\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/E2E/phase-six-http.py",
+        "--complete"
+      ],
+      "exit_code": 0,
+      "output": "PASS Recovered delivery metadata and final resolved state; sent submission cannot queue another mail\n"
+    },
+    {
+      "command": [
+        "node",
+        "tests/E2E/phase-six-browser.cjs"
+      ],
+      "exit_code": 0,
+      "output": "PASS E2E06 browser essential sent\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-six-control.php",
+        "deliver-worker"
+      ],
+      "exit_code": 0,
+      "output": "PASS recovered real worker delivers exactly once to local mail log\n"
+    },
+    {
+      "command": [
+        "php",
+        "tests/E2E/phase-zero-cleanup.php"
+      ],
+      "exit_code": 0,
+      "output": "Removed isolated fixture database and credentials: ruweb_phase0_4ec96b4224dc\n"
+    }
+  ],
+  "status": "passed",
+  "cleanup": "guarded schema dropped, process stopped, private copy removed"
+}

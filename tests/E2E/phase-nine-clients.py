@@ -28,16 +28,24 @@ def private_write(path, text):
 
 def sanitize(value, secrets):
     if isinstance(value, dict):
-        return {key: ('[redacted]' if re.search(r'token|secret|authorization|password|cookie|preview_url', key, re.I)
+        return {key: ('[redacted]' if re.search(r'token|secret|authorization|password|cookie|preview_url', key, re.I) and not ('/' in key and re.search(r'\.(?:php|js|mjs|cjs|py|json|css|blade\.php)$', key))
                       else sanitize(item, secrets)) for key, item in value.items()}
     if isinstance(value, list):
         return [sanitize(item, secrets) for item in value]
     if isinstance(value, str):
+        # Tool content is itself a JSON string: redact its keys and URLs after
+        # decoding too, including PHP's escaped slashes and preview link tokens.
+        try:
+            embedded = json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            embedded = None
+        if isinstance(embedded, (dict, list)):
+            return json.dumps(sanitize(embedded, secrets), ensure_ascii=False)
         for secret in secrets:
             if secret:
                 value = value.replace(secret, '[redacted]')
         value = re.sub(r'ruweb_mcp_[A-Za-z0-9_-]+', '[redacted]', value)
-        value = re.sub(r'https?://[^\s"<>]+/preview/[^\s"<>]+', '[redacted preview]', value)
+        value = re.sub(r'(?:https?://[^/\s"<>]+)?/(?:draft-preview|preview)/[A-Za-z0-9_-]+', '[redacted preview]', value)
         return value
     return value
 

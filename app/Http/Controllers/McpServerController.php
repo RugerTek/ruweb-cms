@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\RevisionConflict;
 use App\Mcp\ToolRegistry;
+use App\Mcp\ToolArguments;
 use App\Models\Media;
 use App\Models\Menu;
 use App\Models\Page;
@@ -12,8 +13,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -116,26 +115,18 @@ class McpServerController extends Controller
             throw new \InvalidArgumentException('Missing required param: name.', -32602);
         }
 
-        if (in_array($name, ['content_versions', 'content_version', 'content_diff', 'content_reviews', 'content_propose', 'content_review_request', 'content_review_decide', 'content_review_comment', 'content_restore', 'content_preview_revoke', 'content_preview'], true)) {
-            Validator::make($arguments, ['type' => ['required', 'in:pages,posts'], 'id' => ['required', 'integer', 'min:1']])->validate();
-        }
-
-        if (str_starts_with((string) $name, 'submissions_')) {
-            Validator::make($arguments, ['form' => ['required', 'string', Rule::in(array_keys(config('cms.forms', [])))], 'id' => [$name === 'submissions_list' ? 'sometimes' : 'required', 'integer', 'min:1']])->validate();
-        }
-
-        if (in_array($name, ['custom_code_get', 'custom_code_activate', 'custom_code_deactivate'], true)) {
-            Validator::make($arguments, ['id' => ['required', 'integer', 'min:1']])->validate();
-        }
-        if ($name === 'custom_code_save') {
-            Validator::make($arguments, ['id' => ['sometimes', 'integer', 'min:1']])->validate();
-        }
-
         $handler = $this->resolveHandler($name);
-
-        if (! $handler) {
+        $schema = null;
+        foreach (ToolRegistry::all() as $tool) {
+            if ($tool['name'] === $name) {
+                $schema = $tool['inputSchema'];
+                break;
+            }
+        }
+        if (! $handler || $schema === null) {
             throw new \InvalidArgumentException("Unknown tool: {$name}.", -32601);
         }
+        ToolArguments::validate($arguments, $schema);
 
         $response = $handler($request, $arguments);
 
