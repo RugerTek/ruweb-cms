@@ -31,6 +31,10 @@ Fast, flexible and intuitive LLM-first CMS.
    php artisan cms:install
    ```
 
+   El instalador pregunta por el perfil **full** (panel editorial completo) o **essential** (panel operativo y edición por MCP), el idioma base y las credenciales del administrador. El **nombre de usuario es obligatorio**: 3–32 letras sin acentos, números, punto, guion o guion bajo; se guarda en minúsculas y debe ser único. Podés iniciar sesión con ese nombre o con el email.
+
+   Para elegir el perfil desde la línea de comandos: `php artisan cms:install --profile=essential` (o `full`). Se guarda en `config/cms.php`, sin variable de entorno; el instalador limpia los cachés de configuración y rutas. Si reinstalás, reiniciá los procesos persistentes. Una cuenta cuyo email ya existe conserva sus credenciales; si todavía no tiene nombre de usuario, el instalador lo solicita.
+
 5. (Opcional) Sembrar menú de ejemplo:
    ```bash
    php artisan db:seed --class="Database\\Seeders\\MenuSeeder"
@@ -49,6 +53,7 @@ URLs:
 ### Credenciales admin
 Durante `php artisan cms:install` podés elegirlas. Los defaults del repo (si no cambiás nada) también están en `.env.example`:
 ```env
+CMS_ADMIN_USERNAME=admin
 CMS_ADMIN_EMAIL=admin@ruweb.local
 CMS_ADMIN_PASSWORD=password
 ```

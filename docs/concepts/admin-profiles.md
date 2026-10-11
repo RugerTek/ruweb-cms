@@ -2,7 +2,7 @@
 
 `config/cms.php` owns `admin_profile`: `full` (default) or `essential`. It is versioned project configuration,
 not editorial data, and has no environment override. An invalid value fails startup with an explicit
-`cms.admin_profile` diagnostic. Existing installations retain full behavior.
+`cms.admin_profile` diagnostic. The installer asks for this choice (or accepts `--profile=full|essential`), writes it to this versioned file and clears configuration/routes caches. Restart persistent workers/server processes when reinstalling.
 
 Run `php artisan cms:capabilities` before planning page/template/section/collection work. MCP exposes the
 same secret-free manifest through `cms_capabilities` and `GET /mcp/capabilities`. It includes the profile,

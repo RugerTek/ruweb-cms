@@ -20,7 +20,7 @@ return [
     // Auth
     'login_identity' => 'Usuario o email',
     'field_username' => 'Nombre de usuario',
-    'username_help' => 'Opcional. De 3 a 32 caracteres: letras sin acentos, números, punto, guion y guion bajo. Se guarda en minúsculas.',
+    'username_help' => 'Obligatorio. De 3 a 32 caracteres: letras sin acentos, números, punto, guion y guion bajo. Se guarda en minúsculas.',
     'sign_in' => 'Iniciar sesión',
     'sign_in_subtitle' => 'Ingresa tus credenciales para continuar',
     'email' => 'Email',

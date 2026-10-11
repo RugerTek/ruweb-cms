@@ -304,6 +304,7 @@ return [
 
     'default_admin' => [
         'name' => env('CMS_ADMIN_NAME', 'Admin'),
+        'username' => env('CMS_ADMIN_USERNAME', 'admin'),
         'email' => env('CMS_ADMIN_EMAIL', 'admin@ruweb.local'),
         'password' => env('CMS_ADMIN_PASSWORD', 'password'),
     ],

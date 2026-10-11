@@ -79,7 +79,7 @@ editor shell and a `previewRender` POST route; everything else is a plain contro
 
 ## Admin sign-in identities
 
-Accounts may set an optional, unique `username` from Profile or the administrator-only Users screens.
+New accounts require a unique `username` in the installer and administrator-only Users screens. Profile and Users can change it but cannot clear it.
 Usernames are normalized to lowercase and contain 3–32 ASCII letters, digits, periods, hyphens or
 underscores; `@` is excluded so email and username identities cannot overlap. Existing accounts keep
 working with their email and no username is guessed during migration.

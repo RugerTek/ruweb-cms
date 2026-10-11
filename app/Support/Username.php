@@ -19,6 +19,6 @@ class Username
 
     public static function rules(?int $userId = null): array
     {
-        return ['nullable', 'string', 'min:3', 'max:32', 'regex:/\A[a-z0-9._-]+\z/', Rule::unique('users', 'username')->ignore($userId)];
+        return ['required', 'string', 'min:3', 'max:32', 'regex:/\A[a-z0-9._-]+\z/', Rule::unique('users', 'username')->ignore($userId)];
     }
 }

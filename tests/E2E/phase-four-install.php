@@ -18,8 +18,8 @@ if (DB::connection('phase4_guard')->select('SELECT SCHEMA_NAME FROM INFORMATION_
 }
 $command = Artisan::all()['cms:install'];
 $tester = new CommandTester($command);
-$tester->setInputs([$config['host'], (string) $config['port'], $database, $config['username'], $config['password'] ?? '', 'es', 'Phase Four First Admin', 'phase4-admin@example.test', 'Phase4-Admin-Only-2026!']);
-$status = $tester->execute([]);
+$tester->setInputs([$config['host'], (string) $config['port'], $database, $config['username'], $config['password'] ?? '', 'es', 'phase4-admin@example.test', 'Phase Four First Admin', 'phase4-admin', 'Phase4-Admin-Only-2026!']);
+$status = $tester->execute(['--profile' => config('cms.admin_profile')]);
 if ($status !== 0 || User::count() !== 1 || User::first()->role !== 'admin') {
     throw new RuntimeException('Real installer did not provision exactly one administrator.');
 }

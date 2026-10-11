@@ -45,8 +45,8 @@ try {
             throw new RuntimeException('Refuse existing schema.');
         }
         $tester = new CommandTester(Artisan::all()['cms:install']);
-        $tester->setInputs([config('database.connections.mysql.host'), (string) config('database.connections.mysql.port'), getenv('PHASE0_DATABASE'), config('database.connections.mysql.username'), config('database.connections.mysql.password') ?: '', 'es', 'Phase Ten', 'phase10@example.test', 'Phase10-Disposable-Only!']);
-        if ($tester->execute([]) !== 0) {
+        $tester->setInputs([config('database.connections.mysql.host'), (string) config('database.connections.mysql.port'), getenv('PHASE0_DATABASE'), config('database.connections.mysql.username'), config('database.connections.mysql.password') ?: '', 'es', 'phase10@example.test', 'Phase Ten', 'phase10-admin', 'Phase10-Disposable-Only!']);
+        if ($tester->execute(['--profile' => config('cms.admin_profile')]) !== 0) {
             throw new RuntimeException('Isolated installer failed (private output).');
         }
         if (config('database.connections.mysql.database') !== getenv('PHASE0_DATABASE')) {

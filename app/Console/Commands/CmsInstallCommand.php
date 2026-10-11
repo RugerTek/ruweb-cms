@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Support\AdminLoginPath;
+use App\Support\Username;
 use Database\Seeders\ContactPageSeeder;
 use Database\Seeders\HomepageSeeder;
 use Database\Seeders\LocaleSeeder;
@@ -12,10 +13,13 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class CmsInstallCommand extends Command
 {
-    protected $signature = 'cms:install';
+    protected $signature = 'cms:install {--profile= : Administration profile: full or essential}';
+
     protected $description = 'Install Rüweb CMS: configure database, run migrations, create admin user';
 
     public function handle(): int
@@ -28,10 +32,11 @@ class CmsInstallCommand extends Command
 
         // Check PHP version
         if (version_compare(PHP_VERSION, '8.2.0', '<')) {
-            $this->error('PHP 8.2 or higher is required. Current: ' . PHP_VERSION);
+            $this->error('PHP 8.2 or higher is required. Current: '.PHP_VERSION);
+
             return Command::FAILURE;
         }
-        $this->info('  ✓ PHP ' . PHP_VERSION);
+        $this->info('  ✓ PHP '.PHP_VERSION);
 
         // Check required extensions
         $required = ['pdo_mysql', 'mbstring', 'openssl', 'tokenizer', 'xml', 'ctype', 'fileinfo'];
@@ -42,10 +47,20 @@ class CmsInstallCommand extends Command
             }
         }
         if (! empty($missing)) {
-            $this->error('Missing PHP extensions: ' . implode(', ', $missing));
+            $this->error('Missing PHP extensions: '.implode(', ', $missing));
+
             return Command::FAILURE;
         }
         $this->info('  ✓ All required PHP extensions loaded');
+
+        $profile = $this->option('profile') ?? $this->choice(
+            'Administration profile', ['full', 'essential'], config('cms.admin_profile', 'full')
+        );
+        if (! in_array($profile, ['full', 'essential'], true)) {
+            $this->error('Administration profile must be full or essential.');
+
+            return Command::FAILURE;
+        }
 
         // Database configuration
         $this->info('');
@@ -72,31 +87,7 @@ class CmsInstallCommand extends Command
             'CMS_BASE_LOCALE' => $baseLocale,
         ]);
 
-        // Test connection and create database
-        try {
-            // Connect without database first to create it
-            config([
-                'database.connections.mysql.host' => $dbHost,
-                'database.connections.mysql.port' => $dbPort,
-                'database.connections.mysql.database' => null,
-                'database.connections.mysql.username' => $dbUser,
-                'database.connections.mysql.password' => $dbPass,
-            ]);
-
-            DB::purge('mysql');
-            DB::connection('mysql')->getPdo();
-
-            // Create database if it doesn't exist
-            DB::connection('mysql')->statement("CREATE DATABASE IF NOT EXISTS `{$dbName}`");
-
-            // Now reconnect with the database selected
-            config(['database.connections.mysql.database' => $dbName]);
-            DB::purge('mysql');
-            DB::connection('mysql')->getPdo();
-
-            $this->info('  ✓ Database connected');
-        } catch (\Exception $e) {
-            $this->error('Could not connect to database: ' . $e->getMessage());
+        if (! $this->configureDatabase($dbHost, $dbPort, $dbName, $dbUser, $dbPass)) {
             return Command::FAILURE;
         }
 
@@ -121,19 +112,26 @@ class CmsInstallCommand extends Command
         $this->info('  Admin User');
         $this->info('  ──────────');
 
-        $adminName = $this->ask('Admin name', config('cms.default_admin.name'));
         $adminEmail = $this->ask('Admin email', config('cms.default_admin.email'));
-        $adminPassword = $this->secret('Admin password') ?? config('cms.default_admin.password');
-
-        User::updateOrCreate(
-            ['email' => $adminEmail],
-            [
+        $admin = User::where('email', $adminEmail)->first();
+        if ($admin) {
+            if (! $admin->username) {
+                $admin->update(['username' => $this->askAdminUsername($admin->id)]);
+            }
+            $this->info('  ✓ Existing account preserved; manage it from the account panel');
+        } else {
+            $adminName = $this->ask('Admin name', config('cms.default_admin.name'));
+            $adminUsername = $this->askAdminUsername();
+            $adminPassword = $this->secret('Admin password') ?? config('cms.default_admin.password');
+            $admin = User::create([
                 'name' => $adminName,
+                'username' => $adminUsername,
+                'email' => $adminEmail,
                 'password' => Hash::make($adminPassword),
                 'role' => 'admin',
-            ]
-        );
-        $this->info('  ✓ Admin user created');
+            ]);
+            $this->info('  ✓ Admin user created');
+        }
 
         // Storage link
         if (! file_exists(public_path('storage'))) {
@@ -164,8 +162,11 @@ class CmsInstallCommand extends Command
         ]);
         $this->info('  ✓ Contact page seeded');
 
-        // Clear config
+        $this->persistProfile($profile);
         Artisan::call('config:clear');
+        Artisan::call('route:clear');
+        $this->info('  ✓ Administration profile: '.$profile);
+        $this->line('  Restart running workers/server processes after reinstalling.');
 
         $assetsBuilt = $this->frontendAssetsAreBuilt();
         if ($assetsBuilt) {
@@ -176,8 +177,9 @@ class CmsInstallCommand extends Command
         $this->info('  ════════════════════════════════');
         $this->info('  Rüweb CMS installed successfully!');
         $this->info('');
-        $this->info("  Login at: " . config('app.url') . AdminLoginPath::url());
+        $this->info('  Login at: '.config('app.url').AdminLoginPath::url());
         $this->info("  Email:    {$adminEmail}");
+        $this->info("  Username: {$admin->username}");
         $this->info('  ════════════════════════════════');
         $this->info('');
 
@@ -198,6 +200,65 @@ class CmsInstallCommand extends Command
         return Command::SUCCESS;
     }
 
+    protected function configureDatabase(string $dbHost, string $dbPort, string $dbName, string $dbUser, string $dbPass): bool
+    {
+        try {
+            // Connect without database first to create it
+            config([
+                'database.connections.mysql.host' => $dbHost,
+                'database.connections.mysql.port' => $dbPort,
+                'database.connections.mysql.database' => null,
+                'database.connections.mysql.username' => $dbUser,
+                'database.connections.mysql.password' => $dbPass,
+            ]);
+
+            DB::purge('mysql');
+            DB::connection('mysql')->getPdo();
+
+            // Create database if it doesn't exist
+            DB::connection('mysql')->statement("CREATE DATABASE IF NOT EXISTS `{$dbName}`");
+
+            // Now reconnect with the database selected
+            config(['database.connections.mysql.database' => $dbName]);
+            DB::purge('mysql');
+            DB::connection('mysql')->getPdo();
+
+            $this->info('  ✓ Database connected');
+        } catch (\Exception $e) {
+            $this->error('Could not connect to database: '.$e->getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function askAdminUsername(?int $userId = null): string
+    {
+        do {
+            $username = Username::normalize($this->ask('Admin username (required)'));
+            $validator = Validator::make(['username' => $username], ['username' => Username::rules($userId)]);
+            if ($validator->passes()) {
+                return $username;
+            }
+            $this->error($validator->errors()->first('username'));
+            if (! $this->input->isInteractive()) {
+                throw new ValidationException($validator);
+            }
+        } while (true);
+    }
+
+    protected function persistProfile(string $profile): void
+    {
+        $path = config_path('cms.php');
+        $content = file_get_contents($path);
+        $updated = preg_replace("/('admin_profile'\\s*=>\\s*)'[^']*'/", '$1'."'{$profile}'", $content, 1, $count);
+        if ($count !== 1 || file_put_contents($path, $updated) === false) {
+            throw new \RuntimeException('Could not save admin_profile in config/cms.php.');
+        }
+        config(['cms.admin_profile' => $profile]);
+    }
+
     /**
      * Vite writes this manifest on build; the layouts cannot resolve any asset without it.
      */
@@ -207,7 +268,7 @@ class CmsInstallCommand extends Command
             || file_exists(public_path('build/.vite/manifest.json'));
     }
 
-    private function updateEnv(array $values): void
+    protected function updateEnv(array $values): void
     {
         $envPath = base_path('.env');
         $content = file_get_contents($envPath);

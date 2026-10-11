@@ -25,6 +25,7 @@ class AdminUserManagementTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('admin.users.store'), [
             'name' => 'Editor User',
+            'username' => 'editor.user',
             'email' => 'editor@example.com',
             'role' => 'editor',
             'password' => 'password123',
@@ -34,6 +35,7 @@ class AdminUserManagementTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('users', [
             'name' => 'Editor User',
+            'username' => 'editor.user',
             'email' => 'editor@example.com',
             'role' => 'editor',
         ]);

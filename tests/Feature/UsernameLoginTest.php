@@ -62,7 +62,7 @@ class UsernameLoginTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_profile_can_set_normalize_keep_and_clear_a_username(): void
+    public function test_profile_can_set_normalize_keep_but_cannot_clear_a_username(): void
     {
         $user = User::factory()->create(['role' => 'editor']);
         $data = ['name' => $user->name, 'email' => $user->email];
@@ -71,8 +71,8 @@ class UsernameLoginTest extends TestCase
         $this->assertSame('angel', $user->fresh()->username);
         $this->put(route('admin.profile.information.update'), $data)->assertRedirect();
         $this->assertSame('angel', $user->fresh()->username);
-        $this->put(route('admin.profile.information.update'), $data + ['username' => ''])->assertRedirect();
-        $this->assertNull($user->fresh()->username);
+        $this->put(route('admin.profile.information.update'), $data + ['username' => ''])->assertSessionHasErrors('username');
+        $this->assertSame('angel', $user->fresh()->username);
     }
 
     public function test_profile_and_user_admin_reject_case_insensitive_duplicate_and_email_shaped_usernames(): void
@@ -87,6 +87,18 @@ class UsernameLoginTest extends TestCase
                 ->assertUnprocessable()->assertJsonValidationErrors('username');
         }
         $this->assertNull($user->fresh()->username);
+    }
+
+    public function test_creating_a_user_requires_a_nonempty_username(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $data = ['name' => 'New Editor', 'email' => 'new@example.test', 'role' => 'editor',
+            'password' => 'password123', 'password_confirmation' => 'password123'];
+        foreach ([[], ['username' => ''], ['username' => '  ']] as $username) {
+            $this->actingAs($admin)->postJson(route('admin.users.store'), $data + $username)
+                ->assertUnprocessable()->assertJsonValidationErrors('username');
+        }
+        $this->assertDatabaseMissing('users', ['email' => 'new@example.test']);
     }
 
     public function test_admin_can_create_update_and_find_users_by_username(): void

@@ -6,6 +6,12 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
+## 1.3.0 - 2026-10-11
+
+- `cms:install` pregunta por el perfil Full/Essential (también `--profile`), lo guarda en la configuración versionada y limpia los cachés de configuración y rutas.
+- El administrador inicial y los usuarios nuevos requieren un nombre de usuario único y normalizado; el perfil permite cambiarlo sin borrarlo. El ingreso acepta nombre de usuario o email.
+- La reinstalación y el seeder conservan las credenciales de una cuenta existente; pruebas de instalación y documentación cubren los nuevos requisitos.
+
 ## 1.2.0 - 2026-10-11 (3a3383e)
 
 - MCP con paridad de Live Editor: `pages_update` / `posts_update` editan en vivo (administradores) con semántica de parche; `pages_delete` / `posts_delete`, `taxonomies_*`, `redirects_*`, `not_found_*`, `settings_reset`, `submissions_delete` y la elección de portada por `settings_update`. Panel y MCP comparten `TaxonomyOperations`, `RedirectOperations`, `PageOperations::delete` y `ContentDeletion` (los borrados limpian enlaces de menú y reportan traducciones en `warnings`).

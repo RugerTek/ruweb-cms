@@ -20,7 +20,7 @@ return [
     // Auth
     'login_identity' => 'Username or email',
     'field_username' => 'Username',
-    'username_help' => 'Optional. 3–32 characters: unaccented letters, numbers, period, hyphen and underscore. Stored in lowercase.',
+    'username_help' => 'Required. 3–32 characters: unaccented letters, numbers, period, hyphen and underscore. Stored in lowercase.',
     'sign_in' => 'Sign in',
     'sign_in_subtitle' => 'Enter your credentials to continue',
     'email' => 'Email',
