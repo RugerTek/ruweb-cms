@@ -3,6 +3,7 @@
 namespace App\Services\Revisions;
 
 use App\Models\ContentRevision;
+use App\Services\Editorial\EditorialHistory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -64,7 +65,8 @@ class ContentRevisionLedger
             return DB::transaction(function () use ($callback, $recorded) {
                 $this->recordedThisRequest = $recorded;
 
-                return $callback();
+                // The transaction is the operation boundary, so editorial history records its outcome only once.
+                return app(EditorialHistory::class)->operation($callback);
             }, $attempts);
         } catch (\Throwable $exception) {
             $this->recordedThisRequest = $recorded;

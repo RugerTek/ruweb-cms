@@ -12,6 +12,71 @@ use Illuminate\Support\Facades\DB;
 /** Full restorable versions; intentionally independent from the snapshot hash ledger. */
 class EditorialHistory
 {
+    /** Operation nesting depth; while open, model hooks defer post-write captures to one final version. */
+    private static int $depth = 0;
+
+    /** @var array<string, true> records whose pre-write baseline was already taken in this operation */
+    private static array $touched = [];
+
+    /** @var array<string, class-string<Model>> records written in this operation, captured once on close */
+    private static array $pending = [];
+
+    /**
+     * One editorial operation yields at most one baseline and one resulting version per record, however many
+     * internal saves, media or taxonomy writes it performs. Run inside the operation's transaction so the final
+     * capture commits or rolls back with the content.
+     */
+    public function operation(callable $callback): mixed
+    {
+        if (self::$depth === 0) {
+            self::$touched = self::$pending = [];
+        }
+        self::$depth++;
+        try {
+            $result = $callback();
+            if (self::$depth === 1) {
+                foreach (self::$pending as $key => $class) {
+                    $record = $class::query()->find((int) substr($key, strrpos($key, '#') + 1));
+                    if ($record) {
+                        $this->capture($record);
+                    }
+                }
+            }
+
+            return $result;
+        } finally {
+            if (--self::$depth === 0) {
+                self::$touched = self::$pending = [];
+            }
+        }
+    }
+
+    /** Pre-write state from a model hook: taken once per record and operation, never an intermediate state. */
+    public function captureBefore(Model $model): void
+    {
+        if (self::$depth > 0) {
+            $key = $model->getTable().'#'.$model->getKey();
+            if (isset(self::$touched[$key])) {
+                return;
+            }
+            self::$touched[$key] = true;
+        }
+        $this->capture($model);
+    }
+
+    /** Post-write state from a model hook: deferred to the end of an open operation. */
+    public function captureAfter(Model $model): void
+    {
+        if (self::$depth === 0) {
+            $this->capture($model);
+
+            return;
+        }
+        $key = $model->getTable().'#'.$model->getKey();
+        self::$touched[$key] = true;
+        self::$pending[$key] = $model::class;
+    }
+
     public function model(string $type, int $id): Model
     {
         abort_unless(in_array($type, ['pages', 'posts']), 404);

@@ -64,7 +64,20 @@ Clients discover the tool list through `tools/list` rather than hardcoding it.
 A controller response with HTTP status >= 400 becomes a tool result with `isError: true` and retains
 its diagnostic in `content`. The RPC envelope may still use HTTP 200: clients must inspect `error`
 and `result.isError`, not only transport status. Successful controller responses set `isError: false`.
-REST keeps its original HTTP status (for example, 422 for a setting outside the writable allowlist).
+REST keeps its original HTTP status (for example, 422 for a setting outside the writable allowlist, 404 for a
+key that does not exist).
+
+Permission refusals — credential scope, account role, custom-code permission or a draft-only edit of a
+published record — answer HTTP 200 with JSON-RPC `error.code: -32003` and `error.data.reason`
+(`scope_denied` or `forbidden`), plus `scope`, `tool` and, for custom code, `required_scope` and
+`required_account_permission`. They are answers, not failures: `-32603` is reserved for real server errors,
+and HTTP 200 lets clients relay the refusal to the agent instead of reporting a failed transport. REST keeps
+HTTP 403.
+
+Writes that store composition HTML (`pages_create_draft`, `pages_update_draft`, `content_propose`) add
+top-level `warnings` when sanitization discarded submitted markup: `code: markup_removed`, the `field`, and
+`removed` entries such as `<script>`, `p[onclick]` or `.unknown-class`. The write still succeeds with the
+sanitized fragment; reread it before relying on the stored markup.
 
 ## Tools
 
@@ -183,6 +196,9 @@ are deleted, and no configuration file is written. The panel uses the same local
 Pages, posts, menus, settings and media expose `revision`. Send it as `expected_revision` when changing a record;
 legacy callers may omit it. The transaction locks and rereads the record before checking. REST returns 409 with
 cause, field, expected/current revision and recovery; RPC returns `error.code: -32009` for this conflict.
+A revision is a fingerprint of the editorial content, not a counter: it guarantees a write applies to exactly
+the content the caller read. Content that returns to an earlier state (A → B → A) has A's revision again, so a
+caller still holding A writes without conflict — safely, since nothing it read has changed.
 Legacy validation/authorization envelopes remain compatible. Never retry stale replacement content blindly:
 read the current record and merge the intended change.
 
@@ -289,7 +305,9 @@ The anonymous renderer checks revocation and expiry on every request, uses no-st
 and suppresses analytics, editor assets, forms and the admin bar. Token hashes are never returned, URLs are not
 stored in operation receipts, and links remain excluded from snapshots.
 
-History is read through bounded pages; version/diff field ranges recover long text without clipping revision or
+Each write operation records one version of its result, plus the prior state when history lacked it; internal
+saves, media and taxonomy writes within the operation never appear as intermediate versions. History is read
+through bounded pages; version/diff field ranges recover long text without clipping revision or
 version fingerprints. Never feed a clipped value back as replacement content. REST reads use
 `GET /mcp/content/{type}/{id}/{versions|version|diff|reviews}`. Writes use POST with
 `propose`, `review-request`, `review-decide`, `review-comment`, `restore`, `preview`, or `preview-revoke`.
@@ -318,7 +336,7 @@ Retry atomically reserves only failed/skipped delivery generations. Pending and 
 
 REST mirrors these tools at `GET /mcp/submissions/{form}`, `GET /mcp/submissions/{form}/{id}` and `POST /mcp/submissions/{form}/{id}/{assign|set-status|add-note|retry-notification}`. Missing records return 404, invalid input 422, stale/different retry inputs 409 (RPC `-32009`). Correct the named field or reread and merge before starting a new operation; retry a lost response with the exact same input/key.
 
-Role denial follows the existing JSON-RPC contract: HTTP 200 with `error.code: -32603` and the explicit authorization message; REST returns HTTP 403. Scope middleware denials return HTTP 403 and RPC `-32603`. Acceptance checks the exact code/message and unchanged data, rather than treating an arbitrary error as an authorization pass. Phase 9 interoperability review preserved these legacy envelopes; a global normalization requires a separate explicit contract change.
+Role and scope denials follow the permission refusal contract above: HTTP 200 with `error.code: -32003`, the explicit authorization message and `error.data.reason`; REST returns HTTP 403. Acceptance checks the exact code/message and unchanged data, rather than treating an arbitrary error as an authorization pass. This replaced the legacy `-32603` / RPC HTTP 403 envelopes, which clients reported as internal or transport failures.
 
 
 ## Trusted Custom Code (phase 8)
@@ -335,5 +353,6 @@ Save creates a complete immutable proposal; activate requires the exact reviewed
 `expected_revision` and durable `operation_key`. All writes require operation_key, and edits/deactivation
 also require revision. Retries recover the original result; changed input or stale revision returns 409 /
 RPC -32009. Evaluate takes a stable `target` reference and optional proposal `version_id`, and never executes
-code. Account and scope denials follow the existing HTTP403 / RPC -32603 contract. Read the full
+code. Account and scope denials return RPC -32003 with `required_scope` / `required_account_permission`
+(REST 403). Read the full
 [Custom Code contract](custom-code.md) before writing code, evaluating locale/group rules or recovering a frontend.

@@ -9,6 +9,7 @@ use App\Contracts\Editorial\Seoable;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
 use App\Support\RichTextSanitizer;
+use App\Traits\ComparesJsonByContent;
 use App\Traits\HasMedia;
 use App\Traits\HasPublicationState;
 use App\Traits\HasTaxonomies;
@@ -19,14 +20,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Post extends Model implements Mediable, Previewable, Publishable, Seoable
 {
-    use HasMedia, HasPublicationState, HasTaxonomies, HasTranslations;
+    use ComparesJsonByContent, HasMedia, HasPublicationState, HasTaxonomies, HasTranslations;
     use RecordsContentRevisions;
 
     protected static function booted(): void
     {
         static::saving(function ($model) {
             if ($model->exists && $model->isDirty()) {
-                app(EditorialHistory::class)->capture($model->newQuery()->findOrFail($model->id));
+                app(EditorialHistory::class)->captureBefore($model->newQuery()->findOrFail($model->id));
             }
             if (EditorialActor::current()?->isEditor() && ($model->status === 'published' || $model->getOriginal('status') === 'published') && (! $model->exists || $model->isDirty())) {
                 abort(403, __('editorial.publish_forbidden'));
@@ -35,7 +36,7 @@ class Post extends Model implements Mediable, Previewable, Publishable, Seoable
         static::deleting(function ($model) {
             abort_if(EditorialActor::current()?->isEditor() && $model->status === 'published', 403, __('editorial.publish_forbidden'));
         });
-        static::saved(fn ($model) => app(EditorialHistory::class)->capture($model));
+        static::saved(fn ($model) => app(EditorialHistory::class)->captureAfter($model));
     }
 
     protected $fillable = [

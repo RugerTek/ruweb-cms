@@ -44,9 +44,9 @@ def rpc(name, args, key='full', fail=False):
     error = 'error' in body or body.get('result', {}).get('isError') is True
     assert error == fail, (name, status, body)
     if fail:
-        # Scope middleware denies at HTTP level; role denials retain the JSON-RPC contract.
-        assert status == (403 if key == 'read' else 200), (name, status, body)
-        assert body.get('error', {}).get('code') == -32603, (name, status, body)
+        # Scope and role denials are JSON-RPC answers with a dedicated code, never an internal error.
+        assert status == 200, (name, status, body)
+        assert body.get('error', {}).get('code') == -32003, (name, status, body)
         messages = ({'Esta clave no permite esta operación.', 'This key does not allow this operation.'}
                     if key == 'read' else {'Solo un administrador puede publicar contenido.',
                                            'Only an administrator can publish content.'})

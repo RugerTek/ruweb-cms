@@ -71,7 +71,7 @@ else:
             snippets[name]=(concurrent_save_activate if name=='marker' else save_activate)(data,f'phase8-{name}')
         before=rpc('custom_code_get',{'id':snippets['marker']['id']})
         for key in ['full','editor','draft','read','code-denied']:
-            status,raw=request('/mcp/rpc',{'jsonrpc':'2.0','id':1,'method':'tools/call','params':{'name':'custom_code_activate','arguments':{'id':snippets['marker']['id']}}},key);assert status==403 and json.loads(raw)['error']['code']==-32603
+            status,raw=request('/mcp/rpc',{'jsonrpc':'2.0','id':1,'method':'tools/call','params':{'name':'custom_code_activate','arguments':{'id':snippets['marker']['id']}}},key);assert status==200 and json.loads(raw)['error']['code']==-32003
         assert rpc('custom_code_get',{'id':snippets['marker']['id']})==before
         checks=['Eight synchronized HTTP save retries and eight activation retries return identical results with one version and one activation event per operation','Custom-code scoped administrator without explicit account permission is denied without mutation','Panel-created active CSS is readable through MCP','Four exact JavaScript versions activated by explicit code credential','Editorial full/editor/draft/read credentials all rejected before executable mutation']
     elif stage=='exact':

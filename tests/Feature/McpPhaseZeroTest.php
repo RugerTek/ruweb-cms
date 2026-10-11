@@ -116,7 +116,7 @@ class McpPhaseZeroTest extends TestCase
             $before = $entity->fresh()->getAttributes();
             foreach (['admin', 'editor'] as $role) {
                 $this->withToken(McpApiKey::issue(User::factory()->create(['role' => $role]), $role, 'full', null));
-                $this->rpc($plural.'_update_draft', [rtrim($plural, 's').'_id' => $entity->id, 'title' => 'Wrong'])->assertJsonPath('error.code', -32603);
+                $this->rpc($plural.'_update_draft', [rtrim($plural, 's').'_id' => $entity->id, 'title' => 'Wrong'])->assertJsonPath('error.code', -32003);
                 $this->patchJson('/mcp/'.$plural.'/'.$entity->id.'/draft', ['title' => 'Wrong'])->assertForbidden();
                 $this->assertSame($before, $entity->fresh()->getAttributes());
             }

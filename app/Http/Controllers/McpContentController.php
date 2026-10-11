@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mcp\ContentResponse;
+use App\Mcp\SanitizationNotice;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Post;
@@ -106,7 +107,10 @@ class McpContentController extends Controller
 
     public function editorialWrite(Request $request, string $type, int $id, string $action): JsonResponse
     {
-        return response()->json(['data' => app(EditorialOperations::class)->write($request->user(), $type, $id, $action, $request->all())]);
+        $data = app(EditorialOperations::class)->write($request->user(), $type, $id, $action, $request->all());
+        $warnings = $action === 'propose' ? SanitizationNotice::forContent($request->input('changes.content_json')) : [];
+
+        return response()->json(['data' => $data] + ($warnings === [] ? [] : ['warnings' => $warnings]));
     }
 
     public function readField(Request $request, string $type, int $id): JsonResponse

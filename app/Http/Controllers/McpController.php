@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mcp\ContentResponse;
+use App\Mcp\SanitizationNotice;
 use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Menu;
@@ -84,7 +85,7 @@ class McpController extends Controller
     {
         $page = app(OperationReceipt::class)->run($request->user(), $request->input('operation_key'), 'pages_create_draft', $request->all(), fn () => app(PageOperations::class)->save($request->user(), $request->all(), draftOnly: true));
 
-        return response()->json(['data' => $this->serializePage($page)], 201);
+        return response()->json(['data' => $this->serializePage($page)] + $this->sanitizationWarnings($request), 201);
     }
 
     public function pagesUpdateDraft(Request $request, Page $page): JsonResponse
@@ -92,7 +93,7 @@ class McpController extends Controller
         Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
         $page = app(PageOperations::class)->save($request->user(), $request->all(), $page, draftOnly: true);
 
-        return response()->json(['data' => $this->serializePage($page)]);
+        return response()->json(['data' => $this->serializePage($page)] + $this->sanitizationWarnings($request));
     }
 
     public function pagesPublish(Request $request, Page $page): JsonResponse
@@ -277,11 +278,12 @@ class McpController extends Controller
         if (! $request->user()->isAdmin()) {
             throw new AuthorizationException('Only admins can update settings through MCP.');
         }
-        if (! in_array($key, config('cms.mcp.settings_writable_keys', []), true)) {
-            return response()->json(['message' => 'Setting key is read-only in MCP.'], 422);
-        }
+        // Existence first: an unknown key is reported as unknown, not as a protected one.
         if (! Setting::where('key', $key)->exists()) {
             return response()->json(['message' => 'Setting not found.'], 404);
+        }
+        if (! in_array($key, config('cms.mcp.settings_writable_keys', []), true)) {
+            return response()->json(['message' => 'Setting key is read-only in MCP.'], 422);
         }
         $validated = Validator::make($request->all(), ['value' => ['present'], 'locale' => ['nullable', 'string'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
         app(SettingOperations::class)->update($request->user(), [$key => $validated['value']], $validated['locale'] ?? null, isset($validated['expected_revision']) ? [$key => $validated['expected_revision']] : []);
@@ -366,6 +368,13 @@ class McpController extends Controller
         if (! in_array($request->user()->role, config('cms.roles', []), true)) {
             throw new AuthorizationException('Unauthorized role for MCP operation.');
         }
+    }
+
+    private function sanitizationWarnings(Request $request): array
+    {
+        $warnings = SanitizationNotice::forContent($request->input('content_json'));
+
+        return $warnings === [] ? [] : ['warnings' => $warnings];
     }
 
     protected function serializePage(Page $page): array

@@ -22,8 +22,20 @@ final class CompositionHtmlSanitizer
 
     private const DROP = ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select', 'option', 'noscript', 'template', 'svg', 'math', 'head', 'link', 'meta', 'base'];
 
+    /** @var array<int, string> what the last sanitize() discarded, e.g. `<script>`, `a[onclick]`, `.foo` */
+    private array $removed = [];
+
+    /** What sanitizing this fragment would discard, so callers can say so instead of reporting a silent success. */
+    public function removals(?string $html): array
+    {
+        $this->sanitize($html);
+
+        return array_values(array_unique($this->removed));
+    }
+
     public function sanitize(?string $html): ?string
     {
+        $this->removed = [];
         if ($html === null) {
             return null;
         }
@@ -114,6 +126,7 @@ final class CompositionHtmlSanitizer
                 continue;
             }
             if (! $node instanceof DOMElement || in_array(strtolower($node->tagName), self::DROP, true)) {
+                $this->removed[] = $node instanceof DOMElement ? '<'.strtolower($node->tagName).'>' : $node->nodeName;
                 $parent->removeChild($node);
 
                 continue;
@@ -121,6 +134,7 @@ final class CompositionHtmlSanitizer
             $this->cleanChildren($node);
             $tag = strtolower($node->tagName);
             if (! in_array($tag, self::TAGS, true)) {
+                $this->removed[] = '<'.$tag.'> (content kept)';
                 while ($node->firstChild) {
                     $parent->insertBefore($node->firstChild, $node);
                 }
@@ -138,21 +152,27 @@ final class CompositionHtmlSanitizer
             });
             foreach (iterator_to_array($node->attributes) as $attribute) {
                 if (! in_array(strtolower($attribute->name), $allowed, true)) {
+                    $this->removed[] = $tag.'['.strtolower($attribute->name).']';
                     $node->removeAttribute($attribute->name);
                 }
             }
-            $classes = preg_split('/\s+/', trim($node->getAttribute('class'))) ?: [];
+            $classes = array_filter(preg_split('/\s+/', trim($node->getAttribute('class'))) ?: []);
+            foreach (array_diff($classes, self::CLASSES) as $class) {
+                $this->removed[] = '.'.$class;
+            }
             $classes = array_values(array_intersect(array_unique($classes), self::CLASSES));
             $node->removeAttribute('class');
             if ($classes) {
                 $node->setAttribute('class', implode(' ', $classes));
             }
             if ($node->hasAttribute('id') && ! preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{0,79}$/D', $node->getAttribute('id'))) {
+                $this->removed[] = $tag.'[id]';
                 $node->removeAttribute('id');
             }
             if ($tag === 'img') {
                 $id = filter_var($node->getAttribute('data-media-id'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
                 if ($id === false) {
+                    $this->removed[] = '<img> without data-media-id';
                     $parent->removeChild($node);
 
                     continue;
@@ -164,6 +184,9 @@ final class CompositionHtmlSanitizer
             }
             if ($tag === 'a') {
                 $url = $this->safeUrl($node->getAttribute('href'));
+                if ($url === null && $node->hasAttribute('href')) {
+                    $this->removed[] = 'a[href]';
+                }
                 $node->removeAttribute('href');
                 if ($url !== null) {
                     $node->setAttribute('href', $url);
@@ -178,10 +201,12 @@ final class CompositionHtmlSanitizer
             }
             foreach (['colspan', 'rowspan'] as $name) {
                 if ($node->hasAttribute($name) && ! preg_match('/^(?:[1-9]|[1-9][0-9])$/D', $node->getAttribute($name))) {
+                    $this->removed[] = $tag.'['.$name.']';
                     $node->removeAttribute($name);
                 }
             }
             if ($node->hasAttribute('scope') && ! in_array($node->getAttribute('scope'), ['row', 'col', 'rowgroup', 'colgroup'], true)) {
+                $this->removed[] = $tag.'[scope]';
                 $node->removeAttribute('scope');
             }
         }

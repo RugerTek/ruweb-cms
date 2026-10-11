@@ -37,7 +37,7 @@ trait HasTaxonomies
             $this->taxonomies()->attach($ids);
         }
         if ($this instanceof Post) {
-            app(EditorialHistory::class)->capture($this);
+            app(EditorialHistory::class)->captureAfter($this);
         }
     }
 }

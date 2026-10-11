@@ -61,8 +61,8 @@ versioned project files. For Claude Code, a named HTTP MCP server accepts an Aut
 private configuration file, or the client's supported secure credential mechanism. Do not place secrets in
 shell arguments, shared logs or committed JSON. Client prompts never grant server permissions.
 
-A transport 401 means missing, expired or revoked credentials. Existing scope denials remain HTTP 403 with
-RPC `-32603`; account-role denials retain HTTP 200 with RPC `-32603`. A controller-level failure can return
+A transport 401 means missing, expired or revoked credentials. Scope and account-role denials return HTTP 200
+with RPC `-32003` and `error.data.reason`; they are refusals, not server failures. A controller-level failure can return
 `result.isError: true` with a diagnostic in its text content. Inspect these fields, not just HTTP 200.
 Conflict errors use RPC `-32009` (REST 409); validation errors identify the input to correct. This release
 preserves legacy error envelopes rather than silently changing their meaning.

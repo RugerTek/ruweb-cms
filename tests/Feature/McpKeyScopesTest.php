@@ -48,7 +48,7 @@ class McpKeyScopesTest extends TestCase
         $this->postJson('/mcp/pages/drafts', ['title' => 'Denied'])->assertForbidden();
         $this->patchJson('/mcp/settings/site_name', ['value' => 'Denied'])->assertForbidden();
         $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/call', 'params' => ['name' => 'pages_create_draft', 'arguments' => ['title' => 'Denied']]])
-            ->assertForbidden()->assertJsonPath('error.code', -32603);
+            ->assertOk()->assertJsonPath('error.code', -32003)->assertJsonPath('error.data.scope', 'read-only');
         $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/call', 'params' => ['name' => 'pages_list', 'arguments' => []]])->assertOk();
         $this->assertSame(0, Page::count());
     }
@@ -63,7 +63,7 @@ class McpKeyScopesTest extends TestCase
         $this->postJson('/mcp/pages/'.$page->id.'/publish')->assertForbidden();
         $page->forceFill(['status' => 'published', 'published_at' => now()])->save();
         $this->patchJson('/mcp/pages/'.$page->id.'/draft', ['title' => 'Denied'])->assertForbidden();
-        $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 3, 'method' => 'tools/call', 'params' => ['name' => 'pages_update_draft', 'arguments' => ['page_id' => $page->id, 'title' => 'Denied']]])->assertForbidden();
+        $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 3, 'method' => 'tools/call', 'params' => ['name' => 'pages_update_draft', 'arguments' => ['page_id' => $page->id, 'title' => 'Denied']]])->assertOk()->assertJsonPath('error.code', -32003);
         $this->assertSame('published', $page->fresh()->status);
         $this->patchJson('/mcp/settings/site_name', ['value' => 'Denied'])->assertForbidden();
     }

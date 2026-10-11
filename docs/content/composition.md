@@ -11,7 +11,8 @@ compatibility information instead of converting the fragment into generic visual
 `sections.content.html` is a complete fragment in one locale. The DOM parser admits section/article/div/span,
 paragraphs, headings h1–h6, line/section breaks, emphasis, links, lists, blockquotes, figures, tables and
 pre/code. Scripts, styles, forms and controls, embedded documents, SVG/MathML and active namespaces are
-removed. The renderer never interprets PHP, Blade or JavaScript stored in content.
+removed. The renderer never interprets PHP, Blade or JavaScript stored in content. MCP writes report what
+was removed in `warnings` (`markup_removed`) instead of succeeding silently; see [MCP](../operations/mcp.md).
 
 Common attributes: allowlisted `class`, safe `id`, `title`. Links admit `href`, `_blank` with generated
 `noopener noreferrer`; URL schemes are HTTP(S), mailto and tel, plus root-relative paths and anchors.

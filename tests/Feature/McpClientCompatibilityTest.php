@@ -31,7 +31,7 @@ class McpClientCompatibilityTest extends TestCase
             $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'method' => 'notifications/initialized'])->assertStatus(202);
             if ($scope !== 'full') {
                 $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/call', 'params' => ['name' => 'menus_create', 'arguments' => ['name' => 'Denied', 'slug' => 'denied']]])
-                    ->assertForbidden()->assertJsonPath('error.code', -32603);
+                    ->assertOk()->assertJsonPath('error.code', -32003)->assertJsonPath('error.data.tool', 'menus_create');
             }
         }
         $this->assertDatabaseMissing('menus', ['slug' => 'denied']);

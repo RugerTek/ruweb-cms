@@ -6,7 +6,17 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
-## 1.0.0 - 2026-10-10
+## 1.0.1 - 2026-10-10
+
+- MCP: los rechazos de permisos (alcance de la credencial, rol o permiso de Custom Code) responden HTTP 200 con JSON-RPC `-32003` y `error.data.reason`, en lugar de `-32603`/HTTP 403, que los clientes mostraban como fallo interno o de transporte. REST mantiene 403.
+- Historial editorial: cada operación registra una única versión de su resultado (más el estado previo si faltaba); los guardados internos, medios y taxonomías ya no generan versiones intermedias.
+- MCP: `pages_create_draft`, `pages_update_draft` y `content_propose` devuelven `warnings` (`markup_removed`) con el marcado HTML descartado por la sanitización, en lugar de un éxito silencioso.
+- MCP: los errores de validación (`-32602`) nombran en `error.message` los campos a corregir, porque muchos clientes solo muestran el mensaje al agente; `error.data` conserva el detalle completo.
+- MCP: `settings_update` con una clave inexistente responde «Setting not found.» (404) en lugar de presentarla como de solo lectura.
+- Páginas y posts: reenviar el mismo contenido JSON con otro orden de claves (MySQL las reordena) ya no cuenta como cambio ni actualiza `updated_at`.
+- Docs: contrato de rechazos, avisos de sanitización, versiones por operación y semántica de `revision` como huella de contenido (ciclo A → B → A).
+
+## 1.0.0 - 2026-10-10 (9385e18)
 
 - MCP valida argumentos requeridos, tipos JSON y límites anunciados antes del dispatcher; getters sin selector devuelven diagnósticos recuperables por campo en lugar de errores 500.
 - Candidato final probado con PHP 8.3 real, recorridos acumulados y piloto Codex conectado desde el panel en ambos perfiles; guía de operación/recovery y criterios comparativos de SEO/rendimiento reproducibles.

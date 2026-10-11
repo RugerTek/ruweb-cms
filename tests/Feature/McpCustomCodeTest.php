@@ -64,13 +64,13 @@ class McpCustomCodeTest extends TestCase
             $this->getJson('/mcp/custom-code')->assertForbidden();
             $this->getJson('/mcp/custom-code/destinations')->assertForbidden();
             foreach (['list', 'get', 'save', 'activate', 'deactivate', 'evaluate', 'destinations'] as $operation) {
-                $this->rpc('custom_code_'.$operation)->assertForbidden()->assertJsonPath('error.code', -32603);
+                $this->rpc('custom_code_'.$operation)->assertOk()->assertJsonPath('error.code', -32003)->assertJsonPath('error.data.required_scope', 'custom-code');
             }
         }
         $unprivileged = User::factory()->create(['role' => 'admin', 'can_manage_custom_code' => false]);
         $this->withToken(McpApiKey::issue($unprivileged, 'Custom code', 'custom-code', null));
         $this->getJson('/mcp/custom-code')->assertForbidden();
-        $this->rpc('custom_code_list')->assertForbidden()->assertJsonPath('error.code', -32603);
+        $this->rpc('custom_code_list')->assertOk()->assertJsonPath('error.code', -32003)->assertJsonPath('error.data.required_account_permission', 'can_manage_custom_code');
     }
 
     public function test_validation_stale_revisions_and_retry_conflicts_survive_transport_adaptation(): void

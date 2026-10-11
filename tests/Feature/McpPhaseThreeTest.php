@@ -44,7 +44,7 @@ class McpPhaseThreeTest extends TestCase
             $this->getJson('/mcp/locales')->assertOk()->assertJsonCount(2, 'data.installed');
             $this->rpc('cms_schema', ['type' => 'posts'])->assertOk()->assertJsonPath('result.isError', false);
             $this->rpc('locales_list')->assertOk()->assertJsonPath('result.isError', false);
-            $this->rpc('locales_configure', ['locales' => ['en' => ['is_active' => false]]])->assertForbidden();
+            $this->rpc('locales_configure', ['locales' => ['en' => ['is_active' => false]]])->assertOk()->assertJsonPath('error.code', -32003);
             $this->postJson('/mcp/locales', ['locales' => ['en' => ['is_active' => false]]])->assertForbidden();
         }
         $this->assertTrue(Locale::where('code', 'en')->firstOrFail()->is_active);
@@ -169,13 +169,13 @@ class McpPhaseThreeTest extends TestCase
             $this->postJson('/mcp/content/pages/'.$page->id.'/'.$path, $body)->assertForbidden();
         }
         foreach (['content_translate' => ['locale' => 'en'], 'content_translation_acknowledge' => ['field' => 'meta.title', 'base_hash' => str_repeat('0', 64)], 'content_publication' => ['action' => 'unpublish'], 'content_preview' => []] as $tool => $body) {
-            $this->rpc($tool, $body + ['type' => 'pages', 'id' => $page->id])->assertForbidden();
+            $this->rpc($tool, $body + ['type' => 'pages', 'id' => $page->id])->assertOk()->assertJsonPath('error.code', -32003);
         }
         $this->withToken($this->token('admin', 'draft-only'));
         $this->postJson('/mcp/content/pages/'.$page->id.'/translation-acknowledge', ['field' => 'meta.title', 'base_hash' => str_repeat('0', 64)])->assertForbidden();
-        $this->rpc('content_translation_acknowledge', ['type' => 'pages', 'id' => $page->id, 'field' => 'meta.title', 'base_hash' => str_repeat('0', 64)])->assertForbidden();
-        $this->rpc('content_publication', ['type' => 'pages', 'id' => $page->id, 'action' => 'unpublish'])->assertForbidden();
-        $this->rpc('media_authorize_upload')->assertForbidden();
+        $this->rpc('content_translation_acknowledge', ['type' => 'pages', 'id' => $page->id, 'field' => 'meta.title', 'base_hash' => str_repeat('0', 64)])->assertOk()->assertJsonPath('error.code', -32003);
+        $this->rpc('content_publication', ['type' => 'pages', 'id' => $page->id, 'action' => 'unpublish'])->assertOk()->assertJsonPath('error.code', -32003);
+        $this->rpc('media_authorize_upload')->assertOk()->assertJsonPath('error.code', -32003);
         $this->postJson('/mcp/media/upload-authorization')->assertForbidden();
         $this->assertSame($before, [Page::count(), DB::table('editorial_versions')->count(), DB::table('editorial_preview_links')->count()]);
         $this->assertSame('published', $page->fresh()->status);

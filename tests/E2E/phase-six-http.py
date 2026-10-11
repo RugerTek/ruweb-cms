@@ -122,8 +122,8 @@ else:
     for key in ('read', 'draft', 'editor'):
         assert rpc('submissions_get', identity, key)['id'] == fixture['id']
     for key in ('read', 'draft', 'viewer'):
-        rejected = rpc('submissions_assign', identity | {'assigned_to': manifest['admin_id'], 'expected_revision': original['revision'], 'operation_key': 'e2e06-denied-' + key}, key, denied=200 if key == 'viewer' else 403)
-        assert rejected['error']['code'] == -32603
+        rejected = rpc('submissions_assign', identity | {'assigned_to': manifest['admin_id'], 'expected_revision': original['revision'], 'operation_key': 'e2e06-denied-' + key}, key, denied=200)
+        assert rejected['error']['code'] == -32003
         if key == 'viewer':
             assert rejected['error']['message'] == 'Unauthorized role for submission operation.'
         else:

@@ -66,7 +66,7 @@ class McpSubmissionsTest extends TestCase
             $this->withToken(McpApiKey::issue($actor, $scope, $scope, null));
             $this->rpcCall('submissions_get', ['form' => 'contact', 'id' => $record->id])->assertOk();
             foreach (['assign', 'set_status', 'add_note', 'retry_notification'] as $action) {
-                $this->rpcCall('submissions_'.$action, ['form' => 'contact', 'id' => $record->id])->assertForbidden()->assertJsonPath('error.code', -32603)->assertJsonPath('error.message', __('security.scope_denied'));
+                $this->rpcCall('submissions_'.$action, ['form' => 'contact', 'id' => $record->id])->assertOk()->assertJsonPath('error.code', -32003)->assertJsonPath('error.message', __('security.scope_denied'))->assertJsonPath('error.data.reason', 'scope_denied');
                 $this->postJson('/mcp/submissions/contact/'.$record->id.'/'.str_replace('_', '-', $action), [])->assertForbidden();
             }
         }

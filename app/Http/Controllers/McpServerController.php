@@ -27,6 +27,9 @@ class McpServerController extends Controller
 {
     private const PROTOCOL_VERSION = '2024-11-05';
 
+    /** Implementation-defined JSON-RPC code for authorization refusals; -32603 stays reserved for real failures. */
+    public const FORBIDDEN = -32003;
+
     public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode) {}
 
     public function handle(Request $request): JsonResponse
@@ -61,9 +64,9 @@ class McpServerController extends Controller
                 default => throw new \InvalidArgumentException("Method not found: {$method}", -32601),
             };
         } catch (ValidationException $e) {
-            return $this->errorResponse($id, -32602, 'Validation failed.', $e->errors());
+            return $this->errorResponse($id, -32602, $this->validationMessage($e->errors()), $e->errors());
         } catch (AuthorizationException $e) {
-            return $this->errorResponse($id, -32603, $e->getMessage());
+            return $this->errorResponse($id, self::FORBIDDEN, $e->getMessage(), ['reason' => 'forbidden', 'recovery' => 'Not a server failure. The account role or record state does not allow this operation.']);
         } catch (ModelNotFoundException) {
             return $this->errorResponse($id, -32602, 'Resource not found.');
         } catch (RevisionConflict $e) {
@@ -280,6 +283,15 @@ class McpServerController extends Controller
     private function without(array $args, string ...$keys): array
     {
         return array_diff_key($args, array_flip($keys));
+    }
+
+    /** Many clients show agents only `error.message`, so it names the fields to correct; `data` keeps them all. */
+    private function validationMessage(array $errors): string
+    {
+        $fields = array_map(fn ($field, $messages) => $field.': '.($messages[0] ?? 'invalid'), array_keys($errors), $errors);
+        $message = 'Validation failed. '.implode(' ', array_slice($fields, 0, 5)).(count($fields) > 5 ? ' (+'.(count($fields) - 5).' more in error.data)' : '');
+
+        return mb_strlen($message) > 1000 ? mb_substr($message, 0, 997).'...' : $message;
     }
 
     private function errorResponse(mixed $id, int $code, string $message, mixed $data = null): JsonResponse

@@ -12,6 +12,7 @@ use App\Support\LinkDestination;
 use App\Support\PageComposition;
 use App\Support\SectionRichText;
 use App\Support\SiteUrl;
+use App\Traits\ComparesJsonByContent;
 use App\Traits\HasMedia;
 use App\Traits\HasPublicationState;
 use App\Traits\HasTranslations;
@@ -22,14 +23,14 @@ use Illuminate\Support\Facades\View;
 
 class Page extends Model implements Mediable, Previewable, Publishable, Seoable
 {
-    use HasMedia, HasPublicationState, HasTranslations;
+    use ComparesJsonByContent, HasMedia, HasPublicationState, HasTranslations;
     use RecordsContentRevisions;
 
     protected static function booted(): void
     {
         static::saving(function ($model) {
             if ($model->exists && $model->isDirty()) {
-                app(EditorialHistory::class)->capture($model->newQuery()->findOrFail($model->id));
+                app(EditorialHistory::class)->captureBefore($model->newQuery()->findOrFail($model->id));
             }
             if (EditorialActor::current()?->isEditor() && ($model->status === 'published' || $model->getOriginal('status') === 'published') && (! $model->exists || $model->isDirty())) {
                 abort(403, __('editorial.publish_forbidden'));
@@ -38,7 +39,7 @@ class Page extends Model implements Mediable, Previewable, Publishable, Seoable
         static::deleting(function ($model) {
             abort_if(EditorialActor::current()?->isEditor() && $model->status === 'published', 403, __('editorial.publish_forbidden'));
         });
-        static::saved(fn ($model) => app(EditorialHistory::class)->capture($model));
+        static::saved(fn ($model) => app(EditorialHistory::class)->captureAfter($model));
     }
 
     protected $fillable = [

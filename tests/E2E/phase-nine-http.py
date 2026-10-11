@@ -70,7 +70,7 @@ assert status==200 and json.loads(raw)['error']['code']==-32009
 for key in ['read','draft']:
  before=rpc('submissions_get',identity)
  status,raw=request('/mcp/rpc',{'jsonrpc':'2.0','id':6,'method':'tools/call','params':{'name':'submissions_add_note','arguments':args|{'operation_key':'denied-'+key}}},key)
- assert status==403 and json.loads(raw)['error']['code']==-32603
+ assert status==200 and json.loads(raw)['error']['code']==-32003
  assert rpc('submissions_get',identity)==before
 passed('Changed retry input conflicts; read and draft scopes reject without mutating')
 (storage/('phase-nine-http-'+profile+'-results.json')).write_text(json.dumps({'profile':profile,'checks':checks,'interrupted_response':{'boundary':'TCP close after upstream success fully drained','committed_effect_count':1,'identical_receipt':True},'async_initial':'queued','submission_id':identity['id']},indent=2))

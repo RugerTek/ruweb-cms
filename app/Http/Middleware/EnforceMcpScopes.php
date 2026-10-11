@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\McpServerController;
 use App\Models\Page;
 use App\Models\Post;
 use Closure;
@@ -32,7 +33,7 @@ class EnforceMcpScopes
             || ($request->is('mcp/rpc') && is_string($rpcTool) && str_starts_with($rpcTool, 'custom_code_'));
         if ($customCode && ($scope !== 'custom-code' || ! $request->user()?->canManageCustomCode())) {
             return $request->is('mcp/rpc')
-                ? response()->json(['jsonrpc' => '2.0', 'id' => $request->input('id'), 'error' => ['code' => -32603, 'message' => __('security.scope_denied')]], 403)
+                ? $this->rpcDenied($request, $scope, ['required_scope' => 'custom-code', 'required_account_permission' => 'can_manage_custom_code'])
                 : response()->json(['message' => __('security.scope_denied')], 403);
         }
         if ($customCode) {
@@ -57,8 +58,7 @@ class EnforceMcpScopes
                 $allowed = false;
             }
             if (! $allowed) {
-                return response()->json(['jsonrpc' => '2.0', 'id' => $request->input('id'),
-                    'error' => ['code' => -32603, 'message' => __('security.scope_denied')]], 403);
+                return $this->rpcDenied($request, $scope);
             }
         } else {
             $allowed = $request->isMethod('GET');
@@ -82,5 +82,19 @@ class EnforceMcpScopes
         }
 
         return $next($request);
+    }
+
+    /**
+     * A permission refusal is an answer, not a transport or server failure: HTTP 200 so MCP clients relay the
+     * JSON-RPC error to the agent, and a dedicated code so it is never mistaken for -32603 (internal error).
+     */
+    private function rpcDenied(Request $request, string $scope, array $requirements = []): Response
+    {
+        return response()->json(['jsonrpc' => '2.0', 'id' => $request->input('id'), 'error' => [
+            'code' => McpServerController::FORBIDDEN,
+            'message' => __('security.scope_denied'),
+            'data' => ['reason' => 'scope_denied', 'scope' => $scope, 'tool' => $request->input('params.name')] + $requirements
+                + ['recovery' => 'Not a server failure. Use a credential whose scope and account permissions allow this tool.'],
+        ]]);
     }
 }
