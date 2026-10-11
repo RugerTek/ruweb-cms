@@ -18,6 +18,12 @@ class AdminBarCreationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->useAdminProfile('full');
+    }
+
     private function page(): Page
     {
         return Page::create(['title' => 'Front', 'slug' => 'front', 'template_key' => 'default', 'status' => 'published', 'published_at' => now(), 'content_json' => []]);

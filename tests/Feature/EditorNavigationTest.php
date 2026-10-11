@@ -12,6 +12,12 @@ class EditorNavigationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->useAdminProfile('full');
+    }
+
     public function test_page_editor_returns_to_frontend_page_when_opened_from_public_bar(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

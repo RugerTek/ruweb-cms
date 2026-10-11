@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ContactSubmission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminSubmissionsTest extends TestCase
@@ -19,8 +20,10 @@ class AdminSubmissionsTest extends TestCase
         ], $overrides));
     }
 
-    public function test_index_lists_submissions_with_tabs_counts_and_filters(): void
+    #[DataProvider('adminProfiles')]
+    public function test_index_lists_submissions_with_tabs_counts_and_filters(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
         $this->submission();
         $this->submission(['name' => 'Bruno Díaz', 'email' => 'bruno@example.com', 'subject' => 'Presupuesto', 'read_at' => now()]);
@@ -41,8 +44,10 @@ class AdminSubmissionsTest extends TestCase
             ->assertSee('Todavía no hay envíos');
     }
 
-    public function test_show_marks_the_submission_as_read_and_shows_metadata(): void
+    #[DataProvider('adminProfiles')]
+    public function test_show_marks_the_submission_as_read_and_shows_metadata(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $editor = User::factory()->create(['role' => 'editor']);
         $submission = $this->submission();
 
@@ -54,8 +59,10 @@ class AdminSubmissionsTest extends TestCase
         $this->assertNotNull($submission->fresh()->read_at);
     }
 
-    public function test_delete_removes_the_submission(): void
+    #[DataProvider('adminProfiles')]
+    public function test_delete_removes_the_submission(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
         $submission = $this->submission();
 
@@ -101,6 +108,7 @@ class AdminSubmissionsTest extends TestCase
 
     public function test_contact_page_editor_shows_form_section_controls(): void
     {
+        $this->useAdminProfile('full');
         $admin = User::factory()->create(['role' => 'admin']);
         \App\Models\Locale::query()->firstOrCreate(['code' => 'es'], ['name' => 'Español', 'is_base' => true, 'is_active' => true, 'is_public' => true, 'sort_order' => 0]);
         $this->seed(\Database\Seeders\ContactPageSeeder::class);

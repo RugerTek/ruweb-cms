@@ -29,6 +29,7 @@ class LiveEditorUiTest extends TestCase
     #[DataProvider('templates')]
     public function test_each_template_preserves_initial_values_and_exposes_shared_controls(string $template): void
     {
+        $this->useAdminProfile('full');
         $section = config("cms.templates.$template.sections")[0];
         $page = $this->page($template, [$section => ['heading' => 'Original heading', 'body' => 'Original body', 'image_id' => null]]);
         $response = $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('admin.pages.edit', $page));
@@ -80,6 +81,7 @@ class LiveEditorUiTest extends TestCase
 
     public function test_invalid_destination_is_rejected_and_empty_repeaters_are_persisted(): void
     {
+        $this->useAdminProfile('full');
         $page = $this->page('home', ['features' => ['logos' => [['label' => 'Existing']]], 'cta' => []]);
         $admin = User::factory()->create(['role' => 'admin']);
         $payload = ['title' => $page->title, 'slug' => $page->slug, 'template_key' => 'home', 'status' => 'published', 'content_json' => ['sections' => ['features' => ['logos' => ''], 'cta' => ['button_url' => 'javascript:bad()']]]];
@@ -92,6 +94,7 @@ class LiveEditorUiTest extends TestCase
 
     public function test_owner_can_delete_using_the_token_from_the_actual_delete_form(): void
     {
+        $this->useAdminProfile('full');
         $admin = User::factory()->create(['role' => 'admin']);
         foreach ([$this->page(), Post::create(['title' => 'Post', 'slug' => 'post', 'status' => 'draft'])] as $content) {
             $type = $content->getTable();
@@ -109,6 +112,7 @@ class LiveEditorUiTest extends TestCase
 
     public function test_entry_context_survives_locale_links_and_creation_of_a_translation(): void
     {
+        $this->useAdminProfile('full');
         Locale::create(['code' => 'es', 'name' => 'Español', 'is_base' => true, 'is_active' => true]);
         Locale::create(['code' => 'en', 'name' => 'English', 'is_active' => true]);
         $page = $this->page();
@@ -123,6 +127,7 @@ class LiveEditorUiTest extends TestCase
 
     public function test_reordering_a_stale_item_cannot_silently_acknowledge_an_unchanged_label(): void
     {
+        $this->useAdminProfile('full');
         Locale::create(['code' => 'es', 'name' => 'Español', 'is_base' => true]);
         Locale::create(['code' => 'en', 'name' => 'English']);
         $base = $this->page('home', ['features' => ['logos' => [['label' => 'First'], ['label' => 'Second']]]]);
@@ -141,6 +146,7 @@ class LiveEditorUiTest extends TestCase
 
     public function test_initial_rich_text_normalization_is_not_a_translation_review(): void
     {
+        $this->useAdminProfile('full');
         Locale::create(['code' => 'es', 'name' => 'Español', 'is_base' => true]);
         Locale::create(['code' => 'en', 'name' => 'English']);
         $base = $this->page('default', ['content' => ['body' => 'Original']]);

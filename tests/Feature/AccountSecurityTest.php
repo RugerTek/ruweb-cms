@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AccountSecurityTest extends TestCase
@@ -21,8 +22,10 @@ class AccountSecurityTest extends TestCase
 
 
 
-    public function test_reset_request_has_identical_response_for_known_unknown_and_throttled_account(): void
+    #[DataProvider('adminProfiles')]
+    public function test_reset_request_has_identical_response_for_known_unknown_and_throttled_account(string $profile): void
     {
+        $this->useAdminProfile($profile);
         Notification::fake();
         $user = User::factory()->create(['role' => 'admin']);
         foreach ([$user->email, 'unknown@example.test', $user->email] as $email) {
@@ -109,8 +112,10 @@ class AccountSecurityTest extends TestCase
         $this->assertNotSame($user->two_factor_secret, DB::table('users')->where('id', $user->id)->value('two_factor_secret'));
     }
 
-    public function test_two_factor_enrollment_and_login_challenge_are_complete(): void
+    #[DataProvider('adminProfiles')]
+    public function test_two_factor_enrollment_and_login_challenge_are_complete(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $user = User::factory()->create(['role' => 'admin']);
         $totp = app(Totp::class);
         $this->actingAs($user)->post(route('admin.two-factor.enable'), ['current_password' => 'password'])->assertRedirect();

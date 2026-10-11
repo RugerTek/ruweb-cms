@@ -33,7 +33,7 @@ class McpSubmissionsTest extends TestCase
     #[DataProvider('profiles')]
     public function test_reads_do_not_mark_read_and_full_editor_writes_share_panel_state(string $profile): void
     {
-        config(['cms.admin_profile' => $profile]);
+        $this->useAdminProfile($profile);
         $actor = User::factory()->create(['role' => 'editor']);
         $key = McpApiKey::issue($actor, 'Inbox', 'full', null);
         $record = $this->record();

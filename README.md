@@ -62,6 +62,12 @@ CMS_ADMIN_PASSWORD=password
 - Si te conecta a SQLite “sin querer”, revisá que en `.env` esté `DB_CONNECTION=mysql`.
 - Si `cms:install` no puede crear la DB, creala manualmente y asegurate de que `DB_DATABASE/DB_USERNAME/DB_PASSWORD` sean correctos.
 
+### Pruebas
+
+`composer test` ejecuta la suite con SQLite en memoria. Los tests de editores visuales seleccionan Full mediante `$this->useAdminProfile('full')`; los contratos exclusivos de Essential seleccionan `essential`. Para comportamientos compartidos, usá `#[DataProvider('adminProfiles')]` y seleccioná cada `$profile` con el mismo helper. No fuerces un perfil global en `Tests\TestCase`: la suite debe funcionar con cualquiera de las dos elecciones versionadas en `config/cms.php`.
+
+La suite puede ejecutarse en una copia del proyecto sin `.git`, pero requiere el ejecutable de Git para crear sus repositorios temporales privados. Los contratos de assets usan fixtures de Vite; su verificación no depende del manifest ni del servidor de desarrollo local.
+
 ## Phase 4 highlights
 
 - Blog collection with admin CRUD (`/admin/posts`) and public routes (`/blog`, `/blog/{slug}`)

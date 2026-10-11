@@ -8,14 +8,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AuthAndMediaSmokeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_admin_routes_render_public_404_for_unauthenticated_visitors(): void
+    #[DataProvider('adminProfiles')]
+    public function test_guest_admin_routes_render_public_404_for_unauthenticated_visitors(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $response = $this->get('/admin');
 
         $response->assertNotFound();
@@ -42,8 +45,10 @@ class AuthAndMediaSmokeTest extends TestCase
             ->assertViewIs('admin.auth.login');
     }
 
-    public function test_admin_can_upload_media_file(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_can_upload_media_file(string $profile): void
     {
+        $this->useAdminProfile($profile);
         Storage::fake('public');
         $admin = User::factory()->create(['role' => 'admin']);
 

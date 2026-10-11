@@ -4,14 +4,17 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminUserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_editor_cannot_access_user_management_routes(): void
+    #[DataProvider('adminProfiles')]
+    public function test_editor_cannot_access_user_management_routes(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $editor = User::factory()->create(['role' => 'editor']);
 
         $response = $this->actingAs($editor)->get(route('admin.users.index'));
@@ -19,8 +22,10 @@ class AdminUserManagementTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_admin_can_create_user_with_role(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_can_create_user_with_role(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->post(route('admin.users.store'), [

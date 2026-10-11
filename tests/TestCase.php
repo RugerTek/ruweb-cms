@@ -34,6 +34,19 @@ abstract class TestCase extends BaseTestCase
         parent::tearDown();
     }
 
+    /** @return array<string, array{string}> */
+    public static function adminProfiles(): array
+    {
+        return ['full' => ['full'], 'essential' => ['essential']];
+    }
+
+    /** Select a profile explicitly, including its route registration contract. */
+    protected function useAdminProfile(string $profile): void
+    {
+        config(['cms.admin_profile' => $profile]);
+        $this->rebuildRoutes();
+    }
+
     /**
      * Re-evaluate the HTTP route files so the login route reflects the current
      * admin_login_path. Production re-runs route files on every request; the

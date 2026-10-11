@@ -22,6 +22,8 @@ class EssentialEditorGuardTest extends TestCase
         $this->git('init', '-q');
         $this->git('config', 'user.email', 'guard@example.test');
         $this->git('config', 'user.name', 'Guard Test');
+        $this->git('config', 'core.hooksPath', '/dev/null');
+        $this->git('config', 'commit.gpgSign', 'false');
         $this->git('commit', '-qm', 'baseline', '--allow-empty');
     }
 
@@ -92,6 +94,13 @@ class EssentialEditorGuardTest extends TestCase
     {
         $this->expectException(ProcessFailedException::class);
         $this->check(since: 'missing-ref');
+    }
+
+    public function test_missing_git_metadata_fails_instead_of_silently_skipping(): void
+    {
+        File::deleteDirectory($this->repository.'/.git');
+        $this->expectException(ProcessFailedException::class);
+        $this->check();
     }
 
     private function writeEditor(string $contents): void

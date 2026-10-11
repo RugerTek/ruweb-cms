@@ -101,8 +101,10 @@ class FormSecurityWorkflowTest extends TestCase
         $this->withHeader('Host', 'evil.example')->post(route('forms.contact.store'), $this->payload(['recaptcha_token' => 'token']))->assertSessionHasErrors('recaptcha_token');
     }
 
-    public function test_inbox_assigns_changes_state_stores_escaped_notes_and_filters(): void
+    #[DataProvider('adminProfiles')]
+    public function test_inbox_assigns_changes_state_stores_escaped_notes_and_filters(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $editor = User::factory()->create(['role' => 'editor']);
         $this->post(route('forms.contact.store'), $this->payload());
         $record = ContactSubmission::firstOrFail();
@@ -117,8 +119,10 @@ class FormSecurityWorkflowTest extends TestCase
         $this->assertDatabaseHas('contact_submissions', ['id' => $record->id, 'workflow_status' => 'resolved', 'assigned_to' => null]);
     }
 
-    public function test_assignment_and_notes_validate_and_unauthorized_role_is_rejected(): void
+    #[DataProvider('adminProfiles')]
+    public function test_assignment_and_notes_validate_and_unauthorized_role_is_rejected(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $record = ContactSubmission::create(['name' => 'Ana', 'email' => 'ana@example.com', 'message' => 'Please contact me']);
         $args = ['form' => 'contact', 'submission' => $record->id];
         $viewer = User::factory()->create(['role' => 'viewer']);

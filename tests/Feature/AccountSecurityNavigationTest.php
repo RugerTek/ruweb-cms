@@ -6,6 +6,7 @@ use App\Models\McpApiKey;
 use App\Models\User;
 use App\Services\Security\Totp;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AccountSecurityNavigationTest extends TestCase
@@ -18,8 +19,10 @@ class AccountSecurityNavigationTest extends TestCase
             ->assertSee('data-tab="information" style="display:none"', false);
     }
 
-    public function test_enrollment_returns_to_visible_security_panel_and_displays_recovery_codes_once(): void
+    #[DataProvider('adminProfiles')]
+    public function test_enrollment_returns_to_visible_security_panel_and_displays_recovery_codes_once(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->travelTo(now()->startOfMinute());
         $user = User::factory()->create(['role' => 'admin']);
         $profile = route('admin.profile.index', ['tab' => 'security']);

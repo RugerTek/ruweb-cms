@@ -69,7 +69,7 @@ class McpClientCompatibilityTest extends TestCase
     public function test_missing_and_wrong_selector_types_are_recoverable_protocol_errors_in_both_profiles(): void
     {
         foreach (['full', 'essential'] as $profile) {
-            config(['cms.admin_profile' => $profile]);
+            $this->useAdminProfile($profile);
             $this->withToken(McpApiKey::issue(User::factory()->create(['role' => 'admin', 'can_manage_custom_code' => true]), 'Selectors', 'full', null));
             foreach ([
                 ['pages_get', 'page_id'], ['pages_update_draft', 'page_id'], ['pages_publish', 'page_id'],
@@ -97,7 +97,7 @@ class McpClientCompatibilityTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'admin', 'can_manage_custom_code' => true]);
         foreach (['full', 'essential'] as $profile) {
-            config(['cms.admin_profile' => $profile]);
+            $this->useAdminProfile($profile);
             foreach (\App\Mcp\ToolRegistry::all() as $tool) {
                 $required = $tool['inputSchema']['required'] ?? [];
                 if ($required === []) {

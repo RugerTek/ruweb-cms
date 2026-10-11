@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Media;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminMediaFiltersTest extends TestCase
@@ -32,8 +33,10 @@ class AdminMediaFiltersTest extends TestCase
         return $media;
     }
 
-    public function test_month_filter_limits_results_to_that_month(): void
+    #[DataProvider('adminProfiles')]
+    public function test_month_filter_limits_results_to_that_month(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
         $this->createMedia('april.webp', '2026-04-15 10:00:00');
         $this->createMedia('march.webp', '2026-03-31 23:59:59');

@@ -36,6 +36,8 @@ class StaleTranslationFieldsTest extends TestCase
 
     public function test_saving_stale_translation_without_changes_fails_validation(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
         [$base, $translation] = $this->createSyncedPageTranslation();
@@ -50,6 +52,8 @@ class StaleTranslationFieldsTest extends TestCase
 
     public function test_saving_stale_translation_with_changed_field_passes(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
         [$base, $translation] = $this->createSyncedPageTranslation();
@@ -64,6 +68,8 @@ class StaleTranslationFieldsTest extends TestCase
 
     public function test_saving_stale_translation_with_acknowledged_field_passes(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
         [$base, $translation] = $this->createSyncedPageTranslation();

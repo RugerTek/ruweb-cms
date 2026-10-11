@@ -17,7 +17,7 @@ class EssentialContentStatusTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['cms.admin_profile' => 'essential']);
+        $this->useAdminProfile('essential');
         Locale::create(['code' => 'es', 'name' => 'Español', 'is_base' => true, 'is_active' => true, 'is_public' => true]);
         $this->actingAs(User::factory()->create(['role' => 'admin']));
     }

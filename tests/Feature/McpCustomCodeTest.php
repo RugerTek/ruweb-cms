@@ -33,7 +33,7 @@ class McpCustomCodeTest extends TestCase
     #[DataProvider('profiles')]
     public function test_rest_and_rpc_share_pending_versions_and_exact_activation(string $profile): void
     {
-        config(['cms.admin_profile' => $profile]);
+        $this->useAdminProfile($profile);
         $actor = User::factory()->create(['role' => 'admin', 'can_manage_custom_code' => true]);
         $this->withToken(McpApiKey::issue($actor, 'Custom code', 'custom-code', null));
         $input = $this->payload('create-marker');
@@ -148,7 +148,7 @@ class McpCustomCodeTest extends TestCase
     {
         $names = ['custom_code_list', 'custom_code_get', 'custom_code_save', 'custom_code_activate', 'custom_code_deactivate', 'custom_code_evaluate', 'custom_code_destinations'];
         foreach (['full', 'essential'] as $profile) {
-            config(['cms.admin_profile' => $profile]);
+            $this->useAdminProfile($profile);
             $tools = collect(ToolRegistry::all())->keyBy('name');
             foreach ($names as $name) $this->assertTrue($tools->has($name));
             $this->assertContains('pages', $tools['custom_code_evaluate']['inputSchema']['properties']['target']['properties']['type']['enum']);

@@ -27,6 +27,8 @@ class PostRichTextContentTest extends TestCase
 
     public function test_content_submitted_through_the_admin_form_is_sanitized(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seed(\Database\Seeders\LocaleSeeder::class);
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -112,6 +114,8 @@ class PostRichTextContentTest extends TestCase
 
     public function test_the_editor_form_marks_the_content_field_as_rich_text(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.posts.create'));

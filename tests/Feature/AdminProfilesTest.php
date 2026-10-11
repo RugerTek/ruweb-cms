@@ -8,22 +8,38 @@ use App\Models\McpApiKey;
 use App\Models\Page;
 use App\Models\User;
 use App\Support\AdminCapabilities;
+use App\Support\EssentialEditorGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\GitRepositoryFixture;
 
 class AdminProfilesTest extends TestCase
 {
     use RefreshDatabase;
 
+    private GitRepositoryFixture $repository;
+
     protected function setUp(): void
     {
         parent::setUp();
+        $this->repository = new GitRepositoryFixture;
+        $this->repository->copy(resource_path('views/admin'), 'resources/views/admin');
+        $this->repository->baseline();
+        $this->app->instance(EssentialEditorGuard::class, $this->repository->editorGuard());
         Locale::create(['code' => 'es', 'name' => 'Español', 'is_base' => true, 'is_active' => true, 'is_public' => true]);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->repository->delete();
+        parent::tearDown();
     }
 
     public function test_default_and_invalid_profiles_are_explicit(): void
     {
+        $this->useAdminProfile('full');
         $this->assertSame('full', app(AdminCapabilities::class)->profile());
         config(['cms.admin_profile' => 'agent-only']);
         $this->expectException(\LogicException::class);
@@ -36,7 +52,7 @@ class AdminProfilesTest extends TestCase
         $actor = User::factory()->create(['role' => 'admin']);
         $catalog = ToolRegistry::all();
         foreach (['full', 'essential'] as $profile) {
-            config(['cms.admin_profile' => $profile]);
+            $this->useAdminProfile($profile);
             $this->assertEquals($catalog, ToolRegistry::all());
             Artisan::call('cms:capabilities');
             $local = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
@@ -53,13 +69,14 @@ class AdminProfilesTest extends TestCase
 
     public function test_essential_has_no_editor_routes_links_or_assets_and_keeps_public_data(): void
     {
+        $this->useAdminProfile('full');
         $actor = User::factory()->create(['role' => 'admin']);
         $content = ['meta' => ['title' => 'SEO preserved'], 'sections' => ['content' => ['heading' => 'Preserved heading', 'body' => '<p>Preserved body</p>', 'is_visible' => true]]];
         $page = Page::create(['title' => 'Profile fixture', 'slug' => 'profile-fixture', 'template_key' => 'default', 'status' => 'published', 'published_at' => now()->subMinute(), 'content_json' => $content]);
         $before = $page->fresh()->getRawOriginal();
         $this->actingAs($actor);
         $this->get('/admin/pages/'.$page->id.'/edit')->assertOk()->assertSee('editor-form');
-        config(['cms.admin_profile' => 'essential']);
+        $this->useAdminProfile('essential');
         $this->get('/admin/pages/'.$page->id.'/edit')->assertNotFound();
         $this->get('/admin/pages/create')->assertNotFound();
         $this->post('/admin/pages', ['title' => 'Forbidden UI write'])->assertNotFound();
@@ -68,25 +85,28 @@ class AdminProfilesTest extends TestCase
         $this->get('/admin/pages')->assertOk()->assertDontSee('/admin/pages/create')->assertDontSee('/admin/pages/'.$page->id.'/edit')->assertDontSee('editor-engine')->assertSee('/admin/editorial/pages/'.$page->id);
         $this->get('/profile-fixture')->assertOk()->assertSee('Preserved body')->assertDontSee('/admin/pages/create')->assertDontSee('/admin/pages/'.$page->id.'/edit')->assertDontSee('/admin/menus')->assertDontSee('/admin/header')->assertDontSee('/admin/footer');
         $this->assertSame($before, $page->fresh()->getRawOriginal());
-        config(['cms.admin_profile' => 'full']);
+        $this->useAdminProfile('full');
         $this->assertTrue(app(AdminCapabilities::class)->liveEditor());
         $this->assertSame($before, $page->fresh()->getRawOriginal());
     }
 
     public function test_custom_fields_require_editors_only_in_full(): void
     {
+        $this->useAdminProfile('full');
         config(['cms.templates.default.sections' => ['content', 'profile_testimonials'], 'cms.templates.default.schema' => config('cms.templates.default.schema') + ['sections.profile_testimonials.items.*.quote' => ['type' => 'text', 'translatable' => true]]]);
         $this->assertSame(1, Artisan::call('cms:check-conventions'));
         $this->assertStringContainsString('section-editor-missing', Artisan::output());
         $this->assertFalse(app(AdminCapabilities::class)->discovery()['templates']['default']['sections']['profile_testimonials']['visual_editor_available']);
-        config(['cms.admin_profile' => 'essential']);
+        $this->useAdminProfile('essential');
         $this->assertSame(0, Artisan::call('cms:check-conventions'), Artisan::output());
         $this->assertFalse(app(AdminCapabilities::class)->discovery()['templates']['default']['sections']['profile_testimonials']['specialized_editor_required']);
     }
 
-    public function test_shared_section_editor_detection_matches_existing_registry(): void
+    #[DataProvider('adminProfiles')]
+    public function test_shared_section_editor_detection_matches_existing_registry(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->assertSame('admin.pages.sections.home_cta', app(AdminCapabilities::class)->sectionEditor('cta'));
-        $this->assertTrue(app(AdminCapabilities::class)->discovery()['templates']['home-alt']['sections']['cta']['visual_editor_available']);
+        $this->assertSame($profile === 'full', app(AdminCapabilities::class)->discovery()['templates']['home-alt']['sections']['cta']['visual_editor_available']);
     }
 }

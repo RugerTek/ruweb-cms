@@ -9,14 +9,17 @@ use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dashboard_shows_editorial_counts_and_translation_coverage(): void
+    #[DataProvider('adminProfiles')]
+    public function test_dashboard_shows_editorial_counts_and_translation_coverage(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->seedLocales();
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -93,8 +96,10 @@ class AdminDashboardTest extends TestCase
         $response->assertViewHas('hasSecondaryPublicLocales', true);
     }
 
-    public function test_dashboard_shows_pending_tasks_and_hides_completed_by_default(): void
+    #[DataProvider('adminProfiles')]
+    public function test_dashboard_shows_pending_tasks_and_hides_completed_by_default(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->seedLocales();
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -168,8 +173,10 @@ class AdminDashboardTest extends TestCase
         $response->assertSee('Habilitar HTTP/2');
     }
 
-    public function test_dashboard_hides_translation_widgets_for_monolingual_sites(): void
+    #[DataProvider('adminProfiles')]
+    public function test_dashboard_hides_translation_widgets_for_monolingual_sites(string $profile): void
     {
+        $this->useAdminProfile($profile);
         Locale::create(['code' => 'es', 'name' => 'Español', 'is_base' => true, 'is_active' => true, 'is_public' => true, 'sort_order' => 0]);
         $admin = User::factory()->create(['role' => 'admin']);
 

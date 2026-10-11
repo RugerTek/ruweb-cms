@@ -166,6 +166,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_editorial_control_reports_missing_translation(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
 
         $user = User::factory()->create(['role' => 'admin']);
@@ -187,6 +189,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_translation_save_clears_review_and_reaches_published_state(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -284,6 +288,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_translate_action_creates_draft_without_inheriting_published_at(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -337,6 +343,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_pages_index_lists_one_row_per_translation_group(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -368,6 +376,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_posts_index_lists_one_row_per_translation_group(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -399,6 +409,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_post_translate_action_creates_draft_translation(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -461,6 +473,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_taxonomy_translate_action_creates_translation(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -501,6 +515,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_editorial_control_offers_create_and_update_actions(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -548,6 +564,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_editorial_control_lists_editorial_completeness_issues(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 
@@ -581,6 +599,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_menus_index_shows_missing_language_actions(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         Locale::create(['code' => 'fr', 'name' => 'Français', 'is_base' => false, 'is_active' => true, 'is_public' => true, 'sort_order' => 2]);
         $user = User::factory()->create(['role' => 'admin']);
@@ -603,6 +623,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_taxonomies_index_shows_language_actions(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         Locale::create(['code' => 'fr', 'name' => 'Français', 'is_base' => false, 'is_active' => true, 'is_public' => true, 'sort_order' => 2]);
         $user = User::factory()->create(['role' => 'admin']);
@@ -633,6 +655,8 @@ class MultilanguagePublicTest extends TestCase
 
     public function test_menu_translate_action_copies_items_and_remaps_internal_links(): void
     {
+        $this->useAdminProfile('full');
+
         $this->seedLocales();
         $user = User::factory()->create(['role' => 'admin']);
 

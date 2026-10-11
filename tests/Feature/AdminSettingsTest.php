@@ -8,14 +8,17 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_settings_show_login_url_field(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_settings_show_login_url_field(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.settings.index', ['tab' => 'admin']));
@@ -24,8 +27,10 @@ class AdminSettingsTest extends TestCase
         $response->assertSee('URL de login');
     }
 
-    public function test_admin_can_customize_login_path(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_can_customize_login_path(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->put(route('admin.settings.update'), [

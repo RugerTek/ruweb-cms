@@ -11,6 +11,12 @@ class AdminPostPermissionsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->useAdminProfile('full');
+    }
+
     public function test_editor_can_create_post(): void
     {
         $editor = User::factory()->create(['role' => 'editor']);

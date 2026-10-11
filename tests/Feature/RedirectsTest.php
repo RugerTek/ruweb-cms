@@ -9,6 +9,7 @@ use App\Models\User;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /** 301/302 rules, the 404 monitor and the admin screen behind them (docs/operations/redirects.md). */
@@ -27,8 +28,10 @@ class RedirectsTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
-    public function test_unmatched_path_follows_an_active_rule(): void
+    #[DataProvider('adminProfiles')]
+    public function test_unmatched_path_follows_an_active_rule(string $profile): void
     {
+        $this->useAdminProfile($profile);
         Redirect::create([
             'source_path' => '/servicios-antiguos',
             'target_url' => '/servicios',
@@ -43,8 +46,10 @@ class RedirectsTest extends TestCase
         $this->assertNotNull($rule->last_used_at);
     }
 
-    public function test_inactive_rule_is_ignored_and_the_404_is_recorded(): void
+    #[DataProvider('adminProfiles')]
+    public function test_inactive_rule_is_ignored_and_the_404_is_recorded(string $profile): void
     {
+        $this->useAdminProfile($profile);
         Redirect::create([
             'source_path' => '/promo',
             'target_url' => '/promociones',
@@ -113,6 +118,7 @@ class RedirectsTest extends TestCase
 
     public function test_only_admins_reach_the_screen(): void
     {
+        $this->useAdminProfile('full');
         $editor = User::factory()->create(['role' => 'editor']);
         $url = route('admin.developer-tools.index', ['tab' => 'redirects']);
 
@@ -122,6 +128,7 @@ class RedirectsTest extends TestCase
 
     public function test_rules_and_the_monitor_are_separate_tabs(): void
     {
+        $this->useAdminProfile('full');
         Redirect::create([
             'source_path' => '/vieja',
             'target_url' => '/nueva',
@@ -147,6 +154,7 @@ class RedirectsTest extends TestCase
 
     public function test_a_404_row_prefills_the_rule_form(): void
     {
+        $this->useAdminProfile('full');
         $this->get('/tienda/producto-viejo');
 
         $this->actingAs($this->admin())
@@ -157,6 +165,7 @@ class RedirectsTest extends TestCase
 
     public function test_admin_creates_a_rule_with_a_normalized_source(): void
     {
+        $this->useAdminProfile('full');
         $this->actingAs($this->admin())
             ->post(route('admin.redirects.store'), [
                 'source_path' => 'https://legacy.example.com/vieja/?ref=1',
@@ -171,6 +180,7 @@ class RedirectsTest extends TestCase
 
     public function test_a_rule_pointing_at_itself_is_rejected(): void
     {
+        $this->useAdminProfile('full');
         $this->actingAs($this->admin())
             ->post(route('admin.redirects.store'), [
                 'source_path' => '/vieja',
@@ -184,6 +194,7 @@ class RedirectsTest extends TestCase
 
     public function test_a_rule_that_closes_a_loop_is_rejected(): void
     {
+        $this->useAdminProfile('full');
         Redirect::create([
             'source_path' => '/b',
             'target_url' => '/a',
@@ -204,6 +215,7 @@ class RedirectsTest extends TestCase
 
     public function test_csv_import_creates_updates_and_skips_rows(): void
     {
+        $this->useAdminProfile('full');
         Redirect::create([
             'source_path' => '/existente',
             'target_url' => '/viejo-destino',
@@ -230,6 +242,7 @@ class RedirectsTest extends TestCase
 
     public function test_admin_clears_the_not_found_monitor(): void
     {
+        $this->useAdminProfile('full');
         $this->get('/no-existe');
 
         $this->actingAs($this->admin())

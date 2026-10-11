@@ -19,6 +19,12 @@ class LiveEditorSafetyTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->useAdminProfile('full');
+    }
+
     public static function contentTypes(): array
     {
         return [['pages'], ['posts']];

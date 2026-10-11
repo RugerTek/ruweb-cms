@@ -6,6 +6,7 @@ use App\Models\Media;
 use App\Models\Page;
 use App\Models\User;
 use App\Services\Pages\PageOperations;
+use App\Support\EssentialEditorGuard;
 use Database\Seeders\PlaceholderMediaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
+use Tests\Support\GitRepositoryFixture;
 
 /** A repeatable fixture of the real E2E02 agents' development task, outside starter content. */
 class ProfileDevelopmentFixtureTest extends TestCase
@@ -22,6 +24,17 @@ class ProfileDevelopmentFixtureTest extends TestCase
 
     private array $createdFiles = [];
 
+    private GitRepositoryFixture $repository;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new GitRepositoryFixture;
+        $this->repository->copy(resource_path('views/admin'), 'resources/views/admin');
+        $this->repository->baseline();
+        $this->app->instance(EssentialEditorGuard::class, $this->repository->editorGuard());
+    }
+
     protected function tearDown(): void
     {
         foreach (array_unique($this->createdFiles) as $path) {
@@ -29,6 +42,7 @@ class ProfileDevelopmentFixtureTest extends TestCase
                 unlink(resource_path($path));
             }
         }
+        $this->repository->delete();
         parent::tearDown();
     }
 
@@ -48,7 +62,7 @@ class ProfileDevelopmentFixtureTest extends TestCase
         config(['cms.templates' => ['profile-fixture' => require $fixture.'/template.php'], 'cms.forms' => []]);
         $section = ['heading' => 'Clientes que confían', 'is_visible' => true, 'items' => [['quote' => 'El equipo cumplió cada detalle.', 'author' => 'Ana Torres', 'role' => 'Directora', 'portrait_id' => $portrait->id]]];
         foreach (['full', 'essential'] as $profile) {
-            config(['cms.admin_profile' => $profile]);
+            $this->useAdminProfile($profile);
             copy($fixture.'/'.$profile.'/views/templates/profile-fixture.blade.php', resource_path('views/templates/profile-fixture.blade.php'));
             $this->createdFiles[] = 'views/templates/profile-fixture.blade.php';
             $partialPath = resource_path('views/admin/pages/sections/profile-fixture_testimonials.blade.php');
@@ -61,6 +75,14 @@ class ProfileDevelopmentFixtureTest extends TestCase
                 unlink($partialPath);
                 // Essential delivers no new visual UI, including repeater helpers.
                 unlink(resource_path('views/admin/pages/sections/_profile-testimonial-item.blade.php'));
+            }
+            foreach ($this->createdFiles as $path) {
+                $fixturePath = $this->repository->root.'/resources/'.$path;
+                if (is_file(resource_path($path))) {
+                    $this->repository->copy(resource_path($path), 'resources/'.$path);
+                } elseif (is_file($fixturePath)) {
+                    unlink($fixturePath);
+                }
             }
             View::getFinder()->flush();
             $this->assertSame(0, Artisan::call('cms:check-conventions'), Artisan::output());
@@ -75,14 +97,14 @@ class ProfileDevelopmentFixtureTest extends TestCase
             $page->update(['published_at' => now()->addDay()]);
             $this->get('/fixture-'.$profile)->assertNotFound();
             $before = $page->fresh()->getRawOriginal();
-            config(['cms.admin_profile' => $profile === 'full' ? 'essential' : 'full']);
+            $this->useAdminProfile($profile === 'full' ? 'essential' : 'full');
             $this->assertSame($before, $page->fresh()->getRawOriginal());
             // Essential delivery reports its missing editor before activation in full.
             if ($profile === 'essential') {
                 $this->assertSame(1, Artisan::call('cms:check-conventions'));
                 $this->assertStringContainsString('section-editor-missing', Artisan::output());
             }
-            config(['cms.admin_profile' => $profile]);
+            $this->useAdminProfile($profile);
             try {
                 app(PageOperations::class)->save($actor, ['title' => 'Invalid', 'slug' => 'invalid-'.$profile, 'template_key' => 'profile-fixture', 'content_json' => ['sections' => ['testimonials' => ['items' => [['portrait_id' => 'https://example.test/image.png']]]]]], draftOnly: true);
                 $this->fail('Media URL accepted in '.$profile);

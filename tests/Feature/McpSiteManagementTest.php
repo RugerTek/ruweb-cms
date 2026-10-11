@@ -58,7 +58,7 @@ class McpSiteManagementTest extends TestCase
     #[DataProvider('profiles')]
     public function test_taxonomy_terms_are_managed_end_to_end(string $profile): void
     {
-        config(['cms.admin_profile' => $profile]);
+        $this->useAdminProfile($profile);
         $parent = $this->rpcData($this->rpc('taxonomies_create', ['type' => 'category', 'name' => 'Noticias', 'slug' => 'noticias', 'operation_key' => 'cat-1']))['data'];
         $this->assertSame($parent['id'], $this->rpcData($this->rpc('taxonomies_create', ['type' => 'category', 'name' => 'Noticias', 'slug' => 'noticias', 'operation_key' => 'cat-1']))['data']['id']);
         $child = $this->rpcData($this->rpc('taxonomies_create', ['type' => 'category', 'name' => 'Local', 'slug' => 'local', 'parent_id' => $parent['id']]))['data'];
@@ -88,7 +88,7 @@ class McpSiteManagementTest extends TestCase
     #[DataProvider('profiles')]
     public function test_redirects_and_the_not_found_monitor_are_managed(string $profile): void
     {
-        config(['cms.admin_profile' => $profile]);
+        $this->useAdminProfile($profile);
         $rule = $this->rpcData($this->rpc('redirects_create', ['source_path' => 'old-page', 'target_url' => '/new-page', 'status_code' => 301, 'is_active' => true]))['data'];
         $this->assertSame(['/old-page', 0], [$rule['source_path'], $rule['hit_count']]);
         foreach (['javascript:alert(1)', 'data:text/html,x'] as $unsafe) {

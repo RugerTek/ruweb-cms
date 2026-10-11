@@ -91,6 +91,8 @@ class HomeLogoCarouselTest extends TestCase
 
     public function test_editor_persists_one_entry_per_row_when_logos_are_submitted(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
         $page = $this->homepage();
         $square = Media::where('placeholder_key', 'square')->firstOrFail();
@@ -129,6 +131,8 @@ class HomeLogoCarouselTest extends TestCase
 
     public function test_editor_exposes_the_logo_repeater_for_the_home_template(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.pages.edit', $this->homepage()));
@@ -143,6 +147,8 @@ class HomeLogoCarouselTest extends TestCase
 
     public function test_each_logo_row_is_its_own_collapsed_accordion_with_item_controls(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.pages.edit', $this->homepage()));
@@ -163,6 +169,8 @@ class HomeLogoCarouselTest extends TestCase
 
     public function test_item_headers_use_the_label_with_a_numbered_fallback(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
         $page = $this->homepage();
         $content = $page->content_json;
@@ -181,6 +189,8 @@ class HomeLogoCarouselTest extends TestCase
 
     public function test_editor_ships_the_shared_confirmation_modal_instead_of_a_native_dialog(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.pages.edit', $this->homepage()));

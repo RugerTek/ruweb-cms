@@ -17,6 +17,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ContactFormTest extends TestCase
@@ -58,8 +59,10 @@ class ContactFormTest extends TestCase
         return $token;
     }
 
-    public function test_contact_page_renders_the_form_with_editor_labels(): void
+    #[DataProvider('adminProfiles')]
+    public function test_contact_page_renders_the_form_with_editor_labels(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $response = $this->get('/contacto');
 
         $response->assertOk();
@@ -71,8 +74,10 @@ class ContactFormTest extends TestCase
         $response->assertDontSee('recaptcha_token');
     }
 
-    public function test_valid_submission_is_stored_with_metadata_and_redirects_with_success(): void
+    #[DataProvider('adminProfiles')]
+    public function test_valid_submission_is_stored_with_metadata_and_redirects_with_success(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $response = $this->from('/contacto')->post(route('forms.contact.store'), $this->payload());
 
         $response->assertRedirect('/contacto#contact-form');

@@ -19,6 +19,7 @@ class EditorUnsavedChangesGuardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->useAdminProfile('full');
 
         Storage::fake('public');
         $this->seed(LocaleSeeder::class);

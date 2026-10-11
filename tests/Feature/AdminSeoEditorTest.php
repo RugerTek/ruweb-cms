@@ -13,6 +13,12 @@ class AdminSeoEditorTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->useAdminProfile('full');
+    }
+
     public function test_page_editor_uses_unified_seo_fields(): void
     {
         $this->seedLocales();

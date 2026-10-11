@@ -22,6 +22,7 @@ class AdminLayoutScreensTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->useAdminProfile('full');
         $this->seed(SettingsSeeder::class);
         $this->seed(MenuSeeder::class);
     }

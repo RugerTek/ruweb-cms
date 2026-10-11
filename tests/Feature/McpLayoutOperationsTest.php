@@ -112,7 +112,7 @@ class McpLayoutOperationsTest extends TestCase
         }
     }
 
-    public function test_same_site_cta_urls_are_portable_from_rest_rpc_and_panel(): void
+    public function test_same_site_cta_urls_are_portable_from_rest_and_rpc(): void
     {
         config(['app.url' => 'http://localhost']);
         $actor = User::factory()->create(['role' => 'admin']);
@@ -122,6 +122,15 @@ class McpLayoutOperationsTest extends TestCase
         $this->assertSame('/rest-contact', Setting::get('header_cta_url'));
         $response = $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/call', 'params' => ['name' => 'settings_update', 'arguments' => ['key' => 'header_cta_url', 'value' => 'http://localhost/rpc-contact']]])->assertOk()->assertJsonPath('result.isError', false);
         $this->assertSame('/rpc-contact', Setting::get('header_cta_url'));
+        $this->assertNull(Setting::get('header_cta_page'));
+    }
+
+    public function test_same_site_cta_urls_are_portable_from_the_full_panel(): void
+    {
+        $this->useAdminProfile('full');
+        config(['app.url' => 'http://localhost']);
+        $actor = User::factory()->create(['role' => 'admin']);
+
         $this->actingAs($actor)->put(route('admin.header.update'), ['settings' => ['header_cta_url' => 'http://localhost/panel-contact']])->assertRedirect(route('admin.header.index'));
         $this->assertSame('/panel-contact', Setting::get('header_cta_url'));
         $this->assertNull(Setting::get('header_cta_page'));

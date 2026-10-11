@@ -37,6 +37,8 @@ class DeveloperToolsSnapshotTest extends TestCase
 
     public function test_admin_can_view_developer_tools(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.developer-tools.index'));
@@ -69,6 +71,8 @@ class DeveloperToolsSnapshotTest extends TestCase
 
     public function test_download_uses_site_name_in_backup_filename(): void
     {
+        $this->useAdminProfile('full');
+
         Carbon::setTestNow('2026-05-04 17:18:39');
         Setting::query()->create([
             'key' => 'site_name',
@@ -262,6 +266,8 @@ class DeveloperToolsSnapshotTest extends TestCase
 
     public function test_admin_upload_flow_reviews_then_restores(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin', 'email' => 'origin@example.com']);
         Storage::disk('public')->put('media/flow.txt', 'flow');
         // A tracked write so the review screen has at least one risk to render.
@@ -302,6 +308,8 @@ class DeveloperToolsSnapshotTest extends TestCase
 
     public function test_review_rejects_unknown_or_malformed_tokens(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)->get(route('admin.developer-tools.review', ['token' => str_repeat('a', 40)]))

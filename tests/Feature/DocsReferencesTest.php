@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use SplFileInfo;
 use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
+use Tests\Support\GitRepositoryFixture;
 
 /**
  * Docs are agent-facing contracts: a link or a path that no longer resolves sends an
@@ -102,7 +103,7 @@ class DocsReferencesTest extends TestCase
         );
     }
 
-    public function test_both_agents_find_the_skills_in_a_fresh_clone(): void
+    public function test_both_agents_share_skills_and_ignore_rules_allow_tracking_the_link(): void
     {
         $this->assertDirectoryExists(base_path('.agents/skills'), 'Codex reads .agents/skills.');
 
@@ -115,10 +116,19 @@ class DocsReferencesTest extends TestCase
             '.claude/skills must resolve to .agents/skills so both agents read one source.'
         );
 
-        // .claude/ is gitignored: without an explicit negation the symlink never reaches a clone.
-        exec('git ls-files --error-unmatch .claude/skills 2>/dev/null', $output, $status);
-
-        $this->assertSame(0, $status, '.claude/skills is not tracked, so a fresh clone would have no skills for Claude Code.');
+        // A source archive has no index: verify the shipped link and its tracking eligibility
+        // using the actual ignore rules in a private repository.
+        $repository = new GitRepositoryFixture;
+        try {
+            $repository->copy(base_path('.gitignore'), '.gitignore');
+            mkdir($repository->root.'/.claude');
+            symlink('../.agents/skills', $repository->root.'/.claude/skills');
+            $repository->git('add', '.');
+            $this->assertSame('.claude/skills', trim($repository->git('ls-files', '--error-unmatch', '.claude/skills')),
+                'Repository ignore rules must include the skills symlink in a fresh clone.');
+        } finally {
+            $repository->delete();
+        }
     }
 
     /** @return iterable<SplFileInfo> */

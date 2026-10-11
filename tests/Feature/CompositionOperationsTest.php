@@ -68,6 +68,8 @@ class CompositionOperationsTest extends TestCase
 
     public function test_stable_blocks_survive_reordering_and_generic_full_editor_cannot_convert_them(): void
     {
+        $this->useAdminProfile('full');
+
         $actor = User::factory()->create(['role' => 'admin']);
         $blocks = [
             ['id' => 'first', 'type' => 'html', 'html' => '<h1>First</h1>'],

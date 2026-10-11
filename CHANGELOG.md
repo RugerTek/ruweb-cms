@@ -6,7 +6,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
-## 1.3.1 - 2026-10-11
+## 1.3.2 - 2026-10-11
+
+- Las pruebas declaran el perfil requerido por los editores visuales y ejecutan los contratos compartidos en Full y Essential, sin imponer un perfil global ni depender de la elección local del proyecto.
+- Los contratos de Git usan repositorios privados temporales; las verificaciones de assets usan fixtures de Vite y conservan la cobertura de convenciones, perfiles y aislamiento sin depender del historial ni del build local.
+- Documentada la selección explícita de perfiles en pruebas y el requisito del ejecutable de Git para sus fixtures, incluso en copias del proyecto sin `.git`.
+
+## 1.3.1 - 2026-10-11 (ba7537e)
 
 - El chequeo de convenciones y el hook pre-commit rechazan nuevos editores visuales en Essential sin una justificación explícita por archivo; conservan los editores heredados y permiten los nuevos en Full.
 - La detección distingue adiciones, cambios existentes e índice de Git; documentación, skill de revisión y pruebas cubren excepciones, renombres y formularios operativos.

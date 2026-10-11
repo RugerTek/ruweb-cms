@@ -34,6 +34,8 @@ class EditorialWorkflowTest extends TestCase
     #[DataProvider('types')]
     public function test_full_versions_restore_as_draft_without_rewriting_ledger(string $type): void
     {
+        $this->useAdminProfile('full');
+
         $user = User::factory()->create(['role' => 'admin']);
         $this->actingAs($user);
         $model = $this->content($type);
@@ -54,6 +56,8 @@ class EditorialWorkflowTest extends TestCase
     #[DataProvider('types')]
     public function test_recovery_is_user_scoped_conflict_aware_and_never_publishes(string $type): void
     {
+        $this->useAdminProfile('full');
+
         $one = User::factory()->create(['role' => 'editor']);
         $two = User::factory()->create(['role' => 'editor']);
         $model = $this->content($type);
@@ -71,6 +75,8 @@ class EditorialWorkflowTest extends TestCase
     #[DataProvider('types')]
     public function test_editor_stages_live_changes_and_only_assigned_reviewer_applies_exact_proposal(string $type): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
         $other = User::factory()->create(['role' => 'admin']);
         $editor = User::factory()->create(['role' => 'editor']);
@@ -94,6 +100,8 @@ class EditorialWorkflowTest extends TestCase
     #[DataProvider('types')]
     public function test_shared_preview_expires_revokes_and_has_safe_headers(string $type): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
         $model = $this->content($type);
         $response = $this->actingAs($admin)->post($this->url('share', $model), ['hours' => 1])->assertRedirect();
@@ -123,6 +131,8 @@ class EditorialWorkflowTest extends TestCase
 
     public function test_first_programmatic_update_captures_preexisting_content_and_restore_requires_publisher_for_live_rows(): void
     {
+        $this->useAdminProfile('full');
+
         $page = Page::create(['title' => 'Before upgrade', 'slug' => 'upgrade', 'template_key' => 'default', 'status' => 'draft']);
         DB::table('editorial_versions')->delete();
         $page->update(['title' => 'After upgrade']);
@@ -136,6 +146,8 @@ class EditorialWorkflowTest extends TestCase
 
     public function test_stale_review_cannot_overwrite_newer_content(): void
     {
+        $this->useAdminProfile('full');
+
         $admin = User::factory()->create(['role' => 'admin']);
         $editor = User::factory()->create(['role' => 'editor']);
         $page = $this->content('pages');
@@ -155,6 +167,8 @@ class EditorialWorkflowTest extends TestCase
 
     public function test_translation_review_shows_changed_source_and_approves_only_selected_field(): void
     {
+        $this->useAdminProfile('full');
+
         $base = $this->content('pages');
         $base->update(['title' => 'Old source', 'content_json' => ['meta' => ['title' => 'Old source', 'description' => 'Old description']]]);
         $translation = $base->replicate(['slug']);
@@ -196,6 +210,8 @@ class EditorialWorkflowTest extends TestCase
 
     public function test_staged_proposals_replace_repeaters_preserve_omitted_media_and_preview_exact_proposal(): void
     {
+        $this->useAdminProfile('full');
+
         $page = $this->content('pages');
         $page->update(['status' => 'published', 'published_at' => now(), 'content_json' => ['sections' => ['content' => ['heading' => 'Live heading'], 'features' => ['logos' => [['label' => 'A'], ['label' => 'B'], ['label' => 'C']]]]]]);
         $media = Media::create(['filename' => 'sample.png', 'original_filename' => 'sample.png', 'path' => 'media/sample.png', 'mime_type' => 'image/png', 'extension' => 'png', 'size' => 100, 'disk' => 'public']);
@@ -220,6 +236,8 @@ class EditorialWorkflowTest extends TestCase
 
     public function test_removed_base_fields_are_visible_and_individually_acknowledgeable(): void
     {
+        $this->useAdminProfile('full');
+
         $base = $this->content('pages');
         $base->update(['content_json' => ['meta' => ['title' => 'Removed source']]]);
         $translation = $base->replicate(['slug']);

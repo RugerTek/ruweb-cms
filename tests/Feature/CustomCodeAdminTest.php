@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\CustomCode\CustomCodeOperations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CustomCodeAdminTest extends TestCase
@@ -17,15 +18,17 @@ class CustomCodeAdminTest extends TestCase
         $this->actingAs($user)->get(route('admin.custom-code.index'))->assertForbidden();
         $user->update(['can_manage_custom_code' => true]);
         foreach (['full', 'essential'] as $profile) {
-            config(['cms.admin_profile' => $profile]);
+            $this->useAdminProfile($profile);
             $this->actingAs($user->fresh())->get(route('admin.custom-code.create'))->assertOk()->assertSee(__('custom_code.warning'));
         }
         $user->update(['role' => 'editor']);
         $this->actingAs($user->fresh())->get(route('admin.custom-code.index'))->assertForbidden();
     }
 
-    public function test_panel_saves_a_proposal_and_activation_is_separate(): void
+    #[DataProvider('adminProfiles')]
+    public function test_panel_saves_a_proposal_and_activation_is_separate(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $user = User::factory()->create(['role' => 'admin', 'can_manage_custom_code' => true]);
         $this->actingAs($user)->post(route('admin.custom-code.store'), [
             'name' => 'Example', 'type' => 'css', 'code' => 'body {color: blue}',

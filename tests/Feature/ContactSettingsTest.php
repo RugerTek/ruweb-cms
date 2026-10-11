@@ -12,6 +12,7 @@ use Database\Seeders\HomepageSeeder;
 use Database\Seeders\MenuSeeder;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /** Settings > Contacto and how the public layout consumes it (docs/admin/layout.md). */
@@ -25,8 +26,10 @@ class ContactSettingsTest extends TestCase
         $this->seed(SettingsSeeder::class);
     }
 
-    public function test_contact_tab_renders_fields_and_social_repeater(): void
+    #[DataProvider('adminProfiles')]
+    public function test_contact_tab_renders_fields_and_social_repeater(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.settings.index', ['tab' => 'contact']));
@@ -47,8 +50,10 @@ class ContactSettingsTest extends TestCase
         }
     }
 
-    public function test_admin_saves_contact_data_and_social_links_in_order(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_saves_contact_data_and_social_links_in_order(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->put(route('admin.settings.update'), [
@@ -88,8 +93,10 @@ class ContactSettingsTest extends TestCase
         ]);
     }
 
-    public function test_contact_validation_rejects_unknown_network_bad_url_and_bad_coordinates(): void
+    #[DataProvider('adminProfiles')]
+    public function test_contact_validation_rejects_unknown_network_bad_url_and_bad_coordinates(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->from(route('admin.settings.index'))->put(route('admin.settings.update'), [
@@ -153,8 +160,10 @@ class ContactSettingsTest extends TestCase
         $response->assertSee('Pedir presupuesto');
     }
 
-    public function test_public_footer_hides_empty_blocks(): void
+    #[DataProvider('adminProfiles')]
+    public function test_public_footer_hides_empty_blocks(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->seed(HomepageSeeder::class);
         // A configured but disabled CTA / credit must stay hidden.
         Setting::set('header_cta_label', 'Oculto');

@@ -9,14 +9,17 @@ use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Artisan;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminCacheRefreshTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_refresh_application_cache(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_can_refresh_application_cache(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin', 'password' => 'password']);
         $this->seed(SettingsSeeder::class);
         $this->withoutMiddleware(PreventRequestForgery::class);
@@ -37,8 +40,10 @@ class AdminCacheRefreshTest extends TestCase
         $this->assertSame('second', Setting::get('meta_pixel_id'));
     }
 
-    public function test_editor_cannot_refresh_application_cache(): void
+    #[DataProvider('adminProfiles')]
+    public function test_editor_cannot_refresh_application_cache(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $editor = User::factory()->create(['role' => 'editor', 'password' => 'password']);
         $this->seed(SettingsSeeder::class);
         $this->withoutMiddleware(PreventRequestForgery::class);
@@ -48,8 +53,10 @@ class AdminCacheRefreshTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_admin_bar_shows_refresh_cache_button_only_for_admins(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_bar_shows_refresh_cache_button_only_for_admins(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin', 'password' => 'password']);
         $editor = User::factory()->create(['role' => 'editor', 'password' => 'password']);
         $this->seed(SettingsSeeder::class);
@@ -64,8 +71,10 @@ class AdminCacheRefreshTest extends TestCase
             ->assertDontSee('Refrescar caché');
     }
 
-    public function test_admin_bar_uses_admin_locale_on_public_pages(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_bar_uses_admin_locale_on_public_pages(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $admin = User::factory()->create(['role' => 'admin', 'password' => 'password']);
         $this->seed(SettingsSeeder::class);
         $this->seed(HomepageSeeder::class);

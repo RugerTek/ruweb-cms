@@ -27,8 +27,10 @@ class UsernameLoginTest extends TestCase
         $this->assertNotNull($user->fresh()->remember_token);
     }
 
-    public function test_existing_accounts_without_a_username_still_sign_in_with_email(): void
+    #[DataProvider('adminProfiles')]
+    public function test_existing_accounts_without_a_username_still_sign_in_with_email(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $user = User::factory()->create(['role' => 'editor']);
         $this->post(route('admin.login.submit'), ['login' => $user->email, 'password' => 'password'])
             ->assertRedirect(route('admin.dashboard'));
@@ -101,8 +103,10 @@ class UsernameLoginTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'new@example.test']);
     }
 
-    public function test_admin_can_create_update_and_find_users_by_username(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_can_create_update_and_find_users_by_username(string $profile): void
     {
+        $this->useAdminProfile($profile);
         Mail::fake();
         $admin = User::factory()->create(['role' => 'admin']);
         $data = ['name' => 'Editor', 'email' => 'editor@example.com', 'username' => 'First.Editor', 'role' => 'editor',

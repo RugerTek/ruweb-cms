@@ -6,14 +6,17 @@ use App\Models\Setting;
 use App\Models\User;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AdminAnalyticsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_access_analytics_page(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_can_access_analytics_page(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->seed(SettingsSeeder::class);
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -25,8 +28,10 @@ class AdminAnalyticsTest extends TestCase
         $response->assertSee('Search Console');
     }
 
-    public function test_editor_cannot_access_analytics_page(): void
+    #[DataProvider('adminProfiles')]
+    public function test_editor_cannot_access_analytics_page(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->seed(SettingsSeeder::class);
         $editor = User::factory()->create(['role' => 'editor']);
 
@@ -35,8 +40,10 @@ class AdminAnalyticsTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_admin_can_save_valid_analytics_values(): void
+    #[DataProvider('adminProfiles')]
+    public function test_admin_can_save_valid_analytics_values(string $profile): void
     {
+        $this->useAdminProfile($profile);
         $this->seed(SettingsSeeder::class);
         $admin = User::factory()->create(['role' => 'admin']);
 

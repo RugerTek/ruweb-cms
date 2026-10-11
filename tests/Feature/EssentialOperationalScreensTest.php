@@ -11,17 +11,39 @@ use App\Policies\PostPolicy;
 use App\Support\AdminCapabilities;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Vite;
 use Tests\TestCase;
 
 class EssentialOperationalScreensTest extends TestCase
 {
     use RefreshDatabase;
 
+    private string $assetsRoot;
+
+    private string $originalPublicPath;
+
     protected function setUp(): void
     {
         parent::setUp();
-        config(['cms.admin_profile' => 'essential']);
+        $this->useAdminProfile('essential');
+        $this->originalPublicPath = public_path();
+        $this->assetsRoot = sys_get_temp_dir().'/essential-assets-'.bin2hex(random_bytes(8));
+        File::ensureDirectoryExists($this->assetsRoot.'/build');
+        File::put($this->assetsRoot.'/build/manifest.json', json_encode([
+            'resources/js/admin-essential.js' => ['src' => 'resources/js/admin-essential.js', 'file' => 'assets/admin-essential-fixture.js', 'isEntry' => true],
+            'resources/js/admin.js' => ['src' => 'resources/js/admin.js', 'file' => 'assets/admin-full-fixture.js', 'isEntry' => true],
+        ], JSON_THROW_ON_ERROR));
+        $this->app->usePublicPath($this->assetsRoot);
+        Vite::useHotFile($this->assetsRoot.'/hot');
         Locale::create(['code' => 'es', 'name' => 'Español', 'is_base' => true, 'is_active' => true, 'is_public' => true]);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->app->usePublicPath($this->originalPublicPath);
+        File::deleteDirectory($this->assetsRoot);
+        parent::tearDown();
     }
 
     public function test_operational_screens_keep_the_essential_entrypoint_and_navigation(): void
@@ -29,8 +51,8 @@ class EssentialOperationalScreensTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']));
         foreach (['/admin', '/admin/media', '/admin/media-health', '/admin/settings', '/admin/languages', '/admin/analytics', '/admin/email', '/admin/users', '/admin/profile', '/admin/claude-mcp', '/admin/developer-tools', '/admin/submissions/contact'] as $url) {
             $response = $this->get($url)->assertOk();
-            $response->assertSee('resources/js/admin-essential.js')
-                ->assertDontSee('resources/js/admin.js')
+            $response->assertSee('assets/admin-essential-fixture.js')
+                ->assertDontSee('assets/admin-full-fixture.js')
                 ->assertDontSee('href="'.url('/admin/menus').'"', false)
                 ->assertDontSee('href="'.url('/admin/header').'"', false)
                 ->assertDontSee('href="'.url('/admin/footer').'"', false)
@@ -47,7 +69,7 @@ class EssentialOperationalScreensTest extends TestCase
             ->assertDontSee('data-rich-text', false);
         $this->put('/admin/settings', ['settings' => ['operational_note' => '<p>Updated</p><script>alert(1)</script>']])->assertRedirect();
         $this->assertSame('<p>Updated</p>', $setting->fresh()->value);
-        config(['cms.admin_profile' => 'full']);
+        $this->useAdminProfile('full');
         $this->get('/admin/settings')->assertOk()->assertSee('data-rich-text="short-description"', false);
     }
 
