@@ -12,6 +12,7 @@ use App\Services\Content\RevisionGuard;
 use App\Services\Pages\PageInput;
 use App\Services\Posts\PostInput;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\SiteUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -73,7 +74,7 @@ final class EditorialOperations
             if ($key && $action !== 'preview') {
                 $receipt = DB::table('editorial_operation_receipts')->where(['user_id' => $actor->id, 'content_type' => $model->getTable(), 'content_id' => $model->id, 'operation_key' => $key])->first();
                 if ($receipt) {
-                    abort_unless(hash_equals($receipt->request_hash, $requestHash), 409, __('editorial.conflict'));
+                    abort_unless(hash_equals($receipt->request_hash, $requestHash), 409, 'Operation key already used with different input. Retry the original input or choose a new key.');
 
                     return json_decode($receipt->result, true);
                 }
@@ -222,7 +223,7 @@ final class EditorialOperations
         $data = Validator::make($input, ['review_id' => ['required', 'integer'], 'state' => ['required', Rule::in(['approved', 'changes_requested'])], 'comment' => ['nullable', 'string', 'max:10000']])->validate();
         $review = $this->reviewRow($model, $data['review_id']);
         abort_unless((int) $review->reviewer_id === (int) $actor->id, 403);
-        abort_unless($review->state === 'pending', 409, __('editorial.conflict'));
+        abort_unless($review->state === 'pending', 409, 'This review was already decided ('.$review->state.'). Request a new review for further changes.');
         abort_unless(hash_equals($review->fingerprint, $this->history->fingerprint($model)), 409, __('editorial.conflict'));
         if ($data['state'] === 'approved' && $review->version_id) {
             $version = $this->versionRow($model, $review->version_id);
@@ -335,7 +336,10 @@ final class EditorialOperations
         $link = (array) $this->history->query($model, 'editorial_preview_links')->where('id', $id)->first();
         unset($link['token_hash']);
 
-        return ['link' => $link, 'preview_url' => route('editorial.preview', $token), 'url' => route('editorial.preview', $token), 'expires_at' => $link['expires_at']];
+        // The site origin, not the request host: the same base every other absolute URL of this site uses.
+        $url = SiteUrl::origin().route('editorial.preview', $token, false);
+
+        return ['link' => $link, 'preview_url' => $url, 'url' => $url, 'expires_at' => $link['expires_at']];
     }
 
     private function revokeLocked(User $actor, Model $model, array $input): array

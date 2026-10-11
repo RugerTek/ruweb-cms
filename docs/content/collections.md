@@ -42,13 +42,17 @@ a page-compatible object for SEO.
 7. Public routes, registered **before** the page catch-all.
 8. Policy and role rules.
 9. Sitemap entry and metadata if public.
-10. Tests for publishing, public visibility and authorization boundaries.
-11. A doc of its own only if it introduces behaviour no existing doc covers.
+10. Shared `<Name>Operations` (save with draft/patch modes, publish, delete) used by the admin controller.
+11. MCP surface: `mcp_operations` in `cms.collections`, the seven `<plural>_*` tools, scopes, REST mirror and
+    tests — [MCP surface checklist](../operations/mcp-surface.md#a-new-collection). `McpSurfaceContractTest`
+    fails without them.
+12. Tests for publishing, public visibility and authorization boundaries.
+13. A doc of its own only if it introduces behaviour no existing doc covers.
 
 ## Public creation shortcuts
 
 Register each collection in `config('cms.collections')` with its `model`, a singular `label` translation
-key in both admin locales, and `create_route`. The public admin bar's **Create new…** dropdown always lists
+key in both admin locales, `create_route` and `mcp_operations` (its MCP tool prefix). The public admin bar's **Create new…** dropdown always lists
 Page first, then registered collections in configuration order (Post in the starter). It hides routes that
 do not exist and collections the signed-in user's `create` policy denies.
 
@@ -68,4 +72,5 @@ Essential reuses the operational `/admin/content/{registered-key}` list and its 
 Register the model and translated label in `cms.collections`; the list checks its `viewAny` policy and
 status/preview check `view`. The model must honor the publication, preview, media and locale contracts
 above. Human lists search title/slug in every locale and separate drafts, live publications, future
-publications and expired content. They do not create, mutate, translate, restore or publish content.
+publications and expired content. They do not create, mutate, translate, restore or publish content — so in
+essential the collection's MCP tools are its editor and are **mandatory**, not an extra.

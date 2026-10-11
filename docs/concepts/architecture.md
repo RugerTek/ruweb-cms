@@ -50,9 +50,12 @@ stays generic and project-specific business logic stays in the fork.
 resolves a published page by slug → the page's `template_key` selects `resources/views/templates/{key}.blade.php`
 → the template reads `$page->sections()` and renders inside `layouts/public`.
 
-The page route is a catch-all with a slug pattern that excludes reserved prefixes (`admin`, `mcp`, `authorize`,
-`token`, `.well-known`) and installed locale codes. **Every explicit public route must be registered before it**
-— that is why blog and form routes appear earlier in the file.
+The page route is a catch-all with a slug pattern that excludes the whole first segments `admin` and `mcp` and
+installed locale codes. Page slugs are validated on save: lowercase hyphenated segments whose first segment is not
+one the site uses (`AdminLoginPath::reservedRootSegments()` — `admin`, `mcp`, `blog`, `login`, `forms`,
+`draft-preview`, `storage`… — nor the configured login path). **Every explicit public route must be registered
+before the catch-all, and its first segment added to that list** — that is why blog and form routes appear earlier
+in the file.
 
 **Localized request.** The same flows under a `{locale}` prefix, whose names are the base name prefixed with
 `localized.` (`localized.page.show`). Build URLs through `LocalizedRoute`, never by concatenating the locale.

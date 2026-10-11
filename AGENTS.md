@@ -34,6 +34,7 @@ App at `http://localhost:8000`, admin at `/admin`. The login path is the `admin_
 | Translate content to another locale | `translate-content` | [docs/concepts/multilanguage.md](docs/concepts/multilanguage.md) |
 | Admin labels, `lang/` parity | `check-translations` | [docs/admin/translations.md](docs/admin/translations.md) |
 | Redirect an old URL, review 404s (Developer tools) | — | [docs/operations/redirects.md](docs/operations/redirects.md) |
+| New MCP tool, or the MCP side of any feature above | — | [docs/operations/mcp-surface.md](docs/operations/mcp-surface.md) |
 | Review a change against the docs | `review-conventions` | [docs/README.md](docs/README.md) |
 | Changelog and `VERSION` | `changelog-version` | — |
 
@@ -41,15 +42,19 @@ Everything else: [docs/README.md](docs/README.md) maps every doc to the decision
 
 ## Deployment Profile
 
-Before creating pages, templates, sections or collections, run `php artisan cms:capabilities`.
-The versioned `config/cms.php` key `admin_profile` is `full` (default) or `essential`; never store it as a
-setting or add an environment override. Read [docs/concepts/admin-profiles.md](docs/concepts/admin-profiles.md).
-Both profiles require data/schema, renderer, operations/validation, permissions, media ids, publication and
-appropriate tests. Only `full` requires specialized visual editors. In `essential`, do not build a Live
-Editor partial by default. MCP has the same tools in both; roles and credential scopes remain independent.
-Essential’s operational panel passed phase 4; later capabilities retain their own roadmap gates. Verify the destination profile before
-deployment; switching profiles regenerates configuration/routes caches and restarts persistent workers,
-without converting or mutating content.
+Before creating pages, templates, sections, collections, forms, layout fields or settings, run
+`php artisan cms:capabilities`. The versioned `config/cms.php` key `admin_profile` is `full` (default) or
+`essential`; never store it as a setting or add an environment override. Read
+[docs/concepts/admin-profiles.md](docs/concepts/admin-profiles.md). Both profiles require data/schema, renderer,
+operations/validation, permissions, media ids, publication and appropriate tests. Only `full` requires specialized
+visual editors; in `essential`, do not build a Live Editor partial by default. MCP has the same tools in both;
+roles and credential scopes remain independent. Verify the destination profile before deployment; switching
+profiles regenerates configuration/routes caches and restarts persistent workers, without converting or mutating
+content.
+
+**Every feature ships with its MCP surface** — in `essential` it is often the only editor. Follow
+[docs/operations/mcp-surface.md](docs/operations/mcp-surface.md); `McpSurfaceContractTest` fails when the
+mechanical parts are missing.
 
 ## Hard Rules
 
@@ -70,6 +75,9 @@ without converting or mutating content.
 8. **`CHANGELOG.md` and `VERSION` change in the same commit as the work they describe** (`changelog-version`).
 9. **Explicit routes are registered before the page catch-all** in `routes/web.php`.
 10. **Public queries filter by publication state.** Drafts and future `published_at` never render publicly.
+11. **Every feature is operable through MCP**, with the same shared operation the panel uses: tools, scopes, REST
+    mirror, tests and the [docs/operations/mcp.md](docs/operations/mcp.md) table.
+    [docs/operations/mcp-surface.md](docs/operations/mcp-surface.md)
 
 ## Layout Worth Knowing
 

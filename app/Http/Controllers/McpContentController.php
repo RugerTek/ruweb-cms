@@ -31,8 +31,34 @@ class McpContentController extends Controller
 
         return response()->json(['data' => ['type' => $data['type'], 'template_key' => $data['template_key'] ?? null, 'schema' => $schema, 'locales' => Locale::orderBy('sort_order')->get(['code', 'name', 'is_base', 'is_active', 'is_public']),
             'rules' => ['translatable' => 'Translate visible text.', 'preserve' => 'Copy unchanged.', 'remap' => 'Use an equivalent translated internal record; never silently link to base-language content.', 'localized_media' => 'Keep or replace with a valid media ID; localize metadata separately.',
-                'revision' => 'Send expected_revision from the latest read. A stale revision returns 409; read and merge before retry.', 'retry' => 'Use operation_key for draft creation. Retry identical input; reusing it for different input returns 409.', 'publication' => 'Draft edits reject published records. Publication and scheduling require an admin and full credential scope.'],
-            'example' => $data['type'] === 'pages' ? ['title' => 'Example', 'slug' => 'example', 'template_key' => $data['template_key'], 'locale' => Locale::baseCode(), 'content_json' => ['meta' => ['title' => 'Example', 'description' => 'Example description'], 'sections' => new \stdClass], 'operation_key' => 'example-draft-1'] : ['title' => 'Example', 'slug' => 'example', 'locale' => Locale::baseCode(), 'content' => '<p>Example</p>', 'operation_key' => 'example-post-1']]]);
+                'revision' => 'Send expected_revision from the latest read. A stale revision returns 409; read and merge before retry.', 'retry' => 'Use operation_key for draft creation. Retry identical input; reusing it for different input returns 409.', 'publication' => 'Draft edits reject published records. Administrators edit published content live with pages_update/posts_update; anyone stages changes with content_propose. Publication and scheduling require an admin and full credential scope.',
+                'unknown_fields' => 'Only paths in this schema are accepted; * is a list index. Send null to remove a legacy key.', 'slug' => 'Lowercase words separated by hyphens; pages may nest with /. A first segment used by the site (admin, mcp, blog, the login path…) is rejected.',
+                'deletion' => 'pages_delete/posts_delete need the current revision; menu links to the record are removed and translations kept, both reported in warnings.'],
+            'example' => $data['type'] === 'pages'
+                ? ['title' => 'Example', 'slug' => 'example', 'template_key' => $data['template_key'], 'locale' => Locale::baseCode(), 'content_json' => $this->exampleContent($schema ?? []), 'operation_key' => 'example-draft-1']
+                : ['title' => 'Example', 'slug' => 'example', 'locale' => Locale::baseCode(), 'content' => '<p>Example</p>', 'operation_key' => 'example-post-1']]]);
+    }
+
+    /** A valid content_json for the schema, one entry per list, so agents start from a shape that saves. */
+    private function exampleContent(array $schema): array
+    {
+        $content = [];
+        foreach ($schema as $path => $field) {
+            $value = match ($field['type'] ?? null) {
+                'boolean' => true,
+                'media', 'page_reference' => null,
+                'url' => '/',
+                'composition_html' => '<section class="cms-section"><h2>Example</h2><p>Example text.</p></section>',
+                'composition_blocks' => [['id' => 'intro', 'type' => 'structured', 'component' => 'callout', 'params' => ['heading' => 'Example', 'body' => 'Example text.']]],
+                'textarea' => 'Example text.',
+                default => 'Example',
+            };
+            if ($value !== null) {
+                data_set($content, str_replace('*', '0', $path), $value);
+            }
+        }
+
+        return $content;
     }
 
     public function locales(Request $request): JsonResponse
@@ -108,7 +134,11 @@ class McpContentController extends Controller
     public function editorialWrite(Request $request, string $type, int $id, string $action): JsonResponse
     {
         $data = app(EditorialOperations::class)->write($request->user(), $type, $id, $action, $request->all());
-        $warnings = $action === 'propose' ? SanitizationNotice::forContent($request->input('changes.content_json')) : [];
+        $warnings = match (true) {
+            $action !== 'propose' => [],
+            $type === 'pages' => SanitizationNotice::forContent($request->input('changes.content_json'), $request->input('changes.template_key') ?? Page::find($id)?->template_key),
+            default => SanitizationNotice::forPost($request->input('changes.content')),
+        };
 
         return response()->json(['data' => $data] + ($warnings === [] ? [] : ['warnings' => $warnings]));
     }
@@ -123,6 +153,7 @@ class McpContentController extends Controller
         }
         $data = Validator::make($request->all(), ['field' => ['required', 'string', 'max:500', 'regex:/^(title|slug|excerpt|content|content_json(?:\.[a-zA-Z0-9_-]+)*|meta_json(?:\.[a-zA-Z0-9_-]+)*)$/'], 'offset' => ['sometimes', 'integer', 'min:0'], 'length' => ['sometimes', 'integer', 'min:1', 'max:8192']])->validate();
         $value = data_get($model->attributesToArray(), $data['field']);
+        abort_if($value === null, 404, 'Field '.$data['field'].' is not set on this record. Read the record or cms_schema for available paths.');
         abort_unless(is_string($value) || is_array($value), 422, 'Select a string or structured editorial field.');
         $offset = $data['offset'] ?? 0;
         $length = $data['length'] ?? 8192;

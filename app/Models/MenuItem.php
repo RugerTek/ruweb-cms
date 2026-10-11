@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\LinkDestination;
 use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,7 +41,8 @@ class MenuItem extends Model
     public function resolveUrl(): string
     {
         if ($this->type === 'custom_link') {
-            return $this->url ?? '#';
+            // Rows stored before URL validation existed are neutralised rather than rendered as executable links.
+            return LinkDestination::resolve(null, $this->url) ?? '#';
         }
 
         if ($this->linkable) {

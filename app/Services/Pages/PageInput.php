@@ -5,6 +5,9 @@ namespace App\Services\Pages;
 use App\Http\Requests\Admin\Concerns\ValidatesPageSections;
 use App\Http\Requests\Admin\Concerns\ValidatesStaleTranslationFields;
 use App\Models\Locale;
+use App\Support\AdminLoginPath;
+use Illuminate\Validation\ValidationException;
+use App\Services\Content\ContentSchemaRegistry;
 use App\Models\Page;
 use App\Support\PageComposition;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +38,14 @@ final class PageInput
 
     public function validate(): array
     {
+        // Bearer writes may only add fields the template declares; the schema is what renderers and translation read.
+        if ($this->preserveContent && is_array($this->data['content_json'] ?? null)) {
+            $template = (string) $this->input('template_key');
+            $unknown = app(ContentSchemaRegistry::class)->unknownPagePaths($template, $this->data['content_json']);
+            if ($unknown !== []) {
+                throw ValidationException::withMessages(['content_json' => 'Fields not in the "'.$template.'" schema: '.implode(', ', array_slice($unknown, 0, 20)).'. Read cms_schema (type pages, template_key '.$template.'); send null to remove a legacy key.']);
+            }
+        }
         if (is_array($this->data['content_json'] ?? null)) {
             $this->data['content_json'] = PageComposition::normalize($this->data['content_json']);
             PageComposition::validateMedia($this->data['content_json']);
@@ -67,6 +78,14 @@ final class PageInput
                 'required',
                 'string',
                 'max:255',
+                // Lowercase URL segments; nested paths allowed. The first segment cannot shadow a registered route.
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $first = strtolower(explode('/', (string) $value)[0]);
+                    if (in_array($first, [...AdminLoginPath::reservedRootSegments(), AdminLoginPath::segment()], true)) {
+                        $fail(__('editorial.page_slug_reserved', ['segment' => $first]));
+                    }
+                },
                 Rule::notIn(Locale::catalogCodes()),
                 Rule::unique('pages', 'slug')
                     ->where('locale', $this->partial ? $this->page->locale : ($this->input('locale') ?? $this->page?->locale ?? Locale::baseCode()))

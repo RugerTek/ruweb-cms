@@ -18,15 +18,17 @@ final class CompositionBlocks
         $result = [];
         $ids = [];
         foreach ($blocks as $index => $block) {
+            // Every error names its block, e.g. content_json.sections.composition.blocks.2.params.image_id.
+            $at = 'content_json.sections.composition.blocks.'.$index;
             if (! is_array($block)) {
-                $this->fail('Each block must be an object.');
+                $this->fail('Each block must be an object.', $at);
             }
             $type = $block['type'] ?? null;
             $fields = $type === 'html' ? ['id', 'type', 'version', 'is_visible', 'html'] : ['id', 'type', 'version', 'is_visible', 'component', 'params'];
-            if (array_diff(array_keys($block), $fields)) {
-                $this->fail('Block contains unsupported fields.');
+            if ($unsupported = array_diff(array_keys($block), $fields)) {
+                $this->fail('Block contains unsupported fields: '.implode(', ', $unsupported).'. Allowed: '.implode(', ', $fields).'.', $at);
             }
-            $validated = Validator::make($block, [
+            $validated = $this->validate($at, $block, [
                 'id' => ['required', 'string', 'max:80', 'regex:/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/D'],
                 'type' => ['required', 'in:html,structured,interactive'],
                 'version' => ['sometimes', 'integer', 'in:1'],
@@ -34,9 +36,9 @@ final class CompositionBlocks
                 'html' => $type === 'html' ? ['required', 'string'] : ['prohibited'],
                 'component' => $type === 'html' ? ['prohibited'] : ['required', 'string', 'max:80'],
                 'params' => $type === 'html' ? ['prohibited'] : ['required', 'array'],
-            ])->validate();
+            ]);
             if (isset($ids[$validated['id']])) {
-                $this->fail('Block identities must be unique.');
+                $this->fail('Block identities must be unique.', $at.'.id');
             }
             $ids[$validated['id']] = true;
             $normalized = [
@@ -51,11 +53,11 @@ final class CompositionBlocks
                 $component = $validated['component'];
                 $definition = config('cms.composition.components.'.$component);
                 if (! is_array($definition) || ($definition['type'] ?? null) !== $type || ! is_array($definition['rules'] ?? null)) {
-                    $this->fail('Component is not registered for this block type.');
+                    $this->fail('Component is not registered for this block type. Registered components: cms_capabilities.composition.components.', $at.'.component');
                 }
                 $rules = $definition['rules'];
-                $this->checkParamKeys($validated['params'], '', array_keys($rules));
-                $params = Validator::make($validated['params'], $rules)->validate();
+                $this->checkParamKeys($validated['params'], '', array_keys($rules), $at.'.params');
+                $params = $this->validate($at.'.params', $validated['params'], $rules);
                 $normalized['component'] = $component;
                 $normalized['params'] = $params;
             }
@@ -66,7 +68,7 @@ final class CompositionBlocks
     }
 
     /** Unknown parameter keys are rejected even inside arrays of registered items. */
-    private function checkParamKeys(array $params, string $prefix, array $paths): void
+    private function checkParamKeys(array $params, string $prefix, array $paths, string $at): void
     {
         foreach ($params as $key => $value) {
             $path = $prefix === '' ? (string) $key : $prefix.'.'.$key;
@@ -79,10 +81,10 @@ final class CompositionBlocks
                 }
             }
             if (! $known) {
-                $this->fail('Unsupported component parameter: '.$path.'.');
+                $this->fail('Unsupported component parameter: '.$path.'.', $at.'.'.$path);
             }
             if (is_array($value)) {
-                $this->checkParamKeys($value, $path, $paths);
+                $this->checkParamKeys($value, $path, $paths, $at);
             }
         }
     }
@@ -101,9 +103,19 @@ final class CompositionBlocks
         return array_values(array_unique($ids));
     }
 
-    private function fail(string $message): never
+    private function fail(string $message, string $at = 'content_json'): never
     {
-        throw ValidationException::withMessages(['content_json' => $message]);
+        throw ValidationException::withMessages([$at => $message]);
+    }
+
+    private function validate(string $at, array $data, array $rules): array
+    {
+        $validator = Validator::make($data, $rules);
+        if ($validator->fails()) {
+            throw ValidationException::withMessages(collect($validator->errors()->messages())->mapWithKeys(fn ($messages, $key) => [$at.'.'.$key => $messages])->all());
+        }
+
+        return $validator->validated();
     }
 
     /** Layout/configuration changes do not invalidate translated copy. Block order is independent. */

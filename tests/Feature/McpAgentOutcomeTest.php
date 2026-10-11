@@ -69,6 +69,19 @@ class McpAgentOutcomeTest extends TestCase
         $this->assertSame('draft', Page::findOrFail($page['id'])->status);
     }
 
+    public function test_a_record_without_history_keeps_its_prior_state_when_first_edited(): void
+    {
+        // A legacy row: stored without history and with outdated translation hashes, like pre-history content.
+        $page = Page::withoutEvents(fn () => Page::create(['title' => 'Legacy', 'slug' => 'legacy', 'template_key' => 'default', 'locale' => 'es', 'status' => 'published', 'published_at' => now()->subDay(),
+            'content_json' => ['sections' => ['content' => ['heading' => 'Old']]], 'source_field_hashes' => ['stale' => 'x'], 'updated_by' => User::query()->value('id')]));
+        $before = app(\App\Services\Editorial\EditorialHistory::class)->fingerprint($page->fresh());
+
+        $after = $this->rpcData($this->rpc('pages_update', ['page_id' => $page->id, 'expected_revision' => $before, 'title' => 'Legacy']))['data'];
+
+        $this->assertSame('published', $after['status']);
+        $this->assertSame([$before, $after['revision']], $this->versions($page->id));
+    }
+
     public function test_a_failed_operation_leaves_no_version_and_does_not_leak_into_the_next_one(): void
     {
         $page = $this->createDraft('rolled-back');
@@ -115,6 +128,43 @@ class McpAgentOutcomeTest extends TestCase
         $this->assertSame('content_json.sections.content.html', $data['warnings'][0]['field']);
         $this->assertSame(['<script>', 'p[onclick]', '.rogue'], $data['warnings'][0]['removed']);
         $this->assertSame($allowed.'<p class="cms-lead">Kept</p>', Page::findOrFail($page['data']['id'])->content_json['sections']['content']['html']);
+    }
+
+    public function test_discarded_rich_text_is_reported_and_remote_images_are_never_stored(): void
+    {
+        $page = $this->rpcData($this->rpc('pages_create_draft', ['title' => 'Rich', 'slug' => 'rich', 'template_key' => 'default', 'operation_key' => 'rich',
+            'content_json' => ['sections' => ['content' => ['is_visible' => true, 'body' => '<p onclick="x()">Hi <a href="javascript:alert(1)">x</a></p><script>alert(1)</script>']]]]));
+        $this->assertSame('content_json.sections.content.body', $page['warnings'][0]['field']);
+        $this->assertSame(['p[onclick]', 'a[href] (unsafe URL)', '<script>'], $page['warnings'][0]['removed']);
+
+        $post = $this->rpcData($this->rpc('posts_create_draft', ['title' => 'Rich post', 'slug' => 'rich-post', 'operation_key' => 'rich-post',
+            'content' => '<p>Own <img src="/storage/media/a.webp" alt="a"> remote <img src="https://tracker.example/p.gif"> relative <img src="//cdn.example/x.png"></p>']));
+        $this->assertSame(['<img> with an external or missing source'], $post['warnings'][0]['removed']);
+        $this->assertStringContainsString('src="/storage/media/a.webp"', $post['data']['content']);
+        $this->assertStringNotContainsString('tracker.example', $post['data']['content']);
+        $this->assertStringNotContainsString('cdn.example', $post['data']['content']);
+    }
+
+    public function test_page_slugs_are_url_segments_that_never_shadow_site_routes(): void
+    {
+        foreach (['QA Raro!!', 'admin', 'admin/equipo', 'blog', 'mcp', 'login', 'Mayusculas', 'doble--guion'] as $slug) {
+            $this->rpc('pages_create_draft', ['title' => 'Bad', 'slug' => $slug, 'template_key' => 'default'])->assertOk()->assertJsonPath('error.code', -32602);
+        }
+        foreach (['administracion', 'mcp-guia', 'servicios/diseno-web'] as $slug) {
+            $this->rpcData($this->rpc('pages_create_draft', ['title' => 'Ok', 'slug' => $slug, 'template_key' => 'default']));
+            Page::where('slug', $slug)->update(['status' => 'published', 'published_at' => now()->subDay()]);
+            $this->get('/'.$slug)->assertOk();
+        }
+    }
+
+    public function test_every_template_schema_example_creates_a_valid_draft(): void
+    {
+        foreach (array_keys(config('cms.templates')) as $template) {
+            $example = $this->rpcData($this->rpc('cms_schema', ['type' => 'pages', 'template_key' => $template]))['data']['example'];
+            $created = $this->rpcData($this->rpc('pages_create_draft', ['slug' => 'example-'.$template, 'operation_key' => 'example-'.$template] + $example));
+            $this->assertSame($template, $created['data']['template_key'], $template);
+            $this->assertArrayNotHasKey('warnings', $created, $template);
+        }
     }
 
     public function test_permission_refusals_are_distinguishable_from_server_failures(): void

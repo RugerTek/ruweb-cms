@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateTaxonomyRequest;
 use App\Models\Taxonomy;
 use App\Models\Locale;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Services\Content\TaxonomyOperations;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,12 +53,7 @@ class TaxonomyController extends Controller
     {
         $this->authorize('create', Taxonomy::class);
 
-        $data = $request->validated();
-        $data['locale'] = $data['locale'] ?? Locale::baseCode();
-        $taxonomy = Taxonomy::create(array_merge($data, ['type' => $type]));
-        $taxonomy->source_fingerprint = $taxonomy->translatableFingerprint();
-        $taxonomy->source_field_hashes = $taxonomy->translatableFieldFingerprints();
-        $taxonomy->save();
+        $taxonomy = app(TaxonomyOperations::class)->create($request->user(), $type, $request->validated());
 
         if ($request->wantsJson()) {
             return response()->json(['id' => $taxonomy->id, 'name' => $taxonomy->name]);
@@ -85,16 +81,9 @@ class TaxonomyController extends Controller
         $this->authorize('update', $taxonomy);
 
         $data = $request->validated();
-        $data['locale'] = $data['locale'] ?? $taxonomy->locale;
-        unset($data['acknowledged_fields']);
-        $taxonomy->update($data);
-        if ($taxonomy->isBaseLocale()) {
-            $taxonomy->source_fingerprint = $taxonomy->translatableFingerprint();
-            $taxonomy->source_field_hashes = $taxonomy->translatableFieldFingerprints();
-        } else {
-            $taxonomy->syncTranslationFromBase();
-        }
-        $taxonomy->save();
+        unset($data['acknowledged_fields'], $data['locale']);
+        // Saving a translation from the panel form marks it reviewed against its source.
+        app(TaxonomyOperations::class)->update($request->user(), $taxonomy, $data, reviewed: true);
 
         return redirect()
             ->route('admin.taxonomies.index', $type)
@@ -111,51 +100,18 @@ class TaxonomyController extends Controller
             return redirect()->route('admin.taxonomies.edit', [$type, $existing]);
         }
 
-        $base = $taxonomy->baseTranslation() ?: $taxonomy;
-        $translation = $base->replicate(['slug']);
-        $translation->locale = $locale;
-        $translation->slug = $this->uniqueTranslatedSlug($base->slug, $base->type, $locale);
-        $translation->parent_id = $this->translatedParentId($base, $locale);
-        $translation->translation_status = 'needs_review';
-        $translation->source_fingerprint = $base->translatableFingerprint();
-        $translation->source_field_hashes = $base->translatableFieldFingerprints();
-        $translation->save();
+        $translation = app(TaxonomyOperations::class)->translate($request->user(), $taxonomy, $locale);
 
         return redirect()
             ->route('admin.taxonomies.edit', [$type, $translation])
             ->with('success', __('admin.taxonomy_created'));
     }
 
-    private function uniqueTranslatedSlug(string $slug, string $type, string $locale): string
-    {
-        $candidate = $slug;
-        $counter = 2;
-
-        while (Taxonomy::where('type', $type)->where('locale', $locale)->where('slug', $candidate)->exists()) {
-            $candidate = $slug.'-'.$counter;
-            $counter++;
-        }
-
-        return $candidate;
-    }
-
-    private function translatedParentId(Taxonomy $base, string $locale): ?int
-    {
-        if (! $base->parent_id) {
-            return null;
-        }
-
-        $parent = $base->parent()->with('translations')->first();
-
-        return $parent?->translations->firstWhere('locale', $locale)?->id;
-    }
-
     public function destroy(string $type, Taxonomy $taxonomy): RedirectResponse
     {
         $this->authorize('delete', $taxonomy);
 
-        $taxonomy->children()->update(['parent_id' => $taxonomy->parent_id]);
-        $taxonomy->delete();
+        app(TaxonomyOperations::class)->delete(request()->user(), $taxonomy);
 
         return redirect()
             ->route('admin.taxonomies.index', $type)

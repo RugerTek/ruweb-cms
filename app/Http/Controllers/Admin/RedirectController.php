@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\NotFoundHit;
 use App\Models\Redirect as RedirectRule;
+use App\Services\Content\RedirectOperations;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -19,52 +19,35 @@ class RedirectController extends Controller
 {
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validated($request);
-
-        $error = $this->rejectionReason($data['source_path'], $data['target_url']);
-        if ($error !== null) {
-            return back()->withErrors(['source_path' => $error])->withInput();
-        }
-
-        RedirectRule::updateOrCreate(
-            ['source_path' => $data['source_path']],
-            $data
-        );
+        app(RedirectOperations::class)->save($request->user(), $request->only(['source_path', 'target_url', 'status_code', 'is_active']));
 
         return $this->back(__('admin.redirect_saved'));
     }
 
     public function update(Request $request, RedirectRule $redirect): RedirectResponse
     {
-        $data = $this->validated($request);
-
-        $error = $this->rejectionReason($data['source_path'], $data['target_url'], $redirect->id);
-        if ($error !== null) {
-            return back()->withErrors(['source_path' => $error])->withInput();
-        }
-
-        $redirect->update($data);
+        app(RedirectOperations::class)->save($request->user(), $request->only(['source_path', 'target_url', 'status_code', 'is_active']), $redirect);
 
         return $this->back(__('admin.redirect_updated'));
     }
 
-    public function destroy(RedirectRule $redirect): RedirectResponse
+    public function destroy(Request $request, RedirectRule $redirect): RedirectResponse
     {
-        $redirect->delete();
+        app(RedirectOperations::class)->delete($request->user(), $redirect);
 
         return $this->back(__('admin.redirect_deleted'));
     }
 
-    public function destroyNotFound(NotFoundHit $notFoundHit): RedirectResponse
+    public function destroyNotFound(Request $request, NotFoundHit $notFoundHit): RedirectResponse
     {
-        $notFoundHit->delete();
+        app(RedirectOperations::class)->forgetNotFound($request->user(), $notFoundHit);
 
         return $this->back(__('admin.not_found_hit_deleted'), 'not-found');
     }
 
-    public function clearNotFound(): RedirectResponse
+    public function clearNotFound(Request $request): RedirectResponse
     {
-        NotFoundHit::query()->delete();
+        app(RedirectOperations::class)->forgetNotFound($request->user());
 
         return $this->back(__('admin.not_found_cleared'), 'not-found');
     }
@@ -146,7 +129,7 @@ class RedirectController extends Controller
                 continue;
             }
 
-            $reason = $this->rejectionReason($sourcePath, $targetUrl);
+            $reason = app(RedirectOperations::class)->rejectionReason($sourcePath, $targetUrl);
             if ($reason !== null) {
                 $skipped++;
                 $errors[] = __('admin.redirect_import_row_reason', ['row' => $rowNumber, 'reason' => $reason]);
@@ -175,60 +158,6 @@ class RedirectController extends Controller
         }
 
         return $this->back($message);
-    }
-
-    /** @return array{source_path: string, target_url: string, status_code: int, is_active: bool} */
-    private function validated(Request $request): array
-    {
-        $data = $request->validate([
-            'source_path' => ['required', 'string', 'max:255'],
-            'target_url' => ['required', 'string', 'max:255'],
-            'status_code' => ['required', Rule::in(config('cms.redirects.status_codes'))],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
-
-        return [
-            'source_path' => RedirectRule::normalizePath($data['source_path']),
-            'target_url' => trim($data['target_url']),
-            'status_code' => (int) $data['status_code'],
-            'is_active' => (bool) ($data['is_active'] ?? false),
-        ];
-    }
-
-    /**
-     * Why this rule cannot be saved, or null when it is fine. Catches the two ways a rule loops:
-     * pointing at itself, and pointing at a path that points back.
-     */
-    private function rejectionReason(string $sourcePath, string $targetUrl, ?int $ignoreId = null): ?string
-    {
-        if ($sourcePath === '/' ) {
-            return __('admin.redirect_error_home_source');
-        }
-
-        if ($targetUrl === '') {
-            return __('admin.redirect_error_empty_target');
-        }
-
-        $isExternal = (bool) parse_url($targetUrl, PHP_URL_HOST);
-        if ($isExternal) {
-            return null;
-        }
-
-        $targetPath = RedirectRule::normalizePath($targetUrl);
-
-        if ($sourcePath === $targetPath) {
-            return __('admin.redirect_error_same');
-        }
-
-        $loops = RedirectRule::query()
-            ->active()
-            ->where('source_path', $targetPath)
-            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
-            ->get()
-            ->contains(fn (RedirectRule $rule): bool => ! $rule->isExternal()
-                && RedirectRule::normalizePath($rule->target_url) === $sourcePath);
-
-        return $loops ? __('admin.redirect_error_loop', ['path' => $targetPath]) : null;
     }
 
     private function toBool(mixed $value): bool

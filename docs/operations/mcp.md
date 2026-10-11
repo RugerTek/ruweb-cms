@@ -37,7 +37,8 @@ Authorization: Bearer <token>
   Revoked or expired migrated keys cannot fall back to legacy authentication.
 - Scopes apply to both REST and JSON-RPC: `read-only` permits reads; `draft-only` also permits creating and
   updating page/post drafts; `full` permits operations within the owner's role. Draft-only keys cannot
-  publish, unpublish an existing published row, or mutate media, settings or menus. Draft status is checked
+  publish, unpublish an existing published row, delete or reset anything, edit published content live, or mutate
+  media, settings, menus, taxonomies or redirects. Draft status is checked
   under a row lock within the mutation transaction, so concurrent publishing cannot bypass the scope.
   Unknown future RPC tools are denied for restricted keys until explicitly classified.
 - API keys are the sole authentication method. Legacy OAuth tokens are rejected, and authorization,
@@ -85,19 +86,31 @@ Defined in `app/Mcp/ToolRegistry.php`:
 | Group | Tools |
 |---|---|
 | Discovery | `cms_capabilities`, `cms_schema`, `locales_list` |
-| Content / languages | `content_translate`, `content_translation_changes`, `content_translation_acknowledge`, `content_publication`, `content_preview`, `content_read_field`, `locales_configure` |
-| Pages | `pages_list`, `pages_get`, `pages_create_draft`, `pages_update_draft`, `pages_publish` |
-| Posts | `posts_list`, `posts_get`, `posts_create_draft`, `posts_update_draft`, `posts_publish` |
+| Content / languages | `content_translate`, `content_translation_changes`, `content_translation_acknowledge`, `content_publication`, `content_preview`, `content_preview_revoke`, `content_read_field`, `locales_configure` |
+| History and review | `content_versions`, `content_version`, `content_diff`, `content_restore`, `content_propose`, `content_review_request`, `content_review_decide`, `content_review_comment`, `content_reviews` |
+| Pages | `pages_list`, `pages_get`, `pages_create_draft`, `pages_update_draft`, `pages_update`, `pages_publish`, `pages_delete` |
+| Posts | `posts_list`, `posts_get`, `posts_create_draft`, `posts_update_draft`, `posts_update`, `posts_publish`, `posts_delete` |
+| Taxonomies | `taxonomies_list`, `taxonomies_get`, `taxonomies_create`, `taxonomies_update`, `taxonomies_translate`, `taxonomies_delete` |
 | Media | `media_list`, `media_get`, `media_update_metadata`, `media_authorize_upload`, `media_usages`, `media_delete` |
-| Settings | `settings_list`, `settings_get`, `settings_update`, `settings_update_batch` |
+| Settings | `settings_list`, `settings_get`, `settings_update`, `settings_update_batch`, `settings_reset` |
 | Menus | `menus_list`, `menus_get`, `menus_create`, `menus_update`, `menus_sync_items`, `menus_delete` |
+| Redirects and 404s | `redirects_list`, `redirects_create`, `redirects_update`, `redirects_delete`, `not_found_list`, `not_found_forget` |
+| Form inbox | `submissions_list`, `submissions_get`, `submissions_assign`, `submissions_set_status`, `submissions_add_note`, `submissions_retry_notification`, `submissions_delete` |
+| Custom code | `custom_code_list`, `custom_code_get`, `custom_code_destinations`, `custom_code_save`, `custom_code_activate`, `custom_code_deactivate`, `custom_code_evaluate` |
 
-Writes create or update **drafts**; publishing is its own call, and republishing keeps the original
-`published_at`. Updating a published page/post is rejected for every role, including administrators;
-it never silently unpublishes the record. For published changes, `content_propose` prepares a separate
-immutable version and `content_review_request` / `content_review_decide` review and apply that exact proposal
-under the editorial workflow described below. Draft checking, partial merge, history and media changes run
-inside a transaction with a row lock.
+`tests/Feature/McpSurfaceContractTest.php` fails when a registered tool is missing from this table, has no
+dispatcher handler or is a read that restricted credentials cannot call. Keeping the MCP surface complete when a
+feature is added is a checklist of its own: [mcp-surface.md](mcp-surface.md).
+
+The surface mirrors the Live Editor. `*_create_draft` and `*_update_draft` only touch drafts. `pages_update` /
+`posts_update` patch a record in place like the Live Editor: drafts for anyone with the role, and published
+content live (it stays published) **for administrators only**; editors change published content through
+`content_propose`, and `content_review_request` / `content_review_decide` apply that exact proposal. Publishing is
+its own call and republishing keeps the original `published_at`; no edit ever silently unpublishes a record.
+`pages_delete` / `posts_delete` remove a record permanently: menu links to it are removed and its translations
+kept, both listed in `warnings`; the base-language homepage cannot be deleted until another page is chosen with
+`settings_update` (`homepage_translation_group_id`). Every write runs inside a transaction with a row lock and
+records one restorable version of its result.
 
 ### Partial content edits
 
@@ -123,8 +136,8 @@ Walk through `meta.last_page`; `meta.total` is the full count. Ordering is newes
 ID descending as a tie-breaker. This is offset pagination over a stable inventory, not a snapshot
 across concurrent inserts/deletes. Both REST and RPC use the explicitly supplied page.
 
-Zero-argument tools must serialize `inputSchema.properties` as an object (`{}`), never an array (`[]`).
-The two tools absent in the initial Codex test both used the invalid array shape; phase 0 repaired the original 22 tools. The current catalog has 52 tools, including deployment discovery; every schema must remain valid.
+Zero-argument tools must serialize `inputSchema.properties` as an object (`{}`), never an array (`[]`); every
+schema must remain valid.
 After a schema change, reconnect the client and open a fresh session to verify its discovered catalog. `template_key` enumerates `config('cms.templates')`, so an agent cannot invent a template.
 
 Setting an image field with no real asset: select the placeholder matching the slot's aspect ratio by its
@@ -134,8 +147,11 @@ Setting an image field with no real asset: select the placeholder matching the s
 ## REST Endpoints
 
 `routes/mcp.php` mirrors the tools: `GET /mcp/pages`, `GET /mcp/pages/{page}`, `POST /mcp/pages/drafts`,
-`PATCH /mcp/pages/{page}/draft`, `POST /mcp/pages/{page}/publish`, the same shape for posts, plus
-`/mcp/media`, `/mcp/settings/{key}` and `/mcp/menus` including `PUT /mcp/menus/{menu}/items`.
+`PATCH /mcp/pages/{page}/draft`, `PATCH /mcp/pages/{page}` (live edit), `DELETE /mcp/pages/{page}`,
+`POST /mcp/pages/{page}/publish`, the same shape for posts, plus `/mcp/media`, `/mcp/settings/{key}`,
+`POST /mcp/settings/reset`, `/mcp/menus` including `PUT /mcp/menus/{menu}/items`, `/mcp/taxonomies`
+(`POST /mcp/taxonomies/{taxonomy}/translations`), `/mcp/redirects`, `GET /mcp/not-found` and
+`POST /mcp/not-found/forget`.
 
 Media detail is `GET /mcp/media/{media}`. Update metadata with `PATCH /mcp/media/{media}` or the compatible
 `PATCH /mcp/media/{media}/metadata` route. Both accept optional `locale` (query string or JSON body on PATCH)
@@ -154,22 +170,26 @@ Password-type settings are always returned with `value: null` and `redacted: tru
 administrators, through list/get on both REST and RPC. Other settings return `redacted: false`.
 An absent secret value in a response is not evidence that the setting is unconfigured.
 
-`config('cms.mcp.settings_writable_keys')` is enforced, not documentation: today `site_name`,
+`config('cms.mcp.settings_writable_keys')` is enforced, not documentation: today `homepage_translation_group_id`
+(a translation group whose base-language page is published, the same choice as the panel), `site_name`,
 `site_description`, `site_favicon`, `admin_login_path`, `contact_phone`, `contact_whatsapp`, `contact_email`,
 `contact_address`, `footer_tagline`, `footer_copyright`, plus the existing public layout/SEO fields:
 `site_logo`, `default_social_image`, `header_cta_enabled`, `header_cta_label`, `header_cta_page`,
 `header_cta_url`, `header_cta_new_tab`, `contact_location`, `contact_social_links`, `footer_credit_enabled`,
-`footer_credit`. This does not include email transport, analytics, credentials, profile or arbitrary configuration. Arbitrary keys are rejected. `cms.mcp.per_page`
-defaults listing pagination to 20.
+`footer_credit`. This does not include email transport, analytics, credentials, profile or arbitrary configuration. Arbitrary keys are rejected and unknown keys
+report `Setting not found.`. `cms.mcp.per_page` defaults listing pagination to 20.
+
+`settings_reset {keys, locale?, expected_revisions?}` restores allowlisted keys to their starter value from
+`App\Support\SettingDefaults` (the same list `SettingsSeeder` installs). Without `locale` it resets the value and
+removes every localized override; with a non-base locale it only removes that override so the base value applies.
+The homepage has no starter value and cannot be reset. A setting's `revision` ignores timestamps: rewriting the same
+value keeps it.
 
 ## Adding A Tool
 
-1. Implement the behaviour in `McpController` or a service — validating input and authorizing before reading
-   or mutating.
-2. Register the definition in `ToolRegistry` with a description precise enough for an agent to choose it, and
-   an `inputSchema` that enumerates valid values wherever a config registry exists.
-3. Add the REST route in `routes/mcp.php` when the operation belongs there too.
-4. Serialize through the existing helpers so both surfaces answer the same shape.
+Follow [mcp-surface.md](mcp-surface.md): it lists every file a new tool touches (shared operation, controller,
+`ToolRegistry`, `McpServerController::resolveHandler`, `EnforceMcpScopes`, `routes/mcp.php`, tests, this doc) and
+the conventions each write must keep (revision, operation key, warnings, error codes).
 
 ## Deployment discovery
 
@@ -182,9 +202,12 @@ See [administration profiles](../concepts/admin-profiles.md).
 ## Phase 3 operational contract
 
 `cms_schema` accepts `type: pages|posts` and the registered `template_key` for pages, and returns the exact
-schema, locale flags, translation rules and a draft example. Registered collections are reported by capabilities;
-only the shipped Post collection currently registers MCP operations. Adding another collection requires its
-schema, explicit operations and policy in code; there is no arbitrary model/table dispatch.
+schema, locale flags, translation rules and a draft example generated from the schema itself (it saves as-is;
+`McpAgentOutcomeTest` checks every template). Bearer page writes may only add paths the template schema declares;
+send `null` to remove a legacy key. Registered collections are reported by capabilities; only the shipped Post
+collection currently registers MCP operations. Adding another collection requires its schema, explicit operations
+and policy in code — see [mcp-surface.md](mcp-surface.md#a-new-collection); there is no arbitrary model/table
+dispatch.
 
 `locales_configure` (admin/full scope) installs only a code from the existing catalog and patches installed
 activation/publication flags atomically. The base locale always stays active/public. No locale records or content

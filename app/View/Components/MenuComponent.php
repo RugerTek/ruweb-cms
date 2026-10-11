@@ -16,7 +16,7 @@ class MenuComponent extends Component
             ? Menu::findByLocation($location)
             : Menu::findBySlug($slug);
 
-        $this->items = $menu ? $menu->tree() : collect();
+        $this->items = $menu ? $menu->tree(public: true) : collect();
     }
 
     public function render()

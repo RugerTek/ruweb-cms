@@ -17,12 +17,14 @@ Run `php artisan cms:capabilities` and read
 Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
 publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
 rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
-role/scope permissions are independent. Essential’s operational panel passed phase 4; later capabilities retain their own roadmap gates.
+role/scope permissions are independent. In `essential`, agents edit through MCP whatever has no panel editor,
+so every editable path must be declared in the schema ([MCP surface](../../../docs/operations/mcp-surface.md)).
 
 ## Steps
 
-1. **Settle the spec.** Page name, slug (infer from the name when not given), sections and the fields each one
-   needs. Ambiguity is resolved with the smallest interpretation consistent with the existing architecture —
+1. **Settle the spec.** Page name, slug (infer from the name when not given: lowercase words joined by hyphens,
+   optionally nested with `/`, never starting with a segment the site uses such as `admin`, `mcp`, `blog` or the
+   login path), sections and the fields each one needs. Ambiguity is resolved with the smallest interpretation consistent with the existing architecture —
    state the assumption instead of asking, unless the answer changes the data model.
 2. **Choose the template.** Reuse an existing `config('cms.templates')` entry when its `sections` match.
    Register a new one only when the shape is genuinely different (`create-template` covers that).
@@ -37,7 +39,9 @@ role/scope permissions are independent. Essential’s operational panel passed p
    [docs/admin/live-editor-ui-ux.md](../../../docs/admin/live-editor-ui-ux.md).
 7. **Declare every editable path** in the template `schema` with `translatable` / `preserve` / `remap`.
 8. **Translations** for any new admin label in `lang/es/admin.php` and `lang/en/admin.php`, key-for-key.
-9. **Verify**: the page resolves on its public URL, preview works in the editor, and `composer test` passes.
+9. **Verify**: the page resolves on its public URL, preview works in the editor (full) or through
+   `content_preview` (essential), it can be edited through `pages_update_draft` / `pages_update`, and
+   `composer test` passes.
 
 ## Never
 

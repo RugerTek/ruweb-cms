@@ -8,6 +8,12 @@ description: Changes what the public header or footer shows in ruweb-cms, or the
 Read [docs/admin/layout.md](../../../docs/admin/layout.md) — ownership map, admin screens, `BusinessContact`
 and the extension checklists.
 
+## Profile First
+
+Run `php artisan cms:capabilities`. In `essential` the Header and Footer screens answer 404: the field is edited
+**only** through MCP, so the MCP steps below are what makes it editable at all. In `full` they are equally
+required, because agents must be able to do what the panel does.
+
 ## Decide Who Owns The Fact
 
 | The value | What to do |
@@ -19,9 +25,18 @@ and the extension checklists.
 ## Then
 
 Follow the matching checklist under "Extending" in [docs/admin/layout.md](../../../docs/admin/layout.md):
-seeder **and** data migration, validation rule in `PersistsSettings`, `es` + `en` translations, the ordering
-array in `HeaderController` / `FooterController`, the view composer variable, the partial rendering, and a case
-in `tests/Feature/AdminLayoutScreensTest.php`.
+default in `App\Support\SettingDefaults` **and** a data migration, validation rule in `PersistsSettings`, `es` +
+`en` translations, the ordering array in `HeaderController` / `FooterController`, the view composer variable,
+the partial rendering, and a case in `tests/Feature/AdminLayoutScreensTest.php`.
+
+## MCP Surface
+
+1. Add the key to `cms.mcp.settings_writable_keys` (never for secrets).
+2. Add its validation rule to `SettingOperations::update()` — the MCP path validates there.
+3. If its text varies by language, add it to the localized key list in that same method.
+4. Test `settings_update_batch` and `settings_reset` for it. `McpSurfaceContractTest` checks it has a default.
+
+See [docs/operations/mcp-surface.md](../../../docs/operations/mcp-surface.md).
 
 A client-facing button destination always uses the shared `admin.partials._link-destination` partial with
 `LinkDestination::resolve()` — page selector first, `Custom` last, "open in a new tab" always visible — never a

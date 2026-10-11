@@ -6,6 +6,7 @@ use App\Mcp\ContentPatch;
 use App\Models\Locale;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\Content\ContentDeletion;
 use App\Services\Content\RevisionGuard;
 use App\Services\Content\TranslationOperations;
 use App\Services\Editorial\EditorialActor;
@@ -18,28 +19,33 @@ use Illuminate\Support\Facades\Validator;
 /** Post writes shared by the panel and bearer transports. */
 final class PostOperations
 {
-    public function save(User $actor, array $input, ?Post $post = null, bool $draftOnly = false, ?string $base = null): Post
+    /** $patch edits in place like the Live Editor; see PageOperations::save(). */
+    public function save(User $actor, array $input, ?Post $post = null, bool $draftOnly = false, ?string $base = null, bool $patch = false): Post
     {
         Gate::forUser($actor)->authorize($post ? 'update' : 'create', $post ?? Post::class);
+        $patch = $patch && $post !== null;
 
-        return $this->transaction($actor, function () use ($actor, $input, $post, $draftOnly, $base) {
+        return $this->transaction($actor, function () use ($actor, $input, $post, $draftOnly, $base, $patch) {
             $post = $post ? Post::query()->lockForUpdate()->findOrFail($post->id) : null;
             if ($draftOnly && $post && $post->status !== 'draft') {
                 throw new AuthorizationException(__('editorial.mcp_draft_required'));
             }
+            if ($patch && $post->status !== 'draft' && ! $actor->isAdmin()) {
+                throw new AuthorizationException(__('editorial.mcp_live_edit_admin_only'));
+            }
             if ($draftOnly && ! $post) {
                 $input['status'] = 'draft';
             }
-            $data = (new PostInput($input, $post, $draftOnly && $post !== null, $draftOnly))->validate();
+            $data = (new PostInput($input, $post, ($draftOnly || $patch) && $post !== null, $draftOnly))->validate();
             $this->checkRevision($post, $data['expected_revision'] ?? $base);
             unset($data['expected_revision']);
             $history = app(EditorialHistory::class);
-            if (! $draftOnly && $post && $actor->isEditor() && $post->status === 'published') {
+            if (! $draftOnly && ! $patch && $post && $actor->isEditor() && $post->status === 'published') {
                 $history->stage($post, $data);
 
                 return $post;
             }
-            $data['status'] = $draftOnly ? 'draft' : $data['status'];
+            $data['status'] = $draftOnly ? 'draft' : ($patch ? $post->status : $data['status']);
             if ($data['status'] === 'published' && ! $actor->isAdmin()) {
                 throw new AuthorizationException(__('editorial.publish_forbidden'));
             }
@@ -50,10 +56,10 @@ final class PostOperations
             }
             $featured = $data['featured_image'] ?? null;
             $categories = $data['categories'] ?? [];
-            $replaceFeatured = ! $draftOnly || array_key_exists('featured_image', $data);
-            $replaceCategories = ! $draftOnly || array_key_exists('categories', $data);
+            $replaceFeatured = (! $draftOnly && ! $patch) || array_key_exists('featured_image', $data);
+            $replaceCategories = (! $draftOnly && ! $patch) || array_key_exists('categories', $data);
             unset($data['featured_image'], $data['categories'], $data['acknowledged_fields']);
-            if ($draftOnly && $post && isset($data['meta_json'])) {
+            if (($draftOnly || $patch) && $post && isset($data['meta_json'])) {
                 $data['meta_json'] = ContentPatch::apply($post->meta_json ?? [], $data['meta_json']);
             }
             if ($post) {
@@ -64,7 +70,7 @@ final class PostOperations
             if ($post->isBaseLocale()) {
                 $post->source_fingerprint = $post->translatableFingerprint();
                 $post->source_field_hashes = $post->translatableFieldFingerprints();
-            } elseif (! $draftOnly) {
+            } elseif (! $draftOnly && ! $patch) {
                 $post->syncTranslationFromBase();
             }
             $post->save();
@@ -99,16 +105,21 @@ final class PostOperations
         });
     }
 
-    public function delete(User $actor, Post $post, ?string $expectedRevision = null): void
+    /** Returns what the deletion left behind; see ContentDeletion. */
+    public function delete(User $actor, Post $post, ?string $expectedRevision = null): array
     {
         Gate::forUser($actor)->authorize('delete', $post);
-        $this->transaction($actor, function () use ($post, $expectedRevision) {
+
+        return $this->transaction($actor, function () use ($post, $expectedRevision) {
             $post = Post::query()->lockForUpdate()->findOrFail($post->id);
             $this->checkRevision($post, $expectedRevision);
+            $warnings = app(ContentDeletion::class)->cleanUp($post);
             app(EditorialHistory::class)->capture($post);
             $post->media()->detach();
             $post->taxonomies()->detach();
             $post->delete();
+
+            return $warnings;
         });
     }
 

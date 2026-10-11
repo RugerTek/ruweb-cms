@@ -5,7 +5,8 @@ description: Adds or changes configuration in ruweb-cms — a runtime setting in
 
 # Add Configuration
 
-Read [docs/admin/settings.md](../../../docs/admin/settings.md). Add
+Run `php artisan cms:capabilities` first: in `essential` several settings screens are hidden and MCP is how the
+value gets edited. Read [docs/admin/settings.md](../../../docs/admin/settings.md). Add
 [docs/content/images.md](../../../docs/content/images.md) for media-related values and
 [docs/operations/mcp.md](../../../docs/operations/mcp.md) when an agent should be able to write it.
 
@@ -22,15 +23,19 @@ never with scattered `Setting::get()` calls.
 
 ## Steps For A Setting
 
-1. Row in `database/seeders/SettingsSeeder.php` **and** a data migration so existing installs get it.
+1. Row in `App\Support\SettingDefaults` (read by `SettingsSeeder` and `settings_reset`) **and** a data migration
+   so existing installs get it.
 2. Correct `type` and `group` ([docs/admin/settings.md](../../../docs/admin/settings.md) lists the types,
    including `media`, `password`, `social_links`, `rich_text`, `map_point`).
 3. `settings_fields.<key>.label` / `.help`, group label and option labels in `lang/es/admin.php` and
    `lang/en/admin.php`, key-for-key.
 4. Validation rule where the group is saved (`PersistsSettings` for `contact`, `header`, `footer`).
 5. Read it through the shared API; add it to the view composer if a partial needs it.
-6. `cms.mcp.settings_writable_keys` when an agent should write it.
-7. Cover it in the matching feature test.
+6. **MCP surface.** Every non-secret value an editor can change in the panel must be writable by agents: add it to
+   `cms.mcp.settings_writable_keys`, give it a rule in `SettingOperations::update()` (and the localized key list
+   there if it varies by language). Mandatory when the screen that edits it is hidden in `essential`. Never for
+   secrets or transport credentials. See [docs/operations/mcp-surface.md](../../../docs/operations/mcp-surface.md).
+7. Cover it in the matching feature test and an MCP write/reset test; `McpSurfaceContractTest` stays green.
 
 ## Rules
 

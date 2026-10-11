@@ -10,6 +10,10 @@ outside the admin UI.
 
 - Editable content lives in the database. If a template holds hardcoded copy, that is a defect to fix, not a
   pattern to follow.
+- An agent edits through MCP: `pages_update_draft` / `pages_update` take the change as a patch (objects merge,
+  lists replace whole, `null` removes a key) with the current `expected_revision`; editors stage published changes
+  with `content_propose` ([../operations/mcp.md](../operations/mcp.md#partial-content-edits)). In `essential` this
+  is the editor for structured sections.
 - Use the admin UI when the form already supports the change; use application code (tinker or a script) for
   bulk or deeply nested updates.
 - Never `UPDATE` the JSON column with raw SQL.

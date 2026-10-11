@@ -35,8 +35,11 @@ The homepage is not resolved by slug: it is the page whose `translation_group_id
    social image when it must differ.
 4. **Templates honor `is_visible`** and skip sections with no meaningful content.
 5. **Content follows the `meta` + `sections` contract** — no third top-level key.
-6. **Editing an existing page uses the shared live editor** ([../admin/live-editor.md](../admin/live-editor.md)).
-   The create screen may be a plain form, since there is no model to preview yet.
+6. **Editing an existing page uses the shared live editor** in `full`
+   ([../admin/live-editor.md](../admin/live-editor.md)); the create screen may be a plain form, since there is no
+   model to preview yet. In `essential` there is no Live Editor: pages are edited through MCP (`pages_update`,
+   `pages_update_draft`, `content_propose`), so every field must be declared in the template schema
+   ([../operations/mcp-surface.md](../operations/mcp-surface.md)).
 
 ## Creating A Page
 

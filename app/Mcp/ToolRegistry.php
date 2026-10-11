@@ -19,6 +19,48 @@ class ToolRegistry
             ...self::mediaTools(),
             ...self::settingTools(),
             ...self::menuTools(),
+            ...self::taxonomyTools(),
+            ...self::redirectTools(),
+        ];
+    }
+
+    private static function redirectTools(): array
+    {
+        $paging = ['page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
+        $id = ['redirect_id' => ['type' => 'integer', 'minimum' => 1]];
+        $fields = ['source_path' => ['type' => 'string', 'maxLength' => 255, 'description' => 'Root-relative old path, e.g. /old-page.'],
+            'target_url' => ['type' => 'string', 'maxLength' => 255, 'description' => 'Root-relative path on this site or an http(s) URL.'],
+            'status_code' => ['type' => 'integer', 'enum' => config('cms.redirects.status_codes', [301, 302])], 'is_active' => ['type' => 'boolean']];
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => $name, 'description' => $description.' Administrator and full credential scope for writes.', 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
+
+        return [
+            $tool('redirects_list', 'List redirect rules with revision, hit count and last use, in bounded pages.', $paging + ['search' => ['type' => 'string', 'maxLength' => 255]]),
+            $tool('redirects_create', 'Create a redirect rule, or replace the rule for the same source path. Self-redirects, loops, the homepage as source and non-http(s) targets are rejected.', $fields, ['source_path', 'target_url', 'status_code']),
+            $tool('redirects_update', 'Patch a redirect rule; omitted fields are kept. Requires the current revision.', $id + $revision + $fields, ['redirect_id', 'expected_revision']),
+            $tool('redirects_delete', 'Permanently delete a redirect rule. Requires the current revision.', $id + $revision, ['redirect_id', 'expected_revision']),
+            $tool('not_found_list', 'List recorded 404 paths, most recent first, to decide which redirects to create.', $paging),
+            $tool('not_found_forget', 'Forget one recorded 404 (hit_id) or the whole monitor (all: true). Returns how many were removed.', ['hit_id' => ['type' => 'integer', 'minimum' => 1], 'all' => ['type' => 'boolean', 'const' => true]]),
+        ];
+    }
+
+    private static function taxonomyTools(): array
+    {
+        $id = ['taxonomy_id' => ['type' => 'integer', 'minimum' => 1]];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
+        $fields = ['name' => ['type' => 'string', 'maxLength' => 255], 'slug' => ['type' => 'string', 'maxLength' => 255, 'pattern' => '^[a-z0-9]+(?:-[a-z0-9]+)*$'],
+            'description' => ['type' => ['string', 'null'], 'maxLength' => 1000], 'parent_id' => ['type' => ['integer', 'null'], 'minimum' => 1, 'description' => 'A term of the same type and locale.'],
+            'order' => ['type' => ['integer', 'null'], 'minimum' => 0]];
+        $type = ['type' => ['type' => 'string', 'enum' => config('cms.taxonomy_types', [])]];
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => 'taxonomies_'.$name, 'description' => $description, 'inputSchema' => ['type' => 'object', 'properties' => $properties, 'required' => $required]];
+
+        return [
+            $tool('list', 'List taxonomy terms (e.g. blog categories) of one type with revision, translation state and usage count, in bounded pages.', $type + ['locale' => ['type' => 'string', 'enum' => Locale::installedCodes()], 'search' => ['type' => 'string', 'maxLength' => 255], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], ['type']),
+            $tool('get', 'Read one taxonomy term with its revision.', $id, ['taxonomy_id']),
+            $tool('create', 'Create a term; it is live immediately (terms have no draft state). operation_key makes exact retries safe. Full credential scope.', $type + $fields + ['locale' => ['type' => 'string', 'enum' => Locale::installedCodes()], 'operation_key' => ['type' => 'string', 'maxLength' => 100]], ['type', 'name', 'slug']),
+            $tool('update', 'Patch a term; omitted fields are kept. Full credential scope; requires the current revision.', $id + $revision + $fields, ['taxonomy_id', 'expected_revision']),
+            $tool('translate', 'Create (or return the existing) translation of a term in another locale, marked needs_review; then patch its name and slug. Full credential scope.', $id + ['locale' => ['type' => 'string', 'enum' => Locale::installedCodes()]], ['taxonomy_id', 'locale']),
+            $tool('delete', 'Permanently delete a term. Child terms move up one level; it is removed from the content and menus that used it, reported in warnings. Administrator and full credential scope; requires the current revision.', $id + $revision, ['taxonomy_id', 'expected_revision']),
         ];
     }
 
@@ -53,6 +95,7 @@ class ToolRegistry
             $write('assign', 'Assign a responsible administrator/editor, or clear assignment with null.', ['assigned_to' => ['type' => ['integer', 'null'], 'minimum' => 1]], ['assigned_to']),
             $write('set_status', 'Set operational follow-up state independently of read state; visitor fields remain immutable.', ['workflow_status' => ['type' => 'string', 'enum' => ['new', 'in_progress', 'resolved']]], ['workflow_status']),
             $write('add_note', 'Append an internal note attributed to the bearer owner. Notes never enter public pages or mail.', ['body' => ['type' => 'string', 'maxLength' => 5000]], ['body']),
+            $write('delete', 'Permanently delete a submission with its internal notes (for example a privacy erasure request). The deletion is audited.', [], []),
             $write('retry_notification', 'Reserve a retry only for failed/skipped delivery using the code-owned notification configuration. Pending/sent generations do not send again. Query delivery state after processing; provider acceptance followed by connection failure cannot guarantee exactly-once.', [], []),
         ];
     }
@@ -88,6 +131,7 @@ class ToolRegistry
 
         return [
             $tool('settings_update_batch', 'Admin/full scope: atomically configure allowed layout, contact and SEO settings. One canonical row per fact; localized values only on supported keys. Secrets are excluded.', ['settings' => ['type' => 'object', 'properties' => array_fill_keys(config('cms.mcp.settings_writable_keys', []), new \stdClass), 'additionalProperties' => false], 'locale' => ['type' => 'string', 'enum' => Locale::installedCodes()], 'expected_revisions' => ['type' => 'object', 'additionalProperties' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]]], ['settings']),
+            $tool('settings_reset', 'Admin/full scope: restore writable settings to their starter value. Without locale the value and all localized overrides are reset; with a non-base locale only that override is removed and the base value applies.', ['keys' => ['type' => 'array', 'maxItems' => 50, 'items' => ['type' => 'string', 'enum' => config('cms.mcp.settings_writable_keys', [])]], 'locale' => ['type' => 'string', 'enum' => Locale::installedCodes()], 'expected_revisions' => ['type' => 'object', 'additionalProperties' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]]], ['keys']),
             $tool('content_read_field', 'Read an editorial string in character ranges or an array in item ranges after a clipped detail response. Check revision between reads.', $entity + ['field' => ['type' => 'string', 'maxLength' => 500], 'offset' => ['type' => 'integer', 'minimum' => 0], 'length' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 8192]], ['type', 'id', 'field']),
             $tool('cms_schema', 'Discover the exact editorial schema, locale rules and creation example for an installed content type/template.', ['type' => ['type' => 'string', 'enum' => ['pages', 'posts']], 'template_key' => ['type' => 'string', 'enum' => array_keys(config('cms.templates', []))]], ['type']),
             $tool('locales_list', 'List installed languages, activation/publication flags and installable catalog.'),
@@ -168,6 +212,35 @@ class ToolRegistry
                         'template_key' => ['type' => 'string', 'enum' => array_keys(config('cms.templates', []))],
                         'content_json' => ['type' => 'object', 'description' => 'Parche: objetos combinan claves, listas se reemplazan completas, null elimina una clave. Omitidos se conservan; parche raíz vacío no cambia contenido.'],
                         'featured_image' => ['type' => ['integer', 'null'], 'description' => 'Pasar null para quitar la imagen.'],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'pages_update',
+                'description' => 'Edit a page like the Live Editor: patch a draft, or as an administrator change published content live (it stays published). Same patch rules as pages_update_draft. Editors change published pages through content_propose. Full credential scope; requires the current revision.',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'required' => ['page_id', 'expected_revision'],
+                    'properties' => [
+                        'page_id' => ['type' => 'integer', 'minimum' => 1],
+                        'expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64],
+                        'title' => ['type' => 'string'],
+                        'slug' => ['type' => 'string'],
+                        'template_key' => ['type' => 'string', 'enum' => array_keys(config('cms.templates', []))],
+                        'content_json' => ['type' => 'object', 'description' => 'Patch: objects merge keys, lists are replaced whole, null removes a key; omitted keys are kept.'],
+                        'featured_image' => ['type' => ['integer', 'null'], 'description' => 'null removes the image.'],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'pages_delete',
+                'description' => 'Permanently delete a page (draft or published). Menu links to it are removed and reported in warnings; its translations are kept and reported. The base-language homepage cannot be deleted. Editors cannot delete published pages. Full credential scope; requires the current revision.',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'required' => ['page_id', 'expected_revision'],
+                    'properties' => [
+                        'page_id' => ['type' => 'integer', 'minimum' => 1],
+                        'expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64],
                     ],
                 ],
             ],
@@ -253,6 +326,37 @@ class ToolRegistry
                         'content' => ['type' => ['string', 'null']],
                         'featured_image' => ['type' => ['integer', 'null']],
                         'meta_json' => ['type' => ['object', 'null'], 'description' => 'Parche de claves SEO; null en una clave la elimina. null en meta_json limpia todo el SEO.'],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'posts_update',
+                'description' => 'Edit a post like the Live Editor: patch a draft, or as an administrator change published content live (it stays published). Same fields and meta_json patch rules as posts_update_draft. Editors change published posts through content_propose. Full credential scope; requires the current revision.',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'required' => ['post_id', 'expected_revision'],
+                    'properties' => [
+                        'post_id' => ['type' => 'integer', 'minimum' => 1],
+                        'expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64],
+                        'categories' => ['type' => 'array', 'items' => ['type' => 'integer']],
+                        'title' => ['type' => 'string'],
+                        'slug' => ['type' => 'string', 'pattern' => '^[a-z0-9]+(?:-[a-z0-9]+)*$'],
+                        'excerpt' => ['type' => ['string', 'null']],
+                        'content' => ['type' => ['string', 'null']],
+                        'featured_image' => ['type' => ['integer', 'null']],
+                        'meta_json' => ['type' => ['object', 'null'], 'description' => 'SEO key patch; null on a key removes it, null clears all SEO.'],
+                    ],
+                ],
+            ],
+            [
+                'name' => 'posts_delete',
+                'description' => 'Permanently delete a post (draft or published). Menu links to it are removed and reported in warnings; its translations are kept and reported. Full credential scope and delete permission; requires the current revision.',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'required' => ['post_id', 'expected_revision'],
+                    'properties' => [
+                        'post_id' => ['type' => 'integer', 'minimum' => 1],
+                        'expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64],
                     ],
                 ],
             ],

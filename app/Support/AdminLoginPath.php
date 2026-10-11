@@ -24,6 +24,9 @@ class AdminLoginPath
             'mcp',
             'up',
             'sitemap-xml',
+            'forms',
+            'draft-preview',
+            'storage',
         ];
     }
 

@@ -923,6 +923,7 @@ return [
     'redirect_updated' => 'Redirección actualizada.',
     'redirect_deleted' => 'Redirección eliminada.',
     'redirect_confirm_delete' => 'Se eliminará la redirección de ":path".',
+    'redirect_error_unsafe_target' => 'El destino debe ser una ruta de este sitio o una dirección http(s).',
     'redirect_error_same' => 'La URL origen y el destino no pueden ser iguales.',
     'redirect_error_home_source' => 'La portada no puede redirigirse desde acá.',
     'redirect_error_empty_target' => 'El destino no puede estar vacío.',

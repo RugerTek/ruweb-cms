@@ -116,9 +116,7 @@ class PageController extends Controller
 
     public function destroy(Page $page): RedirectResponse
     {
-        abort_if(request()->user()->isEditor() && $page->status === 'published', 403, __('editorial.publish_forbidden'));
-        $page->media()->detach();
-        $page->delete();
+        app(PageOperations::class)->delete(request()->user(), $page);
 
         return redirect()
             ->route('admin.pages.index')

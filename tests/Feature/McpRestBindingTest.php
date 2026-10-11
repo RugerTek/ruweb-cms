@@ -128,7 +128,7 @@ class McpRestBindingTest extends TestCase
         $this->assertDatabaseHas('menus', ['id' => $menu->id]);
         auth()->logout();
         $this->withToken($admin->generateMcpApiKey());
-        $this->deleteJson('/mcp/menus/'.$menu->id)->assertNoContent();
+        $this->deleteJson('/mcp/menus/'.$menu->id)->assertOk()->assertJsonPath('data.deleted.id', $menu->id);
         $this->assertDatabaseMissing('menus', ['id' => $menu->id]);
     }
 

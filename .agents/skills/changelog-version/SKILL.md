@@ -1,16 +1,17 @@
 ---
 name: changelog-version
-description: Maintains CHANGELOG.md and VERSION per commit in ruweb-cms using pre-1.0 SemVer, including moving Unreleased bullets into a versioned entry and filling the SHA of the previous one. Use when preparing a commit, writing changelog entries, or bumping the version ("actualizá el changelog", "bump the version").
+description: Maintains CHANGELOG.md and VERSION per commit in ruweb-cms using SemVer, including moving Unreleased bullets into a versioned entry and filling the SHA of the previous one. Use when preparing a commit, writing changelog entries, or bumping the version ("actualizá el changelog", "bump the version").
 ---
 
 # Changelog And Version
 
-Per-commit changelog with pre-1.0 SemVer (`0.MINOR.PATCH`). Entries are written in Spanish, like the rest of
-`CHANGELOG.md`.
+Per-commit changelog with SemVer (`MAJOR.MINOR.PATCH`, released as 1.x). Entries are written in Spanish, like the
+rest of `CHANGELOG.md`.
 
 ## Bump Rules
 
-- **MINOR** — the commit adds or changes product behaviour: UI/UX, modules, endpoints, features.
+- **MAJOR** — only when the project owner decides to break the starter's contract for its forks.
+- **MINOR** — the commit adds or changes product behaviour: UI/UX, modules, endpoints, MCP tools, features.
 - **PATCH** — fix, refactor with no functional impact, docs, chores, CI, deploy, styles.
 - In doubt, PATCH.
 

@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Models\Page;
-use App\Models\Post;
 
 /** Deployment capabilities only. Never authorizes an actor or a credential. */
 final class AdminCapabilities
@@ -111,7 +110,8 @@ final class AdminCapabilities
             'block_formats' => ['structured', 'html', 'interactive'],
             'composition' => ['guide' => 'docs/content/composition.md', 'components' => config('cms.composition.components', []), 'html_rules' => app(CompositionHtmlSanitizer::class)->discovery()],
             'templates' => $templates,
-            'registered_collections' => collect(config('cms.collections', []))->map(fn ($collection) => ['model' => class_basename($collection['model']), 'mcp_operations' => $collection['model'] === Post::class ? 'posts' : null])->all(),
+            'registered_collections' => collect(config('cms.collections', []))->map(fn ($collection) => ['model' => class_basename($collection['model']), 'mcp_operations' => $collection['mcp_operations'] ?? null])->all(),
+            'taxonomies' => ['types' => config('cms.taxonomy_types', []), 'tools' => 'taxonomies'],
             'schema_discovery' => ['tool' => 'cms_schema', 'content_types' => ['pages', 'posts']],
             'locales_discovery' => 'locales_list',
             'custom_code' => ['tools' => ['custom_code_list', 'custom_code_get', 'custom_code_save', 'custom_code_activate', 'custom_code_deactivate', 'custom_code_evaluate', 'custom_code_destinations'], 'credential_scope' => 'custom-code', 'account_permission' => 'can_manage_custom_code', 'save_activates' => false, 'exact_version_activation' => true, 'exclusions_prevail' => true],

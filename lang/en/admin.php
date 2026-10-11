@@ -923,6 +923,7 @@ return [
     'redirect_updated' => 'Redirect updated.',
     'redirect_deleted' => 'Redirect deleted.',
     'redirect_confirm_delete' => 'The redirect for ":path" will be deleted.',
+    'redirect_error_unsafe_target' => 'The target must be a path on this site or an http(s) address.',
     'redirect_error_same' => 'Source and destination cannot be the same.',
     'redirect_error_home_source' => 'The homepage cannot be redirected from here.',
     'redirect_error_empty_target' => 'The destination cannot be empty.',

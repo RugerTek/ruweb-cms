@@ -33,8 +33,8 @@ Admin login, users, password recovery and two-factor authentication remain avail
 
 ## Client compatibility and limits
 
-Use [the phase 9 results](../plans/phase-9-results.md) for exact installed-client versions, evidence and the
-current gate status. Phase 9 was accepted with the owner’s explicit deferral of the real Claude test;
+[The phase 9 results](../plans/phase-9-results.md) record the client versions and evidence of that acceptance
+(historical; the current contract is [mcp.md](mcp.md) and the tests). Phase 9 was accepted with the owner’s explicit deferral of the real Claude test;
 Claude remains pending and uncertified. Codex API-key operation is verified in both profiles. Historical OAuth evidence describes earlier releases and does not apply to this API-key-only release.
 API-key configuration examples below do not certify an untested client release. Rüweb offers stateless JSON HTTP calls, not SSE subscriptions or general MCP background-task APIs.
 It negotiates the supported `2024-11-05` protocol revision and announces only tools. `serverInfo.version`

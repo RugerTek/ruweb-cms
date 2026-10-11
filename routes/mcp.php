@@ -4,8 +4,10 @@ use App\Http\Controllers\McpContentController;
 use App\Http\Controllers\McpController;
 use App\Http\Controllers\McpCustomCodeController;
 use App\Http\Controllers\McpMediaController;
+use App\Http\Controllers\McpRedirectController;
 use App\Http\Controllers\McpServerController;
 use App\Http\Controllers\McpSubmissionController;
+use App\Http\Controllers\McpTaxonomyController;
 use Illuminate\Support\Facades\Route;
 
 // JSON-RPC 2.0 MCP server endpoint
@@ -18,12 +20,16 @@ Route::get('/pages/{page}', [McpController::class, 'pagesGet']);
 Route::post('/pages/drafts', [McpController::class, 'pagesCreateDraft']);
 Route::patch('/pages/{page}/draft', [McpController::class, 'pagesUpdateDraft']);
 Route::post('/pages/{page}/publish', [McpController::class, 'pagesPublish']);
+Route::patch('/pages/{page}', [McpController::class, 'pagesUpdate']);
+Route::delete('/pages/{page}', [McpController::class, 'pagesDelete']);
 
 Route::get('/posts', [McpController::class, 'postsList']);
 Route::get('/posts/{post}', [McpController::class, 'postsGet']);
 Route::post('/posts/drafts', [McpController::class, 'postsCreateDraft']);
 Route::patch('/posts/{post}/draft', [McpController::class, 'postsUpdateDraft']);
 Route::post('/posts/{post}/publish', [McpController::class, 'postsPublish']);
+Route::patch('/posts/{post}', [McpController::class, 'postsUpdate']);
+Route::delete('/posts/{post}', [McpController::class, 'postsDelete']);
 
 Route::get('/media', [McpController::class, 'mediaList']);
 Route::get('/media/{media}', [McpController::class, 'mediaGet']);
@@ -31,6 +37,7 @@ Route::patch('/media/{media}', [McpController::class, 'mediaAttachMetadata']);
 Route::patch('/media/{media}/metadata', [McpController::class, 'mediaAttachMetadata']);
 
 Route::patch('/settings', [McpController::class, 'settingsUpdateBatch']);
+Route::post('/settings/reset', [McpController::class, 'settingsReset']);
 Route::get('/settings', [McpController::class, 'settingsListGrouped']);
 Route::get('/settings/{key}', [McpController::class, 'settingsGet']);
 Route::patch('/settings/{key}', [McpController::class, 'settingsUpdate']);
@@ -41,6 +48,20 @@ Route::post('/menus', [McpController::class, 'menusCreate']);
 Route::patch('/menus/{menu}', [McpController::class, 'menusUpdate']);
 Route::put('/menus/{menu}/items', [McpController::class, 'menusSyncItems']);
 Route::delete('/menus/{menu}', [McpController::class, 'menusDelete']);
+
+Route::get('/taxonomies', [McpTaxonomyController::class, 'index']);
+Route::get('/taxonomies/{taxonomy}', [McpTaxonomyController::class, 'show']);
+Route::post('/taxonomies', [McpTaxonomyController::class, 'store']);
+Route::patch('/taxonomies/{taxonomy}', [McpTaxonomyController::class, 'update']);
+Route::post('/taxonomies/{taxonomy}/translations', [McpTaxonomyController::class, 'translate']);
+Route::delete('/taxonomies/{taxonomy}', [McpTaxonomyController::class, 'destroy']);
+
+Route::get('/redirects', [McpRedirectController::class, 'index']);
+Route::post('/redirects', [McpRedirectController::class, 'store']);
+Route::patch('/redirects/{redirect}', [McpRedirectController::class, 'update']);
+Route::delete('/redirects/{redirect}', [McpRedirectController::class, 'destroy']);
+Route::get('/not-found', [McpRedirectController::class, 'notFound']);
+Route::post('/not-found/forget', [McpRedirectController::class, 'forgetNotFound']);
 
 Route::get('/schema', [McpContentController::class, 'schema']);
 Route::get('/locales', [McpContentController::class, 'locales']);
@@ -67,7 +88,7 @@ foreach (['propose', 'review_request', 'review_decide', 'review_comment', 'resto
 // Operational inbox: account role and credential scope remain independent of profile.
 Route::get('/submissions/{form}', [McpSubmissionController::class, 'index']);
 Route::get('/submissions/{form}/{id}', [McpSubmissionController::class, 'show'])->whereNumber('id');
-foreach (['assign', 'set_status', 'add_note', 'retry_notification'] as $action) {
+foreach (['assign', 'set_status', 'add_note', 'retry_notification', 'delete'] as $action) {
     Route::post('/submissions/{form}/{id}/'.str_replace('_', '-', $action), [McpSubmissionController::class, 'write'])->defaults('action', $action)->whereNumber('id');
 }
 

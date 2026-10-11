@@ -103,13 +103,18 @@ Visitor-facing text settings (`header_cta_label`, `footer_tagline`, `footer_copy
 
 ### Add a field the header or footer owns
 
-1. Add the row to `database/seeders/SettingsSeeder.php` **and** a data migration (pattern: `2026_09_15_000001_add_contact_header_and_footer_settings.php`), with `group` `header` or `footer`.
+1. Add the row to `App\Support\SettingDefaults` (read by `SettingsSeeder` and `settings_reset`) **and** a data migration (pattern: `2026_09_15_000001_add_contact_header_and_footer_settings.php`), with `group` `header` or `footer`.
 2. Add its validation rule to `headerSettingRules()` or `footerSettingRules()` in `PersistsSettings`.
 3. Add `settings_fields.<key>.label` and `.help` to `lang/es/admin.php` and `lang/en/admin.php`.
 4. Add the key to the ordering array in `HeaderController::index()` or `FooterController::index()`.
 5. Expose it from the `layouts.public` composer if the partial needs it, then render it in the partial. Empty value must hide the element.
-6. If an LLM should be able to change it through MCP, add the key to `cms.mcp.settings_writable_keys`.
-7. Cover it in `tests/Feature/AdminLayoutScreensTest.php`.
+6. **Expose it through MCP** — required, not optional: in `essential` the Header and Footer screens answer 404,
+   so MCP is the only editor. Add the key to `cms.mcp.settings_writable_keys`, give it a rule in
+   `SettingOperations::update()` (the MCP path validates there, not in `PersistsSettings`), and add it to the
+   localized key list in that method if its text varies by language
+   ([../operations/mcp-surface.md](../operations/mcp-surface.md)).
+7. Cover it in `tests/Feature/AdminLayoutScreensTest.php` and in an MCP test (`settings_update_batch` write and
+   `settings_reset`).
 
 Before adding a field, ask whether the fact already exists somewhere else. If it does, add a shortcut card instead.
 

@@ -23,9 +23,17 @@ class Menu extends Model
         return $this->hasMany(MenuItem::class)->whereNull('parent_id')->orderBy('order');
     }
 
-    public function tree(): Collection
+    /**
+     * $public drops items whose target is missing or not publicly visible (drafts, scheduled, expired), with their
+     * branch: public pages never link to unpublished content. Editors and MCP read the full tree.
+     */
+    public function tree(bool $public = false): Collection
     {
         $items = $this->items()->with('linkable')->get();
+        if ($public) {
+            $items = $items->reject(fn (MenuItem $item) => $item->type !== 'custom_link'
+                && (! $item->linkable || (method_exists($item->linkable, 'isPublished') && ! $item->linkable->isPublished())));
+        }
         $grouped = $items->groupBy('parent_id');
 
         $buildTree = function ($parentId) use (&$buildTree, $grouped) {

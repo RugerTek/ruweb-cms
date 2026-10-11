@@ -5,26 +5,37 @@ namespace App\Services\Pages;
 use App\Mcp\ContentPatch;
 use App\Models\Locale;
 use App\Models\Page;
+use App\Models\Setting;
 use App\Models\User;
+use App\Services\Content\ContentDeletion;
 use App\Services\Content\RevisionGuard;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 /** Page writes shared by the panel and both bearer transports. */
 final class PageOperations
 {
-    public function save(User $actor, array $input, ?Page $page = null, bool $draftOnly = false, ?string $base = null): Page
+    /**
+     * $patch edits an existing page in place like the Live Editor: partial input, ContentPatch semantics and the
+     * current publication state kept. Published pages change live only for administrators.
+     */
+    public function save(User $actor, array $input, ?Page $page = null, bool $draftOnly = false, ?string $base = null, bool $patch = false): Page
     {
         $this->authorize($actor);
         $base ??= $input['expected_revision'] ?? null;
+        $patch = $patch && $page !== null;
 
-        return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $input, $page, $draftOnly, $base) {
+        return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $input, $page, $draftOnly, $base, $patch) {
             $page = $page ? Page::query()->lockForUpdate()->findOrFail($page->id) : null;
             if ($draftOnly && $page && $page->status !== 'draft') {
                 throw new AuthorizationException(__('editorial.mcp_draft_required'));
+            }
+            if ($patch && $page->status !== 'draft' && ! $actor->isAdmin()) {
+                throw new AuthorizationException(__('editorial.mcp_live_edit_admin_only'));
             }
             $history = app(EditorialHistory::class);
             if ($page) {
@@ -33,13 +44,13 @@ final class PageOperations
             if ($draftOnly && ! $page) {
                 $input['status'] = 'draft';
             }
-            $data = (new PageInput($input, $page, $draftOnly && $page !== null, $draftOnly))->validate();
-            if (! $draftOnly && $page && $actor->isEditor() && $page->status === 'published') {
+            $data = (new PageInput($input, $page, ($draftOnly || $patch) && $page !== null, $draftOnly || $patch))->validate();
+            if (! $draftOnly && ! $patch && $page && $actor->isEditor() && $page->status === 'published') {
                 $history->stage($page, $data);
 
                 return $page;
             }
-            $data['status'] = $draftOnly ? 'draft' : $data['status'];
+            $data['status'] = $draftOnly ? 'draft' : ($patch ? $page->status : $data['status']);
             if ($data['status'] === 'published' && ! $actor->isAdmin()) {
                 throw new AuthorizationException(__('editorial.publish_forbidden'));
             }
@@ -49,11 +60,11 @@ final class PageOperations
                 $data['published_at'] = $page?->published_at ?? now();
             }
             $featured = $data['featured_image'] ?? null;
-            $replaceFeatured = ! $draftOnly || array_key_exists('featured_image', $data);
+            $replaceFeatured = (! $draftOnly && ! $patch) || array_key_exists('featured_image', $data);
             unset($data['featured_image'], $data['acknowledged_fields'], $data['editor_field_origins']);
             if ($page && isset($data['content_json'])) {
                 $existing = $page->content_json ?? [];
-                if ($draftOnly) {
+                if ($draftOnly || $patch) {
                     $data['content_json'] = ContentPatch::apply($existing, $data['content_json']);
                 } else {
                     $submitted = $data['content_json'];
@@ -75,7 +86,7 @@ final class PageOperations
             if ($page->isBaseLocale()) {
                 $page->source_fingerprint = $page->translatableFingerprint();
                 $page->source_field_hashes = $page->translatableFieldFingerprints();
-            } elseif (! $draftOnly) {
+            } elseif (! $draftOnly && ! $patch) {
                 $page->syncTranslationFromBase();
             }
             $page->save();
@@ -147,6 +158,32 @@ final class PageOperations
             app(EditorialHistory::class)->capture($page->fresh());
 
             return $page->fresh();
+        }, 3));
+    }
+
+    /**
+     * Delete for the panel and both transports. The base-language homepage is protected; menu links are cleaned
+     * up and surviving translations reported (see ContentDeletion). Returns those warnings.
+     */
+    public function delete(User $actor, Page $page, ?string $expectedRevision = null): array
+    {
+        $this->authorize($actor);
+
+        return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $page, $expectedRevision) {
+            $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+            RevisionGuard::check($page, $expectedRevision);
+            if ($actor->isEditor() && $page->status === 'published') {
+                throw new AuthorizationException(__('editorial.publish_forbidden'));
+            }
+            if ($page->isBaseLocale() && $page->translation_group_id && $page->translation_group_id === Setting::get('homepage_translation_group_id')) {
+                throw ValidationException::withMessages(['page_id' => __('editorial.homepage_delete_forbidden')]);
+            }
+            $warnings = app(ContentDeletion::class)->cleanUp($page);
+            app(EditorialHistory::class)->capture($page);
+            $page->media()->detach();
+            $page->delete();
+
+            return $warnings;
         }, 3));
     }
 

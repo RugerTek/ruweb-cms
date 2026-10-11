@@ -36,7 +36,9 @@ Rules of resolution:
 
 - Only `GET` and `HEAD` are redirected or monitored.
 - Paths matching `cms.redirects.ignore_paths` are skipped entirely — the panel, `mcp`,
-  `storage`, `build`, `/up`. Add a path there rather than special-casing it in code.
+  `storage`, `build`, `/up`, `/.well-known/*`. Add a path there rather than special-casing it in code.
+  Unknown `/.well-known/*` paths (clients probing for OAuth discovery on every MCP connection) also get a bare
+  JSON 404 instead of a rendered page.
 - Only `is_active` rules apply. Deactivating is the reversible way to switch one off.
 - The incoming query string is carried over when the rule's destination has none, so campaign parameters
   survive the redirect.
@@ -67,9 +69,19 @@ A rule is rejected, with the reason on `source_path`, when:
 
 - the source is `/` — the homepage is chosen in `Ajustes > General`, not redirected;
 - the destination is empty, or equal to the source after normalization;
+- the destination has a scheme other than `http`/`https` (`javascript:`, `data:`, `mailto:`…);
 - the destination path already has an active rule pointing back at the source (a two-step loop).
 
-Chains longer than two steps are not detected; keep rules pointing at the final URL.
+Chains longer than two steps are not detected; keep rules pointing at the final URL. These rules live in
+`App\Services\Content\RedirectOperations`, shared by this screen, the CSV import and MCP.
+
+### Through MCP
+
+`redirects_list`, `redirects_create`, `redirects_update` (patch, revision required), `redirects_delete`,
+`not_found_list` and `not_found_forget` (`hit_id` or `all: true`) expose the same rules to agents: administrator
+and full credential scope for writes. A rule's `revision` ignores its hit counters, so traffic never invalidates
+an agent's read. In `essential` the write actions of this screen are hidden, so MCP is how redirects are managed
+there ([mcp.md](mcp.md)).
 
 ### 404 monitor → rule
 

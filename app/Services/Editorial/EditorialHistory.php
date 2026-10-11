@@ -64,8 +64,11 @@ class EditorialHistory
         $this->capture($model);
     }
 
-    /** Post-write state from a model hook: deferred to the end of an open operation. */
-    public function captureAfter(Model $model): void
+    /**
+     * Post-write state from a model hook: deferred to the end of an open operation. Eloquent fires `saved` even
+     * when nothing changed; such a save writes nothing, so it must not stop the next real write's baseline.
+     */
+    public function captureAfter(Model $model, ?bool $written = null): void
     {
         if (self::$depth === 0) {
             $this->capture($model);
@@ -73,7 +76,9 @@ class EditorialHistory
             return;
         }
         $key = $model->getTable().'#'.$model->getKey();
-        self::$touched[$key] = true;
+        if ($written ?? ($model->wasRecentlyCreated || $model->wasChanged())) {
+            self::$touched[$key] = true;
+        }
         self::$pending[$key] = $model::class;
     }
 

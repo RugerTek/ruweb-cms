@@ -11,6 +11,13 @@ Read the "Translation Workflow", "Editorial Schema" and "Fingerprints" sections 
 Translate **structured fields, never rendered HTML**, and never store two languages in one JSON field: each
 locale is its own record in the same `translation_group_id`.
 
+## Through MCP
+
+`content_translate` (pages, posts) or `taxonomies_translate` creates the target record in the same group, marked
+`needs_review`; then patch its copy and slug with `pages_update_draft` / `posts_update_draft` /
+`taxonomies_update`. When the source changes, `content_translation_changes` lists stale fields and
+`content_translation_acknowledge` (with the reported `base_hash`) confirms each reviewed field.
+
 ## Workflow
 
 1. Read the source entity and resolve its schema — pages from `config('cms.templates').<key>.schema`, posts

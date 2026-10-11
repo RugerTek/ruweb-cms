@@ -27,7 +27,7 @@
 | `label` | Display text |
 | `type` | `custom_link`, `page`, `post`, `taxonomy` |
 | `linkable_type` / `linkable_id` | Polymorphic target |
-| `url` | Only for `custom_link` |
+| `url` | Only for `custom_link`: a root-relative path, `#anchor`, `http(s)://`, `mailto:` or `tel:` (`LinkDestination::CUSTOM_URL_PATTERN`); anything else (`javascript:`, `data:`, bare words) is rejected, and legacy rows render `#` |
 | `target` | `_self` (default) or `_blank` |
 | `order` | Position among siblings |
 
@@ -49,8 +49,10 @@ $item->resolveUrl();             // final href
 `resolveUrl()`: `custom_link` → `url`; `page` / `post` → `$linkable->url()`; `taxonomy` →
 `route('blog.index', ['category' => $linkable->slug])`; orphaned or unknown → `#`.
 
-Deleting a linked model leaves the item orphaned — it keeps rendering with `#` and must be cleaned up in the
-admin.
+Deleting a page, post or taxonomy through its shared operation (panel or MCP) removes the menu items that link to
+it, moves their children up one level and reports them (`App\Services\Content\ContentDeletion`). Public menus are
+built with `Menu::tree(public: true)`, which also hides items whose target is missing or not publicly visible
+(draft, scheduled, expired) together with their branch; the admin and MCP read the full tree.
 
 ## Theme Locations
 

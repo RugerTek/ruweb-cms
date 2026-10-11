@@ -15,7 +15,7 @@ Run `php artisan cms:capabilities` and read
 Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
 publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
 rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
-role/scope permissions are independent. Essential’s operational panel passed phase 4; later capabilities retain their own roadmap gates.
+role/scope permissions are independent. In `essential`, MCP is the editor for whatever the panel hides.
 
 ## 1. Deterministic Pass
 
@@ -43,6 +43,7 @@ docs**:
 | Header, footer, contact data | [docs/admin/layout.md](../../../docs/admin/layout.md) |
 | A new collection or model | [docs/content/collections.md](../../../docs/content/collections.md) + [docs/concepts/editorial-contract.md](../../../docs/concepts/editorial-contract.md) |
 | Locales, schema paths, translations of content | [docs/concepts/multilanguage.md](../../../docs/concepts/multilanguage.md) |
+| `app/Mcp/*`, `routes/mcp.php`, `Mcp*Controller`, `EnforceMcpScopes`, any new panel action or collection | [docs/operations/mcp-surface.md](../../../docs/operations/mcp-surface.md) + [docs/operations/mcp.md](../../../docs/operations/mcp.md) |
 
 Highest-value checks, in order:
 
@@ -57,6 +58,11 @@ Highest-value checks, in order:
 6. **Schema paths** missing or wrongly flagged for a new editable field.
 7. **Placeholders** missing on new image slots in seeded or starter content.
 8. **Settings duplicated** for a fact that already has a row.
+9. **A feature agents cannot operate**: a new panel action, collection, setting or schema field without its MCP
+   tool, allowlist entry or schema path; a write without `expected_revision`, a silent discard without
+   `warnings`, or logic living only in a controller instead of a shared operation
+   ([docs/operations/mcp-surface.md](../../../docs/operations/mcp-surface.md)). `McpSurfaceContractTest` catches
+   only the mechanical part.
 
 ## 3. Report
 

@@ -26,7 +26,8 @@ $localePattern = implode('|', array_map(
     fn (string $code): string => preg_quote($code, '/'),
     $catalogLocales
 ));
-$reservedSlugs = 'admin|mcp';
+// Whole first segments only: `administracion` or `mcp-guide` are ordinary page slugs.
+$reservedSlugs = '(?:admin|mcp)(?:/|$)';
 $reservedLocaleSlugs = implode('|', array_map(
     fn (string $code): string => preg_quote($code, '/').'$',
     $catalogLocales

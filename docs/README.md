@@ -53,6 +53,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 | [operations/redirects.md](operations/redirects.md) | 301/302 rules for old paths, the 404 monitor, CSV import |
 | [operations/custom-code.md](operations/custom-code.md) | Trusted browser snippets, exact destinations, dedicated permissions, activation and recovery |
 | [operations/mcp.md](operations/mcp.md) | MCP auth, protocol, tools, REST, extension points |
+| [operations/mcp-surface.md](operations/mcp-surface.md) | What every feature, collection, setting or tool must add so agents can operate it (both profiles) |
 | [operations/agent-access.md](operations/agent-access.md) | First MCP connection, client compatibility, key rotation and lost-access recovery |
 | [operations/deploy-cpanel.md](operations/deploy-cpanel.md) | cPanel deployment |
 | [operations/deploy-droplet.md](operations/deploy-droplet.md) | Single-server deployment |

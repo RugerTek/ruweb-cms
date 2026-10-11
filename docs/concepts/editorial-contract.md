@@ -55,4 +55,5 @@ Keep this contract small: it does not own persistence, validation or MCP seriali
 5. Keep collection fields explicit instead of hiding them in a generic blob.
 
 The contract does **not** require a shared schema, a migration away from `content_json` or `meta_json`, generic
-sitemap/MCP/preview services, or one editor UI for every type.
+sitemap/preview services, or one editor UI for every type. It does require each type to be operable through
+explicit MCP tools of its own ([MCP surface](../operations/mcp-surface.md)); there is no generic model dispatch.

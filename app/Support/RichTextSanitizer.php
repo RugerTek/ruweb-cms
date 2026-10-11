@@ -62,8 +62,20 @@ class RichTextSanitizer
     /** URL schemes accepted in href and src. */
     protected const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel'];
 
+    /** @var array<int, string> what the last sanitize() discarded, e.g. `<script>`, `p[onclick]` */
+    protected array $removed = [];
+
+    /** What sanitizing this value would discard, so callers can report it instead of a silent success. */
+    public function removals(?string $html): array
+    {
+        $this->sanitize($html);
+
+        return array_values(array_unique($this->removed));
+    }
+
     public function sanitize(?string $html): ?string
     {
+        $this->removed = [];
         if ($html === null) {
             return null;
         }
@@ -128,18 +140,28 @@ class RichTextSanitizer
             $tag = strtolower($node->nodeName);
 
             if (in_array($tag, self::STRIP_WITH_CONTENT, true) && ! $this->isAllowedEmbed($node, $tag)) {
+                $this->removed[] = '<'.$tag.'>';
                 $node->parentNode?->removeChild($node);
 
                 return;
             }
 
             if (! array_key_exists($tag, $this->allowedElements())) {
+                $this->removed[] = '<'.$tag.'> (content kept)';
                 $this->unwrap($node);
 
                 return;
             }
 
             $this->cleanAttributes($node, $tag);
+
+            // Images are this site's media (root-relative after normalisation), never remote files or tracking pixels.
+            if ($tag === 'img' && (! str_starts_with($src = $node->getAttribute('src'), '/') || str_starts_with($src, '//'))) {
+                $this->removed[] = '<img> with an external or missing source';
+                $node->parentNode?->removeChild($node);
+
+                return;
+            }
         } elseif ($node->nodeType === XML_COMMENT_NODE) {
             $node->parentNode?->removeChild($node);
 
@@ -201,6 +223,7 @@ class RichTextSanitizer
             $name = strtolower($attribute->nodeName);
 
             if (! in_array($name, $allowed, true)) {
+                $this->removed[] = $tag.'['.$name.']';
                 $node->removeAttribute($attribute->nodeName);
 
                 continue;
@@ -208,6 +231,7 @@ class RichTextSanitizer
 
             if (in_array($name, ['href', 'src'], true)) {
                 if (! $this->isSafeUrl($attribute->nodeValue)) {
+                    $this->removed[] = $tag.'['.$name.'] (unsafe URL)';
                     $node->removeAttribute($attribute->nodeName);
 
                     continue;

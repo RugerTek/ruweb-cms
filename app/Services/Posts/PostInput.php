@@ -32,7 +32,7 @@ final class PostInput
             $this->withValidator($validator);
         }
         $data = $validator->validate();
-        if ($this->draftOnly && array_key_exists('meta_json', $this->data)) {
+        if (($this->draftOnly || $this->partial) && array_key_exists('meta_json', $this->data)) {
             $data['meta_json'] = $this->data['meta_json'];
         }
 
@@ -61,7 +61,8 @@ final class PostInput
             'acknowledged_fields.*' => ['string'],
             'expected_revision' => ['nullable', 'string', 'size:64'],
         ];
-        if ($this->draftOnly) {
+        // Publication dates change only through the publication operations.
+        if ($this->draftOnly || $this->partial) {
             unset($rules['published_at'], $rules['expires_at']);
         }
         if ($this->partial) {

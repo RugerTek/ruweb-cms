@@ -113,8 +113,9 @@ final class SubmissionOperations
             $value = (string) $record->getAttribute($input['field']);
             $offset = $input['offset'] ?? 0;
             $length = $input['length'] ?? 8192;
-            $data['field_slice'] = ['field' => $input['field'], 'offset' => $offset, 'length' => mb_strlen($value), 'total_characters' => mb_strlen($value), 'has_more' => $offset + $length < mb_strlen($value),
-                'sha256' => hash('sha256', $value), 'value' => mb_substr($value, $offset, $length)];
+            $slice = mb_substr($value, $offset, $length);
+            $data['field_slice'] = ['field' => $input['field'], 'offset' => $offset, 'length' => mb_strlen($slice), 'total_characters' => mb_strlen($value), 'has_more' => $offset + $length < mb_strlen($value),
+                'sha256' => hash('sha256', $value), 'value' => $slice];
         }
 
         return $data;

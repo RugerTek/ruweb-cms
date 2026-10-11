@@ -9,6 +9,8 @@ use App\Models\Media;
 use App\Models\Menu;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Redirect as RedirectRule;
+use App\Models\Taxonomy;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +32,7 @@ class McpServerController extends Controller
     /** Implementation-defined JSON-RPC code for authorization refusals; -32603 stays reserved for real failures. */
     public const FORBIDDEN = -32003;
 
-    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode) {}
+    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode, private McpTaxonomyController $taxonomies, private McpRedirectController $redirects) {}
 
     public function handle(Request $request): JsonResponse
     {
@@ -72,7 +74,18 @@ class McpServerController extends Controller
         } catch (RevisionConflict $e) {
             return $this->errorResponse($id, -32009, $e->getMessage(), $e->diagnostic());
         } catch (HttpExceptionInterface $e) {
-            return $this->errorResponse($id, $e->getStatusCode() === 409 ? -32009 : -32602, $e->getMessage(), ['status' => $e->getStatusCode(), 'recovery' => $e->getStatusCode() === 409 ? 'Read current revision, merge changes and retry.' : 'Correct the input and retry.']);
+            $status = $e->getStatusCode();
+            // Bare abort(404)/abort(403) carry no text; agents still need a cause they can act on.
+            $message = $e->getMessage() !== '' ? $e->getMessage() : match ($status) {
+                404 => 'Resource not found. The id may not exist or may belong to another record.',
+                403 => __('security.scope_denied'),
+                default => \Symfony\Component\HttpFoundation\Response::$statusTexts[$status] ?? 'Request rejected.',
+            };
+            if ($status === 403) {
+                return $this->errorResponse($id, self::FORBIDDEN, $message, ['reason' => 'forbidden', 'status' => 403, 'recovery' => 'Not a server failure. The account role or record state does not allow this operation.']);
+            }
+
+            return $this->errorResponse($id, $status === 409 ? -32009 : -32602, $message, ['status' => $status, 'recovery' => $status === 409 ? 'Read current revision, merge changes and retry.' : 'Correct the input and retry.']);
         } catch (\InvalidArgumentException $e) {
             return $this->errorResponse($id, $e->getCode() ?: -32600, $e->getMessage());
         }
@@ -154,6 +167,7 @@ class McpServerController extends Controller
     {
         $handlers = [
             'settings_update_batch' => fn ($req, $args) => $this->mcp->settingsUpdateBatch($this->synth($req, $args)),
+            'settings_reset' => fn ($req, $args) => $this->mcp->settingsReset($this->synth($req, $args)),
             'content_read_field' => fn ($req, $args) => $this->content->readField($this->synth($req, $args), $args['type'], $args['id']),
             'cms_schema' => fn ($req, $args) => $this->content->schema($this->synth($req, $args)),
             'locales_list' => fn ($req, $args) => $this->content->locales($this->synth($req, $args)),
@@ -181,6 +195,10 @@ class McpServerController extends Controller
 
             'pages_publish' => fn ($req, $args) => $this->mcp->pagesPublish($this->synth($req, $args), Page::findOrFail($args['page_id'])),
 
+            'pages_update' => fn ($req, $args) => $this->mcp->pagesUpdate($this->synth($req, $this->without($args, 'page_id')), Page::findOrFail($args['page_id'])),
+
+            'pages_delete' => fn ($req, $args) => $this->mcp->pagesDelete($this->synth($req, $this->without($args, 'page_id')), Page::findOrFail($args['page_id'])),
+
             // Posts
             'posts_list' => fn ($req, $args) => $this->mcp->postsList($this->synth($req, $args)),
 
@@ -194,6 +212,10 @@ class McpServerController extends Controller
             ),
 
             'posts_publish' => fn ($req, $args) => $this->mcp->postsPublish($this->synth($req, $args), Post::findOrFail($args['post_id'])),
+
+            'posts_update' => fn ($req, $args) => $this->mcp->postsUpdate($this->synth($req, $this->without($args, 'post_id')), Post::findOrFail($args['post_id'])),
+
+            'posts_delete' => fn ($req, $args) => $this->mcp->postsDelete($this->synth($req, $this->without($args, 'post_id')), Post::findOrFail($args['post_id'])),
 
             // Media
             'media_list' => fn ($req, $args) => $this->mcp->mediaList($this->synth($req, $args)),
@@ -243,9 +265,23 @@ class McpServerController extends Controller
         $handlers['custom_code_evaluate'] = fn ($req, $args) => $this->customCode->evaluate($this->synth($req, $args));
         $handlers['custom_code_destinations'] = fn ($req, $args) => $this->customCode->destinations($this->synth($req, $args));
 
+        $handlers['taxonomies_list'] = fn ($req, $args) => $this->taxonomies->index($this->synth($req, $args));
+        $handlers['taxonomies_get'] = fn ($req, $args) => $this->taxonomies->show($this->synth($req), Taxonomy::findOrFail($args['taxonomy_id']));
+        $handlers['taxonomies_create'] = fn ($req, $args) => $this->taxonomies->store($this->synth($req, $args));
+        $handlers['taxonomies_update'] = fn ($req, $args) => $this->taxonomies->update($this->synth($req, $this->without($args, 'taxonomy_id')), Taxonomy::findOrFail($args['taxonomy_id']));
+        $handlers['taxonomies_translate'] = fn ($req, $args) => $this->taxonomies->translate($this->synth($req, $this->without($args, 'taxonomy_id')), Taxonomy::findOrFail($args['taxonomy_id']));
+        $handlers['taxonomies_delete'] = fn ($req, $args) => $this->taxonomies->destroy($this->synth($req, $this->without($args, 'taxonomy_id')), Taxonomy::findOrFail($args['taxonomy_id']));
+
+        $handlers['redirects_list'] = fn ($req, $args) => $this->redirects->index($this->synth($req, $args));
+        $handlers['redirects_create'] = fn ($req, $args) => $this->redirects->store($this->synth($req, $args));
+        $handlers['redirects_update'] = fn ($req, $args) => $this->redirects->update($this->synth($req, $this->without($args, 'redirect_id')), RedirectRule::findOrFail($args['redirect_id']));
+        $handlers['redirects_delete'] = fn ($req, $args) => $this->redirects->destroy($this->synth($req, $this->without($args, 'redirect_id')), RedirectRule::findOrFail($args['redirect_id']));
+        $handlers['not_found_list'] = fn ($req, $args) => $this->redirects->notFound($this->synth($req, $args));
+        $handlers['not_found_forget'] = fn ($req, $args) => $this->redirects->forgetNotFound($this->synth($req, $args));
+
         $handlers['submissions_list'] = fn ($req, $args) => $this->submissions->index($this->synth($req, $args), $args['form']);
         $handlers['submissions_get'] = fn ($req, $args) => $this->submissions->show($this->synth($req, $args), $args['form'], $args['id']);
-        foreach (['assign', 'set_status', 'add_note', 'retry_notification'] as $action) {
+        foreach (['assign', 'set_status', 'add_note', 'retry_notification', 'delete'] as $action) {
             $handlers['submissions_'.$action] = fn ($req, $args) => $this->submissions->write($this->synth($req, $args), $args['form'], $args['id'], $action);
         }
 

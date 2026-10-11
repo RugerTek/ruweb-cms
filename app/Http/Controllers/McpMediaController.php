@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Media;
 use App\Services\Content\OperationReceipt;
 use App\Services\Media\MediaOperations;
+use App\Support\SiteUrl;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ final class McpMediaController extends Controller
         ], JSON_THROW_ON_ERROR));
 
         return response()->json(['data' => [
-            'upload_url' => url('/mcp/media/uploads'), 'method' => 'POST',
+            'upload_url' => SiteUrl::origin().'/mcp/media/uploads', 'method' => 'POST',
             'content_type' => 'multipart/form-data', 'file_field' => 'file',
             'ticket' => $ticket, 'expires_at' => $expires->toISOString(),
             'requires_bearer_token' => true,

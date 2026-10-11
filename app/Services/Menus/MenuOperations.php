@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\Content\OperationReceipt;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\LinkDestination;
 use App\Support\SiteUrl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -21,9 +22,13 @@ use Illuminate\Validation\Rule;
 
 final class MenuOperations
 {
+    /** Stored columns only: list counts (items_count) and timestamps must not change the revision of the same menu. */
     public function fingerprint(Menu $menu): string
     {
-        return hash('sha256', json_encode([$menu->attributesToArray(), $menu->items()->orderBy('id')->get()->toArray()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $attributes = array_diff_key($menu->attributesToArray(), array_flip(['items_count', 'created_at', 'updated_at']));
+        ksort($attributes);
+
+        return hash('sha256', json_encode([$attributes, $menu->items()->orderBy('id')->get()->toArray()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     private function check(Menu $menu, mixed $revision): void
@@ -105,7 +110,8 @@ final class MenuOperations
                 'items.*.label' => ['required', 'string', 'max:255'],
                 'items.*.type' => ['required', 'string', 'in:custom_link,page,post,taxonomy'],
                 'items.*.linkable_id' => ['nullable', 'integer'],
-                'items.*.url' => ['nullable', 'string', 'max:2048'],
+                // Same safe URI forms as every other custom link (no javascript:, data: or bare relative paths).
+                'items.*.url' => ['nullable', 'required_if:items.*.type,custom_link', 'string', 'max:2048', 'regex:'.LinkDestination::CUSTOM_URL_PATTERN],
                 'items.*.target' => ['required', 'string', 'in:_self,_blank'],
                 'items.*.order' => ['required', 'integer', 'min:0'],
             ])->validate();

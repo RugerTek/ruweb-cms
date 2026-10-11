@@ -92,17 +92,21 @@ class McpPhaseZeroTest extends TestCase
 
     public function test_partial_patch_preserves_siblings_replaces_lists_and_explicitly_removes_keys(): void
     {
-        $content = ['meta' => ['title' => 'Keep title', 'description' => 'Before'], 'sections' => ['hero' => ['heading' => 'Keep hero', 'image_id' => 33], 'faq' => ['heading' => 'Keep FAQ', 'items' => [['question' => 'A'], ['question' => 'B']]]]];
-        $page = Page::create(['title' => 'Draft', 'slug' => 'draft', 'template_key' => 'default', 'status' => 'draft', 'content_json' => $content]);
+        // `legacy` is not in the home schema: stored unknown siblings survive patches that do not mention them.
+        $content = ['meta' => ['title' => 'Keep title', 'description' => 'Before'], 'sections' => ['hero' => ['heading' => 'Keep hero', 'image_id' => 33], 'features' => ['heading' => 'Keep features', 'logos' => [['label' => 'A'], ['label' => 'B']]], 'legacy' => ['heading' => 'Keep legacy']]];
+        $page = Page::create(['title' => 'Draft', 'slug' => 'draft', 'template_key' => 'home', 'status' => 'draft', 'content_json' => $content]);
         $data = $this->rpcData($this->rpc('pages_update_draft', ['page_id' => $page->id, 'content_json' => ['meta' => ['description' => 'After']]]))['data'];
         $content['meta']['description'] = 'After';
         $this->assertSame($content, $data['content_json']);
-        $this->patchJson('/mcp/pages/'.$page->id.'/draft', ['content_json' => ['meta' => ['description' => null], 'sections' => ['faq' => ['items' => [['question' => 'C']]]]]])->assertOk();
+        $this->patchJson('/mcp/pages/'.$page->id.'/draft', ['content_json' => ['meta' => ['description' => null], 'sections' => ['features' => ['logos' => [['label' => 'C']]]]]])->assertOk();
         unset($content['meta']['description']);
-        $content['sections']['faq']['items'] = [['question' => 'C']];
+        $content['sections']['features']['logos'] = [['label' => 'C']];
         $this->assertSame($content, $page->fresh()->content_json);
-        $this->rpcData($this->rpc('pages_update_draft', ['page_id' => $page->id, 'content_json' => ['sections' => ['faq' => ['items' => []]]]]));
-        $this->assertSame([], $page->fresh()->content_json['sections']['faq']['items']);
+        $this->rpcData($this->rpc('pages_update_draft', ['page_id' => $page->id, 'content_json' => ['sections' => ['features' => ['logos' => []]]]]));
+        $this->assertSame([], $page->fresh()->content_json['sections']['features']['logos']);
+        $this->rpc('pages_update_draft', ['page_id' => $page->id, 'content_json' => ['sections' => ['faq' => ['heading' => 'New']]]])->assertOk()->assertJsonPath('error.code', -32602);
+        $this->rpcData($this->rpc('pages_update_draft', ['page_id' => $page->id, 'content_json' => ['sections' => ['legacy' => null]]]));
+        $this->assertArrayNotHasKey('legacy', $page->fresh()->content_json['sections']);
         $before = $page->fresh()->content_json;
         $this->rpcData($this->rpc('pages_update_draft', ['page_id' => $page->id, 'content_json' => []]));
         $this->assertSame($before, $page->fresh()->content_json);

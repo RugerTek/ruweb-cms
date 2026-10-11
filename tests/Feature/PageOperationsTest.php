@@ -92,7 +92,7 @@ class PageOperationsTest extends TestCase
     {
         $actor = User::factory()->create(['role' => 'admin']);
         $operations = app(PageOperations::class);
-        $page = $operations->save($actor, ['title' => 'Patch', 'slug' => 'patch', 'template_key' => 'default', 'content_json' => ['sections' => ['features' => ['logos' => [1, 2]]]]], draftOnly: true);
+        $page = $operations->save($actor, ['title' => 'Patch', 'slug' => 'patch', 'template_key' => 'home', 'content_json' => ['sections' => ['features' => ['logos' => [['label' => 'A'], ['label' => 'B']]]]]], draftOnly: true);
         $page = $operations->save($actor, ['content_json' => ['sections' => ['features' => ['logos' => null]]]], $page, draftOnly: true);
         $this->assertArrayNotHasKey('logos', $page->content_json['sections']['features']);
     }

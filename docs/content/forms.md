@@ -157,7 +157,8 @@ Tests use `Queue::fake()` to verify reservation and async dispatch, and invoke j
 
 ## Adding A New Form: Checklist
 
-Follow this list in order. Each step names the contact counterpart to copy.
+Run `php artisan cms:capabilities` first: steps marked *full only* are skipped in `essential`
+([admin profiles](../concepts/admin-profiles.md)). Follow this list in order. Each step names the contact counterpart to copy.
 
 1. **Contract.** Write the field list (name, type, required, rules), which labels/options are administrable, where submissions go, and whether email notifications apply. If any part is unclear, stop and ask the project owner; do not guess.
 2. **Migration + model.** `create_{form}_submissions_table` with the real field columns plus the metadata block above. Include the shared workflow/assignment and notification-generation metadata and a form-owned notes relation, as in the contact workflow migration. Model with `casts` for the timestamps and `recaptcha_score`, `scopeUnread`, `isRead()`, `markRead()`. Do **not** add `RecordsContentRevisions`.
@@ -166,13 +167,13 @@ Follow this list in order. Each step names the contact counterpart to copy.
 5. **Routes.** `POST /forms/{form}` inside the `public.locale` group and its `localized.` twin under the `{locale}` prefix, both with `throttle:forms`, before the page catch-all.
 6. **Template.** Section markup with `@csrf`, hidden `page_id`, labels from the section with `public.*` fallbacks, `<x-forms.honeypot :page="$page" form="{form}" />`, `<x-forms.recaptcha action="{form}" />`, success and error blocks, `old()` values, action from `LocalizedRoute::to('forms.{form}.store')`.
 7. **Schema.** Register the template/section in `config/cms.php` with every editable path flagged `translatable` or `preserve`.
-8. **Live Editor section partial.** `resources/views/admin/pages/sections/{template}_{section}.blade.php` with the contract above: note, labels, options repeater, notifications, green "View submissions" button.
-9. **Registry.** Add `config('cms.forms.{form}')` with `model`, `searchable`, `recaptcha_action`, `template` and `section` (the server-verified page binding).
+8. **Live Editor section partial** (*full only*). `resources/views/admin/pages/sections/{template}_{section}.blade.php` with the contract above: note, labels, options repeater, notifications, green "View submissions" button. In `essential`, labels and notification settings are edited through MCP, so step 7's schema must declare every one of them.
+9. **Registry.** Add `config('cms.forms.{form}')` with `model`, `searchable`, `recaptcha_action`, `template` and `section` (the server-verified page binding). The `submissions_*` MCP tools enumerate this registry, so the inbox is reachable by agents with no extra tool.
 10. **Admin partials.** `resources/views/admin/submissions/{form}/_columns|_row|_detail.blade.php`.
 11. **Notification.** If email applies, a Mailable + view; either reuse `SubmissionNotifier` (generalise the model type) or add a sibling with the same rules.
 12. **Translations.** `admin.forms.{form}`, field labels `admin.submission_field_*` you introduce, and `public.forms.{form}.*` fallbacks in every locale under `lang/`. Keep `lang/es/admin.php` and `lang/en/admin.php` key-for-key identical.
 13. **Seeder** for the starter page if the form ships with the project, and a `MenuSeeder` link when it belongs in navigation.
-14. **Tests.** Copy `ContactFormTest` and `AdminSubmissionsTest`: render, valid submit, validation, honeypot, reCAPTCHA on/off, notification on/off, rate limit, admin list/filters/detail/delete.
+14. **Tests.** Copy `ContactFormTest`, `AdminSubmissionsTest` and `McpSubmissionsTest`: render, valid submit, validation, honeypot, reCAPTCHA on/off, notification on/off, rate limit, admin list/filters/detail/delete, and the MCP inbox for the new form key.
 15. **Docs.** Add the form to this document's reference table if it ships with the starter; project forms document their contract in the project's own docs.
 
 ## Anti-Patterns

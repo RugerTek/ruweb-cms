@@ -16,14 +16,17 @@ Run `php artisan cms:capabilities` and read
 Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
 publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
 rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
-role/scope permissions are independent. Essential’s operational panel passed phase 4; later capabilities retain their own roadmap gates.
+role/scope permissions are independent. In `essential`, agents edit through MCP whatever has no panel editor,
+so every editable path must be declared in the schema ([MCP surface](../../../docs/operations/mcp-surface.md)).
 
 ## Steps
 
 1. **Name the key** (`landing`, `services`) and list its sections in order.
 2. **Register it** in `config('cms.templates')` with `name`, `sections` and a complete `schema` — every
    editable path flagged `translatable`, `preserve`, `remap` or `localized_media`, repeaters as `items.*.field`.
-   A template without a complete schema cannot create translations.
+   A template without a complete schema cannot create translations, and MCP rejects writes to undeclared paths:
+   the schema is the agent's editor. `cms_schema` builds its example from it and
+   `McpAgentOutcomeTest::test_every_template_schema_example_creates_a_valid_draft` proves it saves.
 3. **Create `resources/views/templates/{key}.blade.php`**, extending `layouts.public`, reading
    `$page->sections()`, guarding each section with `is_visible` plus a content check, rendering media through
    `<x-responsive-img :media="…">`. No hardcoded copy, no hardcoded asset paths.
@@ -40,7 +43,8 @@ role/scope permissions are independent. Essential’s operational panel passed p
 
 - A template with no view falls back to `templates.default` silently — check the file name matches the key.
 - Sections shared with another template should keep the same key so the editor partial is reused.
-- MCP exposes `template_key` as an enum of this config, so a new key is immediately agent-visible.
+- MCP exposes `template_key` as an enum of this config, so a new key is immediately agent-visible; verify with
+  `cms_schema` (type `pages`, your key) that every field you render appears there.
 
 ## Agent-managed composition exception
 

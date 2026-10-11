@@ -57,16 +57,19 @@ between requests.
 
 ## Adding A Setting
 
-1. Add the row to `database/seeders/SettingsSeeder.php` **and** a data migration, so existing installs get it
-   (`Setting::set()` ignores unknown keys).
+1. Add the row to `App\Support\SettingDefaults` — the single list `SettingsSeeder` installs and `settings_reset`
+   restores — **and** a data migration, so existing installs get it (`Setting::set()` ignores unknown keys).
 2. Give it the right `type` and `group`.
 3. Add `settings_fields.<key>.label` / `.help`, the group label and any option labels to `lang/es/admin.php`
    and `lang/en/admin.php`, key-for-key ([translations.md](translations.md)).
 4. Add its validation rule where the group is saved — `App\Http\Controllers\Admin\Concerns\PersistsSettings`
    for `contact`, `header` and `footer`.
 5. Read it through the shared API, or expose it in a view composer when a partial needs it.
-6. Add the key to `cms.mcp.settings_writable_keys` if an agent should be able to change it
-   ([../operations/mcp.md](../operations/mcp.md)).
+6. Decide its MCP exposure. Every non-secret setting an editor can change in the panel should be writable by
+   agents: add the key to `cms.mcp.settings_writable_keys` and its rule to `SettingOperations::update()`
+   (plus the localized key list there if it varies by language). It is mandatory for anything only editable on a
+   screen `essential` hides. Secrets, credentials and transport settings never go in the allowlist
+   ([../operations/mcp-surface.md](../operations/mcp-surface.md)).
 
 ```php
 ['key' => 'analytics_id', 'value' => '', 'type' => 'string', 'group' => 'integrations'],

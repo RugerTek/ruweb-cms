@@ -11,6 +11,21 @@ checklist — plus the "Forms Are Code-Owned" section of
 
 The contact form is the reference implementation; every step of the checklist names its counterpart to copy.
 
+## Profile First
+
+Run `php artisan cms:capabilities` and read
+[docs/concepts/admin-profiles.md](../../../docs/concepts/admin-profiles.md). In `full`, build the Live Editor
+section partial (checklist step 8). In `essential`, skip that partial: labels, options and notification
+settings are edited through MCP (`pages_update` / `pages_update_draft`), so the section schema must declare
+every one of those paths. Everything else — table, request, routes, anti-spam, registry, inbox — is required in
+both profiles.
+
+## MCP Surface
+
+Registering the form in `config('cms.forms')` makes its inbox reachable through the `submissions_*` tools with no
+new tool. Make sure the section schema lists every administrable path (agents cannot write undeclared paths) and
+add the form key to an MCP inbox test. See [docs/operations/mcp-surface.md](../../../docs/operations/mcp-surface.md).
+
 ## Before Building
 
 Write the contract down: field list (name, type, required, rules), which labels and which option lists are
@@ -33,7 +48,7 @@ without skipping:
   notification settings, plus the green "View submissions" button linking to that form's listing;
 - schema paths flagged `translatable` / `preserve`;
 - `lang/es/admin.php` and `lang/en/admin.php` key-for-key, plus `public.forms.<form>.*` fallbacks;
-- feature tests mirroring `ContactFormTest` and `AdminSubmissionsTest`.
+- feature tests mirroring `ContactFormTest`, `AdminSubmissionsTest` and `McpSubmissionsTest`.
 
 ## Verify
 

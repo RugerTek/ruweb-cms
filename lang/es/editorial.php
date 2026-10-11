@@ -1,7 +1,10 @@
 <?php
 
 return [
-    'mcp_draft_required' => 'Esta operación solo admite borradores. La publicación se conserva sin cambios; la edición de una versión pendiente por MCP todavía no está disponible.',
+    'mcp_draft_required' => 'Esta operación solo admite borradores. La publicación se conserva sin cambios; un administrador la edita en vivo con pages_update/posts_update y cualquiera puede proponer cambios con content_propose.',
+    'homepage_delete_forbidden' => 'Esta página es la portada. Elige otra portada antes de borrarla.',
+    'page_slug_reserved' => 'El slug no puede empezar por ":segment": esa ruta pertenece al propio sitio. Elige otro slug.',
+    'mcp_live_edit_admin_only' => 'Solo un administrador cambia contenido publicado en vivo. La publicación se conserva sin cambios; propón el cambio con content_propose y solicita revisión.',
     'no_versions' => 'Todavía no hay versiones guardadas.',
     'no_reviews' => 'Todavía no hay solicitudes de revisión.',
     'no_links' => 'No hay enlaces de vista previa activos.',
@@ -51,7 +54,7 @@ return [
     'create_link' => 'Crear enlace',
     'revoke' => 'Revocar',
     'revoked' => 'Enlace revocado.',
-    'conflict' => 'El contenido cambió. Reabrí el editor antes de continuar.',
+    'conflict' => 'El contenido cambió desde que se leyó. Vuelve a cargarlo y reintenta.',
     'publish_forbidden' => 'Solo un administrador puede publicar contenido.',
     'month' => 'Mes',
     'show' => 'Mostrar',

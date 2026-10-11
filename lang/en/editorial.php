@@ -1,7 +1,10 @@
 <?php
 
 return [
-    'mcp_draft_required' => 'This operation only accepts drafts. The published version is unchanged; editing a pending version through MCP is not available yet.',
+    'mcp_draft_required' => 'This operation only accepts drafts. The published version is unchanged; administrators edit it live with pages_update/posts_update, and anyone can stage changes with content_propose.',
+    'homepage_delete_forbidden' => 'This page is the homepage. Choose another homepage before deleting it.',
+    'page_slug_reserved' => 'The slug cannot start with ":segment": that path belongs to the site itself. Choose another slug.',
+    'mcp_live_edit_admin_only' => 'Only administrators change published content live. The published version is unchanged; stage the change with content_propose and request review.',
     'no_versions' => 'No saved versions yet.',
     'no_reviews' => 'No review requests yet.',
     'no_links' => 'No active preview links.',
@@ -51,7 +54,7 @@ return [
     'create_link' => 'Create link',
     'revoke' => 'Revoke',
     'revoked' => 'Link revoked.',
-    'conflict' => 'Content changed. Reopen the editor before continuing.',
+    'conflict' => 'The content changed since it was read. Load it again and retry.',
     'publish_forbidden' => 'Only an administrator can publish content.',
     'month' => 'Month',
     'show' => 'Show',

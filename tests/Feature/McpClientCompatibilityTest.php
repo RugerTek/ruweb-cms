@@ -14,6 +14,11 @@ class McpClientCompatibilityTest extends TestCase
     public function test_oauth_endpoints_and_schema_are_absent(): void
     {
         $this->getJson('/.well-known/oauth-authorization-server')->assertNotFound();
+        // MCP clients probe these on every connection: a bare JSON 404 that never fills the 404 monitor.
+        foreach (['/.well-known/oauth-authorization-server/mcp/rpc', '/.well-known/openid-configuration'] as $probe) {
+            $this->get($probe)->assertNotFound()->assertExactJson(['message' => 'Not Found']);
+        }
+        $this->assertSame(0, \App\Models\NotFoundHit::count());
         $this->getJson('/authorize')->assertNotFound();
         $this->postJson('/authorize', [])->assertStatus(405);
         $this->postJson('/token', [])->assertStatus(405);

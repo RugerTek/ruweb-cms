@@ -56,7 +56,10 @@ class McpPhaseThreeTest extends TestCase
         $this->withToken($this->token());
         $this->postJson('/mcp/locales', ['install' => 'en', 'locales' => ['en' => ['is_active' => true, 'is_public' => true]]])->assertOk();
         $this->assertTrue(Locale::where('code', 'en')->firstOrFail()->is_public);
-        $this->postJson('/mcp/locales', ['locales' => ['es' => ['is_active' => false, 'is_public' => false], 'en' => ['is_active' => false, 'is_public' => true]]])->assertOk();
+        // Deactivating the base locale is refused explicitly, and the whole request changes nothing.
+        $this->postJson('/mcp/locales', ['locales' => ['es' => ['is_active' => false, 'is_public' => false], 'en' => ['is_active' => false, 'is_public' => true]]])->assertUnprocessable();
+        $this->assertTrue(Locale::where('code', 'en')->firstOrFail()->is_public);
+        $this->postJson('/mcp/locales', ['locales' => ['en' => ['is_active' => false, 'is_public' => true]]])->assertOk();
         $this->assertTrue(Locale::where('code', 'es')->firstOrFail()->is_active);
         $this->assertTrue(Locale::where('code', 'es')->firstOrFail()->is_public);
         $this->assertFalse(Locale::where('code', 'en')->firstOrFail()->is_public);
@@ -66,6 +69,13 @@ class McpPhaseThreeTest extends TestCase
         $this->postJson('/mcp/locales', ['install' => $third, 'locales' => [$third => ['is_public' => 'invalid']]])->assertUnprocessable();
         $this->assertDatabaseMissing('locales', ['code' => $third]);
         $this->assertSame($before, DB::table('content_revisions')->count());
+
+        // The panel form posts hidden zeros for the disabled base checkboxes; it must keep saving.
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->put('/admin/languages', ['locales' => ['es' => ['is_active' => '0', 'is_public' => '0'], 'en' => ['is_active' => '1', 'is_public' => '1']]])
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertTrue(Locale::where('code', 'es')->firstOrFail()->is_active);
+        $this->assertTrue(Locale::where('code', 'en')->firstOrFail()->is_public);
     }
 
     public function test_rpc_retries_and_stale_revisions_remain_protocol_errors(): void

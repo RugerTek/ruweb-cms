@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnforceMcpScopes
 {
-    private const READ = ['submissions_list', 'submissions_get', 'content_versions', 'content_version', 'content_diff', 'content_reviews', 'cms_capabilities', 'content_read_field', 'cms_schema', 'locales_list', 'content_translation_changes', 'media_usages', 'pages_list', 'pages_get', 'posts_list', 'posts_get', 'media_list', 'media_get', 'settings_list', 'settings_get', 'menus_list', 'menus_get'];
+    private const READ = ['submissions_list', 'submissions_get', 'content_versions', 'content_version', 'content_diff', 'content_reviews', 'cms_capabilities', 'content_read_field', 'cms_schema', 'locales_list', 'content_translation_changes', 'media_usages', 'pages_list', 'pages_get', 'posts_list', 'posts_get', 'media_list', 'media_get', 'settings_list', 'settings_get', 'menus_list', 'menus_get', 'taxonomies_list', 'taxonomies_get', 'redirects_list', 'not_found_list'];
 
     private const DRAFT = ['content_propose', 'content_review_request', 'content_review_comment', 'content_restore', 'content_preview_revoke', 'content_translate', 'content_translation_acknowledge', 'content_preview', 'pages_create_draft', 'pages_update_draft', 'posts_create_draft', 'posts_update_draft'];
 

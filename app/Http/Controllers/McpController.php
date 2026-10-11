@@ -85,7 +85,7 @@ class McpController extends Controller
     {
         $page = app(OperationReceipt::class)->run($request->user(), $request->input('operation_key'), 'pages_create_draft', $request->all(), fn () => app(PageOperations::class)->save($request->user(), $request->all(), draftOnly: true));
 
-        return response()->json(['data' => $this->serializePage($page)] + $this->sanitizationWarnings($request), 201);
+        return response()->json(['data' => $this->serializePage($page)] + $this->sanitizationWarnings($request, $page), 201);
     }
 
     public function pagesUpdateDraft(Request $request, Page $page): JsonResponse
@@ -93,7 +93,7 @@ class McpController extends Controller
         Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
         $page = app(PageOperations::class)->save($request->user(), $request->all(), $page, draftOnly: true);
 
-        return response()->json(['data' => $this->serializePage($page)] + $this->sanitizationWarnings($request));
+        return response()->json(['data' => $this->serializePage($page)] + $this->sanitizationWarnings($request, $page));
     }
 
     public function pagesPublish(Request $request, Page $page): JsonResponse
@@ -102,6 +102,24 @@ class McpController extends Controller
         $page = app(PageOperations::class)->publish($request->user(), $page, $request->input('expected_revision'));
 
         return response()->json(['data' => $this->serializePage($page)]);
+    }
+
+    /** Live Editor parity: patch a draft or, for administrators, published content in place. */
+    public function pagesUpdate(Request $request, Page $page): JsonResponse
+    {
+        Validator::make($request->all(), ['expected_revision' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $page = app(PageOperations::class)->save($request->user(), $request->all(), $page, patch: true);
+
+        return response()->json(['data' => $this->serializePage($page)] + $this->sanitizationWarnings($request, $page));
+    }
+
+    public function pagesDelete(Request $request, Page $page): JsonResponse
+    {
+        Validator::make($request->all(), ['expected_revision' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $deleted = ['type' => 'pages', 'id' => $page->id, 'title' => $page->title, 'locale' => $page->locale, 'url' => $page->url()];
+        $warnings = app(PageOperations::class)->delete($request->user(), $page, $request->input('expected_revision'));
+
+        return response()->json(['data' => ['deleted' => $deleted]] + ($warnings === [] ? [] : ['warnings' => $warnings]));
     }
 
     public function postsList(Request $request): JsonResponse
@@ -156,7 +174,7 @@ class McpController extends Controller
     {
         $post = app(OperationReceipt::class)->run($request->user(), $request->input('operation_key'), 'posts_create_draft', $request->all(), fn () => app(PostOperations::class)->save($request->user(), $request->all(), draftOnly: true));
 
-        return response()->json(['data' => $this->serializePost($post)], 201);
+        return response()->json(['data' => $this->serializePost($post)] + $this->sanitizationWarnings($request, $post), 201);
     }
 
     public function postsUpdateDraft(Request $request, Post $post): JsonResponse
@@ -164,7 +182,7 @@ class McpController extends Controller
         Validator::make($request->all(), ['expected_revision' => ['nullable', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
         $post = app(PostOperations::class)->save($request->user(), $request->all(), $post, draftOnly: true);
 
-        return response()->json(['data' => $this->serializePost($post)]);
+        return response()->json(['data' => $this->serializePost($post)] + $this->sanitizationWarnings($request, $post));
     }
 
     public function postsPublish(Request $request, Post $post): JsonResponse
@@ -173,6 +191,24 @@ class McpController extends Controller
         $post = app(PostOperations::class)->publish($request->user(), $post, $request->input('expected_revision'));
 
         return response()->json(['data' => $this->serializePost($post)]);
+    }
+
+    /** Live Editor parity; see pagesUpdate(). */
+    public function postsUpdate(Request $request, Post $post): JsonResponse
+    {
+        Validator::make($request->all(), ['expected_revision' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $post = app(PostOperations::class)->save($request->user(), $request->all(), $post, patch: true);
+
+        return response()->json(['data' => $this->serializePost($post)] + $this->sanitizationWarnings($request, $post));
+    }
+
+    public function postsDelete(Request $request, Post $post): JsonResponse
+    {
+        Validator::make($request->all(), ['expected_revision' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/']])->validate();
+        $deleted = ['type' => 'posts', 'id' => $post->id, 'title' => $post->title, 'locale' => $post->locale, 'url' => $post->url()];
+        $warnings = app(PostOperations::class)->delete($request->user(), $post, $request->input('expected_revision'));
+
+        return response()->json(['data' => ['deleted' => $deleted]] + ($warnings === [] ? [] : ['warnings' => $warnings]));
     }
 
     public function mediaList(Request $request): JsonResponse
@@ -209,7 +245,7 @@ class McpController extends Controller
         $media = $query->paginate($validated['per_page'] ?? config('cms.mcp.per_page', 20), ['*'], 'page', $validated['page'] ?? 1);
 
         return response()->json([
-            'data' => $media->getCollection()->map(fn (Media $item) => $this->serializeMedia($item, $validated['locale'] ?? null))->values(),
+            'data' => $media->getCollection()->map(fn (Media $item) => $this->project($this->serializeMedia($item, $validated['locale'] ?? null), $request))->values(),
             'meta' => [
                 'total' => $media->total(),
                 'current_page' => $media->currentPage(),
@@ -291,6 +327,14 @@ class McpController extends Controller
         return response()->json(['data' => $this->serializeSetting(Setting::where('key', $key)->firstOrFail())]);
     }
 
+    public function settingsReset(Request $request): JsonResponse
+    {
+        $data = Validator::make($request->all(), ['keys' => ['required', 'array', 'max:50'], 'keys.*' => ['string'], 'locale' => ['nullable', 'string'], 'expected_revisions' => ['sometimes', 'array'], 'expected_revisions.*' => ['string', 'size:64']])->validate();
+        app(SettingOperations::class)->reset($request->user(), $data['keys'], $data['locale'] ?? null, $data['expected_revisions'] ?? []);
+
+        return response()->json(['data' => Setting::whereIn('key', $data['keys'])->get()->map(fn ($setting) => $this->serializeSetting($setting))->values()]);
+    }
+
     public function settingsUpdateBatch(Request $request): JsonResponse
     {
         $data = Validator::make($request->all(), ['settings' => ['required', 'array', 'max:50'], 'locale' => ['nullable', 'string'], 'expected_revisions' => ['sometimes', 'array'], 'expected_revisions.*' => ['string', 'size:64']])->validate();
@@ -348,9 +392,10 @@ class McpController extends Controller
 
     public function menusDelete(Request $request, Menu $menu): JsonResponse
     {
+        $deleted = ['type' => 'menus', 'id' => $menu->id, 'name' => $menu->name, 'locale' => $menu->locale, 'location' => $menu->location];
         app(MenuOperations::class)->delete($request->user(), $menu, $request->all());
 
-        return response()->json(null, 204);
+        return response()->json(['data' => ['deleted' => $deleted]]);
     }
 
     protected function project(array $data, Request $request): array
@@ -370,9 +415,11 @@ class McpController extends Controller
         }
     }
 
-    private function sanitizationWarnings(Request $request): array
+    private function sanitizationWarnings(Request $request, Page|Post $entity): array
     {
-        $warnings = SanitizationNotice::forContent($request->input('content_json'));
+        $warnings = $entity instanceof Page
+            ? SanitizationNotice::forContent($request->input('content_json'), $entity->template_key)
+            : SanitizationNotice::forPost($request->input('content'));
 
         return $warnings === [] ? [] : ['warnings' => $warnings];
     }

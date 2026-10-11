@@ -35,6 +35,49 @@ class ContentSchemaRegistry
         return is_array($schema) && $schema !== [] ? $schema : null;
     }
 
+    /**
+     * Submitted page content paths the template schema does not declare. Null values are removals and always
+     * allowed (so legacy keys can be deleted); composition subtrees have their own validator.
+     *
+     * @return array<int, string>
+     */
+    public function unknownPagePaths(string $templateKey, array $content): array
+    {
+        $paths = array_keys($this->forPageTemplate($templateKey) ?? []);
+        $patterns = array_map(fn (string $path) => '/^'.str_replace('\\*', '\d+', preg_quote($path, '/')).'$/', $paths);
+        $unknown = [];
+        $walk = function (mixed $value, string $path) use (&$walk, &$unknown, $patterns, $paths): void {
+            if ($value === null || $path === '' && $value === [] || in_array($path, ['sections.composition.blocks', 'sections.content.html'], true)) {
+                return;
+            }
+            if (is_array($value) && $value !== []) {
+                foreach ($value as $key => $child) {
+                    $walk($child, $path === '' ? (string) $key : $path.'.'.$key);
+                }
+
+                return;
+            }
+            // An empty object or list empties a declared container, e.g. sections.features.logos: [].
+            if ($value === []) {
+                $container = preg_replace('/\.\d+(?=\.|$)/', '.*', $path).'.';
+                foreach ($paths as $declared) {
+                    if (str_starts_with($declared, $container)) {
+                        return;
+                    }
+                }
+            }
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $path)) {
+                    return;
+                }
+            }
+            $unknown[] = $path;
+        };
+        $walk($content, '');
+
+        return $unknown;
+    }
+
     public function isTranslatable(Model $entity): bool
     {
         return $this->forEntity($entity) !== null;

@@ -57,6 +57,9 @@ return [
 
     'statuses' => ['draft', 'published'],
 
+    // Taxonomy types the panel and MCP manage; add a type here before using it anywhere else.
+    'taxonomy_types' => ['category'],
+
     // Collection creation shortcuts in the public admin bar. Pages are always offered separately.
     'collections' => [
         'posts' => [
@@ -64,6 +67,8 @@ return [
             'label' => 'admin.content_type_post',
             'create_route' => 'admin.posts.create',
             'custom_code_public' => true,
+            // Tool prefix agents use (posts_list, posts_update…). Required: see docs/operations/mcp-surface.md.
+            'mcp_operations' => 'posts',
         ],
     ],
 
@@ -326,6 +331,8 @@ return [
             'storage/*',
             'build/*',
             'up',
+            // Discovery probes (MCP clients look for OAuth, which this starter does not offer) on every connection.
+            '.well-known/*',
         ],
         'per_page' => 25,
     ],
@@ -338,6 +345,7 @@ return [
     'mcp' => [
         'per_page' => 20,
         'settings_writable_keys' => [
+            'homepage_translation_group_id',
             'site_name',
             'site_description',
             'site_favicon',

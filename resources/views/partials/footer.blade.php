@@ -8,7 +8,7 @@
 --}}
 @php
     $footerMenu = \App\Models\Menu::findByLocation('footer');
-    $footerItems = $footerMenu?->tree() ?? collect();
+    $footerItems = $footerMenu?->tree(public: true) ?? collect();
     $hasContact = \App\Support\BusinessContact::hasAny();
     $socialLinks = \App\Support\BusinessContact::socialLinks();
     $copyright = strtr((string) ($footerCopyright ?? ''), ['{year}' => date('Y'), '{site}' => $siteName]);

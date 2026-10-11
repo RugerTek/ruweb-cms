@@ -17,14 +17,16 @@ Run `php artisan cms:capabilities` and read
 Editor partials/forms by default; preserve schemas, renderers, validation/operations, permissions, media,
 publication and tests. Read Live Editor UI/UX only when creating or changing a visual editor. Verify public
 rendering and operation through shared operations/MCP in essential. Both profiles expose the same MCP tools;
-role/scope permissions are independent. Essential’s operational panel passed phase 4; later capabilities retain their own roadmap gates.
+role/scope permissions are independent. In `essential`, agents edit through MCP whatever has no panel editor,
+so every editable path must be declared in the schema ([MCP surface](../../../docs/operations/mcp-surface.md)).
 
 ## Steps
 
 1. **Locate the template** in `config('cms.templates')` and confirm which pages use it — every one of them
    gets the section, so it must render harmlessly when its content is empty.
 2. **Add the key** to that template's `sections`, in the position it renders.
-3. **Add its paths to `schema`** with the right flags. A repeated item list uses `items.*.field`.
+3. **Add its paths to `schema`** with the right flags. A repeated item list uses `items.*.field`. A path left out
+   of the schema cannot be written through MCP — in `essential` that means nobody can edit it.
 4. **Render it** in `resources/views/templates/{key}.blade.php`, guarded by `is_visible` and a content check.
 5. **Full only: editor partial** `resources/views/admin/pages/sections/{template}_{section}.blade.php` when it needs more
    than `heading` + `body`: one accordion, visibility switch in the header, and for repeaters the markup

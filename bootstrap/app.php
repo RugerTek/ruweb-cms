@@ -67,6 +67,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // A path that matches no route: apply a redirect rule if one exists, otherwise count the 404
         // so it shows up in Admin > Redirects. See docs/operations/redirects.md.
         $exceptions->render(function (NotFoundHttpException $exception, Request $request) {
+            // Automated discovery probes get a bare answer: no site render, no monitor row.
+            if ($request->is('.well-known/*')) {
+                return response()->json(['message' => 'Not Found'], 404);
+            }
             if ($redirect = RedirectResolver::resolve($request)) {
                 return $redirect;
             }

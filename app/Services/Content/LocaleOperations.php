@@ -8,6 +8,7 @@ use App\Services\Editorial\EditorialActor;
 use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 final class LocaleOperations
 {
@@ -28,6 +29,12 @@ final class LocaleOperations
         abort_unless($actor->isAdmin(), 403);
         $data = Validator::make(['locales' => $input], ['locales' => ['required', 'array', 'max:50'], 'locales.*' => ['array:is_active,is_public'], 'locales.*.is_active' => ['sometimes', 'boolean'], 'locales.*.is_public' => ['sometimes', 'boolean']])->validate()['locales'];
         Validator::make(['codes' => array_keys($data)], ['codes.*' => [Rule::in(Locale::installedCodes())]])->validate();
+        // A partial (bearer) request that tries to switch the base locale off is refused; the panel form always posts
+        // hidden zeros for the disabled base checkboxes and keeps relying on the base being forced on below.
+        $base = Locale::baseCode();
+        if (! $replace && isset($data[$base]) && in_array(false, [(bool) ($data[$base]['is_active'] ?? true), (bool) ($data[$base]['is_public'] ?? true)], true)) {
+            throw ValidationException::withMessages(['locales.'.$base => 'The base locale always stays active and public.']);
+        }
         EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($data, $replace) {
             foreach (Locale::query()->orderBy('id')->lockForUpdate()->get() as $locale) {
                 if ($locale->is_base) {

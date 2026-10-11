@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Revisions\ContentRevisionLedger;
 use App\Support\AdminLoginPath;
+use App\Support\SettingDefaults;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -19,9 +20,13 @@ final class SettingOperations
 {
     use PersistsSettings;
 
+    /** Timestamps are excluded: rewriting an unchanged value must not invalidate other clients' reads. */
     public function fingerprint(Setting $setting): string
     {
-        return hash('sha256', json_encode([$setting->attributesToArray(), $setting->translations()->orderBy('locale')->get()->toArray()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $attributes = array_diff_key($setting->attributesToArray(), array_flip(['created_at', 'updated_at']));
+        $translations = $setting->translations()->orderBy('locale')->get(['locale', 'value'])->toArray();
+
+        return hash('sha256', json_encode([$attributes, $translations], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     public function persist(User $actor, array $settings): void
@@ -40,6 +45,7 @@ final class SettingOperations
                 }
 
                 $value = match ($existing->type) {
+                    'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '0',
                     'social_links' => $this->normalizeSocialLinks($value),
                     'map_point' => $this->normalizeMapPoint($value),
                     'rich_text' => $this->normalizeRichText($value),
@@ -53,6 +59,42 @@ final class SettingOperations
         }, 3));
     }
 
+    /**
+     * Restore settings to their starter value (SettingDefaults). Without a locale the value and every localized
+     * override are reset; with a non-base locale only that override is removed, so it falls back to the base value.
+     * Limited to the MCP writable allowlist, like update().
+     */
+    public function reset(User $actor, array $keys, ?string $locale = null, array $revisions = []): void
+    {
+        abort_unless($actor->isAdmin(), 403);
+        Validator::make(['locale' => $locale, 'keys' => $keys], ['locale' => ['nullable', Rule::in(Locale::installedCodes())], 'keys' => ['required', 'array', 'max:50'], 'keys.*' => ['string', 'distinct']])->validate();
+        foreach ($keys as $key) {
+            abort_unless(in_array($key, config('cms.mcp.settings_writable_keys', []), true), 422, 'Setting key is read-only in MCP.');
+            abort_unless(SettingDefaults::for($key) !== null, 404, 'Setting not found.');
+            abort_if($key === 'homepage_translation_group_id', 422, 'The homepage has no starter value; choose another page with settings_update.');
+        }
+        try {
+            EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($keys, $locale, $revisions) {
+                foreach ($keys as $key) {
+                    $setting = Setting::where('key', $key)->lockForUpdate()->first();
+                    abort_unless($setting, 404, 'Setting not found.');
+                    if (isset($revisions[$key]) && ! hash_equals($current = $this->fingerprint($setting), $revisions[$key])) {
+                        throw new RevisionConflict($revisions[$key], $current);
+                    }
+                    if ($locale !== null && $locale !== Locale::baseCode()) {
+                        $setting->translations()->where('locale', $locale)->delete();
+
+                        continue;
+                    }
+                    $setting->translations()->delete();
+                    $setting->update(['value' => SettingDefaults::for($key)['value']]);
+                }
+            }, 3));
+        } finally {
+            Setting::clearCache();
+        }
+    }
+
     public function update(User $actor, array $settings, ?string $locale = null, array $revisions = []): void
     {
         abort_unless($actor->isAdmin(), 403);
@@ -61,6 +103,8 @@ final class SettingOperations
             abort_unless(in_array($key, config('cms.mcp.settings_writable_keys', []), true), 422, 'Setting key is read-only in MCP.');
         }
         Validator::make(['settings' => $settings], $this->contactSettingRules() + $this->headerSettingRules() + $this->footerSettingRules() + [
+            // Same choice as the panel: a translation group whose base-language page is published.
+            'settings.homepage_translation_group_id' => ['sometimes', 'string', Rule::exists('pages', 'translation_group_id')->where('locale', Locale::baseCode())->where('status', 'published')],
             'settings.site_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'settings.site_description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'settings.site_logo' => ['sometimes', 'nullable', 'integer', 'exists:media,id'],
