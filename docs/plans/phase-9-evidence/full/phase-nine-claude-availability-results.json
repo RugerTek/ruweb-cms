@@ -1,0 +1,13 @@
+{
+  "client": "Claude Code",
+  "real_client": true,
+  "tools_disabled": true,
+  "strict_mcp_config": true,
+  "settings_sources_empty": true,
+  "coding_work": false,
+  "exit_code": 1,
+  "passed": false,
+  "blocker": "Failed to authenticate: OAuth session expired and could not be refreshed",
+  "mcp_api_key_interop": "not_run",
+  "oauth_mcp_interop": "not_run"
+}

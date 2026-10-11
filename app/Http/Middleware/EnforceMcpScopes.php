@@ -27,8 +27,9 @@ class EnforceMcpScopes
     private function authorizeScope(Request $request, Closure $next): Response
     {
         $scope = $request->attributes->get('mcp_scope', 'full');
+        $rpcTool = $request->input('params.name');
         $customCode = $request->is('mcp/custom-code', 'mcp/custom-code/*')
-            || ($request->is('mcp/rpc') && str_starts_with((string) $request->input('params.name'), 'custom_code_'));
+            || ($request->is('mcp/rpc') && is_string($rpcTool) && str_starts_with($rpcTool, 'custom_code_'));
         if ($customCode && ($scope !== 'custom-code' || ! $request->user()?->canManageCustomCode())) {
             return $request->is('mcp/rpc')
                 ? response()->json(['jsonrpc' => '2.0', 'id' => $request->input('id'), 'error' => ['code' => -32603, 'message' => __('security.scope_denied')]], 403)
@@ -41,7 +42,7 @@ class EnforceMcpScopes
             return $next($request);
         }
         if ($request->is('mcp/rpc')) {
-            if (in_array($request->input('method'), ['initialize', 'tools/list'], true)) {
+            if (in_array($request->input('method'), ['initialize', 'tools/list', 'ping', 'notifications/initialized', 'notifications/cancelled'], true)) {
                 return $next($request);
             }
             $tool = $request->input('params.name');

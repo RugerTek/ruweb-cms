@@ -36,6 +36,10 @@ class EnsureAccountSession
             'user_agent' => mb_substr((string) $request->userAgent(), 0, 1000), 'last_active_at' => now(),
         ]);
 
-        return $next($request);
+        $response = $next($request);
+        // Profile and integration screens can contain one-time credentials.
+        $response->headers->set('Cache-Control', 'no-store, private');
+
+        return $response;
     }
 }

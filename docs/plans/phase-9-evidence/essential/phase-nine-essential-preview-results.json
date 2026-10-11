@@ -1,0 +1,8 @@
+{
+  "profile": "essential",
+  "page_id": 111,
+  "expected_heading": "Phase Nine Panel updated",
+  "checks": [
+    "Actual Codex essential page renders the exact client-written heading in authorized browser preview"
+  ]
+}

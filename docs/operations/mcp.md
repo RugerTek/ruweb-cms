@@ -44,7 +44,8 @@ Authorization: Bearer <token>
   `/.well-known/oauth-authorization-server`, `/authorize` and `/token` (`routes/oauth.php`), configured with
   `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET` and `OAUTH_ALLOWED_REDIRECT_URIS`.
 
-See [account security](../admin/account-security.md) for OAuth throttling, second-factor enforcement and
+Start with [connect and recover agent access](agent-access.md) for the panel-to-client workflow, compatibility
+and recovery procedures. See [account security](../admin/account-security.md) for OAuth throttling, second-factor enforcement and
 credential revocation on password or identity changes.
 
 `mcp`, `authorize`, `token` and `.well-known` are reserved slugs, so no page can shadow them.
@@ -314,7 +315,7 @@ Retry atomically reserves only failed/skipped delivery generations. Pending and 
 
 REST mirrors these tools at `GET /mcp/submissions/{form}`, `GET /mcp/submissions/{form}/{id}` and `POST /mcp/submissions/{form}/{id}/{assign|set-status|add-note|retry-notification}`. Missing records return 404, invalid input 422, stale/different retry inputs 409 (RPC `-32009`). Correct the named field or reread and merge before starting a new operation; retry a lost response with the exact same input/key.
 
-Role denial follows the existing JSON-RPC contract: HTTP 200 with `error.code: -32603` and the explicit authorization message; REST returns HTTP 403. Scope middleware denials return HTTP 403 and RPC `-32603`. Acceptance checks the exact code/message and unchanged data, rather than treating an arbitrary error as an authorization pass. Any global normalization belongs to phase 9 interoperability review.
+Role denial follows the existing JSON-RPC contract: HTTP 200 with `error.code: -32603` and the explicit authorization message; REST returns HTTP 403. Scope middleware denials return HTTP 403 and RPC `-32603`. Acceptance checks the exact code/message and unchanged data, rather than treating an arbitrary error as an authorization pass. Phase 9 interoperability review preserved these legacy envelopes; a global normalization requires a separate explicit contract change.
 
 
 ## Trusted Custom Code (phase 8)

@@ -1,0 +1,15 @@
+{
+  "profile": "full",
+  "same_identity": true,
+  "identical_authorization_schemas_rules_and_modules": true,
+  "catalog_count": 59,
+  "identical_catalog": true,
+  "catalog_sha256": "288c178baabe0249dc7df790b30d13cbb3cab43bb790f30c6eadd2e3faa08808",
+  "allowed_profile_differences": [
+    "admin_profile",
+    "capabilities.live_editor",
+    "capabilities.specialized_editor_delivery",
+    "templates.*.sections.*.specialized_editor_required",
+    "templates.*.sections.*.visual_editor_available"
+  ]
+}

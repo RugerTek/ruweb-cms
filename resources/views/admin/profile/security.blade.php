@@ -23,8 +23,9 @@
             <p class="text-xs mb-2">{{ __('security.setup_hint') }}</p>
             <label for="setup-key" class="block mb-2">{{ __('security.setup_key') }}</label>
             <input readonly id="setup-key" value="{{ $user->two_factor_secret }}" class="w-full bg-[#1a1a1a] px-3 py-2 font-mono rounded-md mb-3 select-all">
-            <form method="POST" action="{{ route('admin.two-factor.confirm') }}" class="space-y-3">
+            <form method="POST" action="{{ route('admin.two-factor.confirm', ['tab' => 'security']) }}" class="space-y-3">
                 @csrf
+                <input type="hidden" name="_profile_tab" value="security">
                 <label for="confirm-code" class="block">{{ __('security.code') }}</label>
                 <input id="confirm-code" name="code" required autocomplete="one-time-code" inputmode="numeric" class="bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
                 @error('code') <p class="text-red-400" role="alert">{{ $message }}</p> @enderror

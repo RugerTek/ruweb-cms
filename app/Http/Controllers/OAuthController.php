@@ -146,7 +146,7 @@ class OAuthController extends Controller
                 'token_type' => 'Bearer',
                 'scope' => $authCode->scope ?? 'full',
                 'expires_in' => config('oauth.access_token_ttl', 28800),
-            ]);
+            ])->header('Cache-Control', 'no-store')->header('Pragma', 'no-cache');
         }, 3);
     }
 

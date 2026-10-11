@@ -8,7 +8,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 
 ## Unreleased
 
-## 0.54.0 - 2026-10-10
+## 0.54.1 - 2026-10-10
+
+- Corregidos retorno y validación de Seguridad, conservación de ámbito/vencimiento de claves y estado de claves vencidas; credenciales de un solo uso y tokens OAuth se entregan sin caché.
+- Corregida la exclusión CSRF del intercambio OAuth para Laravel 13; consentimiento conserva su protección, MCP anuncia la versión real, acepta ping y diagnostica tipos RPC inválidos sin alterar permisos ni errores legacy.
+- Recuperación y operación documentadas con límites, revisiones y reintentos; E2E-09 real en full/essential verifica identidad, 2FA, OAuth del servidor, Codex con API key, revocación, recuperación, paridad y estado asíncrono.
+- Fase 9 aceptada por decisión explícita del propietario con prueba real de Claude aplazada y no certificada; login OAuth de clientes sin certificar y gates de fases posteriores conservados.
+
+## 0.54.0 - 2026-10-10 (45ae4aa)
 
 - Gestor de Custom Code versionado para HTML/CSS/JavaScript en ambos perfiles, con operaciones compartidas panel/REST/MCP, permiso administrativo y scope específicos, propuestas separadas de la activación exacta, revisiones y auditoría.
 - Destinos estables por entidad e idioma, inclusión/exclusión con prioridad de exclusión y diagnóstico de referencias eliminadas; una evaluación por documento conserva posiciones y orden, sin ejecutar código en admin ni previews ordinarias.

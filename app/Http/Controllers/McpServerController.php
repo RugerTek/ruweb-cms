@@ -43,6 +43,11 @@ class McpServerController extends Controller
         $id = $body['id'] ?? null;
         $isNotification = ! array_key_exists('id', $body);
 
+        if (! is_string($method) || $method === '' || ! is_array($params)
+            || ($id !== null && ! is_string($id) && ! is_int($id) && ! is_float($id))) {
+            return $this->errorResponse(null, -32600, 'Invalid Request: method, params or id has an invalid type.');
+        }
+
         // JSON-RPC notifications must not receive a response
         if ($isNotification) {
             return response()->json(null, 202);
@@ -53,6 +58,7 @@ class McpServerController extends Controller
                 'initialize' => $this->handleInitialize(),
                 'tools/list' => $this->handleToolsList(),
                 'tools/call' => $this->handleToolsCall($request, $params),
+                'ping' => new \stdClass,
                 default => throw new \InvalidArgumentException("Method not found: {$method}", -32601),
             };
         } catch (ValidationException $e) {
@@ -87,7 +93,7 @@ class McpServerController extends Controller
             'capabilities' => ['tools' => new \stdClass],
             'serverInfo' => [
                 'name' => config('app.name', 'ruweb-cms'),
-                'version' => '1.0.0',
+                'version' => config('cms.version', '0.0.0'),
             ],
         ];
     }
@@ -101,6 +107,10 @@ class McpServerController extends Controller
     {
         $name = $params['name'] ?? null;
         $arguments = $params['arguments'] ?? [];
+
+        if (! is_string($name) || ! is_array($arguments)) {
+            throw new \InvalidArgumentException('Tool name must be a string and arguments must be an object.', -32602);
+        }
 
         if (! $name) {
             throw new \InvalidArgumentException('Missing required param: name.', -32602);

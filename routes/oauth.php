@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\OAuthController;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
 
 // OAuth metadata discovery
 Route::get('/.well-known/oauth-authorization-server', [OAuthController::class, 'metadata'])
-    ->withoutMiddleware([VerifyCsrfToken::class]);
+    ->withoutMiddleware([PreventRequestForgery::class]);
 
 // Authorization endpoint (GET renders form, POST processes it)
 Route::get('/authorize', [OAuthController::class, 'showAuthorize'])->name('oauth.authorize');
@@ -16,4 +16,4 @@ Route::post('/authorize', [OAuthController::class, 'handleAuthorize'])->middlewa
 Route::post('/token', [OAuthController::class, 'token'])
     ->middleware('throttle:oauth-token')
     ->name('oauth.token')
-    ->withoutMiddleware([VerifyCsrfToken::class]);
+    ->withoutMiddleware([PreventRequestForgery::class]);

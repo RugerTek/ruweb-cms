@@ -4,6 +4,8 @@
 
 @section('content')
 @php
+    $activeProfileTab = request('tab', old('_profile_tab', 'information'));
+    $activeProfileTab = in_array($activeProfileTab, ['information', 'security'], true) ? $activeProfileTab : 'information';
     $roleKey = 'admin.role_' . $user->role;
     $roleLabel = __($roleKey) !== $roleKey ? __($roleKey) : ucfirst($user->role);
 @endphp
@@ -29,11 +31,12 @@
         </button>
     </div>
 
-    <section class="profile-panel" data-tab="information" style="display:none">
+    <section class="profile-panel" data-tab="information" style="{{ $activeProfileTab === 'information' ? '' : 'display:none' }}">
         <form method="POST" action="{{ route('admin.profile.information.update', ['tab' => 'information']) }}"
               class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-5">
             @csrf
             @method('PUT')
+            <input type="hidden" name="_profile_tab" value="information">
 
             <h2 class="text-sm font-semibold text-white mb-4">{{ __('admin.profile_identity') }}</h2>
 
@@ -80,11 +83,12 @@
         </form>
     </section>
 
-    <section class="profile-panel" data-tab="security" style="display:none">
+    <section class="profile-panel" data-tab="security" style="{{ $activeProfileTab === 'security' ? '' : 'display:none' }}">
         <form method="POST" action="{{ route('admin.profile.password.update', ['tab' => 'security']) }}"
               class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-5">
             @csrf
             @method('PUT')
+            <input type="hidden" name="_profile_tab" value="security">
 
             <h2 class="text-sm font-semibold text-white mb-1">{{ __('admin.profile_change_password') }}</h2>
             <p class="text-xs text-gray-500 mb-4">{{ __('security.password_revocation') }}</p>
@@ -125,10 +129,12 @@
 <script>
     const profileTabs = document.querySelectorAll('.profile-tab');
     const profilePanels = document.querySelectorAll('.profile-panel');
-    const profileParams = new URLSearchParams(window.location.search);
-    const profileInitialTab = profileParams.get('tab') || 'information';
+    const profileInitialTab = @json($activeProfileTab);
 
     function switchProfileTab(tab) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState(null, '', url);
         profileTabs.forEach(button => {
             if (button.dataset.tab === tab) {
                 button.classList.add('border-sky-500', 'text-sky-400');

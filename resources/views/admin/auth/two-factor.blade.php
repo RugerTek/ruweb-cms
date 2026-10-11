@@ -10,4 +10,5 @@
     @error('code') <p class="text-sm text-red-400" role="alert">{{ $message }}</p> @enderror
     <button class="bg-sky-600 text-white rounded-md px-4 py-2 mt-3" type="submit">{{ __('security.verify') }}</button>
 </form>
+<p class="mt-4 text-sm"><a href="{{ route('admin.login') }}" class="text-sky-400">{{ __('admin.back_to_login') }}</a></p>
 @endsection

@@ -29,6 +29,7 @@ return [
     'key_expiry' => 'Expires at (optional)',
     'keys_hint' => 'Create a separate key for each integration. Draft keys cannot publish or change published content, settings, media or menus.',
     'revoked' => 'Revoked',
+    'expired' => 'Expired',
     'never' => 'No expiry',
     'active_keys' => 'Integration keys',
     'no_keys' => 'No integration keys yet.',

@@ -29,6 +29,7 @@ return [
     'key_expiry' => 'Vence el (opcional)',
     'keys_hint' => 'Creá una clave para cada integración. Las claves de borrador no pueden publicar ni cambiar contenido publicado, configuración, medios o menús.',
     'revoked' => 'Revocada',
+    'expired' => 'Vencida',
     'never' => 'Sin vencimiento',
     'active_keys' => 'Claves de integración',
     'no_keys' => 'Todavía no hay claves de integración.',

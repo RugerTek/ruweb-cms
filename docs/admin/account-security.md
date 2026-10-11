@@ -54,3 +54,7 @@ installations with different APP_KEY values. Password hashes retain the existing
 
 Keep production clocks synchronized and configure transactional email delivery. Deploy the account
 security migration before exposing these routes. No third-party service receives authenticator secrets.
+
+Human first connection, named-key rotation, OAuth expiry/reconnection and CLI recovery are documented in
+[connect and recover agent access](../operations/agent-access.md). Admin responses containing one-time keys,
+2FA setup or recovery codes are private and must not be stored by caches.

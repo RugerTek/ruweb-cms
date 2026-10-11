@@ -1,0 +1,11 @@
+{
+  "client": "codex",
+  "case": "essential-panel-revoked",
+  "profile": "essential",
+  "authentication": "revoked-named-api-key",
+  "isolated_config": true,
+  "exit_code": 1,
+  "expected_startup_error": "HTTP 401",
+  "startup_denied": true,
+  "mcp_calls": 0
+}

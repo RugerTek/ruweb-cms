@@ -42,7 +42,7 @@ class TwoFactorController extends Controller
         abort_if($request->user()->hasTwoFactor(), 409);
         $request->user()->forceFill(['two_factor_secret' => $totp->secret(), 'two_factor_last_counter' => null])->save();
 
-        return back()->with('success', __('security.enrollment_started'));
+        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('success', __('security.enrollment_started'));
     }
 
     public function confirm(Request $request, Totp $totp, RevokeCredentials $revoke)
@@ -57,7 +57,7 @@ class TwoFactorController extends Controller
         $revoke->all($user, $request->session()->getId());
         $request->session()->put(['two_factor_passed' => $user->id, 'security_version' => $user->fresh()->security_version]);
 
-        return back()->with('recovery_codes', $totp->recoveryCodes($user))->with('success', __('security.enabled'));
+        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('recovery_codes', $totp->recoveryCodes($user))->with('success', __('security.enabled'));
     }
 
     public function disable(Request $request, Totp $totp, RevokeCredentials $revoke)
@@ -72,7 +72,7 @@ class TwoFactorController extends Controller
         $revoke->all($user, $request->session()->getId());
         $request->session()->put('security_version', $user->fresh()->security_version);
 
-        return back()->with('success', __('security.disabled'));
+        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('success', __('security.disabled'));
     }
 
     public function recovery(Request $request, Totp $totp)
@@ -83,6 +83,6 @@ class TwoFactorController extends Controller
             throw ValidationException::withMessages(['code' => __('security.invalid_code')]);
         }
 
-        return back()->with('recovery_codes', $totp->recoveryCodes($request->user()));
+        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('recovery_codes', $totp->recoveryCodes($request->user()));
     }
 }

@@ -19,7 +19,7 @@ class AccountSessionsController extends Controller
         abort_unless($affected, 404);
         $request->user()->forceFill(['remember_token' => Str::random(60)])->save();
 
-        return back()->with('success', __('security.session_revoked'));
+        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('success', __('security.session_revoked'));
     }
 
     public function destroyOthers(Request $request)
@@ -31,7 +31,7 @@ class AccountSessionsController extends Controller
         $request->user()->forceFill(['remember_token' => Str::random(60)])->save();
         $request->session()->put('security_version', $request->user()->fresh()->security_version);
 
-        return back()->with('success', __('security.session_revoked'));
+        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('success', __('security.session_revoked'));
     }
 
     public function revokeConnection(Request $request, OauthAccessToken $connection)
@@ -40,6 +40,6 @@ class AccountSessionsController extends Controller
         abort_unless($connection->user_id === $request->user()->id, 403);
         $connection->update(['revoked_at' => now()]);
 
-        return back()->with('success', __('security.connection_revoked'));
+        return redirect()->route('admin.profile.index', ['tab' => 'security'])->with('success', __('security.connection_revoked'));
     }
 }

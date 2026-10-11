@@ -1,0 +1,18 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Real public form queues mail; MCP reads asynchronous queued status without changing it",
+    "Socket closed after committed note; exact stale revision/key retry returns original result and one note",
+    "Changed retry input conflicts; read and draft scopes reject without mutating",
+    "MCP polls completed asynchronous delivery after real queue worker; one delivery attempt and one note"
+  ],
+  "interrupted_response": {
+    "boundary": "TCP close after upstream success fully drained",
+    "committed_effect_count": 1,
+    "identical_receipt": true
+  },
+  "async_initial": "queued",
+  "submission_id": 3,
+  "async_final": "sent",
+  "delivery_attempts": 1
+}

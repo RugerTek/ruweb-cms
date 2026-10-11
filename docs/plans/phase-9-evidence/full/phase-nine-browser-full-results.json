@@ -1,0 +1,28 @@
+{
+  "profile": "full",
+  "checks": [
+    "Fictitious administrator created through panel",
+    "2FA enrollment revokes prior integration; eight recovery codes displayed once",
+    "Password login requires second-factor challenge; recovery code signs in",
+    "Draft/full/read keys created through panel; individual revocation denies old key and replacement works",
+    "Fresh-session OAuth requires 2FA, S256 exchange works and panel revocation denies token",
+    "Codex-created page verified in real authorized preview"
+  ],
+  "screenshots": [
+    "phase-nine-full-login-1440.png",
+    "phase-nine-full-login-390.png",
+    "phase-nine-full-profile-1440.png",
+    "phase-nine-full-profile-390.png",
+    "phase-nine-full-profile-enrolled-1440.png",
+    "phase-nine-full-profile-enrolled-390.png",
+    "phase-nine-full-mcp-1440.png",
+    "phase-nine-full-mcp-390.png",
+    "phase-nine-full-oauth-1440.png",
+    "phase-nine-full-oauth-390.png"
+  ],
+  "page_errors": [],
+  "blocked_external_assets": [
+    "https://fonts.googleapis.com"
+  ],
+  "external_origins": []
+}

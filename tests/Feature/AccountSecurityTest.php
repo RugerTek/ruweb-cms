@@ -38,6 +38,7 @@ class AccountSecurityTest extends TestCase
         $this->assertNull($code->fresh()->used_at);
         $exchange['code_verifier'] = 'verifier';
         $response = $this->postJson('/token', $exchange)->assertOk();
+        $response->assertHeader('Cache-Control', 'no-store, private')->assertHeader('Pragma', 'no-cache');
         $this->assertNotNull($code->fresh()->used_at);
         $this->postJson('/token', $exchange)->assertStatus(400)->assertJsonPath('error', 'invalid_grant');
         $this->assertSame(1, OauthAccessToken::count());

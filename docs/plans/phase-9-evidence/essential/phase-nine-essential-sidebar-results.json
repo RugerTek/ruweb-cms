@@ -1,0 +1,26 @@
+{
+  "profile": "essential",
+  "checks": [
+    "Disabled live-editor routes absent from sidebar",
+    "Pages inventory omits visual create/edit links",
+    "Authorized preview of Codex-created page remains available with expected heading"
+  ],
+  "sidebar_paths": [
+    "/",
+    "/admin",
+    "/admin/pages",
+    "/admin/submissions/contact",
+    "/admin/content/posts",
+    "/admin/editorial-control",
+    "/admin/media",
+    "/admin/media-health",
+    "/admin/settings",
+    "/admin/languages",
+    "/admin/analytics",
+    "/admin/email",
+    "/admin/users",
+    "/admin/claude-mcp",
+    "/admin/developer-tools",
+    "/admin/profile"
+  ]
+}

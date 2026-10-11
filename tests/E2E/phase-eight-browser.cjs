@@ -84,7 +84,7 @@ assert.equal(manifest.database,process.env.PHASE0_DATABASE);assert(/^ruweb_phase
    }
 
   }
-  assert.deepEqual(errors,[]);assert(external.every(origin=>origin==='https://fonts.googleapis.com')); 
+  assert.deepEqual(errors,[]);assert(external.every(origin=>origin==='https://fonts.googleapis.com'));
   fs.writeFileSync(path.join(storage,`phase-eight-browser-${stage}-results.json`),JSON.stringify({profile:fixture.profile,stage,checks:stage==='capture-test'?['Exact approved test executes in the separate opaque-origin frame, parent code remains inert, no horizontal overflow at desktop/mobile widths']:stage==='capture-panel'?['Read-only panel inspected at desktop and mobile widths, closed sidebar and no horizontal overflow']:stage==='create'?['CSS authored and exact version activated through the real panel','Desktop and mobile panel with no executable custom code']:['Six destination/locale documents show exact marker count and CSS state','Ordered head, body-start and body-end insertion in real DOM','Pending version stays inert; excludes and exact language identities prevail','Ordinary preview/login/OAuth consent/admin have no custom code','Desktop/mobile screenshots and no horizontal overflow','Local-only browser requests; no page errors'],blocked_external_assets:external, external_origins:[],page_errors:errors},null,2));
   console.log('PASS E2E08 browser '+fixture.profile+' '+stage);
  }finally{await browser.close()}

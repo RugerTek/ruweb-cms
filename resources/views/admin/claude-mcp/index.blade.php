@@ -107,11 +107,11 @@
             <input id="key-name" name="name" required maxlength="100" value="{{ old('name') }}" class="w-full bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
             <label for="key-scope" class="block">{{ __('security.scope') }}</label>
             <select id="key-scope" name="scope" class="w-full bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
-                @foreach(['read-only', 'draft-only', 'full'] as $scope)<option value="{{ $scope }}">{{ __('security.scope_'.$scope) }}</option>@endforeach
-                @if($user->canManageCustomCode())<option value="custom-code">{{ __('custom_code.credential_scope') }}</option>@endif
+                @foreach(['read-only', 'draft-only', 'full'] as $scope)<option value="{{ $scope }}" @selected(old('scope', 'read-only') === $scope)>{{ __('security.scope_'.$scope) }}</option>@endforeach
+                @if($user->canManageCustomCode())<option value="custom-code" @selected(old('scope') === 'custom-code')>{{ __('custom_code.credential_scope') }}</option>@endif
             </select>
             <label for="key-expiry" class="block">{{ __('security.key_expiry') }}</label>
-            <input id="key-expiry" name="expires_at" type="datetime-local" class="bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
+            <input id="key-expiry" name="expires_at" type="datetime-local" value="{{ old('expires_at') }}" class="bg-[#1a1a1a] border border-white/10 rounded-md px-3 py-2">
             @foreach(['name', 'scope', 'expires_at'] as $field) @error($field)<p class="text-red-400 text-xs" role="alert">{{ $message }}</p>@enderror @endforeach
             <button type="submit" class="bg-sky-600 text-white px-3 py-2 rounded-md">{{ __('admin.mcp_api_key_generate') }}</button>
         </form>
@@ -123,6 +123,8 @@
                 <p class="text-xs text-gray-400">{{ __('security.key_expiry') }}: {{ $key->expires_at?->format('Y-m-d H:i') ?? __('security.never') }} · {{ __('admin.mcp_api_key_last_used_at') }}: {{ $key->last_used_at?->format('Y-m-d H:i') ?? '—' }}</p>
                 @if($key->revoked_at)
                     <p class="text-gray-400">{{ __('security.revoked') }}</p>
+                @elseif($key->expires_at && $key->expires_at->lte(now()))
+                    <p class="text-gray-400">{{ __('security.expired') }}</p>
                 @else
                     <form method="POST" action="{{ route('admin.claude-mcp.api-keys.revoke', $key) }}" class="mt-2">
                         @csrf @method('DELETE')

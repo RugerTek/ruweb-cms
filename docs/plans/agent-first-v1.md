@@ -1,10 +1,10 @@
 # Rüweb CMS 1.0 — Plan de evolución hacia operación por agentes
 
-**Estado:** fases 0–8 implementadas y aceptadas con sus gates E2E. Fases 9–11 autorizadas, sin iniciar.
+**Estado:** fases 0–9 implementadas y aceptadas; fase 9 con excepción explícita para Claude pendiente. Fases 10–11 autorizadas, sin iniciar.
 **Fecha:** 10 de octubre de 2026.
-**Revisión:** 13 — Custom Code con permiso específico, destinos estables, recuperación y E2E-08 en ambos perfiles.
+**Revisión:** 15 — Fase 9 aceptada; el propietario aplaza la prueba real de Claude sin certificarla ni reducir los gates 10–11.
 **Base inspeccionada:** Rüweb CMS 0.47.0.
-**Entrega actual:** fases [0](phase-0-results.md), [1](phase-1-results.md), [2](phase-2-results.md), [3](phase-3-results.md), [4](phase-4-results.md), [5](phase-5-results.md), [6](phase-6-results.md) y [7](phase-7-results.md) aceptadas con resultados. El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
+**Entrega actual:** fases [0](phase-0-results.md), [1](phase-1-results.md), [2](phase-2-results.md), [3](phase-3-results.md), [4](phase-4-results.md), [5](phase-5-results.md), [6](phase-6-results.md) [7](phase-7-results.md), [8](phase-8-results.md) y [9](phase-9-results.md) aceptadas con resultados; fase 9 conserva la excepción explícita de Claude. El propietario autorizó la ejecución autónoma completa hasta 1.0; cada fase exige su E2E aprobado antes de avanzar, con programación y pruebas realizadas por Sol 6.1.
 
 ## 1. Objetivo y valor del producto
 
@@ -510,9 +510,10 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 
 **Trabajo**
 
-- [ ] Completar los recorridos de conexión inicial, consentimiento, segundo factor, rotación, revocación y recuperación.
-- [ ] Validar clientes MCP acordados en fase 0; revisar límites, errores y tareas largas de las operaciones que las necesiten.
-- [ ] Asegurar paridad entre perfiles y ausencia de enlaces a pantallas deshabilitadas.
+- [x] Completar los recorridos de conexión inicial, consentimiento, segundo factor, rotación, revocación y recuperación.
+- [x] Validar Codex real en ambos perfiles y revisar límites, errores, reintentos y estado asíncrono; matriz aceptada con excepción explícita de Claude.
+- [ ] Seguimiento aplazado por el propietario: ejecutar Claude real tras recuperar su login; no certificado.
+- [x] Asegurar paridad entre perfiles y ausencia de enlaces a pantallas deshabilitadas.
 
 **E2E-09 — Conectar, operar, revocar y recuperar**
 
@@ -526,6 +527,12 @@ Cada caso conserva evidencia antes/después y debe aprobarse por separado. Una s
 **Aprobación:** evidencia de cliente real además de pruebas deterministas del protocolo, sin secretos en el informe. La pantalla de login sigue disponible y no exige un agente ya conectado.
 
 **Reversión:** conservar métodos de acceso compatibles durante la transición; revocar conexiones de prueba y volver al flujo estable documentado.
+
+**Resultado:** fase aceptada en 0.54.1: identidad, recuperación, HTTP/MySQL, navegador y Codex con API key
+pasan en ambos perfiles. El propietario autorizó el 2026-10-10 continuar y aplazar Claude
+(«continua trabajando, eso lo vemos mas tarde»): queda pendiente y no certificado. OAuth navegador/HTTP
+verifica el servidor, sin certificar login OAuth del cliente. [Evidencia y procedimiento](phase-9-results.md).
+La excepción permite continuar y conserva íntegros los gates 10–11.
 
 ### Fase 10 — Actualización, snapshots, transiciones y piloto
 
@@ -657,7 +664,7 @@ No se fijan porcentajes de ahorro ni presupuestos de rendimiento inventados: est
 8. **Crear nuevas capacidades mediante código y migraciones**; MCP descubre y opera lo que el proyecto tiene registrado.
 9. **1.0 condicionada a aceptación y piloto**, sin fecha ni número de versiones intermedias impuestos.
 
-Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). La fase 8 está aceptada con [evidencia](phase-8-results.md). Fases 9–11 conservan sus gates y no se iniciaron.
+Las fases 0 y 1 están aceptadas y su implementación y evidencia están registradas en sus documentos de resultados. La fase 2 está aceptada con [evidencia](phase-2-results.md). La fase 3 está aceptada con [evidencia](phase-3-results.md). La fase 4 está aceptada con [evidencia](phase-4-results.md). La fase 5 está aceptada con [evidencia](phase-5-results.md). La fase 6 está aceptada con [evidencia](phase-6-results.md). La fase 7 está aceptada con [evidencia](phase-7-results.md). La fase 8 está aceptada con [evidencia](phase-8-results.md). La fase 9 está aceptada con [resultados y excepción explícita](phase-9-results.md); Claude queda pendiente de seguimiento y no certificado por aplazamiento autorizado del propietario. Las fases 10–11 no se iniciaron.
 
 
 ## 15. Cambios principales respecto a la primera versión del plan
