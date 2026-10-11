@@ -6,7 +6,7 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
-## 1.2.0 - 2026-10-11
+## 1.2.0 - 2026-10-11 (3a3383e)
 
 - MCP con paridad de Live Editor: `pages_update` / `posts_update` editan en vivo (administradores) con semántica de parche; `pages_delete` / `posts_delete`, `taxonomies_*`, `redirects_*`, `not_found_*`, `settings_reset`, `submissions_delete` y la elección de portada por `settings_update`. Panel y MCP comparten `TaxonomyOperations`, `RedirectOperations`, `PageOperations::delete` y `ContentDeletion` (los borrados limpian enlaces de menú y reportan traducciones en `warnings`).
 - Seguridad y contenido: los menús rechazan enlaces `javascript:`/`data:` y neutralizan los antiguos; el menú público oculta destinos no publicados; los slugs de página exigen formato URL y no pueden empezar por rutas del sitio (y `administracion` ya no queda bloqueada); el texto enriquecido no admite imágenes externas; las escrituras MCP rechazan campos fuera del esquema del template.
