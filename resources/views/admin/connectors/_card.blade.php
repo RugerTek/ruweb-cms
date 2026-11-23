@@ -42,7 +42,12 @@
                 @if(! ($paused && $isMeta && $requirement->key === \App\Connectors\ConnectorRequirement::SHOP_CATALOG && $requirement->action !== null))
                     <p>{{ $isMeta && $requirement->key === \App\Connectors\ConnectorRequirement::SHOP_CATALOG && $requirement->action !== null ? __('connectors.meta_needs_catalog') : __($requirement->message) }}</p>
                 @endif
-                @if($requirement->action)
+                @if($requirement->action && strtoupper($requirement->action->method) === 'GET')
+                    {{-- A screen to go to (Bancard: Payments and shipping, Settings > Shop): a link, not a form. --}}
+                    <a href="{{ $requirement->action->url($key) }}" class="inline-flex items-center gap-2 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors" data-connector-action="{{ $requirement->key }}">
+                        {{ __($requirement->action->label) }}
+                    </a>
+                @elseif($requirement->action)
                     <form method="POST" action="{{ $requirement->action->url($key) }}"
                           @if($requirement->action->confirm)
                               data-confirm="{{ __($requirement->action->confirm, ['path' => $shopPath]) }}"

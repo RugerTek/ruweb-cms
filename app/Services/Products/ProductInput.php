@@ -5,6 +5,7 @@ namespace App\Services\Products;
 use App\Http\Requests\Admin\Concerns\ValidatesStaleTranslationFields;
 use App\Models\Locale;
 use App\Models\Product;
+use App\Support\ShopModule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
@@ -93,7 +94,7 @@ final class ProductInput
         $hasVariants = $this->hasVariants();
         $rules = [
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::notIn(Locale::catalogCodes()), Rule::unique('products', 'slug')->where('locale', $locale)->ignore($this->product?->id)],
+            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::notIn(Locale::catalogCodes()), Rule::notIn(ShopModule::RESERVED_SLUGS), Rule::unique('products', 'slug')->where('locale', $locale)->ignore($this->product?->id)],
             'locale' => ['nullable', 'string', Rule::in(Locale::installedCodes())],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string'],

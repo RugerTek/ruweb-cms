@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Connectors\Bancard\BancardConnector;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorStatus;
 use App\Models\Connector;
@@ -9,6 +10,7 @@ use App\Models\Locale;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Connectors\ConnectorOperations;
+use App\Shop\Payments\Bancard\BancardProvider;
 use App\Support\ShopModule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -94,6 +96,20 @@ class AdminConnectorsTest extends TestCase
 
         $this->get(route('admin.connectors.show', ['connector' => 'google']))->assertNotFound();
         $this->post(route('admin.connectors.activate', ['connector' => 'google']))->assertNotFound();
+    }
+
+    public function test_bancard_detail_sends_to_payments_or_back_to_the_grid(): void
+    {
+        config(['cms.connectors.bancard' => BancardConnector::class, 'cms.shop.payment_providers.bancard' => BancardProvider::class]);
+        $show = route('admin.connectors.show', ['connector' => 'bancard']);
+
+        // Bancard publishes no feed: its keys and switch live in Admin > Payments and shipping.
+        $this->actingAs($this->admin)->get($show)->assertRedirect(route('admin.connectors.index'));
+        $this->useShop('catalog');
+        $this->get($show)->assertRedirect(route('admin.shop-payments.edit').'#bancard');
+        $this->get(route('admin.shop-payments.edit'))->assertOk();
+
+        $this->actingAs($this->editor)->get($show)->assertForbidden();
     }
 
     public function test_card_button_turns_the_catalog_on_and_returns_to_the_card(): void

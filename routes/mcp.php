@@ -39,6 +39,8 @@ Route::delete('/posts/{post}', [McpController::class, 'postsDelete']);
 // Optional shop catalog: products_* REST mirror, always registered (route:cache) and answering 404 while the
 // catalog is off (EnsureShopCatalog), like the products_* tools that ToolRegistry lists only while it is on.
 Route::middleware(EnsureShopCatalog::class)->group(base_path('routes/mcp-shop.php'));
+// Orders, payments and shipping (routes/mcp-shop-checkout.php): with the catalog on, like the panel.
+Route::middleware(EnsureShopCatalog::class)->group(base_path('routes/mcp-shop-checkout.php'));
 
 Route::get('/media', [McpController::class, 'mediaList']);
 Route::get('/media/{media}', [McpController::class, 'mediaGet']);

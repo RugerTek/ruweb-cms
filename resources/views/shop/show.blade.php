@@ -130,6 +130,49 @@
                     </div>
                 @endif
 
+                @if(app(\App\Support\ShopModule::class)->checkout() && ! ($isEditorPreview ?? false))
+                    @php
+                        // Only while selling online. Same rules as CartService::add(): a price, and stock unless the
+                        // product does not track it or allows backorders. The cart re-checks everything on submit.
+                        $carts = app(\App\Services\Shop\CartService::class);
+                        $buyable = fn ($variant = null): bool => ($variant ? $variant->price_amount : $commerce->price_amount) !== null
+                            && ($carts->available($commerce, $variant) ?? 1) > 0;
+                        $buyableVariants = $variants->filter(fn ($variant) => $buyable($variant));
+                        $canBuy = $commerce->has_variants ? $buyableVariants->isNotEmpty() : $buyable();
+                        $priced = $commerce->has_variants ? $variants->contains(fn ($variant) => $variant->price_amount !== null) : $commerce->price_amount !== null;
+                    @endphp
+                    @if(! $priced)
+                        {{-- Nothing to buy without a price: no button or quantity, only how to get the price. --}}
+                        <p class="mt-6 text-sm text-gray-600" data-product-no-price>{{ __('checkout.product_no_price') }}</p>
+                    @else
+                        <form method="POST" action="{{ \App\Services\Shop\CartService::route('cart.add') }}" class="mt-6 flex flex-wrap items-end gap-3" data-add-to-cart>
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $commerce->id }}">
+                            @if($commerce->has_variants)
+                                <div>
+                                    <label for="add-variant" class="block text-sm font-medium text-gray-700">{{ __('shop.variant') }}</label>
+                                    <select id="add-variant" name="variant_id" required @disabled(! $canBuy) class="mt-1 rounded-md border border-gray-200 px-3 py-2 text-sm">
+                                        <option value="">{{ __('shop.choose_variant') }}</option>
+                                        @foreach($variants as $variant)
+                                            <option value="{{ $variant->id }}" @selected($selectedVariant?->id === $variant->id && $buyable($variant)) @disabled(! $buyable($variant))>
+                                                {{ $variant->name }}@if($variant->price_amount) — {{ $variant->price_amount->format() }}@endif @if(! $buyable($variant))({{ $variant->price_amount ? __('shop.out_of_stock') : __('checkout.cart_item_no_price') }})@endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                            <div>
+                                <label for="add-quantity" class="block text-sm font-medium text-gray-700">{{ __('checkout.quantity') }}</label>
+                                <input id="add-quantity" type="number" name="quantity" value="1" min="1" max="{{ \App\Services\Shop\CartService::MAX_QUANTITY }}" @disabled(! $canBuy) class="mt-1 w-20 rounded-md border border-gray-200 px-3 py-2 text-sm">
+                            </div>
+                            <button type="submit" @disabled(! $canBuy) class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-300">{{ __('checkout.add_to_cart') }}</button>
+                            @unless($canBuy)
+                                <p class="w-full text-sm text-gray-500" data-add-to-cart-unavailable>{{ __('checkout.cart_item_out_of_stock') }}</p>
+                            @endunless
+                        </form>
+                    @endif
+                @endif
+
                 @if($product->description)
                     <div class="prose prose-gray mt-10 max-w-none">
                         {!! \App\Helpers\ContentHelper::richText($product->description) !!}

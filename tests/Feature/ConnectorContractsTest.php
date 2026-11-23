@@ -55,7 +55,8 @@ class ConnectorContractsTest extends TestCase
 
     public function test_config_registers_meta_and_the_product_source(): void
     {
-        $this->assertSame(['meta'], array_keys(config('cms.connectors')));
+        $this->assertSame(['meta', 'bancard'], array_keys(config('cms.connectors')));
+        $this->assertSame('App\Connectors\Bancard\BancardConnector', config('cms.connectors.bancard'));
         $this->assertSame('App\Connectors\Meta\MetaCatalogConnector', config('cms.connectors.meta'));
         $this->assertSame('App\Connectors\Sources\ShopProductSource', config('cms.catalog_sources.products'));
         $this->assertContains('feeds/*', config('cms.redirects.ignore_paths'));

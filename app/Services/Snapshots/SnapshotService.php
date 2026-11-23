@@ -53,6 +53,11 @@ class SnapshotService
         'jobs',
         'password_reset_tokens',
         'sessions',
+        // Shop (PLAN.md E3.5, R8): guest carts are transient and tied to visitors' cookies; payment provider events
+        // are a local audit trail of raw notifications. Orders and payments travel.
+        'carts',
+        'cart_items',
+        'payment_events',
     ];
 
     protected const TABLE_PRIORITY = [
@@ -71,6 +76,16 @@ class SnapshotService
         'menu_items',
         'mediables',
         'taxables',
+        // Shop: parents before children, so a restore inside an open transaction (SQLite ignores the foreign
+        // key switch there) inserts in dependency order.
+        'products',
+        'product_variants',
+        'shipping_zones',
+        'payment_methods',
+        'orders',
+        'order_items',
+        'order_addresses',
+        'payments',
     ];
 
     public function __construct(
@@ -398,6 +413,17 @@ class SnapshotService
                         DB::table($credentials)->delete();
                     }
                 }
+            }
+            // Local carts point at destination product ids and local payment events at destination payment ids.
+            if (in_array('products', $tableNames, true)) {
+                foreach (['cart_items', 'carts'] as $cartTable) {
+                    if (Schema::hasTable($cartTable)) {
+                        DB::table($cartTable)->delete();
+                    }
+                }
+            }
+            if (in_array('payments', $tableNames, true) && Schema::hasTable('payment_events')) {
+                DB::table('payment_events')->delete();
             }
             // Older snapshots contain media but predate localized metadata. Do not let
             // destination overrides attach themselves to restored, potentially reused ids.

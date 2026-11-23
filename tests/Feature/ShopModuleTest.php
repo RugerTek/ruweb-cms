@@ -124,7 +124,7 @@ class ShopModuleTest extends TestCase
         config(['cms.shop.mode' => 'checkout']);
         $tester = $this->installer(successful: false);
         $this->assertSame(1, $tester->execute(['--profile' => 'full', '--shop' => 'checkout']));
-        $this->assertStringContainsString('checkout is not delivered yet', $tester->getDisplay());
+        $this->assertStringContainsString('Shop module checkout needs an enabled and complete payment method, a delivery option, an email for order notices', $tester->getDisplay());
 
         $this->assertSame($before, file_get_contents($this->fixture.'/config/cms.php'));
         $this->assertSame('off', Setting::where('key', ShopModule::SETTING)->value('value'));

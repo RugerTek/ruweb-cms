@@ -186,6 +186,8 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
     // Optional shop module: panel routes stay inside this authenticated group, always registered (route:cache)
     // and answering 404 while the catalog is off (EnsureShopCatalog).
     Route::middleware(EnsureShopCatalog::class)->group(base_path('routes/shop-admin.php'));
+    // Orders, payments and shipping (routes/shop-checkout-admin.php): with the catalog on, whether or not selling is.
+    Route::middleware(EnsureShopCatalog::class)->group(base_path('routes/shop-checkout-admin.php'));
 });
 
 // Guest routes

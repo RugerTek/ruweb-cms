@@ -2,8 +2,12 @@
 
 namespace App\Mcp;
 
+use App\Http\Controllers\McpOrderController;
 use App\Models\Locale;
+use App\Models\Order;
+use App\Models\PaymentMethod;
 use App\Services\Menus\MenuOperations;
+use App\Services\Shop\OrderOperations;
 use App\Support\CustomCodeDestinations;
 use App\Support\EditorialTypes;
 use App\Support\ShopModule;
@@ -22,6 +26,10 @@ class ToolRegistry
             ...self::postTools(),
             // Optional shop catalog: the tools exist only while cms.shop.mode enables it (docs/shop/catalog.md).
             ...(app(ShopModule::class)->catalog() ? self::productTools() : []),
+            // Selling online, like the panel: orders while selling or while orders exist; payment methods and
+            // shipping with the catalog on, to prepare selling (docs/operations/mcp.md#orders-and-payments).
+            ...(McpOrderController::ordersAvailable() ? self::orderTools() : []),
+            ...(McpOrderController::settingsAvailable() ? self::shopSettingTools() : []),
             ...self::mediaTools(),
             ...self::settingTools(),
             ...self::menuTools(),
@@ -47,6 +55,53 @@ class ToolRegistry
                 'settings' => ['type' => 'object', 'description' => 'Partial settings, e.g. {"brand": "Acme", "condition": "new"}; see setting_keys in connectors_get.'],
             ], ['connector', 'expected_revision']),
             $tool('rotate_token', 'Regenerate the secret feed URL: the previous one stops working at once and the new one must be pasted again in the platform (from the admin panel). Answers only rotated_at and the new revision. Full credential scope; requires the current revision.', $key + $revision, ['connector', 'expected_revision']),
+        ];
+    }
+
+    private static function orderTools(): array
+    {
+        $order = ['order_id' => ['type' => 'integer', 'minimum' => 1]];
+        $payment = ['payment_id' => ['type' => 'integer', 'minimum' => 1]];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64, 'description' => 'revision of the order from orders_get or orders_list.']];
+        $secret = ' The order access token and its page URL are never returned (only the customer email carries them).';
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => $name, 'description' => $description, 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
+
+        return [
+            $tool('orders_list', 'List orders, newest first, in bounded pages: number, status, customer, payment method and status, total (integer amount in currency) and revision. Filter by status, payment_method key, placed date range (from/to, YYYY-MM-DD) or search (number, customer name, email or phone). Any CMS role.'.$secret, [
+                'status' => ['type' => 'string', 'enum' => Order::STATUSES], 'payment_method' => ['type' => 'string', 'maxLength' => 50],
+                'from' => ['type' => 'string', 'format' => 'date'], 'to' => ['type' => 'string', 'format' => 'date'], 'search' => ['type' => 'string', 'maxLength' => 255],
+                'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]]),
+            $tool('orders_get', 'Read one order: items, delivery, amounts, customer and internal notes, stock shortfall, available_transitions, every payment attempt with its events (provider payloads excluded) and the revision. Any CMS role.'.$secret, $order, ['order_id']),
+            $tool('orders_transition', 'Change the order status like the panel: fulfilled (paid → delivered or picked up; any CMS role), cancelled (pending|paid; administrator; a paid order gets its stock back and its payment stays to refund), paid (confirms the pending manual payment; administrator), refunded (refunds the confirmed payment through its provider; administrator). Cancelling a pending order whose online payment reached the provider asks the provider first and refuses if it was paid there. Repeating the current status is a no-op. Full credential scope; requires the current revision.', $order + $revision + ['status' => ['type' => 'string', 'enum' => array_keys(OrderOperations::TRANSITION_ABILITIES)]], ['order_id', 'expected_revision', 'status']),
+            $tool('orders_note', 'Replace the internal notes of an order (team only, never shown to the customer); null or blank clears them. Any CMS role, full credential scope; requires the current revision.', $order + $revision + ['internal_notes' => ['type' => ['string', 'null'], 'maxLength' => 10000]], ['order_id', 'expected_revision', 'internal_notes']),
+            $tool('payments_confirm', 'Confirm a pending MANUAL payment (bank transfer, cash on delivery) once the money arrived: the order becomes paid, stock is taken and the customer is emailed. Online payments are confirmed by their provider. Administrator, full credential scope; expected_revision is the order revision.', $payment + $revision, ['payment_id', 'expected_revision']),
+            $tool('payments_fail', 'Mark a pending MANUAL payment as failed (the money never arrived); the order stays pending. Administrator, full credential scope; expected_revision is the order revision.', $payment + $revision, ['payment_id', 'expected_revision']),
+            $tool('payments_refund', 'Refund a confirmed payment: through its provider (Bancard rollback), or manual: true when the money was already returned by hand. When the provider cannot (already settled), the error says so and nothing changes. The order becomes refunded and its stock comes back. Administrator, full credential scope; expected_revision is the order revision.', $payment + $revision + ['manual' => ['type' => 'boolean']], ['payment_id', 'expected_revision']),
+        ];
+    }
+
+    private static function shopSettingTools(): array
+    {
+        $keys = PaymentMethod::query()->orderBy('sort_order')->orderBy('id')->pluck('key')->all();
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => $name, 'description' => $description.' Administrator only.', 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
+
+        return [
+            $tool('payment_methods_list', 'List the payment methods (bank_transfer, cod, bancard): enabled, order, ready and what is missing, offered at checkout, public settings (bank details, instructions) with their setting_keys, and the revision. For Bancard only whether the keys of each environment are configured: keys are never returned.', []),
+            $tool('payment_methods_update', 'Patch one payment method: enabled, sort_order, settings (public bank details or instructions; null on a key removes it; unknown keys are ignored and reported in warnings) and, for Bancard, credentials {environment, public_key (32 letters and digits), private_key} of one environment. Keys are stored encrypted, bound to this site, and NEVER returned by any tool. An enabled method must stay complete, and while selling no change may leave the checkout without a payment method: either fails with nothing saved. The Bancard environment (test or production) is switched only in the panel. Full credential scope; requires the method revision.', [
+                'method' => $keys === [] ? ['type' => 'string', 'maxLength' => 50] : ['type' => 'string', 'enum' => $keys],
+                'enabled' => ['type' => 'boolean'], 'sort_order' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 1000],
+                'settings' => ['type' => 'object', 'description' => 'e.g. {"bank_name": "…", "account_holder": "…", "account_number": "…"}; see setting_keys in payment_methods_list.'],
+                'credentials' => ['type' => 'object', 'description' => '{"environment": "staging"|"production", "public_key": "…", "private_key": "…"}; write-only.'],
+            ] + $revision, ['method', 'expected_revision']),
+            $tool('shipping_zones_list', 'Read delivery: zones (id, name, fixed price as an integer amount in currency, enabled, order), store pickup (pickup_enabled, pickup_address) and the revision.', []),
+            $tool('shipping_zones_update', 'Replace delivery settings. zones is the WHOLE list: rows with id are updated, rows without id created, stored zones missing from it deleted (existing orders keep the name and price they copied; deletions are reported in warnings); list order is the display order. pickup_enabled needs a pickup_address. While selling, a change that leaves no delivery option fails with nothing saved. Full credential scope; requires the current revision.', $revision + [
+                'zones' => ['type' => 'array', 'maxItems' => 100, 'items' => ['type' => 'object', 'required' => ['name', 'price_amount'], 'additionalProperties' => false, 'properties' => [
+                    'id' => ['type' => 'integer', 'minimum' => 1], 'name' => ['type' => 'string', 'maxLength' => 255],
+                    'price_amount' => ['type' => 'integer', 'minimum' => 0], 'enabled' => ['type' => 'boolean'],
+                ]]],
+                'pickup_enabled' => ['type' => 'boolean'], 'pickup_address' => ['type' => ['string', 'null'], 'maxLength' => 2000],
+            ], ['expected_revision']),
         ];
     }
 

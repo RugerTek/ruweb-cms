@@ -5,6 +5,7 @@ namespace App\Services\Connectors;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\FeedResult;
 use App\Models\Connector;
+use App\Support\SiteUrl;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,9 +15,10 @@ use Throwable;
 /**
  * The generated document of a feed connector (PLAN.md §4.7): `feeds/{key}.{extension}` on the private `local` disk,
  * built by walking the source through check() and write(), written to a temporary file in the same folder and
- * renamed over the previous one, so a reader never sees half a document. Rebuilt when missing or stale
- * (ConnectorOperations::feedIsStale(): older than FEED_TTL_SECONDS or after touchFeeds()); one build at a time per
- * connector, while other requests keep serving the previous file.
+ * renamed over the previous one, so a reader never sees half a document. Next to it, `{document}.origin` keeps the
+ * SiteUrl::origin() the links were built with. Rebuilt when missing or stale (ConnectorOperations::feedIsStale():
+ * older than FEED_TTL_SECONDS, after touchFeeds(), or built for another origin because APP_URL or the domain
+ * changed); one build at a time per connector, while other requests keep serving the previous file.
  */
 final class FeedFile
 {
@@ -28,6 +30,9 @@ final class FeedFile
     private const LOCK_SECONDS = 300;
 
     private const WAIT_SECONDS = 60;
+
+    /** Suffix of the sibling file holding the origin a document was built for. */
+    private const ORIGIN_SUFFIX = '.origin';
 
     public function __construct(
         private readonly ConnectorRegistry $registry,
@@ -93,6 +98,7 @@ final class FeedFile
         $definition = $this->registry->feed($connector->key);
         $source = $this->registry->source($definition->source());
         $settings = $this->registry->settings($connector->key);
+        $origin = SiteUrl::origin();
         $path = $this->path($connector->key);
         $directory = dirname($path);
         if (! is_dir($directory) && ! @mkdir($directory, 0755, true) && ! is_dir($directory)) {
@@ -138,6 +144,8 @@ final class FeedFile
 
             throw $e;
         }
+        // Written after the rename: a reader in between sees the old origin and rebuilds once more, never the reverse.
+        $this->recordOrigin($path, $origin);
 
         $result = new FeedResult($included, $skipped, [], $warnings);
         $this->operations->recordCounts($connector, $result);
@@ -150,7 +158,25 @@ final class FeedFile
         clearstatcache(true, $path);
         $generatedAt = is_file($path) ? filemtime($path) : false;
 
-        return $generatedAt === false || $this->operations->feedIsStale($generatedAt);
+        return $generatedAt === false || $this->operations->feedIsStale($generatedAt, $this->builtForOrigin($path));
+    }
+
+    /** Origin the document at $path was built for; '' when unknown (a file from before this record), so it is rebuilt. */
+    private function builtForOrigin(string $path): string
+    {
+        $file = $path.self::ORIGIN_SUFFIX;
+        clearstatcache(true, $file);
+        $origin = is_file($file) ? @file_get_contents($file) : false;
+
+        return $origin === false ? '' : $origin;
+    }
+
+    /** @throws RuntimeException when the origin file cannot be written */
+    private function recordOrigin(string $path, string $origin): void
+    {
+        if (@file_put_contents($path.self::ORIGIN_SUFFIX, $origin, LOCK_EX) !== strlen($origin)) {
+            throw new RuntimeException('Cannot write the feed origin file '.$path.self::ORIGIN_SUFFIX.'.');
+        }
     }
 
     /** Atomic on the same filesystem; retried because Windows refuses to replace a file another process is reading. */

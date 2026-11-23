@@ -33,7 +33,7 @@ $localePattern = implode('|', array_map(
 $shopPath = app(ShopModule::class)->path();
 // Whole first segments only: `administracion` or `mcp-guide` are ordinary page slugs. The shop prefix is not
 // reserved here: its routes come first and, with the shop off, hand `/productos` back to the page catch-all.
-$reservedSlugs = '(?:admin|mcp|feeds)(?:/|$)';
+$reservedSlugs = '(?:admin|mcp|feeds|webhooks)(?:/|$)';
 $reservedLocaleSlugs = implode('|', array_map(
     fn (string $code): string => preg_quote($code, '/').'$',
     $catalogLocales
@@ -47,8 +47,10 @@ Route::middleware(['redirects', 'public.locale'])->group(function () use ($local
     // Public forms: POST only, registered before the page catch-all. See docs/content/forms.md.
     Route::post('/forms/contact', [ContactFormController::class, 'store'])->middleware('throttle:forms')->name('forms.contact.store');
     // Optional shop catalog: always registered (route:cache), before the catch-all, in the base group and again
-    // under {locale}; EnsureShopCatalog decides per request whether the catalog or a page answers.
+    // under {locale}; EnsureShopCatalog decides per request whether the catalog or a page answers. The checkout
+    // routes come first so `/productos/carrito` never reaches the product route (routes/shop-checkout.php).
     $localized = false;
+    require __DIR__.'/shop-checkout.php';
     require __DIR__.'/shop.php';
 
     Route::prefix('{locale}')
@@ -59,6 +61,7 @@ Route::middleware(['redirects', 'public.locale'])->group(function () use ($local
             Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('localized.blog.show');
             Route::post('/forms/contact', [ContactFormController::class, 'store'])->middleware('throttle:forms')->name('localized.forms.contact.store');
             $localized = true;
+            require __DIR__.'/shop-checkout.php';
             require __DIR__.'/shop.php';
             Route::get('/{slug}', [PageController::class, 'show'])
                 ->name('localized.page.show')

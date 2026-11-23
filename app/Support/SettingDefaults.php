@@ -49,6 +49,12 @@ final class SettingDefaults
             ['key' => 'search_console_verification_token', 'value' => null,     'type' => 'string', 'group' => 'analytics', 'options' => null],
             // Shop module switch, edited only through App\Services\Shop\ShopModuleOperations (docs/shop/catalog.md).
             ['key' => 'shop_mode',              'value' => 'off',              'type' => 'select', 'group' => 'shop',      'options' => ['off' => 'off', 'catalog' => 'catalog', 'checkout' => 'checkout']],
+            // Selling online (PLAN.md E3.3, E3.4): order notices go here (empty = contact_email), store pickup,
+            // and the page with the purchase policies the checkout asks to accept.
+            ['key' => 'shop_orders_email',      'value' => null,               'type' => 'string', 'group' => 'shop',      'options' => null],
+            ['key' => 'shop_pickup_enabled',    'value' => '0',                'type' => 'boolean', 'group' => 'shop',     'options' => null],
+            ['key' => 'shop_pickup_address',    'value' => null,               'type' => 'text',   'group' => 'shop',      'options' => null],
+            ['key' => 'shop_terms_page_id',     'value' => null,               'type' => 'string', 'group' => 'shop',      'options' => null],
         ];
     }
 

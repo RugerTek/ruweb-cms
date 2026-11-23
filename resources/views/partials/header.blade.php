@@ -53,6 +53,20 @@
                 </a>
             @endif
 
+            {{-- Cart icon: only while selling online (App\View\Composers\CartComposer sets these variables). --}}
+            @if($cartEnabled ?? false)
+                <a href="{{ $cartUrl }}" data-header-cart
+                   class="relative inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                   aria-label="{{ __('checkout.cart_icon_label') }}: {{ trans_choice('checkout.cart_count', $cartCount, ['count' => $cartCount]) }}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 4h2l2.4 10.2a1 1 0 001 .8h8.8a1 1 0 001-.76L20 8H6.2M9 20a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/>
+                    </svg>
+                    @if($cartCount > 0)
+                        <span data-cart-count class="absolute -right-2 -top-2 inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-gray-900 px-1 text-xs font-semibold text-white">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
+                    @endif
+                </a>
+            @endif
+
             {{-- Mobile hamburger --}}
             <button id="mobile-menu-toggle" class="sm:hidden text-gray-600 hover:text-gray-900">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\Shop\CheckoutReadiness;
+use App\Services\Shop\ReadinessItem;
 use App\Services\Shop\ShopModuleOperations;
 use App\Support\AdminLoginPath;
 use App\Support\ShopModule;
@@ -12,11 +14,13 @@ use Database\Seeders\HomepageSeeder;
 use Database\Seeders\LocaleSeeder;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use PDOException;
 
 class CmsInstallCommand extends Command
 {
@@ -77,6 +81,12 @@ class CmsInstallCommand extends Command
         if ($shop !== null && ! app(ShopModule::class)->allows($shop)) {
             $this->error('Shop module '.$shop.' is not available: config/cms.php shop.mode allows at most '.app(ShopModule::class)->limit()
                 .($shop === 'checkout' ? ', and checkout is not delivered yet' : '').'.');
+
+            return Command::FAILURE;
+        }
+        if ($shop === 'checkout' && ($missing = $this->missingCheckoutRequirements()) !== []) {
+            $this->error('Shop module checkout needs '.implode(', ', $missing).'. Install with --shop=catalog, set them up in'
+                .' Admin > Payments and shipping and turn selling on from Settings > Shop.');
 
             return Command::FAILURE;
         }
@@ -312,5 +322,27 @@ class CmsInstallCommand extends Command
         }
 
         file_put_contents($envPath, $content);
+    }
+
+    /**
+     * What CheckoutReadiness still lacks, in English for the console. A database that is not migrated yet lacks all.
+     *
+     * @return list<string>
+     */
+    private function missingCheckoutRequirements(): array
+    {
+        $labels = [
+            CheckoutReadiness::PAYMENT_METHOD => 'an enabled and complete payment method',
+            CheckoutReadiness::DELIVERY => 'a delivery option',
+            CheckoutReadiness::ORDERS_EMAIL => 'an email for order notices',
+            CheckoutReadiness::MAIL => 'email sending turned on (Admin > Email)',
+        ];
+        try {
+            $missing = array_map(fn (ReadinessItem $item): string => $item->key, app(CheckoutReadiness::class)->missing());
+        } catch (QueryException|PDOException) {
+            $missing = array_keys($labels);
+        }
+
+        return array_values(array_map(fn (string $key): string => $labels[$key], $missing));
     }
 }

@@ -15,6 +15,12 @@ final class ShopModule
 {
     public const MODES = ['off', 'catalog', 'checkout'];
 
+    /**
+     * Second segments under the public prefix that belong to the checkout (routes/shop-checkout.php):
+     * `/productos/carrito`, `/productos/checkout`, `/productos/pedido/{token}`. Products cannot use them as slugs.
+     */
+    public const RESERVED_SLUGS = ['carrito', 'checkout', 'pedido'];
+
     /** Key of the setting the administrator changes (`settings` table, group `shop`). */
     public const SETTING = 'shop_mode';
 
@@ -66,7 +72,10 @@ final class ShopModule
         return array_search($mode, self::MODES, true) <= array_search($this->limit(), self::MODES, true);
     }
 
-    /** Cart and checkout ship with routes/shop-checkout.php (PLAN.md §3); until then `checkout` behaves as `catalog`. */
+    /**
+     * Cart and checkout ship with routes/shop-checkout.php (PLAN.md §3); without it `checkout` behaves as `catalog`.
+     * Choosing `checkout` also needs CheckoutReadiness (App\Services\Shop\ShopModuleOperations::setMode()).
+     */
     public function checkoutAvailable(): bool
     {
         return is_file(base_path('routes/shop-checkout.php'));

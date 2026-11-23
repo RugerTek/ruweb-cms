@@ -1,10 +1,13 @@
 <?php
 
+use App\Connectors\Bancard\BancardConnector;
 use App\Connectors\Meta\MetaCatalogConnector;
 use App\Connectors\Sources\ShopProductSource;
 use App\Models\ContactSubmission;
 use App\Models\Post;
 use App\Models\Product;
+use App\Shop\Payments\Bancard\BancardProvider;
+use App\Shop\Payments\ManualPaymentProvider;
 
 return [
     // Versioned deployment choice. No database setting or environment override.
@@ -46,12 +49,42 @@ return [
             'gallery' => ['type' => 'media', 'localized_media' => true],
             'taxonomies' => ['type' => 'internal_reference', 'remap' => true],
         ],
+        // Cart, checkout and orders (PLAN.md, stage 3). Active only while the effective mode is `checkout`.
+        'checkout' => [
+            // Days a guest cart (cookie `ruweb_cart`) lives without activity.
+            'cart_days' => 30,
+            // Orders with an automatic payment method still unpaid after this many hours are cancelled.
+            'unpaid_order_hours' => 48,
+            // Bancard attempts still pending after this many minutes are queried and, if unpaid, rolled back.
+            'bancard_pending_minutes' => 10,
+            // Order numbers: ORD-2026-000001.
+            'order_prefix' => 'ORD',
+        ],
+        // key => class implementing App\Contracts\Shop\PaymentProvider (App\Shop\Payments\PaymentProviderRegistry).
+        // The key is the `provider` column of payment_methods and payments.
+        'payment_providers' => [
+            'manual' => ManualPaymentProvider::class,
+            'bancard' => BancardProvider::class,
+        ],
+        // Bancard vPOS 2.0 (PLAN.md E3.1). Credentials are per site, encrypted in payment_methods, never here.
+        'bancard' => [
+            'urls' => [
+                'staging' => 'https://vpos.infonet.com.py:8888',
+                'production' => 'https://vpos.infonet.com.py',
+            ],
+            // Local fake server for development and tests; the Bancard client honours it only when
+            // app()->environment('local', 'testing'), so it can never redirect a real site's payments.
+            'staging_url_override' => env('BANCARD_STAGING_URL'),
+            // Version of {env}/checkout/javascript/dist/bancard-checkout-<version>.js the order page loads.
+            'checkout_js_version' => '5.0.1',
+        ],
     ],
 
     // Admin > Connectors (PLAN.md §4): key => class implementing App\Contracts\Connectors\Connector. Adding one is a
     // class, an entry here, lang/{es,en}/connectors.php keys and tests; every connector shares the `connectors` table.
     'connectors' => [
         'meta' => MetaCatalogConnector::class,
+        'bancard' => BancardConnector::class,
     ],
 
     // Where feed connectors read items from: key => class implementing App\Contracts\Catalog\CatalogSource.
@@ -386,6 +419,8 @@ return [
             'up',
             // Public connector feeds: requests with a wrong token must not fill the 404 monitor.
             'feeds/*',
+            // Payment provider notifications (Bancard posts here, including an empty monitoring ping every 5 minutes).
+            'webhooks/*',
             // Discovery probes (MCP clients look for OAuth, which this starter does not offer) on every connection.
             '.well-known/*',
         ],
@@ -424,6 +459,8 @@ return [
             'footer_copyright',
             // Shop module switch: validated against the config limit by App\Services\Shop\ShopModuleOperations.
             'shop_mode',
+            // Where order notices go (empty = contact_email); guarded by CheckoutReadiness while selling online.
+            'shop_orders_email',
         ],
     ],
 ];

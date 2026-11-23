@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\McpOrderController;
 use App\Http\Controllers\McpServerController;
 use App\Models\Page;
 use App\Models\Post;
@@ -29,6 +30,12 @@ class EnforceMcpScopes
     /** Reads of the optional shop catalog; they join READ only while the catalog (and so its tools) exists. */
     private const CATALOG_READ = ['products_list', 'products_get'];
 
+    /** Order reads; they join READ only while the orders tools exist (McpOrderController::ordersAvailable()). */
+    private const CHECKOUT_READ = ['orders_list', 'orders_get'];
+
+    /** Payment method and shipping reads; they join READ with the catalog on (McpOrderController::settingsAvailable()). */
+    private const CHECKOUT_SETTINGS_READ = ['payment_methods_list', 'shipping_zones_list'];
+
     /**
      * Tools a read-only or draft-only credential may always call: READ plus the reads of enabled optional modules.
      *
@@ -36,7 +43,16 @@ class EnforceMcpScopes
      */
     public static function reads(): array
     {
-        return app(ShopModule::class)->catalog() ? [...self::READ, ...self::CATALOG_READ] : self::READ;
+        if (! app(ShopModule::class)->catalog()) {
+            return self::READ;
+        }
+
+        return [
+            ...self::READ,
+            ...self::CATALOG_READ,
+            ...(McpOrderController::settingsAvailable() ? self::CHECKOUT_SETTINGS_READ : []),
+            ...(McpOrderController::ordersAvailable() ? self::CHECKOUT_READ : []),
+        ];
     }
 
     public function handle(Request $request, Closure $next): Response

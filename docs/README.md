@@ -54,7 +54,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 | [operations/custom-code.md](operations/custom-code.md) | Trusted browser snippets, exact destinations, dedicated permissions, activation and recovery |
 | [operations/mcp.md](operations/mcp.md) | MCP auth, protocol, tools, REST, extension points |
 | [operations/mcp-surface.md](operations/mcp-surface.md) | What every feature, collection, setting or tool must add so agents can operate it (both profiles) |
-| [operations/connectors.md](operations/connectors.md) | Admin > Connectors: contracts, adding a connector or catalog source, the secret feed URL, Meta feed format, what the server and Cloudflare must allow, Commerce Manager guide |
+| [operations/connectors.md](operations/connectors.md) | Admin > Connectors: contracts, adding a connector or catalog source, the secret feed URL, Meta feed format, what the server and Cloudflare must allow, Commerce Manager guide, the Bancard card |
 | [operations/agent-access.md](operations/agent-access.md) | First MCP connection, client compatibility, key rotation and lost-access recovery |
 | [operations/deploy-cpanel.md](operations/deploy-cpanel.md) | cPanel deployment |
 | [operations/deploy-droplet.md](operations/deploy-droplet.md) | Single-server deployment |
@@ -64,7 +64,10 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 
 | Doc | Owns |
 |---|---|
-| [shop/catalog.md](shop/catalog.md) | Optional shop module: the Settings > Shop switch (off, catalog, checkout) capped by `shop.mode`, turning it on/off, what each mode adds, showing the catalog on Meta |
+| [shop/catalog.md](shop/catalog.md) | Optional shop module: the Settings > Shop switch (off, catalog, checkout) capped by `shop.mode`, turning it on/off, what each mode adds, the requirements to sell online, showing the catalog on Meta |
+| [shop/checkout.md](shop/checkout.md) | Selling online: cart, checkout and its anti-spam, the order page by token, order and payment states, stock taken on payment, emails, roles, scheduled clean-up |
+| [shop/payments.md](shop/payments.md) | `PaymentProvider` contract, manual methods, Bancard vPOS 2.0 (verified facts, tokens, webhook, sweep, stray charges, keys), development fake, certification and sandbox checklist, known limits |
+| [shop/shipping.md](shop/shipping.md) | Store pickup and delivery zones with a fixed price, what an order keeps of them |
 
 ## Skills
 

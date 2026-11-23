@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Connectors\Bancard\BancardConnector;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorStatus;
 use App\Connectors\FeedResult;
@@ -55,9 +56,19 @@ class ConnectorController extends Controller
         return view('admin.connectors.index', ['cards' => $cards]);
     }
 
-    public function show(string $connector): View
+    /**
+     * The detail of a feed connector. Bancard publishes no feed: its keys, environment and switch live in Admin >
+     * Payments and shipping, so its detail sends there (or back to the grid, whose card offers to turn the catalog on,
+     * while that screen is not available).
+     */
+    public function show(string $connector): View|RedirectResponse
     {
         $definition = $this->registry->get($connector);
+        if ($definition instanceof BancardConnector) {
+            return app(ShopModule::class)->catalog()
+                ? redirect()->route('admin.shop-payments.edit')->withFragment('bancard')
+                : redirect()->route('admin.connectors.index');
+        }
         $card = $this->card($connector, $definition, withPreview: true);
         $record = $card['record'];
         $feedUrl = $record?->feedUrl();

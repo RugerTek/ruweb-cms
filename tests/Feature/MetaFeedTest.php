@@ -345,6 +345,34 @@ class MetaFeedTest extends TestCase
         $this->assertTrue(app(ConnectorOperations::class)->feedIsStale(time() - ConnectorOperations::FEED_TTL_SECONDS));
     }
 
+    public function test_generated_file_is_rebuilt_when_the_site_origin_changes(): void
+    {
+        config(['app.url' => 'http://tienda-vieja.test']);
+        $this->fakeSource()->items = [FakeCatalogSource::item('A', ['imageMediaId' => $this->jpeg('a.jpg')])];
+        $token = $this->activate();
+        $path = app(FeedFile::class)->path('meta');
+
+        $old = $this->items($this->feed($token)->assertOk()->streamedContent())['A'];
+        $this->assertStringStartsWith('http://tienda-vieja.test/', $old['link']);
+        $this->assertStringStartsWith('http://tienda-vieja.test/', $old['image_link']);
+
+        // Fresh by time (built after the last touchFeeds() and within the TTL): only the new domain makes it stale.
+        $built = time() - 30;
+        Cache::forever(ConnectorOperations::FEEDS_TOUCHED_KEY, $built - 30);
+        touch($path, $built);
+        clearstatcache();
+        $this->feed($token)->assertOk();
+        clearstatcache();
+        $this->assertSame($built, filemtime($path));
+
+        config(['app.url' => 'https://tienda-nueva.test/']);
+        $new = $this->items($this->feed($token)->assertOk()->streamedContent())['A'];
+        $this->assertStringStartsWith('https://tienda-nueva.test/', $new['link']);
+        $this->assertStringStartsWith('https://tienda-nueva.test/', $new['image_link']);
+        $this->assertStringNotContainsString('tienda-vieja.test', (string) file_get_contents($path));
+        $this->assertSame([], glob(dirname($path).'/*.tmp'));
+    }
+
     public function test_end_to_end_with_the_shop_source_converts_webp_to_jpeg(): void
     {
         if (! function_exists('imagewebp') || ! function_exists('imagecreatefromwebp')) {

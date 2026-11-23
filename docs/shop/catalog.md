@@ -24,7 +24,7 @@ read through `Setting::get()`, cached for the process like any setting.
 |---|---|
 | `off` | Nothing. `/productos` is an ordinary page slug. |
 | `catalog` | Products (with or without price), public catalog, sitemap entries, admin screens, MCP tools, menu links. No cart. |
-| `checkout` | Everything in `catalog`; cart, checkout, orders and payments are delivered in a later stage. Until the checkout route file ships in a later stage (`ShopModule::checkoutAvailable()` looks for it) nobody can choose it: the panel shows it disabled as "coming soon", and the operation refuses it. |
+| `checkout` | Everything in `catalog`, plus the "Add to cart" button, cart, checkout, order page, orders panel and payments (see [checkout.md](checkout.md)). It can only be chosen once the site meets every selling requirement (`CheckoutReadiness`: a ready payment method, a delivery option, an orders email and email sending on); until then the panel shows the option disabled with what is missing and the operation refuses it. |
 
 One enum instead of two booleans: "checkout without catalog" cannot be expressed.
 
@@ -45,11 +45,14 @@ The single write path is `App\Services\Shop\ShopModuleOperations`:
 
 ```php
 // Admin only (403 otherwise). ValidationException on `mode` when the mode is unknown, above cms.shop.mode or
-// not delivered yet. Stores shop_mode and re-syncs this process's registries; never touches shop data.
+// not delivered yet, or for `checkout` while CheckoutReadiness reports something missing (one message listing
+// every missing requirement). Stores shop_mode, re-syncs this process's registries and mirrors the Bancard
+// connector card; never touches shop data.
 public function setMode(User $actor, string $mode): void;
 
-// Modes within the limit, in order, with `available` false for the ones not delivered yet.
-/** @return list<array{mode: string, available: bool}> */
+// Modes within the limit, in order, with `available` false for the ones not delivered yet and, for `checkout`,
+// the unmet selling requirements (each with the panel route that resolves it).
+/** @return list<array{mode: string, available: bool, missing: list<ReadinessItem>}> */
 public function choices(): array;
 ```
 
@@ -142,6 +145,38 @@ shell: it has no edit lock or draft recovery.
   (sku, prices, stock, variants) are not copied: they live on the base row, and the translation's form hides them.
 
 With the catalog off products are not an editorial type: those screens and tools answer 404 for `products`.
+
+## Sell online
+
+`checkout` adds the cart, the checkout, the order page, Admin > Orders and online payments on top of the catalog.
+The flow is in [checkout.md](checkout.md), payment methods and Bancard in [payments.md](payments.md), delivery in
+[shipping.md](shipping.md).
+
+**Settings > Shop** offers "Catalog + selling" disabled, listing what is "Still missing", until the site meets every
+requirement of `App\Services\Shop\CheckoutReadiness` (`app/Services/Shop/CheckoutReadiness.php`). Each missing item
+links to the screen that fixes it:
+
+| Requirement | Met when | Fixed in |
+|---|---|---|
+| `payment_method` | At least one payment method enabled **and** complete: bank transfer with its bank details, cash on delivery with its text, or Bancard with keys of its environment readable on this site | Admin > Payments and shipping |
+| `delivery` | Store pickup on with an address, or at least one enabled delivery zone | Admin > Payments and shipping |
+| `orders_email` | A valid address for order notices: `shop_orders_email`, or `contact_email` when it is empty | Admin > Payments and shipping |
+| `mail` | Sending email turned on (`mail_enabled`, off by default) | Admin > Email (`admin.email.index`) |
+
+The email requirement exists because without it nobody hears about an order: neither the customer (the email is
+the only way back to their order page) nor the store. `setMode('checkout')` refuses the switch with the same list
+from every entry point (panel, MCP `settings_update`, `cms:install --shop=checkout`), and `choices()` returns it for
+the panel. `shop_orders_email` is also writable over MCP (`settings_update`), with email validation; while selling, a change
+that leaves no valid orders address (it or `contact_email`) is refused.
+
+Admin > Payments and shipping is available as soon as the catalog is on, so everything can be prepared before
+selling is turned on. While selling, it refuses a change that would leave the checkout without a payment method or
+delivery option. Turning selling off keeps orders manageable, the order pages working and the Bancard webhook
+listening ([checkout.md](checkout.md#turning-selling-on)).
+
+With `checkout` on, the product page shows **Add to cart** (variant and quantity; disabled without a price or
+stock; never in the editor preview), the header shows the cart counter, and `carrito`, `checkout` and `pedido` are
+reserved: products cannot use them as slugs (`ShopModule::RESERVED_SLUGS`).
 
 ## Show the catalog on Meta
 

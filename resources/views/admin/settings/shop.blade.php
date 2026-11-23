@@ -3,7 +3,12 @@
 @section('title', __('shop.module_title'))
 
 @section('content')
-{{-- Settings > Shop (docs/shop/catalog.md). Choosing a mode opens the confirmation; only the confirmed PUT switches it. --}}
+{{--
+    Settings > Shop (docs/shop/catalog.md). Choosing a mode opens the confirmation; only the confirmed PUT switches it.
+    Selling online (`checkout`) stays disabled while CheckoutReadiness reports something missing: the option lists
+    each requirement with the screen that solves it (choices[].missing). Leaving `checkout` says that the cart, checkout
+    and online selling stop, and how many orders are still open ($openOrders): they stay manageable in Orders.
+--}}
 <div class="mb-6">
     <h1 class="text-lg font-semibold text-white">{{ __('admin.settings') }}</h1>
     <p class="text-sm text-gray-500 mt-0.5">{{ __('admin.settings_subtitle') }}</p>
@@ -30,10 +35,15 @@
     @else
         <form method="GET" action="{{ route('admin.settings.shop') }}" class="mt-6 space-y-3">
             @foreach ($choices as $choice)
-                @php $mode = $choice['mode']; @endphp
-                <label class="flex items-start gap-3 rounded-lg ring-1 ring-white/[0.06] p-4 {{ $choice['available'] ? 'cursor-pointer hover:bg-white/[0.02]' : 'opacity-60' }}">
+                @php
+                    $mode = $choice['mode'];
+                    $missing = $choice['missing'] ?? [];
+                    $selectable = $choice['available'] && ($missing === [] || $mode === $current);
+                @endphp
+                <div class="rounded-lg ring-1 ring-white/[0.06] {{ $selectable ? 'hover:bg-white/[0.02]' : '' }}" data-shop-mode-choice="{{ $mode }}" data-selectable="{{ $selectable ? '1' : '0' }}">
+                <label class="flex items-start gap-3 p-4 {{ $selectable ? 'cursor-pointer' : '' }} {{ $choice['available'] ? '' : 'opacity-60' }}">
                     <input type="radio" name="mode" value="{{ $mode }}" class="mt-1"
-                           @checked(($pending ?? $current) === $mode) @disabled(! $choice['available'])>
+                           @checked(($pending ?? $current) === $mode) @disabled(! $selectable)>
                     <span>
                         <span class="block text-sm font-medium text-white">
                             {{ __('shop.module_mode_'.$mode) }}
@@ -42,8 +52,25 @@
                             @endunless
                         </span>
                         <span class="block text-xs text-gray-500 mt-0.5">{{ __('shop.module_mode_'.$mode.'_help') }}</span>
+                        @if ($mode === 'checkout' && $choice['available'] && $missing === [] && $current !== 'checkout')
+                            <span class="block text-xs text-emerald-400 mt-1">{{ __('checkout.readiness_all_met') }}</span>
+                        @endif
                     </span>
                 </label>
+                @if ($missing !== [])
+                    <div class="px-4 pb-4 pl-11 text-sm" data-shop-readiness-missing>
+                        <p class="text-amber-400 font-medium">{{ __('checkout.readiness_missing') }}</p>
+                        <ul class="mt-1 space-y-1">
+                            @foreach ($missing as $item)
+                                <li class="flex flex-wrap items-baseline gap-x-2 text-gray-300" data-readiness-item="{{ $item->key }}">
+                                    <span>{{ ucfirst($item->label()) }}</span>
+                                    <a href="{{ $item->url() }}" class="text-xs text-sky-400 hover:text-sky-300">{{ __('checkout.readiness_fix') }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                </div>
             @endforeach
             <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
                 {{ __('shop.module_continue') }}
@@ -56,10 +83,21 @@
     @enderror
 </section>
 
-@if ($pending)
+@php
+    // A `?mode=checkout` typed by hand while requirements are missing gets no confirmation: the PUT would refuse it.
+    $pendingMissing = $pending === null ? [] : (collect($choices)->firstWhere('mode', $pending)['missing'] ?? []);
+@endphp
+@if ($pending && $pendingMissing === [])
     <section class="mt-6 bg-[#141414] ring-1 ring-amber-500/30 rounded-xl p-6 max-w-3xl" data-shop-module-confirm="{{ $pending }}">
         <h2 class="text-base font-semibold text-white">{{ __('shop.module_confirm_title', ['mode' => __('shop.module_mode_'.$pending)]) }}</h2>
-        <p class="text-sm text-gray-400 mt-2">{{ __('shop.module_confirm_'.$pending) }}</p>
+        {{-- Coming down from selling to the catalog says what stops (cart, checkout, selling), not what turns on. --}}
+        <p class="text-sm text-gray-400 mt-2">{{ __($pending === 'catalog' && $current === 'checkout' ? 'shop.module_confirm_catalog_from_checkout' : 'shop.module_confirm_'.$pending) }}</p>
+        @if ($pending === 'off' && $current === 'checkout')
+            <p class="text-sm text-gray-400 mt-2" data-shop-selling-off>{{ __('shop.module_confirm_selling_off') }}</p>
+        @endif
+        @if (($openOrders ?? 0) > 0)
+            <p class="text-sm text-amber-300 mt-2" data-shop-open-orders="{{ $openOrders }}">{{ trans_choice('checkout.open_orders_warning', $openOrders, ['count' => $openOrders]) }}</p>
+        @endif
         @if ($pending === 'off')
             <p class="text-sm text-gray-300 mt-2">{{ trans_choice('shop.module_confirm_off_kept', $productCount, ['count' => $productCount]) }}</p>
             @if ($pausedConnectors !== [])

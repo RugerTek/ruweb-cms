@@ -51,8 +51,17 @@ class ShopModuleSwitchTest extends TestCase
         $this->get(route('admin.settings.shop'))->assertOk()
             ->assertSee('data-shop-module="off"', false)
             ->assertSee(__('shop.module_mode_catalog'))
-            ->assertSee(__('shop.module_coming_soon'))
+            ->assertDontSee(__('shop.module_coming_soon'))
             ->assertDontSee('data-shop-module-confirm', false);
+
+        // Selling online is delivered (routes/shop-checkout.php) but blocked by its missing requirements (PLAN.md E3.3).
+        $this->assertTrue(app(ShopModule::class)->checkoutAvailable());
+        $this->put(route('admin.settings.shop.update'), ['mode' => 'checkout', 'confirm' => '1'])
+            ->assertSessionHasErrors(['mode' => __('checkout.readiness_blocked', ['missing' => implode(', ', [
+                __('checkout.readiness_payment_method'), __('checkout.readiness_delivery'), __('checkout.readiness_orders_email'),
+                __('checkout.readiness_mail'),
+            ])])]);
+        $this->assertSame('off', app(ShopModule::class)->mode());
 
         // Choosing a mode only opens the confirmation step.
         $this->get(route('admin.settings.shop', ['mode' => 'catalog']))->assertOk()
@@ -109,7 +118,7 @@ class ShopModuleSwitchTest extends TestCase
         $this->assertArrayNotHasKey('products', config('cms.collections'));
         $this->get('/productos')->assertNotFound();
 
-        // The operation refuses anything the limit does not allow, and checkout until it is delivered.
+        // The operation refuses anything the limit does not allow, and checkout while requirements are missing.
         foreach (['catalog' => 'off', 'checkout' => 'catalog', 'tienda' => 'checkout'] as $mode => $limit) {
             config(['cms.shop.mode' => $limit]);
             try {

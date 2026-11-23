@@ -91,6 +91,8 @@ Defined in `app/Mcp/ToolRegistry.php`:
 | Pages | `pages_list`, `pages_get`, `pages_create_draft`, `pages_update_draft`, `pages_update`, `pages_publish`, `pages_delete` |
 | Posts | `posts_list`, `posts_get`, `posts_create_draft`, `posts_update_draft`, `posts_update`, `posts_publish`, `posts_delete` |
 | Shop catalog (only while the shop catalog is on) | `products_list`, `products_get`, `products_create_draft`, `products_update_draft`, `products_update`, `products_publish`, `products_delete` |
+| Orders and payments (catalog on, while selling or while orders exist) | `orders_list`, `orders_get`, `orders_transition`, `orders_note`, `payments_confirm`, `payments_fail`, `payments_refund` |
+| Payment methods and shipping (catalog on; administrator only) | `payment_methods_list`, `payment_methods_update`, `shipping_zones_list`, `shipping_zones_update` |
 | Connectors (administrator only) | `connectors_list`, `connectors_get`, `connectors_preview`, `connectors_update`, `connectors_rotate_token` |
 | Taxonomies | `taxonomies_list`, `taxonomies_get`, `taxonomies_create`, `taxonomies_update`, `taxonomies_translate`, `taxonomies_delete` |
 | Media | `media_list`, `media_get`, `media_update_metadata`, `media_authorize_upload`, `media_usages`, `media_delete` |
@@ -143,6 +145,57 @@ REST mirror (`routes/mcp-shop.php`): `GET /mcp/products`, `GET /mcp/products/{pr
 `menus_sync_items` item types derive from `MenuOperations::linkableTypes()`: `custom_link`, `page`, `post`,
 `taxonomy` and, while the catalog is on, `product` (`linkable_id` = product id). With the catalog off, product items
 the menu already stores (as `menus_get` returns them) are kept when sent back; a new one is a `-32602`.
+
+### Orders and payments
+
+Selling online follows the panel (`app/Http/Controllers/McpOrderController.php`). The `orders_*` and `payments_*`
+tools exist while the catalog is on **and** the shop sells (`checkout`) or already has orders, like the "Orders"
+sidebar entry, so orders placed before selling was turned off stay manageable. `payment_methods_*` and
+`shipping_zones_*` exist with the catalog on, so an agent can complete what `settings_update` on `shop_mode` reports
+as missing before selling. With the shop off none is listed, calling one answers `-32601` and the REST routes
+answer 404. Writes go through `App\Services\Shop\OrderOperations` and `PaymentOperations`, the operations the panel
+uses; `App\Policies\OrderPolicy` decides the role.
+
+- **Never returned**: the order access token, its hash or the order page URL (only the customer email carries
+  them), payment method keys (Bancard public and private keys) and provider payloads (a Bancard notification
+  carries its md5 token and `security_information`). Payment events show only `type`, `token_valid`,
+  `status_before` and `created_at`.
+- `orders_list {status?, payment_method?, from?, to?, search?, page?, per_page?}` and `orders_get {order_id}`: any
+  CMS role. Amounts are integers in `currency`. `revision` covers status, internal notes, stock shortfall and every
+  attempt's status; `payments_*` take the revision **of the order**.
+- `orders_transition {order_id, expected_revision, status}` with `fulfilled` (any CMS role), `cancelled`, `paid`
+  (confirms the pending manual attempt) or `refunded` (through the provider) — administrator for the last three.
+  Cancelling a pending order whose online attempt reached the provider asks the provider first: paid there → the
+  payment is applied (the order becomes paid) and the cancellation is refused (`-32602`, refund instead); not paid →
+  cancelled at the provider. Repeating the current status is a no-op; an impossible move is `-32602`.
+- `orders_note {order_id, expected_revision, internal_notes}` replaces the internal notes (any CMS role).
+- `payments_confirm` / `payments_fail {payment_id, expected_revision}`: manual methods only (bank transfer, cash on
+  delivery), administrator. `payments_refund {payment_id, expected_revision, manual?}`: through the provider, or
+  `manual: true` once the money was returned by hand; when Bancard already settled the transaction the error says
+  so and nothing changes.
+- `payment_methods_list` / `payment_methods_update {method, expected_revision, enabled?, sort_order?, settings?,
+  credentials?}`: administrator. `settings` patches the public fields (`setting_keys`; `null` removes one; unknown
+  keys are ignored and reported in `warnings`). Bancard takes `credentials {environment, public_key, private_key}`
+  of one environment: stored encrypted and bound to this site's origin, write-only (responses say only
+  `credentials.<environment>.configured`). An enabled method must stay complete and, while selling, no change may
+  leave the checkout without a payment method or delivery option (`CheckoutReadiness::guard()`, as in the panel):
+  either is `-32602` with nothing saved. The Bancard
+  environment (test or production) is switched only in the panel, which asks for confirmation.
+- `shipping_zones_list` / `shipping_zones_update {expected_revision, zones?, pickup_enabled?, pickup_address?}`:
+  administrator. `zones` is the whole list (rows with `id` updated, without one created, missing ones deleted and
+  reported in `warnings`; orders keep the name and price they copied); list order is the display order.
+- Reads (`orders_list`, `orders_get`, `payment_methods_list`, `shipping_zones_list`) are allowed to read-only and
+  draft-only credentials (still with the role above); every write needs full scope.
+- Charges Bancard collected for an attempt already failed or expired, or for another amount, are reversed
+  automatically when MCP applies a provider answer too (`StrayChargeOperations::apply()`); `orders_get` shows the
+  outcome as payment events `late_payment_reversed`, `late_payment_review` and `late_payment_resolved`. Marking a
+  charge in review as resolved is a panel action, with no tool
+  ([../shop/payments.md](../shop/payments.md#stray-charges-late-payment-and-another-amount)).
+
+REST mirror (`routes/mcp-shop-checkout.php`): `GET /mcp/orders`, `GET /mcp/orders/{order}`,
+`POST /mcp/orders/{order}/transition`, `POST /mcp/orders/{order}/note`, `POST /mcp/payments/{payment}/confirm`,
+`POST /mcp/payments/{payment}/fail`, `POST /mcp/payments/{payment}/refund`, `GET /mcp/payment-methods`,
+`PATCH /mcp/payment-methods/{method}`, `GET /mcp/shipping-zones`, `PATCH /mcp/shipping-zones`.
 
 ### Connectors
 

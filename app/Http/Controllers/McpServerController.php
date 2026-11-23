@@ -7,7 +7,9 @@ use App\Mcp\ToolArguments;
 use App\Mcp\ToolRegistry;
 use App\Models\Media;
 use App\Models\Menu;
+use App\Models\Order;
 use App\Models\Page;
+use App\Models\Payment;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\Redirect as RedirectRule;
@@ -35,7 +37,7 @@ class McpServerController extends Controller
     /** Implementation-defined JSON-RPC code for authorization refusals; -32603 stays reserved for real failures. */
     public const FORBIDDEN = -32003;
 
-    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode, private McpTaxonomyController $taxonomies, private McpRedirectController $redirects, private McpProductController $products, private McpConnectorController $connectors) {}
+    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode, private McpTaxonomyController $taxonomies, private McpRedirectController $redirects, private McpProductController $products, private McpConnectorController $connectors, private McpOrderController $orders) {}
 
     public function handle(Request $request): JsonResponse
     {
@@ -297,6 +299,23 @@ class McpServerController extends Controller
             $handlers['products_update'] = fn ($req, $args) => $this->products->update($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
             $handlers['products_publish'] = fn ($req, $args) => $this->products->publish($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
             $handlers['products_delete'] = fn ($req, $args) => $this->products->destroy($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
+        }
+
+        // Selling online: absent like their schemas when ToolRegistry does not list them (McpOrderController).
+        if (McpOrderController::ordersAvailable()) {
+            $handlers['orders_list'] = fn ($req, $args) => $this->orders->ordersList($this->synth($req, $args));
+            $handlers['orders_get'] = fn ($req, $args) => $this->orders->ordersGet($this->synth($req), Order::findOrFail($args['order_id']));
+            $handlers['orders_transition'] = fn ($req, $args) => $this->orders->ordersTransition($this->synth($req, $this->without($args, 'order_id')), Order::findOrFail($args['order_id']));
+            $handlers['orders_note'] = fn ($req, $args) => $this->orders->ordersNote($this->synth($req, $this->without($args, 'order_id')), Order::findOrFail($args['order_id']));
+            $handlers['payments_confirm'] = fn ($req, $args) => $this->orders->paymentsConfirm($this->synth($req, $this->without($args, 'payment_id')), Payment::findOrFail($args['payment_id']));
+            $handlers['payments_fail'] = fn ($req, $args) => $this->orders->paymentsFail($this->synth($req, $this->without($args, 'payment_id')), Payment::findOrFail($args['payment_id']));
+            $handlers['payments_refund'] = fn ($req, $args) => $this->orders->paymentsRefund($this->synth($req, $this->without($args, 'payment_id')), Payment::findOrFail($args['payment_id']));
+        }
+        if (McpOrderController::settingsAvailable()) {
+            $handlers['payment_methods_list'] = fn ($req, $args) => $this->orders->paymentMethodsList($this->synth($req));
+            $handlers['payment_methods_update'] = fn ($req, $args) => $this->orders->paymentMethodsUpdate($this->synth($req, $this->without($args, 'method')), $args['method']);
+            $handlers['shipping_zones_list'] = fn ($req, $args) => $this->orders->shippingZonesList($this->synth($req));
+            $handlers['shipping_zones_update'] = fn ($req, $args) => $this->orders->shippingZonesUpdate($this->synth($req, $args));
         }
 
         // Admin > Connectors: always present, administrator only; the feed token and URL never reach a response.

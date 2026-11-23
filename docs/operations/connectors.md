@@ -27,7 +27,8 @@ Instagram shops and catalog ads. v1 is feed-only (Meta pulls a URL); there is no
 - `/admin/connectors/{key}` is the detail: status and last downloads, the feed URL with Copy and Regenerate, the
   setup guide, the default values form, a preview of the first items with the full list of skipped items (with
   reason and an "Edit product" link) and notices (only for items that enter the feed: a skipped item is listed once),
-  and Deactivate.
+  and Deactivate. Connectors without a feed have no detail of their own: Bancard's sends the administrator to its
+  settings ([Bancard card](#bancard-card)).
 
 All texts live in `lang/es/connectors.php` / `lang/en/connectors.php` (parity rule:
 [../admin/translations.md](../admin/translations.md)).
@@ -36,7 +37,7 @@ All texts live in `lang/es/connectors.php` / `lang/en/connectors.php` (parity ru
 
 | Piece | Where | Owns |
 |---|---|---|
-| Registry entries | `config/cms.php`: `connectors` (key => class) and `catalog_sources` (key => class) | Which connectors and sources exist. Today `meta` and `products`. |
+| Registry entries | `config/cms.php`: `connectors` (key => class) and `catalog_sources` (key => class) | Which connectors and sources exist. Today `meta` and `bancard`, and the `products` source. |
 | `Connector` | `app/Contracts/Connectors/Connector.php` | `key()`, `label()` and `description()` (translation keys), `icon()` (Blade view), `requirements()`, `defaults()`, `rules()` |
 | `FeedConnector` | `app/Contracts/Connectors/FeedConnector.php` | Extends `Connector` for platforms that download a file: `source()`, `check()`, `write()`, `contentType()`, `extension()`, `fetchAgents()` |
 | `CatalogSource` | `app/Contracts/Catalog/CatalogSource.php` | Where a feed reads items from: `key()`, `available()`, `items()` (a cursor-backed `LazyCollection`, never the whole catalog in memory), `count()` (items) and `groupCount()` (products: the variants of one product count once) |
@@ -99,6 +100,32 @@ A new **catalog source** (records other than shop products) is a class implement
 format. v1 ships only the shop products source (`products`).
 
 The next planned connector is Google Merchant Center: same source, same `FeedResult`, its own writer and defaults.
+
+## Bancard card
+
+Bancard (card payments, [../shop/payments.md](../shop/payments.md#bancard-vpos-20)) appears as a card so a client
+browsing Connectors finds it, but it publishes no feed and keeps no settings of its own
+(`app/Connectors/Bancard/BancardConnector.php`, key `bancard`, icon
+`resources/views/admin/connectors/icons/bancard.blade.php`). Keys, environment and turning it on live in
+**Admin > Payments and shipping**.
+
+Requirements, in the order the card explains them (only the first unmet one carries a button):
+
+| Requirement | Unmet when | Button |
+|---|---|---|
+| Product catalog | The shop is off (`ConnectorRequirement::shopCatalog()`) | Turn on product catalog (when `shop.mode` allows it) |
+| `bancard_payments` | The `bancard` payment method is off or not ready (provider registered, keys of the active environment saved, readable and bound to this site) | Configure payments → Admin > Payments and shipping |
+| `shop_checkout` | Selling online is off (`shop_mode` is not `checkout`) | Settings > Shop |
+
+Status follows the usual rules: `needs_action` while a requirement is unmet, `connected` while Bancard takes
+payments. The `connectors` row is not activated from the card: it mirrors the payment method
+(`PaymentMethodOperations::syncConnector()`): on while Bancard is enabled and every requirement is met, off
+otherwise. It is resynced on every payment method write (panel and MCP) and when Settings > Shop changes the mode
+(`ShopModuleOperations::setMode()`), so the card never says `connected` on a site that does not sell.
+
+`/admin/connectors/bancard` redirects to Admin > Payments and shipping (`#bancard`) while the catalog is on, and back
+to the grid otherwise (where the card offers to turn the catalog on). The card's buttons that only navigate are
+links (GET), not forms.
 
 ## The feed URL
 

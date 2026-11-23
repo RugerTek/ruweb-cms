@@ -10,6 +10,7 @@ use App\Models\Connector;
 use App\Models\User;
 use App\Services\Shop\ShopModuleOperations;
 use App\Support\ShopModule;
+use App\Support\SiteUrl;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -251,10 +252,16 @@ final class ConnectorOperations
 
     /**
      * Whether a feed file generated at $generatedAt (Unix seconds, e.g. filemtime()) must be rebuilt: older than
-     * FEED_TTL_SECONDS or not newer than the last touchFeeds(). Errs toward rebuilding within the same second.
+     * FEED_TTL_SECONDS, not newer than the last touchFeeds(), or, when $builtForOrigin is given, built for another
+     * site origin than SiteUrl::origin() (APP_URL or the domain changed: its links point at the old address).
+     * Errs toward rebuilding within the same second.
      */
-    public function feedIsStale(int $generatedAt): bool
+    public function feedIsStale(int $generatedAt, ?string $builtForOrigin = null): bool
     {
+        if ($builtForOrigin !== null && $builtForOrigin !== SiteUrl::origin()) {
+            return true;
+        }
+
         $touched = $this->feedsTouchedAt();
 
         return $generatedAt <= time() - self::FEED_TTL_SECONDS || ($touched !== null && $generatedAt <= $touched);

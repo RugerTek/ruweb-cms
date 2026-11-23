@@ -1,5 +1,7 @@
 <?php
 
+use App\Console\Commands\ShopExpirePaymentsCommand;
+use App\Models\Cart;
 use App\Support\AdminCapabilities;
 use App\Support\EditorialTypes;
 use Illuminate\Foundation\Inspiring;
@@ -24,6 +26,19 @@ Artisan::command('cms:expire-content', function () {
     DB::table('editorial_drafts')->where('expires_at', '<=', now())->delete();
 })->purpose('Expire scheduled content and prune expired recovery drafts');
 Schedule::command('cms:expire-content')->everyMinute()->withoutOverlapping();
+
+// Shop checkout (PLAN.md E3.2 step 8): Bancard attempts pending for 10 minutes are queried and rolled back, and
+// unpaid orders with an automatic method are cancelled. Runs whatever the shop mode: payments in flight still settle.
+// The command ships with track 3C2; until its class exists there is nothing to schedule.
+if (class_exists(ShopExpirePaymentsCommand::class)) {
+    Schedule::command('shop:expire-payments')->everyFiveMinutes()->withoutOverlapping();
+}
+
+// Guest carts expire after cms.shop.checkout.cart_days without activity; their lines go with them (cascade).
+Artisan::command('shop:prune-carts', function () {
+    $this->line('Expired carts deleted: '.Cart::query()->expired()->delete());
+})->purpose('Delete expired guest carts');
+Schedule::command('shop:prune-carts')->daily();
 
 Artisan::command('cms:capabilities', function () {
     $this->line(json_encode(app(AdminCapabilities::class)->discovery(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));

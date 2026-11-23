@@ -2,7 +2,9 @@
 
 namespace Tests;
 
+use App\Models\PaymentMethod;
 use App\Models\Setting;
+use App\Models\ShippingZone;
 use App\Providers\ShopServiceProvider;
 use App\Support\AdminLoginPath;
 use App\Support\SettingDefaults;
@@ -11,8 +13,11 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use Tests\Support\CheckoutFixtures;
+use Tests\Support\FakeBancard;
 use Tests\Support\FakeCatalogSource;
 use Tests\Support\FakeFeedConnector;
+use Tests\Support\FakePaymentProvider;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -84,6 +89,55 @@ abstract class TestCase extends BaseTestCase
         $this->app->instance(FakeFeedConnector::class, $fake);
         $this->app->instance(FakeCatalogSource::class, $catalog);
         config(['cms.connectors' => [$connector => FakeFeedConnector::class], 'cms.catalog_sources' => [$source => FakeCatalogSource::class]]);
+
+        return $fake;
+    }
+
+    /**
+     * Selling online, ready to buy (PLAN.md E3.5): shop mode `checkout`, bank transfer and cash on delivery enabled
+     * with their data (CheckoutFixtures), store pickup on, one delivery zone and an orders email. Sets the stored
+     * mode directly, like useShop(), so it does not depend on the readiness checks of Settings > Shop.
+     */
+    protected function useCheckout(): ShippingZone
+    {
+        $this->useShop('checkout');
+        CheckoutFixtures::enableManualMethods();
+        foreach (['shop_pickup_enabled' => '1', 'shop_pickup_address' => 'Av. España 123, Asunción', 'shop_orders_email' => 'pedidos@example.com'] as $key => $value) {
+            Setting::updateOrCreate(['key' => $key], ['value' => $value] + SettingDefaults::for($key));
+        }
+        Setting::clearCache();
+
+        return CheckoutFixtures::shippingZone();
+    }
+
+    /**
+     * Fake the Bancard API (tests/Support/FakeBancard.php) and store its keys in the `bancard` method, enabled in
+     * $environment and bound to this origin. The same instance is in the container (app(FakeBancard::class)).
+     * Whether the method is offered still depends on cms.shop.payment_providers having a `bancard` entry.
+     */
+    protected function useFakeBancard(string $environment = PaymentMethod::ENVIRONMENT_STAGING): FakeBancard
+    {
+        $fake = (new FakeBancard)->install();
+        $this->app->instance(FakeBancard::class, $fake);
+        $fake->configure(PaymentMethod::query()->where('key', 'bancard')->firstOrFail(), $environment);
+
+        return $fake;
+    }
+
+    /**
+     * Register FakePaymentProvider (an iframe provider) under `fake` with an enabled, ready `fake` payment method, so
+     * the checkout and order page can be tested without the Bancard tracks. Configure it through the returned
+     * instance (also app(FakePaymentProvider::class)).
+     */
+    protected function useFakePaymentProvider(): FakePaymentProvider
+    {
+        $fake = new FakePaymentProvider;
+        $this->app->instance(FakePaymentProvider::class, $fake);
+        config(['cms.shop.payment_providers.'.FakePaymentProvider::KEY => FakePaymentProvider::class]);
+        PaymentMethod::query()->updateOrCreate(
+            ['key' => FakePaymentProvider::KEY],
+            ['provider' => FakePaymentProvider::KEY, 'enabled' => true, 'sort_order' => 10],
+        );
 
         return $fake;
     }
