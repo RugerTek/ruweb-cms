@@ -90,6 +90,8 @@ Defined in `app/Mcp/ToolRegistry.php`:
 | History and review | `content_versions`, `content_version`, `content_diff`, `content_restore`, `content_propose`, `content_review_request`, `content_review_decide`, `content_review_comment`, `content_reviews` |
 | Pages | `pages_list`, `pages_get`, `pages_create_draft`, `pages_update_draft`, `pages_update`, `pages_publish`, `pages_delete` |
 | Posts | `posts_list`, `posts_get`, `posts_create_draft`, `posts_update_draft`, `posts_update`, `posts_publish`, `posts_delete` |
+| Shop catalog (only while the shop catalog is on) | `products_list`, `products_get`, `products_create_draft`, `products_update_draft`, `products_update`, `products_publish`, `products_delete` |
+| Connectors (administrator only) | `connectors_list`, `connectors_get`, `connectors_preview`, `connectors_update`, `connectors_rotate_token` |
 | Taxonomies | `taxonomies_list`, `taxonomies_get`, `taxonomies_create`, `taxonomies_update`, `taxonomies_translate`, `taxonomies_delete` |
 | Media | `media_list`, `media_get`, `media_update_metadata`, `media_authorize_upload`, `media_usages`, `media_delete` |
 | Settings | `settings_list`, `settings_get`, `settings_update`, `settings_update_batch`, `settings_reset` |
@@ -111,6 +113,66 @@ its own call and republishing keeps the original `published_at`; no edit ever si
 kept, both listed in `warnings`; the base-language homepage cannot be deleted until another page is chosen with
 `settings_update` (`homepage_translation_group_id`). Every write runs inside a transaction with a row lock and
 records one restorable version of its result.
+
+### Shop catalog
+
+With the optional shop module off (the default; an administrator switches it in Settings > Shop or with
+`settings_update` on `shop_mode`) the `products_*` tools are not listed, calling one answers `-32601` and the
+`/mcp/products` REST routes answer 404. With `catalog` or `checkout` they
+behave like the post tools over `App\Services\Products\ProductOperations`, the operation the panel uses
+([../shop/catalog.md](../shop/catalog.md)):
+
+- `revision` comes from `ProductOperations::revision()`: the editorial fingerprint plus the variant list, so a
+  change to one variant also makes an older `expected_revision` stale (`-32009`, nothing written).
+- Prices are integers in `cms.shop.currency` (`150000`, never `"150.000"`); `null` is a product without a public
+  price. `price_amount` of a product with variants is ignored by the catalog: each variant carries its own.
+- `variants` is the whole list: rows with `id` are kept and updated, rows without one are created and stored
+  rows missing from the list are deleted. `has_variants: true` needs at least one; `false` removes them.
+- Commerce fields (`sku`, prices, stock, weight, dimensions, variants) live on the base-language row; sending them
+  for a translation is a `-32602`. `sku` is unique across products and variants.
+- `products_create_draft` accepts `operation_key`; draft-only credentials may call it and `products_update_draft`
+  (drafts only). `products_update` (live edit) is full scope; publishing and deleting are administrator-only.
+  Scheduling, expiry and unpublishing use `content_publication` (`type: products`).
+- `products_delete` removes the variants with the product and reports removed menu links and kept translations
+  in `warnings`.
+
+REST mirror (`routes/mcp-shop.php`): `GET /mcp/products`, `GET /mcp/products/{product}`,
+`POST /mcp/products/drafts`, `PATCH /mcp/products/{product}/draft`, `PATCH /mcp/products/{product}`,
+`POST /mcp/products/{product}/publish`, `DELETE /mcp/products/{product}`.
+
+`menus_sync_items` item types derive from `MenuOperations::linkableTypes()`: `custom_link`, `page`, `post`,
+`taxonomy` and, while the catalog is on, `product` (`linkable_id` = product id). With the catalog off, product items
+the menu already stores (as `menus_get` returns them) are kept when sent back; a new one is a `-32602`.
+
+### Connectors
+
+Admin > Connectors ([connectors.md](connectors.md)) exists on every site, so the `connectors_*` tools are always
+listed, whatever the shop mode. All of them require an administrator account (an editor gets `-32003`); writes go
+through `App\Services\Connectors\ConnectorOperations`, the operation the panel uses.
+
+- **The feed token and the feed URL are secret and never appear in any MCP or REST response**, like transport
+  credentials ([mcp-surface.md](mcp-surface.md)). The administrator copies the URL from the panel
+  (`/admin/connectors/{key}`); responses only say where (`feed_url_location`).
+- `connectors_list` and `connectors_get` return `status` (`available`, `needs_action`, `connected`), the
+  requirements (an unmet `shop_catalog` one carries `resolution`: `settings_update` on `shop_mode` with
+  `catalog`), effective `settings`, `defaults`, `setting_keys`, the last feed totals (`last_item_count`,
+  `last_skipped_count`), `last_meta_fetched_at`, the last fetch by any client and `revision`.
+- `connectors_preview {connector, limit?}` walks the catalog through the connector without writing anything (no
+  counters either): `included`, `skipped`, the first `limit` (default 20, max 100) included items as the connector
+  checks them (`price_amount` in `currency`; `null` `brand`/`availability` mean the connector default), every
+  skip reason in `skipped_reasons` and notices that do not skip in `notices` (each list bounded to 200, with
+  `*_total`). With the catalog off it answers zeros plus the unmet requirement.
+- `connectors_update {connector, expected_revision, enabled?, settings?}` patches settings (validated with the
+  connector rules; unknown keys are ignored and reported in `warnings` as `unknown_setting`) and/or switches the
+  connector on or off, in one transaction: a stale revision is `-32009` and an activation refused by an unmet
+  requirement is `-32602`, with nothing saved. Deactivating keeps settings and the URL.
+- `connectors_rotate_token {connector, expected_revision}` makes the previous URL stop working at once and answers
+  only `rotated_at` and the new `revision`.
+- `connectors_list`, `connectors_get` and `connectors_preview` are allowed to read-only and draft-only credentials
+  (still administrator only); `connectors_update` and `connectors_rotate_token` need full scope.
+
+REST mirror: `GET /mcp/connectors`, `GET /mcp/connectors/{connector}`, `GET /mcp/connectors/{connector}/preview`,
+`PATCH /mcp/connectors/{connector}`, `POST /mcp/connectors/{connector}/rotate-token`.
 
 ### Partial content edits
 
@@ -150,8 +212,8 @@ Setting an image field with no real asset: select the placeholder matching the s
 `PATCH /mcp/pages/{page}/draft`, `PATCH /mcp/pages/{page}` (live edit), `DELETE /mcp/pages/{page}`,
 `POST /mcp/pages/{page}/publish`, the same shape for posts, plus `/mcp/media`, `/mcp/settings/{key}`,
 `POST /mcp/settings/reset`, `/mcp/menus` including `PUT /mcp/menus/{menu}/items`, `/mcp/taxonomies`
-(`POST /mcp/taxonomies/{taxonomy}/translations`), `/mcp/redirects`, `GET /mcp/not-found` and
-`POST /mcp/not-found/forget`.
+(`POST /mcp/taxonomies/{taxonomy}/translations`), `/mcp/redirects`, `GET /mcp/not-found`,
+`POST /mcp/not-found/forget` and `/mcp/connectors` ([Connectors](#connectors)).
 
 Media detail is `GET /mcp/media/{media}`. Update metadata with `PATCH /mcp/media/{media}` or the compatible
 `PATCH /mcp/media/{media}/metadata` route. Both accept optional `locale` (query string or JSON body on PATCH)
@@ -176,7 +238,9 @@ An absent secret value in a response is not evidence that the setting is unconfi
 `contact_address`, `footer_tagline`, `footer_copyright`, plus the existing public layout/SEO fields:
 `site_logo`, `default_social_image`, `header_cta_enabled`, `header_cta_label`, `header_cta_page`,
 `header_cta_url`, `header_cta_new_tab`, `contact_location`, `contact_social_links`, `footer_credit_enabled`,
-`footer_credit`. This does not include email transport, analytics, credentials, profile or arbitrary configuration. Arbitrary keys are rejected and unknown keys
+`footer_credit`, and `shop_mode` (the shop module switch: `off`, `catalog` or `checkout`, refused with `422` on
+`mode` above the `cms.shop.mode` limit or while checkout is not delivered; `settings_reset` turns the shop off,
+nothing is deleted, see [../shop/catalog.md](../shop/catalog.md)). This does not include email transport, analytics, credentials, profile or arbitrary configuration. Arbitrary keys are rejected and unknown keys
 report `Setting not found.`. `cms.mcp.per_page` defaults listing pagination to 20.
 
 `settings_reset {keys, locale?, expected_revisions?}` restores allowlisted keys to their starter value from

@@ -1,11 +1,63 @@
 <?php
 
+use App\Connectors\Meta\MetaCatalogConnector;
+use App\Connectors\Sources\ShopProductSource;
 use App\Models\ContactSubmission;
 use App\Models\Post;
+use App\Models\Product;
 
 return [
     // Versioned deployment choice. No database setting or environment override.
     'admin_profile' => 'full',
+
+    // Optional shop module. The administrator turns it on and off from the panel (Settings > Shop, the `shop_mode`
+    // setting); `mode` here is the versioned LIMIT a deployment allows, not the switch: off (the site cannot turn
+    // the shop on) | catalog (up to the catalog) | checkout (no limit). No environment override. Read the effective
+    // mode only through App\Support\ShopModule (docs/shop/catalog.md).
+    'shop' => [
+        'mode' => 'checkout',
+        // ISO 4217; one currency per site. Amounts are stored as integers (Guaraníes have no decimals).
+        'currency' => 'PYG',
+        // Public catalog prefix: /productos and /en/productos. Reserved for pages only while the module is on.
+        'path' => 'productos',
+        // Merged into taxonomy_types while the catalog is on.
+        'taxonomy_types' => ['brand'],
+        // Merged into collections.products while the catalog is on (App\Providers\ShopServiceProvider).
+        'collection' => [
+            'model' => Product::class,
+            'label' => 'shop.content_type_product',
+            'create_route' => 'admin.products.create',
+            'custom_code_public' => false,
+            'mcp_operations' => 'products',
+            // History, versions, proposals, shared previews, translation and content_* tools (App\Support\EditorialTypes).
+            'editorial_history' => true,
+        ],
+        // Merged into custom_code.indexes.shop while the catalog is on: code scoped to the public catalog listing.
+        'custom_code_index' => ['label' => 'Tienda', 'routes' => ['shop.index', 'localized.shop.index']],
+        // Merged into content_schemas.product while the catalog is on. Commerce fields (sku, prices, stock,
+        // variants) live on the base-language row only, so they are not translation paths.
+        'content_schema' => [
+            'title' => ['type' => 'text', 'translatable' => true],
+            'excerpt' => ['type' => 'textarea', 'translatable' => true],
+            'description' => ['type' => 'richtext', 'translatable' => true],
+            'meta_json.title' => ['type' => 'text', 'translatable' => true],
+            'meta_json.description' => ['type' => 'textarea', 'translatable' => true],
+            'featured_image' => ['type' => 'media', 'localized_media' => true],
+            'gallery' => ['type' => 'media', 'localized_media' => true],
+            'taxonomies' => ['type' => 'internal_reference', 'remap' => true],
+        ],
+    ],
+
+    // Admin > Connectors (PLAN.md §4): key => class implementing App\Contracts\Connectors\Connector. Adding one is a
+    // class, an entry here, lang/{es,en}/connectors.php keys and tests; every connector shares the `connectors` table.
+    'connectors' => [
+        'meta' => MetaCatalogConnector::class,
+    ],
+
+    // Where feed connectors read items from: key => class implementing App\Contracts\Catalog\CatalogSource.
+    'catalog_sources' => [
+        'products' => ShopProductSource::class,
+    ],
 
     // Application version. Single source of truth is the VERSION file at the
     // repository root, bumped together with CHANGELOG.md (see skills/changelog-version).
@@ -332,6 +384,8 @@ return [
             'storage/*',
             'build/*',
             'up',
+            // Public connector feeds: requests with a wrong token must not fill the 404 monitor.
+            'feeds/*',
             // Discovery probes (MCP clients look for OAuth, which this starter does not offer) on every connection.
             '.well-known/*',
         ],
@@ -368,6 +422,8 @@ return [
             'contact_address',
             'footer_tagline',
             'footer_copyright',
+            // Shop module switch: validated against the config limit by App\Services\Shop\ShopModuleOperations.
+            'shop_mode',
         ],
     ],
 ];

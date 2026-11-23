@@ -318,6 +318,10 @@ return [
     // Taxonomies
     'taxonomy_type_category' => 'Categories',
     'taxonomy_type_tag' => 'Tags',
+    'taxonomy_type_brand' => 'Brands',
+    'taxonomy_singular_category' => 'category',
+    'taxonomy_singular_tag' => 'tag',
+    'taxonomy_singular_brand' => 'brand',
     'taxonomy_new' => 'New :type',
     'taxonomy_edit' => 'Edit :name',
     'taxonomy_none' => 'No :type yet',

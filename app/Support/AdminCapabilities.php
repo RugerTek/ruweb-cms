@@ -55,7 +55,7 @@ final class AdminCapabilities
         if ($model instanceof Page && ! $this->pageVisualEditor($model->template_key)) {
             return route('admin.editorial.index', ['pages', $model->getKey()]);
         }
-        if (! $this->liveEditor() && ! in_array($model->getTable(), ['pages', 'posts'], true)) {
+        if (! $this->liveEditor() && ! EditorialTypes::has($model->getTable())) {
             foreach (config('cms.collections', []) as $type => $collection) {
                 if ($model instanceof $collection['model']) {
                     return route('admin.content.show', [$type, $model->getKey()]);
@@ -104,6 +104,8 @@ final class AdminCapabilities
 
         return [
             'admin_profile' => $this->profile(),
+            // Optional modules (docs/shop/catalog.md): off | catalog | checkout. Deployment choice, like the profile.
+            'modules' => ['shop' => app(ShopModule::class)->mode()],
             'stability' => 'stable',
             'capabilities' => ['public_site' => true, 'mcp' => true, 'identity' => true, 'custom_code' => true, 'live_editor' => $this->liveEditor(), 'specialized_editor_delivery' => $this->liveEditor()],
             'authorization' => 'Independent of profile: account role and credential scope apply to every operation.',
@@ -112,7 +114,7 @@ final class AdminCapabilities
             'templates' => $templates,
             'registered_collections' => collect(config('cms.collections', []))->map(fn ($collection) => ['model' => class_basename($collection['model']), 'mcp_operations' => $collection['mcp_operations'] ?? null])->all(),
             'taxonomies' => ['types' => config('cms.taxonomy_types', []), 'tools' => 'taxonomies'],
-            'schema_discovery' => ['tool' => 'cms_schema', 'content_types' => ['pages', 'posts']],
+            'schema_discovery' => ['tool' => 'cms_schema', 'content_types' => EditorialTypes::all()],
             'locales_discovery' => 'locales_list',
             'custom_code' => ['tools' => ['custom_code_list', 'custom_code_get', 'custom_code_save', 'custom_code_activate', 'custom_code_deactivate', 'custom_code_evaluate', 'custom_code_destinations'], 'credential_scope' => 'custom-code', 'account_permission' => 'can_manage_custom_code', 'save_activates' => false, 'exact_version_activation' => true, 'exclusions_prevail' => true],
             'content_rules' => ['media_by_id', 'root_relative_internal_urls', 'published_only_public_queries', 'forms_defined_in_code'],

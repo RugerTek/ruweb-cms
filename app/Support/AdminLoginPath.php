@@ -27,6 +27,7 @@ class AdminLoginPath
             'forms',
             'draft-preview',
             'storage',
+            'feeds',
         ];
     }
 

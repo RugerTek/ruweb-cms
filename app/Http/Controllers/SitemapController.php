@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
 use App\Models\Setting;
+use App\Support\ShopModule;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
@@ -29,7 +31,18 @@ class SitemapController extends Controller
                 ->get();
             $latestPostDate = $posts->first()?->updated_at;
 
-            return view('sitemap.index', compact('homePage', 'pages', 'posts', 'latestPostDate'))->render();
+            // Optional shop module: with cms.shop.mode = off the products table may not exist at all.
+            $shop = app(ShopModule::class);
+            $shopPath = $shop->catalog() ? '/'.$shop->path() : null;
+            $products = $shop->catalog()
+                ? Product::published()
+                    ->whereIn('locale', Locale::publicCodes())
+                    ->latest('published_at')
+                    ->get()
+                : collect();
+            $latestProductDate = $products->max('updated_at');
+
+            return view('sitemap.index', compact('homePage', 'pages', 'posts', 'latestPostDate', 'shopPath', 'products', 'latestProductDate'))->render();
         })();
 
         return response($xml, 200, ['Content-Type' => 'text/xml; charset=utf-8']);

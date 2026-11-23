@@ -318,6 +318,10 @@ return [
     // Taxonomies
     'taxonomy_type_category' => 'Categorías',
     'taxonomy_type_tag' => 'Etiquetas',
+    'taxonomy_type_brand' => 'Marcas',
+    'taxonomy_singular_category' => 'categoría',
+    'taxonomy_singular_tag' => 'etiqueta',
+    'taxonomy_singular_brand' => 'marca',
     'taxonomy_new' => 'Nueva :type',
     'taxonomy_edit' => 'Editar :name',
     'taxonomy_none' => 'Aún no hay :type',

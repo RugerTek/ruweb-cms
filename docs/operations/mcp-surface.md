@@ -37,7 +37,10 @@ writable setting without a default). The judgment parts below are yours.
 4. **`McpServerController::resolveHandler()`**: one handler, strip route ids with `without()`.
 5. **`app/Http/Middleware/EnforceMcpScopes.php`**: reads go in `READ`; writes a draft-only key may make go in
    `DRAFT` (plus the draft-row check when they edit an existing record). Anything else is full-scope only, which is
-   the safe default.
+   the safe default. Reads of an optional module (e.g. `products_list` / `products_get` of the shop catalog) do
+   **not** go in `READ`: they exist only while the module is on, so they go in their own constant that
+   `EnforceMcpScopes::reads()` adds when the module is enabled. The middleware and `McpSurfaceContractTest`
+   both use `reads()`, and the contract runs with the catalog off and on.
 6. **`routes/mcp.php`**: the REST mirror. If the tool is in `DRAFT`, extend the draft-only REST patterns in
    `EnforceMcpScopes` too.
 7. **Tests** in `tests/Feature/Mcp*Test.php`: success, stale revision (`-32009`), validation (`-32602`), refusal by

@@ -3,12 +3,14 @@
     $locales = $locales ?? collect();
     $editRoute = $editRoute ?? null;
     $translateRoute = $translateRoute ?? null;
+    // Form whose hidden `return` travels with a new translation (#product-form for products).
+    $returnForm = $returnForm ?? '#editor-form';
 @endphp
 
 @if($model && $editRoute && $translateRoute && $locales->count() > 1)
     <div class="relative">
         <label for="editor-language-switcher" class="sr-only">{{ __('admin.language') }}</label>
-        <select id="editor-language-switcher"
+        <select id="editor-language-switcher" data-return-form="{{ $returnForm }}"
                 class="h-8 w-[7.5rem] sm:w-36 rounded-md border border-white/[0.08] bg-[#171717] pl-2.5 pr-8 text-xs font-medium text-gray-300 outline-none transition-colors hover:border-white/15 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30">
             @foreach($locales as $locale)
                 @php
@@ -54,7 +56,7 @@
                 token.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
                 form.appendChild(token);
-                const returnInput = document.querySelector('#editor-form [name="return"]');
+                const returnInput = document.querySelector(`${select.dataset.returnForm || '#editor-form'} [name="return"]`);
                 if (returnInput) form.appendChild(returnInput.cloneNode(true));
                 document.body.appendChild(form);
                 form.submit();

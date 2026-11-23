@@ -73,6 +73,54 @@ class ImageOptimizer
         ];
     }
 
+    /**
+     * Encode a JPEG copy of a JPEG, PNG or WebP image for destinations that do not accept WebP (catalog feeds).
+     * The longer side is capped at $maxSide without ever enlarging, and transparency is flattened onto white
+     * (JPEG has no alpha channel).
+     *
+     * @return array{width: int, height: int, size: int, extension: string, mime_type: string}
+     */
+    public function toJpeg(string $sourcePath, string $targetPath, int $quality = 85, ?int $maxSide = null): array
+    {
+        if (! function_exists('imagejpeg')) {
+            throw new RuntimeException('GD JPEG support is not available on this server.');
+        }
+
+        [$sourceImage, $sourceWidth, $sourceHeight] = $this->createImageResource($sourcePath);
+
+        $scale = $maxSide && $maxSide > 0 ? min(1, $maxSide / max($sourceWidth, $sourceHeight)) : 1;
+        $targetWidth = max(1, (int) round($sourceWidth * $scale));
+        $targetHeight = max(1, (int) round($sourceHeight * $scale));
+
+        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+        imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, imagecolorallocate($canvas, 255, 255, 255));
+        imagealphablending($canvas, true);
+        imagecopyresampled($canvas, $sourceImage, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
+        imagedestroy($sourceImage);
+
+        $targetDir = dirname($targetPath);
+        if (! is_dir($targetDir) && ! mkdir($targetDir, 0775, true) && ! is_dir($targetDir)) {
+            imagedestroy($canvas);
+            throw new RuntimeException("Unable to create directory: {$targetDir}");
+        }
+
+        $encoded = imagejpeg($canvas, $targetPath, $quality);
+        imagedestroy($canvas);
+        if (! $encoded) {
+            throw new RuntimeException('Unable to encode image as JPEG.');
+        }
+
+        clearstatcache(true, $targetPath);
+
+        return [
+            'width' => $targetWidth,
+            'height' => $targetHeight,
+            'size' => filesize($targetPath) ?: 0,
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+        ];
+    }
+
     public function readDimensions(string $path): ?array
     {
         $info = @getimagesize($path);

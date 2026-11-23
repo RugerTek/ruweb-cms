@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ShopModule;
 use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,11 +26,16 @@ class Menu extends Model
 
     /**
      * $public drops items whose target is missing or not publicly visible (drafts, scheduled, expired), with their
-     * branch: public pages never link to unpublished content. Editors and MCP read the full tree.
+     * branch: public pages never link to unpublished content. Product items also go while the shop catalog is off
+     * (no public catalog to link to; the rows stay stored for when it is switched back on). Editors and MCP read the
+     * full tree.
      */
     public function tree(bool $public = false): Collection
     {
-        $items = $this->items()->with('linkable')->get();
+        $catalog = app(ShopModule::class)->catalog();
+        $items = $public && ! $catalog
+            ? $this->items()->where('type', '!=', 'product')->with('linkable')->get()
+            : $this->items()->with('linkable')->get();
         if ($public) {
             $items = $items->reject(fn (MenuItem $item) => $item->type !== 'custom_link'
                 && (! $item->linkable || (method_exists($item->linkable, 'isPublished') && ! $item->linkable->isPublished())));
@@ -39,6 +45,7 @@ class Menu extends Model
         $buildTree = function ($parentId) use (&$buildTree, $grouped) {
             return ($grouped[$parentId] ?? collect())->map(function ($item) use ($buildTree) {
                 $item->setRelation('children', $buildTree($item->id));
+
                 return $item;
             });
         };

@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use App\Http\Controllers\McpServerController;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
+use App\Support\EditorialTypes;
+use App\Support\ShopModule;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,9 +15,29 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnforceMcpScopes
 {
-    private const READ = ['submissions_list', 'submissions_get', 'content_versions', 'content_version', 'content_diff', 'content_reviews', 'cms_capabilities', 'content_read_field', 'cms_schema', 'locales_list', 'content_translation_changes', 'media_usages', 'pages_list', 'pages_get', 'posts_list', 'posts_get', 'media_list', 'media_get', 'settings_list', 'settings_get', 'menus_list', 'menus_get', 'taxonomies_list', 'taxonomies_get', 'redirects_list', 'not_found_list'];
+    private const READ = ['submissions_list', 'submissions_get', 'content_versions', 'content_version', 'content_diff', 'content_reviews', 'cms_capabilities', 'content_read_field', 'cms_schema', 'locales_list', 'content_translation_changes', 'media_usages', 'pages_list', 'pages_get', 'posts_list', 'posts_get', 'media_list', 'media_get', 'settings_list', 'settings_get', 'menus_list', 'menus_get', 'taxonomies_list', 'taxonomies_get', 'redirects_list', 'not_found_list', 'connectors_list', 'connectors_get'];
 
-    private const DRAFT = ['content_propose', 'content_review_request', 'content_review_comment', 'content_restore', 'content_preview_revoke', 'content_translate', 'content_translation_acknowledge', 'content_preview', 'pages_create_draft', 'pages_update_draft', 'posts_create_draft', 'posts_update_draft'];
+    private const DRAFT = ['content_propose', 'content_review_request', 'content_review_comment', 'content_restore', 'content_preview_revoke', 'content_translate', 'content_translation_acknowledge', 'content_preview', 'pages_create_draft', 'pages_update_draft', 'posts_create_draft', 'posts_update_draft', 'products_create_draft', 'products_update_draft'];
+
+    /**
+     * Tools that compute an answer without writing anything but whose name is not a read verb, so they stay out of
+     * READ/reads() (McpSurfaceContractTest classifies reads by name and content_preview does write a link).
+     * Restricted credentials may call them like reads.
+     */
+    private const COMPUTED_READ = ['connectors_preview'];
+
+    /** Reads of the optional shop catalog; they join READ only while the catalog (and so its tools) exists. */
+    private const CATALOG_READ = ['products_list', 'products_get'];
+
+    /**
+     * Tools a read-only or draft-only credential may always call: READ plus the reads of enabled optional modules.
+     *
+     * @return list<string>
+     */
+    public static function reads(): array
+    {
+        return app(ShopModule::class)->catalog() ? [...self::READ, ...self::CATALOG_READ] : self::READ;
+    }
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -47,12 +70,15 @@ class EnforceMcpScopes
                 return $next($request);
             }
             $tool = $request->input('params.name');
-            $allowed = in_array($tool, self::READ, true) || ($scope === 'draft-only' && in_array($tool, self::DRAFT, true));
+            $allowed = in_array($tool, self::reads(), true) || in_array($tool, self::COMPUTED_READ, true) || ($scope === 'draft-only' && in_array($tool, self::DRAFT, true));
             if ($allowed && in_array($tool, ['pages_update_draft', 'posts_update_draft', 'content_translation_acknowledge'], true)) {
                 $generic = str_starts_with($tool, 'content_');
-                $model = $generic ? ($request->input('params.arguments.type') === 'pages' ? Page::class : Post::class) : ($tool === 'pages_update_draft' ? Page::class : Post::class);
+                $model = $generic ? (EditorialTypes::model((string) $request->input('params.arguments.type')) ?? Post::class) : ($tool === 'pages_update_draft' ? Page::class : Post::class);
                 $id = $request->input('params.arguments.'.($generic ? 'id' : ($model === Page::class ? 'page_id' : 'post_id')));
                 $allowed = $model::whereKey($id)->where('status', 'draft')->lockForUpdate()->first() !== null;
+            }
+            if ($allowed && $tool === 'products_update_draft') {
+                $allowed = Product::whereKey($request->input('params.arguments.product_id'))->where('status', 'draft')->lockForUpdate()->first() !== null;
             }
             if ($tool === 'content_restore' && $request->input('params.arguments.mode') !== 'proposal') {
                 $allowed = false;
@@ -63,17 +89,24 @@ class EnforceMcpScopes
         } else {
             $allowed = $request->isMethod('GET');
             if ($scope === 'draft-only') {
-                $allowed = $allowed || ($request->isMethod('POST') && preg_match('#^mcp/(pages|posts)/drafts$#D', $request->path()));
-                if ($request->isMethod('POST') && preg_match('#^mcp/content/(pages|posts)/([0-9]+)/(translation|translation-acknowledge|preview)$#D', $request->path(), $matches)) {
-                    $model = $matches[1] === 'pages' ? Page::class : Post::class;
+                $types = EditorialTypes::pattern();
+                $allowed = $allowed || ($request->isMethod('POST') && preg_match('#^mcp/('.$types.')/drafts$#D', $request->path()));
+                if ($request->isMethod('POST') && preg_match('#^mcp/content/('.$types.')/([0-9]+)/(translation|translation-acknowledge|preview)$#D', $request->path(), $matches)) {
+                    $model = EditorialTypes::model($matches[1]);
                     $allowed = $matches[3] === 'translation' || $model::whereKey($matches[2])->where('status', 'draft')->lockForUpdate()->first() !== null;
                 }
-                if ($request->isMethod('POST') && preg_match('#^mcp/content/(pages|posts)/([0-9]+)/(propose|review-request|review-comment|preview-revoke|preview|restore)$#D', $request->path(), $matches)) {
+                if ($request->isMethod('POST') && preg_match('#^mcp/content/('.$types.')/([0-9]+)/(propose|review-request|review-comment|preview-revoke|preview|restore)$#D', $request->path(), $matches)) {
                     $allowed = $matches[3] !== 'restore' || $request->input('mode') === 'proposal';
                 }
-                if ($request->isMethod('PATCH') && preg_match('#^mcp/(pages|posts)/([0-9]+)/draft$#D', $request->path(), $matches)) {
-                    $model = $matches[1] === 'pages' ? Page::class : Post::class;
+                if ($request->isMethod('PATCH') && preg_match('#^mcp/('.$types.')/([0-9]+)/draft$#D', $request->path(), $matches)) {
+                    $model = EditorialTypes::model($matches[1]);
                     $allowed = $model::whereKey($matches[2])->where('status', 'draft')->lockForUpdate()->first() !== null;
+                }
+                if (app(ShopModule::class)->catalog()) {
+                    $allowed = $allowed || ($request->isMethod('POST') && $request->path() === 'mcp/products/drafts');
+                    if ($request->isMethod('PATCH') && preg_match('#^mcp/products/([0-9]+)/draft$#D', $request->path(), $matches)) {
+                        $allowed = Product::whereKey($matches[1])->where('status', 'draft')->lockForUpdate()->first() !== null;
+                    }
                 }
             }
             if (! $allowed) {

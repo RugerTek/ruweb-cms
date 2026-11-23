@@ -5,6 +5,7 @@ namespace App\Services\Snapshots;
 use App\Models\Page;
 use App\Services\Media\SvgSanitizer;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\EditorialTypes;
 use App\Support\PageComposition;
 use App\Support\RichTextSanitizer;
 use Illuminate\Support\Carbon;
@@ -370,7 +371,7 @@ class SnapshotService
 
         try {
             $tableNames = array_column($tables, 'name');
-            if (array_intersect(['pages', 'posts'], $tableNames)) {
+            if (array_intersect(EditorialTypes::all(), $tableNames)) {
                 // User drafts/share links are installation-local; old archives must not inherit
                 // destination histories or reviews attached to reused content ids.
                 foreach (['editorial_drafts', 'editorial_preview_links', 'editorial_review_comments', 'editorial_versions', 'editorial_reviews'] as $editorialTable) {

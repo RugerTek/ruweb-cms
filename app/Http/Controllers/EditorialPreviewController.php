@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Media;
+use App\Models\Product;
 use App\Models\Taxonomy;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Products\ProductPreview;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +21,7 @@ class EditorialPreviewController extends Controller
             $version = $history->query($model)->where('id', $link->version_id)->first();
             abort_unless($version, 404);
             $payload = json_decode($version->payload, true);
-            $model->fill($payload['attributes']);
+            $model->fill(EditorialHistory::plainAttributes($payload['attributes']));
             $media = collect();
             foreach ($payload['media'] as $entry) {
                 $item = Media::find($entry['id']);
@@ -31,6 +33,9 @@ class EditorialPreviewController extends Controller
             $model->setRelation('media', $media);
             if (method_exists($model, 'taxonomies')) {
                 $model->setRelation('taxonomies', Taxonomy::whereIn('id', $payload['taxonomies'])->get());
+            }
+            if ($model instanceof Product) {
+                $model->setRelation('variants', app(ProductPreview::class)->variantModels($model, $payload['variants'] ?? []));
             }
         }
         app()->setLocale($model->locale);

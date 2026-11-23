@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\LinkDestination;
+use App\Support\ShopModule;
 use App\Traits\RecordsContentRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,12 +48,14 @@ class MenuItem extends Model
 
         if ($this->linkable) {
             return match ($this->type) {
-                'page'     => $this->linkable->url(),
-                'post'     => $this->linkable->url(),
+                'page' => $this->linkable->url(),
+                'post' => $this->linkable->url(),
+                // Optional shop module: with the catalog off there is no public product page to link to.
+                'product' => app(ShopModule::class)->catalog() ? $this->linkable->url() : '#',
                 'taxonomy' => $this->linkable->locale === Locale::baseCode()
                     ? route('blog.index', ['category' => $this->linkable->slug])
                     : route('localized.blog.index', ['locale' => $this->linkable->locale, 'category' => $this->linkable->slug]),
-                default    => '#',
+                default => '#',
             };
         }
 

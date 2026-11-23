@@ -53,4 +53,29 @@
     </url>
     @endforeach
 
+    @if($shopPath)
+    {{-- Shop catalog index (optional module) --}}
+    <url>
+        <loc>{{ url($shopPath) }}</loc>
+        @if($latestProductDate)
+        <lastmod>{{ $latestProductDate->toW3cString() }}</lastmod>
+        @endif
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    {{-- Products --}}
+    @foreach($products as $product)
+    <url>
+        <loc>{{ url($product->url()) }}</loc>
+        @foreach($product->availablePublishedTranslations() as $alternate)
+        <xhtml:link rel="alternate" hreflang="{{ $alternate->locale }}" href="{{ url($alternate->url()) }}" />
+        @endforeach
+        <lastmod>{{ $product->updated_at->toW3cString() }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    @endforeach
+    @endif
+
 </urlset>

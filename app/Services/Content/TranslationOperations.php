@@ -6,9 +6,11 @@ use App\Mcp\ContentResponse;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
 use App\Models\User;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
+use App\Services\Products\ProductOperations;
 use App\Services\Revisions\ContentRevisionLedger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -18,11 +20,11 @@ use Illuminate\Validation\Rule;
 /** Shared translation creation, source changes and field acknowledgements. */
 final class TranslationOperations
 {
-    public function create(User $actor, Page|Post $source, string $locale): Model
+    public function create(User $actor, Page|Post|Product $source, string $locale): Model
     {
         $this->authorize($actor, $source);
-        if ($source instanceof Post) {
-            Gate::forUser($actor)->authorize('create', Post::class);
+        if (! $source instanceof Page) {
+            Gate::forUser($actor)->authorize('create', $source::class);
         }
         Validator::make(['locale' => $locale], ['locale' => ['required', Rule::in(Locale::where('is_active', true)->pluck('code')->all())]])->validate();
         abort_unless($source->isTranslationSchemaReady(), 422, 'This template/content type has no translation schema.');
@@ -49,11 +51,15 @@ final class TranslationOperations
             $translation->source_field_hashes = $base->translatableFieldFingerprints();
             $translation->created_by = $actor->id;
             $translation->updated_by = $actor->id;
+            if ($translation instanceof Product) {
+                // Prices, stock and variants are read from the base row; a translation row carries none of them.
+                $translation->fill(ProductOperations::COMMERCE_DEFAULTS);
+            }
             $translation->save();
             foreach ($base->media()->get() as $media) {
                 $translation->attachMedia($media->id, $media->pivot->collection, $media->pivot->order);
             }
-            if ($base instanceof Post) {
+            if (! $base instanceof Page) {
                 $ids = $base->taxonomies()->with('translations')->get()->map(fn ($term) => $term->translations->firstWhere('locale', $locale)?->id)->filter()->values()->all();
                 $translation->taxonomies()->sync($ids);
             }
@@ -63,7 +69,7 @@ final class TranslationOperations
         }, 3));
     }
 
-    public function changes(User $actor, Page|Post $model, array $input = []): array
+    public function changes(User $actor, Page|Post|Product $model, array $input = []): array
     {
         $this->authorize($actor, $model);
         $options = Validator::make($input, ['field' => ['sometimes', 'string', Rule::in($model->staleTranslatableFields())], 'page' => ['sometimes', 'integer', 'min:1'], 'offset' => ['sometimes', 'integer', 'min:0'], 'length' => ['sometimes', 'integer', 'min:1', 'max:8192']])->validate();
@@ -92,7 +98,7 @@ final class TranslationOperations
         return ['source_id' => $model->baseTranslation()?->id, 'source_fingerprint' => $model->baseTranslation()?->translatableFingerprint(), 'stale_fields' => $fields, 'changes' => $changes, 'current_page' => $options['page'] ?? 1, 'total_fields' => count($allFields), 'last_page' => max(1, (int) ceil(count($allFields) / 100)), 'has_more' => ! isset($options['field']) && ($options['page'] ?? 1) * 100 < count($allFields), 'omitted_oversized_fields' => count($model->staleTranslatableFields()) - count($allFields)];
     }
 
-    public function acknowledge(User $actor, Page|Post $model, array $input): Model
+    public function acknowledge(User $actor, Page|Post|Product $model, array $input): Model
     {
         $this->authorize($actor, $model);
         $data = Validator::make($input, ['field' => ['required', 'string', 'max:500'], 'base_hash' => ['required', 'string', 'size:64'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
@@ -124,7 +130,7 @@ final class TranslationOperations
 
     private function authorize(User $actor, Model $model): void
     {
-        if ($model instanceof Post) {
+        if (! $model instanceof Page) {
             Gate::forUser($actor)->authorize('update', $model);
         } else {
             abort_unless(in_array($actor->role, config('cms.roles', []), true), 403);

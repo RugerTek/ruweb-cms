@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\Shop\ShopModuleOperations;
 use App\Support\AdminLoginPath;
+use App\Support\ShopModule;
 use App\Support\Username;
 use Database\Seeders\ContactPageSeeder;
 use Database\Seeders\HomepageSeeder;
@@ -18,7 +20,9 @@ use Illuminate\Validation\ValidationException;
 
 class CmsInstallCommand extends Command
 {
-    protected $signature = 'cms:install {--profile= : Administration profile: full or essential}';
+    protected $signature = 'cms:install
+        {--profile= : Administration profile: full or essential}
+        {--shop= : Optional shop module: off, catalog or checkout (omitted: the site keeps its current choice)}';
 
     protected $description = 'Install Rüweb CMS: configure database, run migrations, create admin user';
 
@@ -58,6 +62,21 @@ class CmsInstallCommand extends Command
         );
         if (! in_array($profile, ['full', 'essential'], true)) {
             $this->error('Administration profile must be full or essential.');
+
+            return Command::FAILURE;
+        }
+
+        // The shop tables are ordinary migrations; --shop only stores the administrator's choice (shop_mode setting),
+        // checked here against the config limit before anything is touched.
+        $shop = $this->option('shop');
+        if ($shop !== null && ! in_array($shop, ShopModule::MODES, true)) {
+            $this->error('Shop module must be off, catalog or checkout.');
+
+            return Command::FAILURE;
+        }
+        if ($shop !== null && ! app(ShopModule::class)->allows($shop)) {
+            $this->error('Shop module '.$shop.' is not available: config/cms.php shop.mode allows at most '.app(ShopModule::class)->limit()
+                .($shop === 'checkout' ? ', and checkout is not delivered yet' : '').'.');
 
             return Command::FAILURE;
         }
@@ -163,9 +182,18 @@ class CmsInstallCommand extends Command
         $this->info('  ✓ Contact page seeded');
 
         $this->persistProfile($profile);
+        if ($shop !== null && $admin->isAdmin()) {
+            // Same write path as Settings > Shop and MCP, acting as the installed administrator.
+            app(ShopModuleOperations::class)->setMode($admin, $shop);
+        }
         Artisan::call('config:clear');
         Artisan::call('route:clear');
         $this->info('  ✓ Administration profile: '.$profile);
+        if ($shop !== null) {
+            $admin->isAdmin()
+                ? $this->info('  ✓ Shop module: '.$shop)
+                : $this->warn('  Shop module not changed: '.$admin->email.' is not an administrator; use Settings > Shop.');
+        }
         $this->line('  Restart running workers/server processes after reinstalling.');
 
         $assetsBuilt = $this->frontendAssetsAreBuilt();

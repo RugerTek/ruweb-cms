@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Page;
-use App\Models\Post;
 use App\Models\User;
 use App\Services\Content\ContentEditLock;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Editorial\EditorialOperations;
 use App\Support\AdminCapabilities;
+use App\Support\EditorialTypes;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -160,7 +159,7 @@ class EditorialController extends Controller
         $start = Carbon::parse($month.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
         $items = collect();
-        foreach ([Page::class, Post::class] as $class) {
+        foreach (EditorialTypes::models() as $class) {
             $items = $items->merge($class::where(fn ($q) => $q->whereBetween('published_at', [$start, $end])->orWhereBetween('expires_at', [$start, $end]))->get());
         }
 

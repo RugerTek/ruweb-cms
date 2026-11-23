@@ -54,10 +54,17 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 | [operations/custom-code.md](operations/custom-code.md) | Trusted browser snippets, exact destinations, dedicated permissions, activation and recovery |
 | [operations/mcp.md](operations/mcp.md) | MCP auth, protocol, tools, REST, extension points |
 | [operations/mcp-surface.md](operations/mcp-surface.md) | What every feature, collection, setting or tool must add so agents can operate it (both profiles) |
+| [operations/connectors.md](operations/connectors.md) | Admin > Connectors: contracts, adding a connector or catalog source, the secret feed URL, Meta feed format, what the server and Cloudflare must allow, Commerce Manager guide |
 | [operations/agent-access.md](operations/agent-access.md) | First MCP connection, client compatibility, key rotation and lost-access recovery |
 | [operations/deploy-cpanel.md](operations/deploy-cpanel.md) | cPanel deployment |
 | [operations/deploy-droplet.md](operations/deploy-droplet.md) | Single-server deployment |
 | [operations/git.md](operations/git.md) | Starting a project from the starter, git hooks |
+
+## Shop
+
+| Doc | Owns |
+|---|---|
+| [shop/catalog.md](shop/catalog.md) | Optional shop module: the Settings > Shop switch (off, catalog, checkout) capped by `shop.mode`, turning it on/off, what each mode adds, showing the catalog on Meta |
 
 ## Skills
 

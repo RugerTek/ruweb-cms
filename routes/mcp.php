@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\McpConnectorController;
 use App\Http\Controllers\McpContentController;
 use App\Http\Controllers\McpController;
 use App\Http\Controllers\McpCustomCodeController;
@@ -8,6 +9,10 @@ use App\Http\Controllers\McpRedirectController;
 use App\Http\Controllers\McpServerController;
 use App\Http\Controllers\McpSubmissionController;
 use App\Http\Controllers\McpTaxonomyController;
+use App\Http\Middleware\EnsureShopCatalog;
+use App\Http\Middleware\RequireRegisteredType;
+use App\Support\EditorialTypes;
+use App\Support\ShopModule;
 use Illuminate\Support\Facades\Route;
 
 // JSON-RPC 2.0 MCP server endpoint
@@ -30,6 +35,10 @@ Route::patch('/posts/{post}/draft', [McpController::class, 'postsUpdateDraft']);
 Route::post('/posts/{post}/publish', [McpController::class, 'postsPublish']);
 Route::patch('/posts/{post}', [McpController::class, 'postsUpdate']);
 Route::delete('/posts/{post}', [McpController::class, 'postsDelete']);
+
+// Optional shop catalog: products_* REST mirror, always registered (route:cache) and answering 404 while the
+// catalog is off (EnsureShopCatalog), like the products_* tools that ToolRegistry lists only while it is on.
+Route::middleware(EnsureShopCatalog::class)->group(base_path('routes/mcp-shop.php'));
 
 Route::get('/media', [McpController::class, 'mediaList']);
 Route::get('/media/{media}', [McpController::class, 'mediaGet']);
@@ -63,6 +72,15 @@ Route::delete('/redirects/{redirect}', [McpRedirectController::class, 'destroy']
 Route::get('/not-found', [McpRedirectController::class, 'notFound']);
 Route::post('/not-found/forget', [McpRedirectController::class, 'forgetNotFound']);
 
+// Admin > Connectors (connectors_* tools): always registered, administrator only; unknown keys answer 404.
+Route::get('/connectors', [McpConnectorController::class, 'index']);
+Route::prefix('/connectors/{connector}')->where(['connector' => '[a-z0-9_]+'])->group(function () {
+    Route::get('/', [McpConnectorController::class, 'show']);
+    Route::get('/preview', [McpConnectorController::class, 'preview']);
+    Route::patch('/', [McpConnectorController::class, 'update']);
+    Route::post('/rotate-token', [McpConnectorController::class, 'rotateToken']);
+});
+
 Route::get('/schema', [McpContentController::class, 'schema']);
 Route::get('/locales', [McpContentController::class, 'locales']);
 Route::post('/locales', [McpContentController::class, 'configureLocales']);
@@ -78,11 +96,14 @@ Route::delete('/media/{media}', [McpMediaController::class, 'destroy']);
 
 Route::get('/content/{type}/{id}/field', [McpContentController::class, 'readField']);
 
+// Compiled once (route:cache): the shop's editorial types are in the constraint whatever its mode, and
+// RequireRegisteredType answers 404 for a type that is not registered right now.
+$editorialTypes = array_values(array_unique([...EditorialTypes::all(), ...app(ShopModule::class)->editorialTypes()]));
 foreach (['versions', 'version', 'diff', 'reviews'] as $action) {
-    Route::get('/content/{type}/{id}/'.$action, [McpContentController::class, 'editorialRead'])->defaults('action', $action)->whereNumber('id')->whereIn('type', ['pages', 'posts']);
+    Route::get('/content/{type}/{id}/'.$action, [McpContentController::class, 'editorialRead'])->defaults('action', $action)->whereNumber('id')->whereIn('type', $editorialTypes)->middleware(RequireRegisteredType::class.':editorial');
 }
 foreach (['propose', 'review_request', 'review_decide', 'review_comment', 'restore', 'preview_revoke'] as $action) {
-    Route::post('/content/{type}/{id}/'.str_replace('_', '-', $action), [McpContentController::class, 'editorialWrite'])->defaults('action', $action)->whereNumber('id')->whereIn('type', ['pages', 'posts']);
+    Route::post('/content/{type}/{id}/'.str_replace('_', '-', $action), [McpContentController::class, 'editorialWrite'])->defaults('action', $action)->whereNumber('id')->whereIn('type', $editorialTypes)->middleware(RequireRegisteredType::class.':editorial');
 }
 
 // Operational inbox: account role and credential scope remain independent of profile.

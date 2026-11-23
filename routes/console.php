@@ -1,8 +1,7 @@
 <?php
 
-use App\Models\Page;
-use App\Models\Post;
 use App\Support\AdminCapabilities;
+use App\Support\EditorialTypes;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +17,7 @@ Schedule::command('snapshot:prune')->daily();
 
 // Public scope hides expired content immediately; scheduler records the transition.
 Artisan::command('cms:expire-content', function () {
-    foreach ([Page::class, Post::class] as $type) {
+    foreach (EditorialTypes::models() as $type) {
         $type::where('status', 'published')->whereNotNull('expires_at')->where('expires_at', '<=', now())
             ->eachById(fn ($content) => $content->update(['status' => 'draft']));
     }

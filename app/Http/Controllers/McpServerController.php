@@ -3,19 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\RevisionConflict;
-use App\Mcp\ToolRegistry;
 use App\Mcp\ToolArguments;
+use App\Mcp\ToolRegistry;
 use App\Models\Media;
 use App\Models\Menu;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
 use App\Models\Redirect as RedirectRule;
 use App\Models\Taxonomy;
+use App\Support\ShopModule;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 /**
@@ -32,7 +35,7 @@ class McpServerController extends Controller
     /** Implementation-defined JSON-RPC code for authorization refusals; -32603 stays reserved for real failures. */
     public const FORBIDDEN = -32003;
 
-    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode, private McpTaxonomyController $taxonomies, private McpRedirectController $redirects) {}
+    public function __construct(private McpController $mcp, private McpContentController $content, private McpMediaController $media, private McpSubmissionController $submissions, private McpCustomCodeController $customCode, private McpTaxonomyController $taxonomies, private McpRedirectController $redirects, private McpProductController $products, private McpConnectorController $connectors) {}
 
     public function handle(Request $request): JsonResponse
     {
@@ -79,7 +82,7 @@ class McpServerController extends Controller
             $message = $e->getMessage() !== '' ? $e->getMessage() : match ($status) {
                 404 => 'Resource not found. The id may not exist or may belong to another record.',
                 403 => __('security.scope_denied'),
-                default => \Symfony\Component\HttpFoundation\Response::$statusTexts[$status] ?? 'Request rejected.',
+                default => Response::$statusTexts[$status] ?? 'Request rejected.',
             };
             if ($status === 403) {
                 return $this->errorResponse($id, self::FORBIDDEN, $message, ['reason' => 'forbidden', 'status' => 403, 'recovery' => 'Not a server failure. The account role or record state does not allow this operation.']);
@@ -284,6 +287,24 @@ class McpServerController extends Controller
         foreach (['assign', 'set_status', 'add_note', 'retry_notification', 'delete'] as $action) {
             $handlers['submissions_'.$action] = fn ($req, $args) => $this->submissions->write($this->synth($req, $args), $args['form'], $args['id'], $action);
         }
+
+        // Optional shop catalog: without it the products_* tools do not exist (-32601), like their schemas.
+        if (app(ShopModule::class)->catalog()) {
+            $handlers['products_list'] = fn ($req, $args) => $this->products->index($this->synth($req, $args));
+            $handlers['products_get'] = fn ($req, $args) => $this->products->show($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
+            $handlers['products_create_draft'] = fn ($req, $args) => $this->products->storeDraft($this->synth($req, $args));
+            $handlers['products_update_draft'] = fn ($req, $args) => $this->products->updateDraft($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
+            $handlers['products_update'] = fn ($req, $args) => $this->products->update($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
+            $handlers['products_publish'] = fn ($req, $args) => $this->products->publish($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
+            $handlers['products_delete'] = fn ($req, $args) => $this->products->destroy($this->synth($req, $this->without($args, 'product_id')), Product::findOrFail($args['product_id']));
+        }
+
+        // Admin > Connectors: always present, administrator only; the feed token and URL never reach a response.
+        $handlers['connectors_list'] = fn ($req, $args) => $this->connectors->index($this->synth($req));
+        $handlers['connectors_get'] = fn ($req, $args) => $this->connectors->show($this->synth($req), $args['connector']);
+        $handlers['connectors_preview'] = fn ($req, $args) => $this->connectors->preview($this->synth($req, $this->without($args, 'connector')), $args['connector']);
+        $handlers['connectors_update'] = fn ($req, $args) => $this->connectors->update($this->synth($req, $this->without($args, 'connector')), $args['connector']);
+        $handlers['connectors_rotate_token'] = fn ($req, $args) => $this->connectors->rotateToken($this->synth($req, $this->without($args, 'connector')), $args['connector']);
 
         foreach (['versions', 'version', 'diff', 'reviews'] as $action) {
             $handlers['content_'.$action] = fn ($req, $args) => $this->content->editorialRead($this->synth($req, $args), $args['type'], $args['id'], $action);

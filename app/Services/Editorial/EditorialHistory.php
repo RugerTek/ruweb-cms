@@ -3,9 +3,13 @@
 namespace App\Services\Editorial;
 
 use App\Models\Page;
-use App\Models\Post;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\Content\ContentSchemaRegistry;
+use App\Services\Products\ProductOperations;
+use App\Support\EditorialTypes;
 use App\Support\PageComposition;
+use App\ValueObjects\Money;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -84,9 +88,9 @@ class EditorialHistory
 
     public function model(string $type, int $id): Model
     {
-        abort_unless(in_array($type, ['pages', 'posts']), 404);
+        $class = EditorialTypes::model($type) ?? abort(404);
 
-        return ($type === 'pages' ? Page::class : Post::class)::findOrFail($id);
+        return $class::findOrFail($id);
     }
 
     public function query(Model $model, string $table = 'editorial_versions')
@@ -94,13 +98,38 @@ class EditorialHistory
         return DB::table($table)->where('content_type', $model->getTable())->where('content_id', $model->id);
     }
 
+    /**
+     * Restorable state: attributes, media pivot and terms; products add their variant list (part of the product, so
+     * a variant-only change is a new version and a revision conflict). Money values are stored as integers.
+     */
     public function payload(Model $model): array
     {
-        $attributes = $model->attributesToArray();
+        $attributes = self::plainAttributes($model->attributesToArray());
         unset($attributes['id'], $attributes['created_at'], $attributes['updated_at']);
         $media = $model->media()->get()->map(fn ($m) => ['id' => $m->id, 'collection' => $m->pivot->collection, 'order' => $m->pivot->order])->all();
+        $payload = ['attributes' => $attributes, 'media' => $media, 'taxonomies' => method_exists($model, 'taxonomies') ? $model->taxonomies()->pluck('taxonomies.id')->all() : []];
+        if ($model instanceof Product) {
+            $payload['variants'] = $model->variants()->get()->map(fn (ProductVariant $variant) => ProductOperations::variantPayload($variant))->all();
+        }
 
-        return ['attributes' => $attributes, 'media' => $media, 'taxonomies' => method_exists($model, 'taxonomies') ? $model->taxonomies()->pluck('taxonomies.id')->all() : []];
+        return $payload;
+    }
+
+    /**
+     * Version attributes as plain JSON values: a Money cast serializes as its integer amount, so restoring writes
+     * back through the cast. Versions written before this rule kept `{amount, currency}`; they read as the amount.
+     */
+    public static function plainAttributes(array $attributes): array
+    {
+        foreach ($attributes as $key => $value) {
+            if ($value instanceof Money) {
+                $attributes[$key] = $value->amount;
+            } elseif (is_array($value) && array_keys($value) === ['amount', 'currency'] && is_int($value['amount'])) {
+                $attributes[$key] = $value['amount'];
+            }
+        }
+
+        return $attributes;
     }
 
     public function fingerprint(Model $model): string
@@ -139,7 +168,7 @@ class EditorialHistory
         }
         $proposal = $model->newInstance(array_replace($payload['attributes'], $attributes));
         $proposal->status = 'draft';
-        $payload['attributes'] = $proposal->attributesToArray();
+        $payload['attributes'] = self::plainAttributes($proposal->attributesToArray());
         if (array_key_exists('featured_image', $data)) {
             $payload['media'] = array_values(array_filter($payload['media'], fn ($m) => $m['collection'] !== 'featured_image'));
         }
@@ -155,6 +184,7 @@ class EditorialHistory
 
     public function storeProposal(Model $model, array $payload): int
     {
+        $payload['attributes'] = self::plainAttributes($payload['attributes'] ?? []);
         if ($model instanceof Page && is_array($payload['attributes']['content_json'] ?? null)) {
             $payload['attributes']['content_json'] = PageComposition::normalize($payload['attributes']['content_json']);
             PageComposition::validateMedia($payload['attributes']['content_json']);
@@ -170,15 +200,19 @@ class EditorialHistory
         ]);
     }
 
+    /** Low-level restore without an actor. Products restore through EditorialOperations, which also rebuilds variants. */
     public function restore(Model $model, int $version, bool $asDraft = true): void
     {
+        if ($model instanceof Product) {
+            throw new \LogicException('Restore products with EditorialOperations::restore(): their variants are part of the version.');
+        }
         DB::transaction(function () use ($model, $version, $asDraft) {
             $model = $model->newQuery()->lockForUpdate()->findOrFail($model->id);
             $row = $this->query($model)->where('id', $version)->first();
             abort_unless($row, 404);
             $this->capture($model);
             $payload = json_decode($row->payload, true);
-            $attributes = array_intersect_key($payload['attributes'], array_flip($model->getFillable()));
+            $attributes = array_intersect_key(self::plainAttributes($payload['attributes']), array_flip($model->getFillable()));
             if ($model instanceof Page && is_array($attributes['content_json'] ?? null)) {
                 $attributes['content_json'] = PageComposition::normalize($attributes['content_json']);
                 PageComposition::validateMedia($attributes['content_json']);
@@ -210,7 +244,7 @@ class EditorialHistory
         if ($hash) {
             foreach ($this->query($base)->latest('id')->cursor() as $version) {
                 $payload = json_decode($version->payload, true);
-                $historical = $base->newInstance($payload['attributes']);
+                $historical = $base->newInstance(self::plainAttributes($payload['attributes']));
                 $values = app(ContentSchemaRegistry::class)->extract($historical, 'translatable');
                 if (($historical->translatableFieldFingerprints()[$field] ?? null) === $hash) {
                     $before = $values[$field] ?? null;

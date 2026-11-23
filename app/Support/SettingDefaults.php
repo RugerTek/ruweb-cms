@@ -47,6 +47,8 @@ final class SettingDefaults
             ['key' => 'google_tag_id',          'value' => null,               'type' => 'string', 'group' => 'analytics', 'options' => null],
             ['key' => 'meta_pixel_id',          'value' => null,               'type' => 'string', 'group' => 'analytics', 'options' => null],
             ['key' => 'search_console_verification_token', 'value' => null,     'type' => 'string', 'group' => 'analytics', 'options' => null],
+            // Shop module switch, edited only through App\Services\Shop\ShopModuleOperations (docs/shop/catalog.md).
+            ['key' => 'shop_mode',              'value' => 'off',              'type' => 'select', 'group' => 'shop',      'options' => ['off' => 'off', 'catalog' => 'catalog', 'checkout' => 'checkout']],
         ];
     }
 

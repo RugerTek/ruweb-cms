@@ -4,10 +4,11 @@ namespace App\Services\Media;
 
 use App\Models\Media;
 use App\Models\Page;
-use App\Models\Post;
+use App\Models\Product;
 use App\Models\Setting;
 use App\Services\Content\ContentSchemaRegistry;
 use App\Support\CompositionHtmlSanitizer;
+use App\Support\EditorialTypes;
 use App\Support\PageComposition;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,11 @@ class MediaUsage
             }
         }
         $registry = app(ContentSchemaRegistry::class);
-        foreach ([Page::class, Post::class] as $model) {
+        foreach (EditorialTypes::models() as $model) {
+            // Products are scanned below, field by field, whether or not the catalog is on.
+            if ($model === Product::class) {
+                continue;
+            }
             foreach ($model::query()->cursor() as $content) {
                 $data = $registry->copyForTranslation($content);
                 if ($content instanceof Page && in_array((int) $media->id, PageComposition::mediaIds($content->content_json ?? []), true)) {
@@ -55,6 +60,10 @@ class MediaUsage
                     $references[] = ['type' => $content->getTable(), 'id' => $content->id, 'label' => $content->title.' ('.$content->locale.')', 'field' => 'content'];
                 }
             }
+        }
+
+        if (Schema::hasTable('products')) {
+            $references = [...$references, ...$this->productReferences($media)];
         }
 
         if (Schema::hasTable('editorial_versions')) {
@@ -81,6 +90,34 @@ class MediaUsage
                         break;
                     }
                 }
+            }
+        }
+
+        return $references;
+    }
+
+    /**
+     * Shop products (docs/shop/catalog.md). Featured image and gallery are `mediables` rows, already counted above;
+     * this adds media embedded by URL in their rich text and media ids in `meta_json`. Products are scanned while
+     * their table exists, even with the module off: switching the shop off keeps its data, so its media stay
+     * protected. It is the single product scan: the editorial loop above skips products even while they are an
+     * editorial type, so each reference names the product field (excerpt, description, meta_json) exactly once.
+     */
+    private function productReferences(Media $media): array
+    {
+        $references = [];
+        $path = (string) parse_url($media->url(), PHP_URL_PATH);
+        foreach (Product::query()->cursor() as $product) {
+            $label = $product->title.' ('.$product->locale.')';
+            foreach (['excerpt', 'description'] as $field) {
+                $html = (string) $product->getAttribute($field);
+                if (($path !== '' && str_contains($html, $path))
+                    || in_array((int) $media->id, app(CompositionHtmlSanitizer::class)->mediaIds($html), true)) {
+                    $references[] = ['type' => 'products', 'id' => $product->id, 'label' => $label, 'field' => $field];
+                }
+            }
+            if ($this->containsMedia($product->meta_json ?? [], $media)) {
+                $references[] = ['type' => 'products', 'id' => $product->id, 'label' => $label, 'field' => 'meta_json'];
             }
         }
 

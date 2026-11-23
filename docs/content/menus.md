@@ -25,7 +25,7 @@
 | `menu_id` | Cascade on delete |
 | `parent_id` | Self-referential, null on delete |
 | `label` | Display text |
-| `type` | `custom_link`, `page`, `post`, `taxonomy` |
+| `type` | `custom_link`, `page`, `post`, `taxonomy`, and `product` while the shop catalog is on ([../shop/catalog.md](../shop/catalog.md)) |
 | `linkable_type` / `linkable_id` | Polymorphic target |
 | `url` | Only for `custom_link`: a root-relative path, `#anchor`, `http(s)://`, `mailto:` or `tel:` (`LinkDestination::CUSTOM_URL_PATTERN`); anything else (`javascript:`, `data:`, bare words) is rejected, and legacy rows render `#` |
 | `target` | `_self` (default) or `_blank` |
@@ -42,12 +42,21 @@ $menu->items();                  // ordered
 $menu->rootItems();
 $menu->tree();                   // nested collection, one query, children pre-set
 
-$item->linkable();               // MorphTo: Page, Post or Taxonomy
+$item->linkable();               // MorphTo: Page, Post, Taxonomy or Product
 $item->resolveUrl();             // final href
 ```
 
 `resolveUrl()`: `custom_link` → `url`; `page` / `post` → `$linkable->url()`; `taxonomy` →
-`route('blog.index', ['category' => $linkable->slug])`; orphaned or unknown → `#`.
+`route('blog.index', ['category' => $linkable->slug])`; `product` → `$linkable->url()` while the shop catalog is
+on, `#` otherwise; orphaned or unknown → `#`.
+
+The linkable types (`type => model`) come from `App\Services\Menus\MenuOperations::linkableTypes()`: the panel
+selector and the MCP enum use that list, so `product` is offered and checked against the catalog only while the
+catalog is on. Switched off, stored product items stay in the database, the admin and MCP still read them and
+`Menu::tree(public: true)` leaves them out with their branch. Saving the menu keeps them: `SyncMenuItemsRequest` and
+the shared save accept `MenuOperations::syncableTypes()` (the linkable types plus `product`), and the save only lets
+through product items the menu already stores (same `linkable_id`, at most as many), without checking them against
+the catalog. A new product item is a validation error on its `items.N.type`.
 
 Deleting a page, post or taxonomy through its shared operation (panel or MCP) removes the menu items that link to
 it, moves their children up one level and reports them (`App\Services\Content\ContentDeletion`). Public menus are
@@ -123,7 +132,7 @@ Policy: `App\Policies\MenuPolicy`.
 Menus are complete per locale: a header menu in English is a separate menu from the base-locale one, even at the
 same location. The localized menu is used when it exists, otherwise the base-locale menu renders.
 
-When duplicating a menu, `page` / `post` / `taxonomy` targets must be remapped to the translation in the same
-`translation_group_id`. Without a translated target the item is flagged for review or left out of public
+When duplicating a menu, `page` / `post` / `taxonomy` / `product` targets must be remapped to the translation in the
+same `translation_group_id`. Without a translated target the item is flagged for review or left out of public
 rendering — a secondary menu **never** links silently to base-language content. Custom links are copied as-is
 ([../concepts/multilanguage.md](../concepts/multilanguage.md)).

@@ -3,6 +3,8 @@
 @section('title', $menu->name)
 
 @php
+// Guarded: the compiled view can run more than once per process (queue workers, tests).
+if (! function_exists('flattenMenuTree')) {
 function flattenMenuTree($items, $parentId = null) {
     $result = [];
     foreach ($items as $idx => $item) {
@@ -24,6 +26,7 @@ function flattenMenuTree($items, $parentId = null) {
         }
     }
     return $result;
+}
 }
 @endphp
 
@@ -185,6 +188,33 @@ function flattenMenuTree($items, $parentId = null) {
                 </div>
                 @endif
 
+                @if(($products ?? collect())->isNotEmpty())
+                {{-- Only while the shop catalog is on: MenuController passes published products of the menu language. --}}
+                <div class="bg-[#1a1a1a] ring-1 ring-white/[0.06] rounded-lg overflow-hidden">
+                    <button type="button" onclick="togglePanel('panel-products')"
+                            class="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                        <span>{{ __('shop.product') }}</span>
+                        <svg id="chevron-panel-products" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="panel-products" class="hidden border-t border-white/[0.06] px-3 py-3">
+                        <div class="space-y-1 max-h-48 overflow-y-auto mb-3">
+                            @foreach($products as $product)
+                            <label class="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 cursor-pointer py-0.5">
+                                <input type="checkbox" value="{{ $product->id }}" data-label="{{ $product->title }}" class="product-check rounded border-white/20 bg-[#111111]">
+                                {{ $product->title }}
+                            </label>
+                            @endforeach
+                        </div>
+                        <button type="button" onclick="addChecked('product', '.product-check')"
+                                class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-medium rounded-md transition-colors">
+                            {{ __('admin.menu_add_to_menu') }}
+                        </button>
+                    </div>
+                </div>
+                @endif
+
                 @if($taxonomies->isNotEmpty())
                 <div class="bg-[#1a1a1a] ring-1 ring-white/[0.06] rounded-lg overflow-hidden">
                     <button type="button" onclick="togglePanel('panel-taxonomies')"
@@ -333,6 +363,7 @@ function flattenMenuTree($items, $parentId = null) {
             page:        '{{ __('admin.menu_item_type_page') }}',
             post:        '{{ __('admin.menu_item_type_post') }}',
             taxonomy:    '{{ __('admin.menu_item_type_taxonomy') }}',
+            product:     @json(__('shop.product')),
         };
 
         div.innerHTML = `
