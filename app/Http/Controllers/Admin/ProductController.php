@@ -66,6 +66,7 @@ class ProductController extends Controller
         return view('admin.products.create', [
             'product' => null,
             'brands' => $this->brands(Locale::baseCode()),
+            'categories' => $this->categories(Locale::baseCode()),
         ] + $this->backLink($request));
     }
 
@@ -85,6 +86,7 @@ class ProductController extends Controller
         return view('admin.products.edit', [
             'product' => $product->load(['media', 'taxonomies', 'variants', 'translations']),
             'brands' => $this->brands($product->locale),
+            'categories' => $this->categories($product->locale),
             'locales' => Locale::where('is_active', true)->orderBy('sort_order')->get(),
             'revision' => app(ProductOperations::class)->revision($product),
         ] + $this->backLink($request));
@@ -152,6 +154,7 @@ class ProductController extends Controller
             'featured_image' => $nullable('featured_image'),
             'gallery' => collect($items['gallery'] ?? [])->pluck('media_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all(),
             'brands' => array_values(array_map('intval', (array) $request->input('brands', []))),
+            'categories' => array_values(array_map('intval', (array) $request->input('categories', []))),
             'meta_json' => array_filter((array) $request->input('meta_json', []), fn ($value) => filled($value)) ?: null,
         ];
         if ($request->user()->isAdmin()) {
@@ -221,6 +224,42 @@ class ProductController extends Controller
     private function brands(string $locale): Collection
     {
         return Taxonomy::ofType(Product::BRAND_TAXONOMY)->where('locale', $locale)->ordered()->get();
+    }
+
+    /**
+     * Categories of the product's language in tree order, each with its full path (`Ropa > Remeras`) so the form
+     * shows where a subcategory sits. A term whose parent is missing or in a loop is listed at the top level.
+     *
+     * @return Collection<int, array{id: int, path: string}>
+     */
+    private function categories(string $locale): Collection
+    {
+        $terms = Taxonomy::ofType(Product::CATEGORY_TAXONOMY)->where('locale', $locale)->ordered()->get(['id', 'name', 'parent_id', 'order']);
+        $known = $terms->pluck('id')->all();
+        $children = $terms->groupBy(fn (Taxonomy $term) => in_array($term->parent_id, $known, true) ? (int) $term->parent_id : 0);
+        $options = collect();
+        $visited = [];
+        $walk = function (int $parent, array $path) use (&$walk, $children, $options, &$visited): void {
+            foreach ($children->get($parent, []) as $term) {
+                if (isset($visited[$term->id])) {
+                    continue;
+                }
+                $visited[$term->id] = true;
+                $names = [...$path, (string) $term->name];
+                $options->push(['id' => (int) $term->id, 'path' => implode(' > ', $names)]);
+                $walk((int) $term->id, $names);
+            }
+        };
+        $walk(0, []);
+        // Terms only reachable through a parent loop never hang the form: they are listed on their own.
+        foreach ($terms as $term) {
+            if (! isset($visited[$term->id])) {
+                $visited[$term->id] = true;
+                $options->push(['id' => (int) $term->id, 'path' => (string) $term->name]);
+            }
+        }
+
+        return $options;
     }
 
     private function backLink(Request $request): array

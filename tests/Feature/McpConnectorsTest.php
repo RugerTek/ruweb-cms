@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Connectors\MetaPixel\MetaPixelConnector;
 use App\Http\Controllers\McpServerController;
 use App\Http\Middleware\EnforceMcpScopes;
 use App\Models\Connector;
 use App\Models\McpApiKey;
 use App\Models\User;
 use App\Services\Connectors\ConnectorOperations;
+use App\Services\Marketing\MetaPixel;
+use App\Services\Marketing\MetaPixelOperations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\FakeCatalogSource;
@@ -241,5 +244,55 @@ class McpConnectorsTest extends TestCase
             }
             $this->assertStringNotContainsString('/feeds/', $decoded, "{$label} leaks a feed URL.");
         }
+    }
+
+    public function test_the_meta_pixel_token_never_appears_and_it_has_no_feed_tools(): void
+    {
+        config(['cms.connectors.meta_pixel' => MetaPixelConnector::class]);
+        $this->useShop('off');
+        $token = 'EAABsbCS1iHgBOZCmcpSecretTokenValue0123456789QRST';
+        app(MetaPixelOperations::class)->saveAccessToken($this->admin, $token);
+        $ciphertext = (string) Connector::where('key', 'meta_pixel')->firstOrFail()->getRawOriginal('secrets');
+        $this->assertNotSame('', $ciphertext);
+        $get = fn () => $this->rpcData($this->rpc('connectors_get', ['connector' => 'meta_pixel']))['data'];
+        $bodies = [];
+
+        $before = $get();
+        $this->assertSame(['needs_action', false, false, 'meta_pixel_id'], [$before['status'], $before['enabled'], $before['is_feed'], $before['requirements'][0]['key']]);
+        $this->assertSame(['pixel_id', 'test_event_code'], $before['setting_keys']);
+        $this->assertTrue($before['conversions_api']['token_configured']);
+        $this->assertFalse($before['conversions_api']['token_needs_reentry']);
+        $this->assertSame(MetaPixelConnector::EVENTS, $before['conversions_api']['events']);
+        $this->assertNull($before['feed_url_location']);
+
+        // The token is not a setting: sent through MCP it is ignored and the saved one stays.
+        $response = $this->rpc('connectors_update', ['connector' => 'meta_pixel', 'expected_revision' => $before['revision'], 'enabled' => true,
+            'settings' => ['pixel_id' => '123456789012345', 'test_event_code' => 'TEST12345', 'access_token' => 'EAAother']]);
+        $bodies['rpc update'] = $response->getContent();
+        $updated = $this->rpcData($response);
+        $this->assertSame(['connected', true, '123456789012345', 'TEST12345'], [$updated['data']['status'], $updated['data']['enabled'], $updated['data']['settings']['pixel_id'], $updated['data']['settings']['test_event_code']]);
+        $this->assertSame([['code' => 'unknown_setting', 'field' => 'settings.access_token']], array_map(fn ($w) => ['code' => $w['code'], 'field' => $w['field']], $updated['warnings']));
+        $this->assertSame($token, app(MetaPixel::class)->accessToken());
+
+        $list = $this->rpc('connectors_list');
+        $bodies['rpc list'] = $list->getContent();
+        $this->assertContains('meta_pixel', array_column($this->rpcData($list)['data'], 'key'));
+        $bodies['rpc get'] = $this->rpc('connectors_get', ['connector' => 'meta_pixel'])->getContent();
+        $bodies['rest list'] = $this->getJson('/mcp/connectors')->assertOk()->getContent();
+        $bodies['rest get'] = $this->getJson('/mcp/connectors/meta_pixel')->assertOk()->getContent();
+        $bodies['rest update'] = $this->patchJson('/mcp/connectors/meta_pixel', ['expected_revision' => $get()['revision'], 'enabled' => false])->assertOk()->getContent();
+        foreach ($bodies as $label => $body) {
+            foreach ([$token, $ciphertext, 'QRST'] as $secret) {
+                $this->assertStringNotContainsString($secret, (string) $body, "{$label} leaks the Conversions API token.");
+            }
+        }
+
+        // No feed: no token to rotate and nothing to preview.
+        $revision = $get()['revision'];
+        $this->postJson('/mcp/connectors/meta_pixel/rotate-token', ['expected_revision' => $revision])->assertNotFound();
+        $this->getJson('/mcp/connectors/meta_pixel/preview')->assertNotFound();
+        $this->rpc('connectors_rotate_token', ['connector' => 'meta_pixel', 'expected_revision' => $revision])->assertOk()->assertJsonPath('error.code', -32602);
+        $this->rpc('connectors_preview', ['connector' => 'meta_pixel'])->assertOk()->assertJsonPath('error.code', -32602);
+        $this->assertSame($revision, $get()['revision'], 'Nothing was written.');
     }
 }

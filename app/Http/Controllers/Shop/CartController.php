@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Services\Marketing\MetaPixel;
+use App\Services\Marketing\MetaPixelContent;
 use App\Services\Shop\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +51,12 @@ class CartController extends Controller
         } catch (ValidationException $exception) {
             return $this->toCart()->withErrors($exception->errors())->withCookie($this->carts->cookie($cart));
         }
+        // Meta Pixel AddToCart (browser event on the cart page, server event queued); never fails the request.
+        app(MetaPixel::class)->track('AddToCart', fn () => MetaPixelContent::forProduct(
+            $product,
+            isset($data['variant_id']) ? $product->variants()->whereKey((int) $data['variant_id'])->first() : null,
+            max(1, (int) ($data['quantity'] ?? 1)),
+        ), redirect: true);
 
         return $this->toCart()->with('status', __('checkout.cart_added'))->withCookie($this->carts->cookie($cart));
     }

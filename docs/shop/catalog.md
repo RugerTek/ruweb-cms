@@ -117,6 +117,35 @@ MCP tools need nothing special: `ToolRegistry`, the dispatcher and `EnforceMcpSc
 | Custom code | `shop.custom_code_index` is merged into `cms.custom_code.indexes.shop`, a destination for code scoped to the catalog listing (`ShopController::index` sets it as the page's custom-code target, per language). Product pages are ordinary `products` destinations. |
 | Editorial | `shop.collection` declares `editorial_history`, so `products` is an editorial type (`App\Support\EditorialTypes`): see below. |
 
+## Categories and brands
+
+A product carries two kinds of terms, both managed in the panel (Taxonomies) and through `taxonomies_*`:
+
+| Term | Type | Shared with | Used for |
+|---|---|---|---|
+| Brand | `brand` (`Product::BRAND_TAXONOMY`, merged from `shop.taxonomy_types`) | Products only | Product list filter, Meta feed `brand` and `custom_label_2` |
+| Category | `category` (`Product::CATEGORY_TAXONOMY`, the base `cms.taxonomy_types` entry) | Blog posts | Meta feed `product_type` and `custom_label_0` |
+
+Categories nest through `parent_id`. The product form lists the categories of the product's language in tree order,
+each with its full path (`Ropa > Remeras`), so a subcategory is clear without indentation; a term whose parent is
+missing or part of a loop is listed at the top level. MCP `products_create_draft` / `products_update_draft` /
+`products_update` take `categories` as a list of term ids (find them with `taxonomies_list`, `type: category`) and
+`products_get` returns them, the same shape as `brands`.
+
+- **Validation** (`App\Services\Products\ProductInput`): every id must be a `category` term of the product's
+  language, at most `ProductInput::MAX_CATEGORIES` (20), no repeats; a brand id or a term of another language is
+  refused with `shop.category_invalid`.
+- **Writes** go through `ProductOperations::save` like brands: a full save (panel form) replaces the list and an
+  empty selection removes them; a patch (MCP) changes them only when `categories` is sent, and `[]` removes them.
+  Only the `category` terms are replaced, so brands are untouched and vice versa.
+- **History.** Terms are part of the product version (`EditorialHistory::payload` stores `taxonomies`), so changing
+  categories is a new version with the acting user, changes the optimistic revision, and restoring a version brings
+  its categories back. An editor's change to a published product is staged as a proposal with its categories
+  (`ProductPreview`), and `content_propose` accepts `categories`.
+- **Meta feed.** The first category (lowest id) and its parents become `product_type` (`Ropa > Remeras`) and the
+  top level becomes `custom_label_0` (`Ropa`); without a category both fields are left out
+  ([../operations/connectors.md](../operations/connectors.md)).
+
 ## Products as editorial content
 
 Products share the editorial workflow of posts: history, versions, restoration, proposals and reviews, shared
@@ -141,7 +170,7 @@ shell: it has no edit lock or draft recovery.
   version with its own variants.
 - **Translation.** `content_translate`, the panel language switcher (`POST /admin/products/{id}/translations/{locale}`)
   and `TranslationOperations::create` copy the translatable fields (`title`, `excerpt`, `description`,
-  `meta_json.title`/`description`), media and brands remapped to the target language, as a draft. Commerce fields
+  `meta_json.title`/`description`), media, brands and categories remapped to the target language, as a draft. Commerce fields
   (sku, prices, stock, variants) are not copied: they live on the base row, and the translation's form hides them.
 
 With the catalog off products are not an editorial type: those screens and tools answer 404 for `products`.
@@ -211,4 +240,5 @@ and a route cache compiled with the shop off; `ShopModuleTest` covers the switch
 `ShopPublicTest` the public catalog, sitemap and the catalog custom-code index; `AdminProductsTest` the panel
 (CRUD, history link and restore, translation, menus with the catalog on and off); `McpProductsTest` the
 `products_*` tools; `ProductEditorialTest` history, restoration, proposals, shared previews, translation and the
-`content_*` tools; `McpSurfaceContractTest` runs the MCP contract with the catalog off and on.
+`content_*` tools; `ShopProductCategoriesTest` categories from the panel and MCP (validation, history, proposals,
+restore) and their `product_type` / `custom_label_0` in the Meta feed; `McpSurfaceContractTest` runs the MCP contract with the catalog off and on.

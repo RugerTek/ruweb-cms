@@ -7,6 +7,7 @@ use App\Http\Requests\Public\ContactSubmissionRequest;
 use App\Models\ContactSubmission;
 use App\Models\Page;
 use App\Services\Forms\SubmissionNotifier;
+use App\Services\Marketing\MetaPixel;
 use Illuminate\Http\RedirectResponse;
 
 /**
@@ -34,6 +35,8 @@ class ContactFormController extends Controller
         ]);
 
         $notifier->notify($submission, $page);
+        // Meta Pixel Lead (browser event on the page it returns to, server event queued); never fails the request.
+        app(MetaPixel::class)->track('Lead', redirect: true);
 
         return $redirect;
     }

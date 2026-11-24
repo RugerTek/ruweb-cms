@@ -268,6 +268,42 @@ class AdminConnectorsTest extends TestCase
             ->assertSee(__('connectors.meta_action_deactivate'));
     }
 
+    public function test_guide_follows_the_real_commerce_manager_steps_and_mentions_the_campaign_labels(): void
+    {
+        $this->connected();
+        $this->actingAs($this->admin);
+
+        $this->get(route('admin.connectors.show', ['connector' => 'meta']))->assertOk()
+            ->assertSeeInOrder([
+                __('connectors.guide_step_data_source'),
+                __('connectors.guide_step_platform'),
+                __('connectors.guide_step_url'),
+                __('connectors.guide_step_name_currency', ['currency' => 'PYG']),
+                __('connectors.guide_step_schedule'),
+                __('connectors.guide_step_products'),
+                __('connectors.guide_step_return'),
+                __('connectors.guide_labels'),
+            ])
+            ->assertSee('data-copy-target="guide-feed-url"', false)
+            ->assertSee('https://developers.facebook.com/documentation/ads-commerce/catalog/guides/scheduled-feeds/', false);
+
+        // Labels of Commerce Manager in Spanish (Spain), as seen on 2026-11-24.
+        $es = fn (string $key, array $replace = []) => trans('connectors.'.$key, $replace, 'es');
+        $this->assertStringContainsString('«Añadir productos»', $es('guide_step_open'));
+        $this->assertStringContainsString('NO marques «Conectarse a una plataforma de socios»', $es('guide_step_open'));
+        $this->assertStringContainsString('«Sube un archivo de datos»', $es('guide_step_data_source'));
+        $this->assertStringContainsString('«¿Para qué plataforma está formateado tu archivo?»', $es('guide_step_platform'));
+        $this->assertStringContainsString('«Utiliza una URL u Hojas de cálculo de Google»', $es('guide_step_url'));
+        $this->assertStringContainsString('«Información de inicio de sesión»', $es('guide_step_url'));
+        $this->assertStringContainsString('«Divisa predeterminada» viene en USD: cambiala a PYG', $es('guide_step_name_currency', ['currency' => 'PYG']));
+        $this->assertStringContainsString('«Cada hora»', $es('guide_step_schedule'));
+        $this->assertStringNotContainsString('diario', $es('guide_step_schedule'));
+        $this->assertStringContainsString('«Orígenes de datos»', $es('guide_step_result'));
+        $this->assertStringContainsString('«Actualizar»', $es('guide_step_result'));
+        $this->assertStringContainsString('«Cumple los requisitos»', $es('guide_step_products'));
+        $this->assertStringContainsString('conjuntos de productos y campañas por categoría', $es('guide_labels'));
+    }
+
     public function test_rotating_invalidates_the_previous_url(): void
     {
         $record = $this->connected();

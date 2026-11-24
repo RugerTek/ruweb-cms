@@ -151,6 +151,7 @@ class McpProductController extends McpController
             'description' => $product->description,
             'meta_json' => $product->meta_json,
             'brands' => $product->brands()->pluck('taxonomies.id')->all(),
+            'categories' => $product->categories()->orderBy('taxonomies.id')->pluck('taxonomies.id')->all(),
             'gallery' => $product->mediaByCollection('gallery')->get()->map(fn ($media) => $this->serializeMedia($media))->values()->all(),
             'track_stock' => (bool) $product->track_stock,
             'allow_backorder' => (bool) $product->allow_backorder,

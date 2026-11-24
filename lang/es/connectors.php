@@ -17,6 +17,7 @@ return [
     // Card groups (App\Connectors\ConnectorCategory)
     'category_sales_channel' => 'Canales de venta',
     'category_payments' => 'Medios de pago',
+    'category_marketing' => 'Publicidad y medición',
 
     // Requirements and actions that resolve them
     'requirement_shop_catalog' => 'Activá el catálogo de productos para usar este conector.',
@@ -120,18 +121,19 @@ return [
     'meta_action_activate' => 'Activar feed para Meta',
     'meta_action_deactivate' => 'Desactivar feed',
 
-    // Commerce Manager guide (PLAN.md §4.6)
+    // Commerce Manager guide (PLAN.md §4.6). Quoted labels are those of Commerce Manager in Spanish (Spain), seen 2026-11-24.
     'guide_title' => 'Cómo conectar el catálogo en Commerce Manager',
     'guide_requirement' => 'Necesitás un portfolio comercial de Meta (Business Manager) con control total.',
-    'guide_step_open' => 'Abrí :link. Si todavía no tenés catálogo, crealo: tipo «Productos en línea», sin conectar plataforma, elegí el portfolio y poné un nombre; el píxel se puede saltear.',
-    'guide_step_data_source' => 'En el catálogo: pestaña «Catálogo» → «Orígenes de datos» → «+ Agregar» → «Archivo de datos».',
-    'guide_step_platform' => 'En «¿Para qué plataforma tiene formato tu archivo?» dejá «Commerce Manager».',
-    'guide_step_url' => 'Elegí «Usar una URL» y pegá la URL del feed copiada de esta pantalla.',
-    'guide_step_fields' => 'Siguiente. Si Meta propone emparejar campos, no hace falta cambiar nada: el feed usa sus nombres.',
-    'guide_step_name_currency' => 'Poné un nombre al feed y elegí :currency como moneda predeterminada.',
-    'guide_step_schedule' => 'Elegí el horario: diario (recomendado; Meta no descarga más de una vez por hora). Dejá «Reemplazar»: así un producto que despublicás también sale del catálogo.',
-    'guide_step_upload' => 'Subir. En «Orígenes de datos» vas a ver cuántos productos entraron y los errores (:link).',
+    'guide_step_open' => 'Abrí :link y tocá «Añadir productos» (o creá un catálogo). Elegí el tipo de productos online, NO marques «Conectarse a una plataforma de socios», elegí tu portfolio, poné un nombre y tocá «Siguiente» (así aceptás las condiciones de catálogo de Meta).',
+    'guide_step_data_source' => 'En «Elige cómo añadir tus productos o servicios» elegí «Sube un archivo de datos» y tocá «Siguiente».',
+    'guide_step_platform' => 'En «¿Para qué plataforma está formateado tu archivo?» dejá «Commerce Manager».',
+    'guide_step_url' => 'En «Elige cómo quieres subir el archivo» elegí «Utiliza una URL u Hojas de cálculo de Google» y pegá la URL del feed de esta pantalla. «Información de inicio de sesión» queda vacía. Tocá «Siguiente».',
+    'guide_step_name_currency' => 'En «Confirmar configuración» poné un nombre. «Divisa predeterminada» viene en USD: cambiala a :currency, la moneda de tu sitio.',
+    'guide_step_schedule' => 'En «Programación de la lista de datos» dejá la frecuencia «Cada hora» (viene así y conviene dejarla) y tocá «Subir».',
+    'guide_step_result' => 'Para ver el resultado entrá a «Catálogo» → «Orígenes de datos»: muestra cuántos productos entraron y «Sin errores». Con «Actualizar» Meta lo lee en el momento (:link).',
+    'guide_step_products' => 'En «Productos» cada producto tiene que decir «Cumple los requisitos».',
     'guide_step_return' => 'Volvé a esta pantalla: «Meta descargó el catálogo por última vez» tiene que mostrar la fecha.',
+    'guide_labels' => 'El feed manda la categoría de cada producto, si está en oferta y su marca: sirven para armar conjuntos de productos y campañas por categoría en Commerce Manager.',
     'guide_link_commerce_manager' => 'Commerce Manager',
     'guide_link_troubleshoot' => 'cómo solucionar errores del feed',
     'guide_link_scheduled' => 'feeds programados',

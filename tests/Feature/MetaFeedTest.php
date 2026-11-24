@@ -12,6 +12,7 @@ use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Taxonomy;
 use App\Models\User;
 use App\Services\Connectors\ConnectorOperations;
 use App\Services\Connectors\FeedFile;
@@ -144,6 +145,63 @@ class MetaFeedTest extends TestCase
         $this->assertSame('Tela:Algodón,gender:Hombre,Corte:Recto', $items['REM-R']['additional_variant_attribute']);
         $this->assertSame('Azul', $items['v6']['color']);
         $this->assertSame('unisex', $items['v6']['gender']);
+    }
+
+    public function test_category_path_sale_and_brand_become_product_type_and_custom_labels(): void
+    {
+        $source = $this->fakeSource();
+        $image = $this->jpeg('remera.jpg');
+        $source->items = [
+            FakeCatalogSource::item('REM', ['imageMediaId' => $image, 'categoryPath' => ['Ropa', ' Remeras '], 'price' => 120000, 'salePrice' => 90000, 'brand' => 'Algodonera']),
+            FakeCatalogSource::item('MATE', ['imageMediaId' => $image, 'categoryPath' => [], 'brand' => null]),
+            FakeCatalogSource::item('LARGO', ['imageMediaId' => $image, 'categoryPath' => [str_repeat('a', 150), str_repeat('b', 900)], 'brand' => str_repeat('c', 120)]),
+        ];
+        $token = $this->activate();
+
+        $body = $this->feed($token)->assertOk()->streamedContent();
+        $items = $this->items($body);
+
+        $this->assertSame('Ropa > Remeras', $items['REM']['product_type']);
+        $this->assertSame('Ropa', $items['REM']['custom_label_0']);
+        $this->assertSame(MetaFeedWriter::SALE_LABEL, $items['REM']['custom_label_1']);
+        $this->assertSame('oferta', $items['REM']['custom_label_1']);
+        $this->assertSame('Algodonera', $items['REM']['custom_label_2']);
+
+        // No category, no sale price and no brand of its own: the fields are left out (the default brand stays in g:brand only).
+        foreach (['product_type', 'custom_label_0', 'custom_label_1', 'custom_label_2'] as $field) {
+            $this->assertArrayNotHasKey($field, $items['MATE']);
+        }
+        $this->assertNotSame('', $items['MATE']['brand']);
+
+        // Meta's limits (catalog fields page, Updated: Oct 28, 2026): product_type 1,000, custom_label_* 100.
+        $this->assertSame(MetaFeedWriter::PRODUCT_TYPE_MAX, mb_strlen($items['LARGO']['product_type']));
+        $this->assertStringStartsWith(str_repeat('a', 150).' > b', $items['LARGO']['product_type']);
+        $this->assertSame(str_repeat('a', MetaFeedWriter::CUSTOM_LABEL_MAX), $items['LARGO']['custom_label_0']);
+        $this->assertSame(str_repeat('c', MetaFeedWriter::CUSTOM_LABEL_MAX), $items['LARGO']['custom_label_2']);
+        $this->assertArrayNotHasKey('custom_label_1', $items['LARGO']);
+    }
+
+    public function test_shop_source_sends_the_category_path_from_the_top_level_down(): void
+    {
+        $clothes = Taxonomy::create(['locale' => 'es', 'name' => 'Ropa', 'slug' => 'ropa', 'type' => 'category']);
+        $shirts = Taxonomy::create(['locale' => 'es', 'name' => 'Remeras', 'slug' => 'remeras', 'type' => 'category', 'parent_id' => $clothes->id]);
+        $brand = Taxonomy::create(['locale' => 'es', 'name' => 'Algodonera', 'slug' => 'algodonera', 'type' => Product::BRAND_TAXONOMY]);
+        $shirt = $this->product(['title' => 'Remera', 'slug' => 'remera', 'sku' => 'REM', 'price_amount' => 90000, 'compare_at_price_amount' => 120000]);
+        $shirt->taxonomies()->attach([$shirts->id, $brand->id]);
+        $this->product(['title' => 'Mate', 'slug' => 'mate', 'sku' => 'MATE', 'price_amount' => 50000]);
+        $source = app(ShopProductSource::class);
+
+        $items = $source->items()->keyBy('id')->all();
+
+        $this->assertSame(['Ropa', 'Remeras'], $items['REM']->categoryPath);
+        $this->assertSame('Algodonera', $items['REM']->brand);
+        $this->assertSame([], $items['MATE']->categoryPath);
+
+        // A parent loop in the data never hangs the feed: the walk stops at a fixed depth.
+        $clothes->update(['parent_id' => $shirts->id]);
+        $looped = $source->items()->keyBy('id')->all()['REM']->categoryPath;
+        $this->assertLessThanOrEqual(10, count($looped));
+        $this->assertSame('Remeras', end($looped));
     }
 
     public function test_additional_images_fit_in_two_thousand_characters(): void

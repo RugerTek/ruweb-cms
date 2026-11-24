@@ -5,7 +5,7 @@ namespace App\Connectors;
 /**
  * What a connector is for, as the administrator groups them in Admin > Connectors (one heading per category, in the
  * order of the cases). Connectors is the showcase of everything external and its status; the settings of each one
- * live in a single place (Meta on its detail, Bancard in Admin > Payments and shipping).
+ * live in a single place (Meta and the Meta Pixel on their detail, Bancard in Admin > Payments and shipping).
  */
 enum ConnectorCategory: string
 {
@@ -14,6 +14,9 @@ enum ConnectorCategory: string
 
     /** Ways to take payments on the site (Bancard). */
     case Payments = 'payments';
+
+    /** Advertising and measurement: what tells an ad platform what visitors do on the site (Meta Pixel). */
+    case Marketing = 'marketing';
 
     /** Translation key of the group heading (`connectors.category_sales_channel`). */
     public function label(): string

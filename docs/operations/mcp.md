@@ -135,6 +135,8 @@ behave like the post tools over `App\Services\Products\ProductOperations`, the o
 - `products_create_draft` accepts `operation_key`; draft-only credentials may call it and `products_update_draft`
   (drafts only). `products_update` (live edit) is full scope; publishing and deleting are administrator-only.
   Scheduling, expiry and unpublishing use `content_publication` (`type: products`).
+- `categories` (ids of `category` terms from `taxonomies_list`, base language of the product, up to 20) replaces
+  the product's list; `[]` empties it and omitting the key keeps it. `brands` works the same way.
 - `products_delete` removes the variants with the product and reports removed menu links and kept translations
   in `warnings`.
 
@@ -220,7 +222,13 @@ through `App\Services\Connectors\ConnectorOperations`, the operation the panel u
   connector on or off, in one transaction: a stale revision is `-32009` and an activation refused by an unmet
   requirement is `-32602`, with nothing saved. Deactivating keeps settings and the URL.
 - `connectors_rotate_token {connector, expected_revision}` makes the previous URL stop working at once and answers
-  only `rotated_at` and the new `revision`.
+  only `rotated_at` and the new `revision`. Connectors without a feed (`bancard`, `meta_pixel`) have no token: it
+  and `connectors_preview` answer `-32602` (REST: 404).
+- `meta_pixel` ([meta-pixel.md](meta-pixel.md)) has `setting_keys` `pixel_id` and `test_event_code`, and an extra
+  `conversions_api` block: `token_configured` (a usable Conversions API token is saved), `token_needs_reentry`
+  (one is saved but was entered under another origin or `APP_KEY`), `token_location`, `graph_api_version` and
+  `events`. **The access token is set only in the panel and never appears in any response**; an `access_token`
+  sent in `settings` is ignored and reported as `unknown_setting`.
 - `connectors_list`, `connectors_get` and `connectors_preview` are allowed to read-only and draft-only credentials
   (still administrator only); `connectors_update` and `connectors_rotate_token` need full scope.
 

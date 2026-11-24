@@ -2,6 +2,7 @@
 
 use App\Connectors\Bancard\BancardConnector;
 use App\Connectors\Meta\MetaCatalogConnector;
+use App\Connectors\MetaPixel\MetaPixelConnector;
 use App\Connectors\Sources\ShopProductSource;
 use App\Models\ContactSubmission;
 use App\Models\Post;
@@ -85,6 +86,22 @@ return [
     'connectors' => [
         'meta' => MetaCatalogConnector::class,
         'bancard' => BancardConnector::class,
+        'meta_pixel' => MetaPixelConnector::class,
+    ],
+
+    // Meta Pixel + Conversions API (App\Connectors\MetaPixel, docs/operations/meta-pixel.md). The pixel ID, the
+    // access token (encrypted in the connectors table) and the test events code are per site, never here.
+    'meta_pixel' => [
+        // Graph API version of the Conversions API endpoint. v27.0 is the latest one (Meta changelog, released
+        // 2026-11-04, checked 2026-11-24); every version is supported for the Conversions API for at least two years.
+        'graph_api_version' => 'v27.0',
+        'graph_url' => 'https://graph.facebook.com',
+        // Seconds to wait for Meta in a server event or the panel's test event.
+        'timeout' => 10,
+        // ISO 3166-1 alpha-2 of the customers' country (`country` in user_data) and the calling code added to phone
+        // numbers written without one (0981 123456 → 595981123456), as Meta asks.
+        'country' => 'py',
+        'phone_country_code' => '595',
     ],
 
     // Where feed connectors read items from: key => class implementing App\Contracts\Catalog\CatalogSource.

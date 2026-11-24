@@ -1,0 +1,56 @@
+<?php
+
+// Meta Pixel connector (App\Connectors\MetaPixel\MetaPixelConnector, docs/operations/meta-pixel.md).
+return [
+    'label' => 'Píxel de Meta',
+    'description' => 'Le cuenta a Facebook e Instagram qué hacen las visitas en tu sitio (miran un producto, compran, te escriben) para que tus anuncios lleguen a quien corresponde y puedas medir los resultados.',
+    'requirement_pixel_id' => 'Falta el ID del píxel: copialo de Events Manager y guardalo en el detalle.',
+    'action_configure' => 'Configurar',
+
+    'settings_title' => 'Configuración',
+    'settings_help' => 'Con el ID del píxel ya se mide desde el navegador. Si además cargás el token de la API de Conversiones, el sitio también avisa a Meta desde el servidor, y Meta cuenta cada acción una sola vez.',
+    'field_pixel_id' => 'ID del píxel (conjunto de datos)',
+    'field_pixel_id_help' => 'Son solo números. Lo encontrás en :link › Orígenes de datos, debajo del nombre de tu píxel.',
+    'field_access_token' => 'Token de la API de Conversiones (opcional)',
+    'field_access_token_help' => 'Generalo en Events Manager › tu píxel › Configuración › API de Conversiones › «Generar token de acceso». Se guarda cifrado y nunca se vuelve a mostrar. :link',
+    'link_meta_guide' => 'Guía de Meta',
+    'token_saved' => 'Token guardado, termina en :suffix.',
+    'token_missing' => 'Todavía no cargaste un token: solo se mide desde el navegador.',
+    'token_unusable' => 'Hay un token guardado, pero se cargó en otra dirección del sitio o con otra clave: volvé a pegarlo para usarlo acá.',
+    'token_placeholder' => 'Pegá el token acá',
+    'token_placeholder_replace' => 'Dejalo vacío para conservar el actual',
+    'token_forget' => 'Borrar el token guardado',
+    'field_test_event_code' => 'Código de eventos de prueba (opcional)',
+    'field_test_event_code_help' => 'Lo da Events Manager › Probar eventos (por ejemplo TEST12345). Mientras esté cargado, los eventos del servidor aparecen en esa pantalla: borralo cuando termines de probar.',
+    'saved' => 'Configuración del píxel guardada.',
+    'error_token_format' => 'Eso no parece un token de Meta. Copiá el token completo, sin espacios.',
+
+    'test_title' => 'Probar la conexión',
+    'test_help' => 'Manda ahora una visita de prueba por la API de Conversiones con tu código de eventos de prueba. Abrí :link en Events Manager para verla llegar.',
+    'link_test_events' => 'Probar eventos',
+    'action_test' => 'Enviar evento de prueba',
+    'test_needs_pixel_id' => 'Para probar, primero guardá el ID del píxel.',
+    'test_needs_token' => 'Para probar, primero guardá el token de la API de Conversiones.',
+    'test_needs_code' => 'Para probar, primero guardá el código de eventos de prueba (Events Manager › Probar eventos).',
+    'test_sent' => 'Meta recibió el evento de prueba. Revisá Events Manager › Probar eventos.',
+    'test_failed' => 'Meta no aceptó el evento de prueba: :message',
+    'test_connection' => 'no se pudo conectar con Meta. Probá de nuevo en un rato.',
+
+    'events_title' => 'Qué se le cuenta a Meta',
+    'events_help' => 'Cada acción va desde el navegador y, con el token, también desde el servidor, con el mismo identificador para que Meta no la cuente dos veces. Los productos se identifican igual que en el catálogo de Meta.',
+    'event_PageView' => 'alguien abre cualquier página del sitio.',
+    'event_ViewContent' => 'alguien mira la ficha de un producto.',
+    'event_AddToCart' => 'alguien agrega un producto al carrito.',
+    'event_InitiateCheckout' => 'alguien empieza a completar sus datos para comprar.',
+    'event_Purchase' => 'se confirma el pago de un pedido (con el total y los productos).',
+    'event_Lead' => 'alguien envía el formulario de contacto.',
+    'events_without_shop' => 'Con la tienda apagada se miden las visitas y los formularios de contacto.',
+    'events_not_measured' => 'No se mide nada mientras tengas la sesión iniciada en el panel ni en las vistas previas, para no mezclar tus visitas con las de tus clientes.',
+
+    'privacy_title' => 'Privacidad',
+    'privacy_help' => 'El píxel usa cookies de Meta. Contá en tu política de privacidad que usás el Píxel de Meta y para qué. El email, el teléfono, el nombre y la ciudad de un pedido se mandan a Meta cifrados (no se pueden leer) y solo para reconocer la compra.',
+
+    'card_browser_and_server' => 'Midiendo desde el navegador y el servidor.',
+    'card_browser_only' => 'Midiendo desde el navegador. Cargá el token para medir también desde el servidor.',
+    'confirm_deactivate' => 'El píxel deja de cargarse y no se manda nada más a Meta. No se borra nada: el ID, el token y el código se conservan.',
+];

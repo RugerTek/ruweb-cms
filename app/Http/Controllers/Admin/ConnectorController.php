@@ -7,16 +7,20 @@ use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorStatus;
 use App\Connectors\FeedResult;
+use App\Connectors\MetaPixel\MetaPixelConnector;
 use App\Contracts\Connectors\Connector as ConnectorContract;
 use App\Contracts\Connectors\FeedConnector;
 use App\Exceptions\RevisionConflict;
 use App\Http\Controllers\Controller;
 use App\Models\Connector;
 use App\Services\Connectors\ConnectorOperations;
+use App\Services\Marketing\MetaPixel;
+use App\Services\Marketing\MetaPixelOperations;
 use App\Support\AdminCapabilities;
 use App\Support\ShopModule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rules\In;
 use Illuminate\Validation\ValidationException;
@@ -77,6 +81,9 @@ class ConnectorController extends Controller
                 ? redirect()->route('admin.shop-payments.edit')->withFragment('bancard')
                 : redirect()->route('admin.connectors.index');
         }
+        if ($definition instanceof MetaPixelConnector) {
+            return $this->showMetaPixel($connector, $definition);
+        }
         $card = $this->card($connector, $definition, withPreview: true);
         $record = $card['record'];
         $feedUrl = $record?->feedUrl();
@@ -127,6 +134,88 @@ class ConnectorController extends Controller
         $this->operations->rotateToken($request->user(), $connector);
 
         return redirect()->route('admin.connectors.show', ['connector' => $connector])->with('success', __('connectors.token_rotated'));
+    }
+
+    /**
+     * Meta Pixel settings form: pixel ID and test events code (ConnectorOperations::updateSettings(), the path MCP
+     * uses too) and, when typed, a new Conversions API access token (MetaPixelOperations, encrypted). An empty token
+     * field keeps the saved one; `forget_access_token` removes it.
+     */
+    public function updateMetaPixel(Request $request, string $connector, MetaPixelOperations $pixelOperations): RedirectResponse
+    {
+        $this->metaPixel($connector);
+        $settings = ['pixel_id' => trim((string) $request->input('pixel_id')), 'test_event_code' => trim((string) $request->input('test_event_code'))];
+        $revision = $request->filled('expected_revision') ? (string) $request->input('expected_revision') : null;
+        $token = trim((string) $request->input('access_token'));
+
+        try {
+            DB::transaction(function () use ($request, $connector, $settings, $revision, $token, $pixelOperations) {
+                $this->operations->updateSettings($request->user(), $connector, $settings, $revision);
+                if ($token !== '') {
+                    $pixelOperations->saveAccessToken($request->user(), $token);
+                } elseif ($request->boolean('forget_access_token')) {
+                    $pixelOperations->forgetAccessToken($request->user());
+                }
+            });
+        } catch (RevisionConflict) {
+            return back()->withInput($request->except('access_token'))->withErrors(['expected_revision' => __('connectors.revision_conflict')]);
+        } catch (ValidationException $exception) {
+            return back()->withInput($request->except('access_token'))->withErrors($exception->errors());
+        }
+
+        return redirect()->route('admin.connectors.show', ['connector' => $connector])->with('success', __('meta_pixel.saved'));
+    }
+
+    /** "Send test event": a PageView with the test events code, now, and what Meta answered. */
+    public function sendMetaPixelTest(Request $request, string $connector, MetaPixelOperations $pixelOperations): RedirectResponse
+    {
+        $this->metaPixel($connector);
+        try {
+            $result = $pixelOperations->sendTestEvent($request->user(), $request->userAgent(), $request->ip());
+        } catch (ValidationException $exception) {
+            return back()->withErrors(['test_event' => $exception->validator->errors()->first()]);
+        }
+        $redirect = redirect()->route('admin.connectors.show', ['connector' => $connector]);
+
+        return $result->ok
+            ? $redirect->with('success', __('meta_pixel.test_sent', ['count' => (int) $result->eventsReceived]))
+            : $redirect->withErrors(['test_event' => __('meta_pixel.test_failed', ['message' => $result->message === 'connection' ? __('meta_pixel.test_connection') : (string) $result->message])]);
+    }
+
+    /**
+     * The Meta Pixel detail: status card, settings form (the access token only as "saved, ends in …"), test event
+     * and the events the site sends.
+     */
+    private function showMetaPixel(string $connector, MetaPixelConnector $definition): View
+    {
+        $card = $this->card($connector, $definition);
+        $record = $card['record'];
+        $pixel = app(MetaPixel::class);
+        $token = $pixel->accessToken();
+
+        return view('admin.connectors.meta-pixel', $card + [
+            'settings' => $this->registry->settings($connector),
+            'revision' => $this->operations->revision($record ?? new Connector(['key' => $connector, 'enabled' => false])),
+            'tokenSuffix' => $token === null ? null : substr($token, -4),
+            'tokenUnusable' => (bool) $record?->secretsUnusable(),
+            'events' => MetaPixelConnector::EVENTS,
+            'shopOn' => app(ShopModule::class)->catalog(),
+            'links' => [
+                'events_manager' => MetaPixelConnector::EVENTS_MANAGER_URL,
+                'access_token' => MetaPixelConnector::HELP_ACCESS_TOKEN_URL,
+                'test_events' => MetaPixelConnector::HELP_TEST_EVENTS_URL,
+                'deduplication' => MetaPixelConnector::HELP_DEDUPLICATION_URL,
+            ],
+        ]);
+    }
+
+    /** 404 unless $connector is the Meta Pixel. */
+    private function metaPixel(string $connector): MetaPixelConnector
+    {
+        $definition = $this->registry->get($connector);
+        abort_unless($definition instanceof MetaPixelConnector, 404);
+
+        return $definition;
     }
 
     /**

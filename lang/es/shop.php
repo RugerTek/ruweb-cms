@@ -34,6 +34,8 @@ return [
     'category' => 'Categoría',
     'brands' => 'Marcas',
     'brand' => 'Marca',
+    'categories_help' => 'La primera categoría (con sus superiores, por ejemplo «Ropa > Remeras») se usa en el catálogo de Meta para armar conjuntos de productos y campañas por categoría.',
+    'category_invalid' => 'Elegí una categoría que exista en el idioma de este producto.',
 
     // Admin form fields
     'field_title' => 'Nombre',

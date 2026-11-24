@@ -35,6 +35,9 @@ class Product extends Model implements Mediable, Previewable, Publishable, Seoab
 
     public const BRAND_TAXONOMY = 'brand';
 
+    /** Shared with posts (`cms.taxonomy_types`); categories() comes from HasTaxonomies. */
+    public const CATEGORY_TAXONOMY = 'category';
+
     protected static function booted(): void
     {
         static::saving(function ($model) {

@@ -34,6 +34,8 @@ return [
     'category' => 'Category',
     'brands' => 'Brands',
     'brand' => 'Brand',
+    'categories_help' => 'The first category (with its parents, e.g. "Clothing > T-shirts") is sent to the Meta catalog to build product sets and campaigns by category.',
+    'category_invalid' => 'Choose a category that exists in this product\'s language.',
 
     // Admin form fields
     'field_title' => 'Name',

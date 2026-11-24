@@ -1,5 +1,6 @@
 {{--
-    Step by step guide to add the feed in Meta Commerce Manager (PLAN.md §4.6). Receives $guideLinks
+    Step by step guide to add the feed in Meta Commerce Manager (PLAN.md §4.6), with the labels of its interface
+    (verified 2026-11-24, docs/operations/connectors.md). Receives $guideLinks
     (Admin\ConnectorController::guideLinks()), $feedUrl and $currency from the detail view.
 --}}
 @php
@@ -11,10 +12,10 @@
         e(__('connectors.guide_step_data_source')),
         e(__('connectors.guide_step_platform')),
         e(__('connectors.guide_step_url')),
-        e(__('connectors.guide_step_fields')),
         e(__('connectors.guide_step_name_currency', ['currency' => $currency])),
         e(__('connectors.guide_step_schedule')).' ('.$anchor($guideLinks['HELP_SCHEDULED_FEEDS_URL'], __('connectors.guide_link_scheduled')).')',
-        $withLink('connectors.guide_step_upload', $anchor($guideLinks['HELP_TROUBLESHOOT_URL'], __('connectors.guide_link_troubleshoot'))),
+        $withLink('connectors.guide_step_result', $anchor($guideLinks['HELP_TROUBLESHOOT_URL'], __('connectors.guide_link_troubleshoot'))),
+        e(__('connectors.guide_step_products')),
         e(__('connectors.guide_step_return')),
     ];
 @endphp
@@ -44,4 +45,6 @@
             </li>
         @endforeach
     </ol>
+
+    <p class="text-xs text-gray-500 mt-4" data-meta-guide-labels>{{ __('connectors.guide_labels') }}</p>
 </section>

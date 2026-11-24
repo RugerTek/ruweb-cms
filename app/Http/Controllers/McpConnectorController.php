@@ -6,11 +6,13 @@ use App\Connectors\CatalogItem;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorRequirement;
 use App\Connectors\FeedWarning;
+use App\Connectors\MetaPixel\MetaPixelConnector;
 use App\Contracts\Connectors\FeedConnector;
 use App\Exceptions\RevisionConflict;
 use App\Models\Connector;
 use App\Models\User;
 use App\Services\Connectors\ConnectorOperations;
+use App\Services\Marketing\MetaPixel;
 use App\Support\ShopModule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,7 +25,9 @@ use Illuminate\Validation\Validator as ValidatorInstance;
  * MCP tools and REST mirror of Admin > Connectors (`connectors_*`, docs/operations/mcp.md#connectors). Always
  * registered (the section exists on every site), administrator only. Writes go through ConnectorOperations, the
  * operation the panel uses. The feed token and the feed URL never leave this controller: the URL is shown only in
- * the panel (Connector::feedUrl()), like transport credentials (docs/operations/mcp-surface.md).
+ * the panel (Connector::feedUrl()), like transport credentials (docs/operations/mcp-surface.md). The Meta Pixel's
+ * pixel ID and test events code are ordinary settings here; its Conversions API access token is set only in the panel
+ * and reported as `conversions_api.token_configured`.
  */
 class McpConnectorController extends Controller
 {
@@ -126,7 +130,8 @@ class McpConnectorController extends Controller
     {
         $user = $request->user();
         $this->authorizeAdmin($user);
-        $this->registry->get($connector);
+        // Only feed connectors have a feed token (Bancard and the Meta Pixel answer 404).
+        $this->registry->feed($connector);
         $validated = Validator::make($request->all(), ['expected_revision' => self::REVISION])->validate();
 
         DB::transaction(function () use ($user, $connector, $validated) {
@@ -169,7 +174,7 @@ class McpConnectorController extends Controller
         return route('admin.connectors.show', ['connector' => $connector]);
     }
 
-    /** Never includes token, token_hash or the feed URL. */
+    /** Never includes token, token_hash, the feed URL or a connector secret (the Meta Pixel access token). */
     private function serialize(string $key, bool $summary = false): array
     {
         $definition = $this->registry->get($key);
@@ -189,6 +194,16 @@ class McpConnectorController extends Controller
             'last_skipped_count' => $record?->last_skipped_count,
             'last_meta_fetched_at' => $record?->last_meta_fetched_at?->toISOString(),
         ];
+        if ($definition instanceof MetaPixelConnector) {
+            // Whether the Conversions API token is saved and usable here; the token itself only goes into the panel.
+            $data['conversions_api'] = [
+                'token_configured' => app(MetaPixel::class)->accessToken() !== null,
+                'token_needs_reentry' => (bool) $record?->secretsUnusable(),
+                'token_location' => 'Secret: set only in the admin panel ('.$this->panelUrl($key).'), never through MCP.',
+                'graph_api_version' => (string) config('cms.meta_pixel.graph_api_version'),
+                'events' => MetaPixelConnector::EVENTS,
+            ];
+        }
         if ($summary) {
             return $data;
         }
@@ -201,7 +216,7 @@ class McpConnectorController extends Controller
             'last_fetched_at' => $record?->last_fetched_at?->toISOString(),
             'last_fetch_agent' => $record?->last_fetch_agent,
             'token_rotated_at' => $record?->token_rotated_at?->toISOString(),
-            'feed_url_location' => 'Secret: shown only in the admin panel ('.$this->panelUrl($key).'), never through MCP.',
+            'feed_url_location' => $definition instanceof FeedConnector ? 'Secret: shown only in the admin panel ('.$this->panelUrl($key).'), never through MCP.' : null,
             'activated_at' => $record?->created_at?->toISOString(),
             'updated_at' => $record?->updated_at?->toISOString(),
         ];

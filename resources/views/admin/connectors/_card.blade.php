@@ -96,7 +96,13 @@
             @endif
         @endif
 
-        @if($record?->enabled)
+        @if($record?->enabled && $key === \App\Connectors\MetaPixel\MetaPixelConnector::KEY && $status === \App\Connectors\ConnectorStatus::Connected)
+            @php($capi = app(\App\Services\Marketing\MetaPixel::class)->accessToken() !== null)
+            <p data-meta-pixel-status="{{ $capi ? 'browser_and_server' : 'browser' }}">{{ $capi ? __('meta_pixel.card_browser_and_server') : __('meta_pixel.card_browser_only') }}</p>
+        @endif
+
+        {{-- Fetch log: only connectors that publish a feed (Bancard and the Meta Pixel have none). --}}
+        @if($record?->enabled && $connector instanceof \App\Contracts\Connectors\FeedConnector)
             <div class="text-xs text-gray-400 space-y-1" data-fetch-log>
                 @if($isMeta)
                     @if($record->last_meta_fetched_at)

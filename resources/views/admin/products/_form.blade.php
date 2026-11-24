@@ -13,6 +13,8 @@
 
     $meta = old('meta_json', $product?->meta_json ?? []);
     $selectedBrands = array_map('intval', (array) old('brands', $product ? $product->brands()->pluck('taxonomies.id')->all() : []));
+    $categories ??= collect();
+    $selectedCategories = array_map('intval', (array) old('categories', $product ? $product->categories()->pluck('taxonomies.id')->all() : []));
     $gallery = old('items.gallery', $product ? $product->mediaByCollection('gallery')->get()->map(fn ($media) => ['media_id' => $media->id])->all() : []);
     $variants = old('items.variants', $product ? $product->variants->map(fn ($variant) => [
         'id' => $variant->id,
@@ -183,6 +185,23 @@
                         <a href="{{ route('admin.taxonomies.index', \App\Models\Product::BRAND_TAXONOMY) }}" class="text-xs text-gray-600 underline hover:text-gray-300">{{ __('shop.brands') }} →</a>
                     @endforelse
                 </div>
+            </div>
+            <div>
+                <p class="block text-xs font-medium text-gray-500 mb-2">{{ __('shop.categories') }}</p>
+                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    @forelse($categories as $category)
+                        <label class="flex items-center gap-2.5 cursor-pointer group">
+                            <input type="checkbox" name="categories[]" value="{{ $category['id'] }}" @checked(in_array($category['id'], $selectedCategories, true)) class="{{ $checkbox }}">
+                            <span class="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">{{ $category['path'] }}</span>
+                        </label>
+                    @empty
+                        @if(in_array(\App\Models\Product::CATEGORY_TAXONOMY, config('cms.taxonomy_types', []), true))
+                            <a href="{{ route('admin.taxonomies.index', \App\Models\Product::CATEGORY_TAXONOMY) }}" class="text-xs text-gray-600 underline hover:text-gray-300">{{ __('shop.categories') }} →</a>
+                        @endif
+                    @endforelse
+                </div>
+                @if($errors->has('categories') || $errors->has('categories.*'))<p class="text-red-400 text-xs mt-1">{{ $errors->first('categories') ?: $errors->first('categories.*') }}</p>@endif
+                <p class="text-xs text-gray-600 mt-2">{{ __('shop.categories_help') }}</p>
             </div>
         </div>
         <div data-repeater data-repeater-key="gallery" data-item-label="{{ __('shop.field_gallery') }} :position" data-confirm-remove="{{ __('admin.remove') }}: :item" data-confirm-label="{{ __('admin.remove') }}">

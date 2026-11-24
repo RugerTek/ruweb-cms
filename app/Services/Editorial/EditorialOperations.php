@@ -29,7 +29,7 @@ use Illuminate\Validation\Rule;
 final class EditorialOperations
 {
     /** Product fields a proposal may change; publication state and dates stay with the publication operations. */
-    public const PRODUCT_PROPOSAL_FIELDS = ['title', 'slug', 'excerpt', 'description', 'meta_json', 'featured_image', 'gallery', 'brands',
+    public const PRODUCT_PROPOSAL_FIELDS = ['title', 'slug', 'excerpt', 'description', 'meta_json', 'featured_image', 'gallery', 'brands', 'categories',
         'sku', 'price_amount', 'compare_at_price_amount', 'has_variants', 'track_stock', 'allow_backorder', 'stock', 'weight_grams', 'dimensions_json', 'variants'];
 
     public function __construct(private EditorialHistory $history) {}
@@ -342,7 +342,7 @@ final class EditorialOperations
     /**
      * A product version is written back through ProductOperations::save (full form), so prices go through the Money
      * cast, variants are rebuilt (rows deleted since then are created again) and translation hashes stay right.
-     * Terms other than brands, which the product form does not manage, are synced as for posts.
+     * Terms other than brands and categories, which the product form does not manage, are synced as for posts.
      */
     private function applyProductPayload(User $actor, Product $model, array $payload): void
     {
@@ -358,7 +358,9 @@ final class EditorialOperations
         $media = collect($payload['media'] ?? [])->filter(fn ($entry) => DB::table('media')->where('id', $entry['id'])->exists());
         $input['featured_image'] = $media->firstWhere('collection', 'featured_image')['id'] ?? null;
         $input['gallery'] = $media->where('collection', 'gallery')->sortBy('order')->pluck('id')->values()->all();
-        $input['brands'] = DB::table('taxonomies')->whereIn('id', $payload['taxonomies'] ?? [])->where('type', Product::BRAND_TAXONOMY)->where('locale', $model->locale)->pluck('id')->all();
+        foreach (['brands' => Product::BRAND_TAXONOMY, 'categories' => Product::CATEGORY_TAXONOMY] as $key => $type) {
+            $input[$key] = DB::table('taxonomies')->whereIn('id', $payload['taxonomies'] ?? [])->where('type', $type)->where('locale', $model->locale)->pluck('id')->all();
+        }
         if ($model->isBaseLocale()) {
             $input += Arr::only($attributes, array_diff(ProductInput::COMMERCE_FIELDS, ['variants']));
             $existing = $model->variants()->pluck('id')->all();

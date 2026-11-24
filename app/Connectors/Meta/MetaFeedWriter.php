@@ -13,7 +13,7 @@ use XMLWriter;
  * Writes a Meta catalog feed as RSS 2.0 with `g:` fields (PLAN.md §4.5): the `<?xml` declaration first, one field
  * per line, streamed to the target in batches so the catalog never sits in memory as a whole document. Images are
  * resolved per batch to JPEG/PNG URLs (App\Services\Media\FeedImage); every URL is made absolute with
- * App\Support\SiteUrl::origin(). Limits follow Meta's catalog fields page (Updated: Oct 5, 2026).
+ * App\Support\SiteUrl::origin(). Limits follow Meta's catalog fields page (Updated: Oct 28, 2026; read 2026-11-24).
  */
 final class MetaFeedWriter
 {
@@ -26,6 +26,18 @@ final class MetaFeedWriter
     public const BRAND_MAX = 100;
 
     public const ATTRIBUTE_MAX = 200;
+
+    /** `product_type`: the category path (`Ropa > Remeras`). */
+    public const PRODUCT_TYPE_MAX = 1000;
+
+    /** `custom_label_0` to `custom_label_4`. */
+    public const CUSTOM_LABEL_MAX = 100;
+
+    /** Separator between category levels in `product_type`, as in Meta's example. */
+    public const CATEGORY_SEPARATOR = ' > ';
+
+    /** `custom_label_1` of items with a sale price, to build sets and campaigns of products on sale. */
+    public const SALE_LABEL = 'oferta';
 
     public const ADDITIONAL_IMAGES_MAX = 50;
 
@@ -165,8 +177,34 @@ final class MetaFeedWriter
         if ($category !== '') {
             $this->field($xml, 'google_product_category', $category);
         }
+        $this->campaignFields($xml, $item);
         $this->variantFields($xml, $item->variantAttributes);
         $xml->endElement();
+    }
+
+    /**
+     * Fields to build product sets and campaigns in Commerce Manager: `product_type` = category path,
+     * `custom_label_0` = top-level category, `custom_label_1` = SALE_LABEL with a sale price, `custom_label_2` = the
+     * product's own brand (never the connector default). Empty values are left out.
+     */
+    private function campaignFields(XMLWriter $xml, CatalogItem $item): void
+    {
+        $path = array_values(array_filter(
+            array_map(fn ($name) => self::clean((string) $name), $item->categoryPath),
+            fn (string $name) => $name !== '',
+        ));
+        $labels = [
+            'product_type' => [implode(self::CATEGORY_SEPARATOR, $path), self::PRODUCT_TYPE_MAX],
+            'custom_label_0' => [$path[0] ?? '', self::CUSTOM_LABEL_MAX],
+            'custom_label_1' => [$item->salePrice !== null ? self::SALE_LABEL : '', self::CUSTOM_LABEL_MAX],
+            'custom_label_2' => [self::clean($item->brand ?? ''), self::CUSTOM_LABEL_MAX],
+        ];
+        foreach ($labels as $field => [$value, $max]) {
+            $value = trim(mb_substr($value, 0, $max));
+            if ($value !== '') {
+                $this->field($xml, $field, $value);
+            }
+        }
     }
 
     /** @param array<string, string> $attributes */

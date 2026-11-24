@@ -17,6 +17,7 @@ return [
     // Card groups (App\Connectors\ConnectorCategory)
     'category_sales_channel' => 'Sales channels',
     'category_payments' => 'Payment methods',
+    'category_marketing' => 'Advertising and measurement',
 
     // Requirements and actions that resolve them
     'requirement_shop_catalog' => 'Turn on the product catalog to use this connector.',
@@ -120,18 +121,20 @@ return [
     'meta_action_activate' => 'Activate feed for Meta',
     'meta_action_deactivate' => 'Deactivate feed',
 
-    // Commerce Manager guide (PLAN.md §4.6)
+    // Commerce Manager guide (PLAN.md §4.6). Quoted labels translate those seen in Commerce Manager in Spanish (Spain) on
+    // 2026-11-24; the English interface may word them slightly differently.
     'guide_title' => 'How to connect the catalog in Commerce Manager',
     'guide_requirement' => 'You need a Meta business portfolio (Business Manager) with full control.',
-    'guide_step_open' => 'Open :link. If you do not have a catalog yet, create one: type "Online products", without connecting a platform, choose the portfolio and give it a name; the pixel can be skipped.',
-    'guide_step_data_source' => 'In the catalog: "Catalog" tab → "Data sources" → "+ Add" → "Data file".',
+    'guide_step_open' => 'Open :link and click "Add products" (or create a catalog). Choose the online products type, do NOT tick "Connect to a partner platform", choose your portfolio, give it a name and click "Next" (this accepts Meta\'s catalog terms).',
+    'guide_step_data_source' => 'In "Choose how to add your products or services" choose "Upload a data feed" and click "Next".',
     'guide_step_platform' => 'In "Which platform is your file formatted for?" keep "Commerce Manager".',
-    'guide_step_url' => 'Choose "Use a URL" and paste the feed URL copied from this screen.',
-    'guide_step_fields' => 'Next. If Meta offers to map fields, nothing needs changing: the feed uses its names.',
-    'guide_step_name_currency' => 'Name the feed and choose :currency as the default currency.',
-    'guide_step_schedule' => 'Choose the schedule: daily (recommended; Meta downloads at most once an hour). Keep "Replace" so a product you unpublish also leaves the catalog.',
-    'guide_step_upload' => 'Upload. In "Data sources" you will see how many products entered and the errors (:link).',
+    'guide_step_url' => 'In "Choose how you want to upload the file" choose "Use a URL or Google Sheets" and paste the feed URL from this screen. Leave "Login information" empty. Click "Next".',
+    'guide_step_name_currency' => 'In "Confirm settings" give it a name. "Default currency" comes set to USD: change it to :currency, your site\'s currency.',
+    'guide_step_schedule' => 'In "Data feed schedule" keep the "Hourly" frequency (it is the default and worth keeping) and click "Upload".',
+    'guide_step_result' => 'To see the result go to "Catalog" → "Data sources": it shows how many products entered and "No errors". "Update" makes Meta read it right away (:link).',
+    'guide_step_products' => 'In "Products" every product must say "Meets requirements".',
     'guide_step_return' => 'Come back to this screen: "Meta last downloaded the catalog" must show the date.',
+    'guide_labels' => 'The feed sends each product\'s category, whether it is on sale and its brand: use them to build product sets and campaigns by category in Commerce Manager.',
     'guide_link_commerce_manager' => 'Commerce Manager',
     'guide_link_troubleshoot' => 'how to fix feed errors',
     'guide_link_scheduled' => 'scheduled feeds',

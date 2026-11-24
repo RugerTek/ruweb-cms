@@ -166,9 +166,11 @@ final class ProductPreview
         }
         $base['media'] = $media->values()->all();
 
-        if (! $patch || array_key_exists('brands', $data)) {
-            $others = Taxonomy::whereIn('id', $base['taxonomies'])->where('type', '!=', Product::BRAND_TAXONOMY)->pluck('id')->all();
-            $base['taxonomies'] = array_values([...$others, ...array_map('intval', $data['brands'] ?? [])]);
+        foreach (['brands' => Product::BRAND_TAXONOMY, 'categories' => Product::CATEGORY_TAXONOMY] as $key => $type) {
+            if (! $patch || array_key_exists($key, $data)) {
+                $others = Taxonomy::whereIn('id', $base['taxonomies'])->where('type', '!=', $type)->pluck('id')->all();
+                $base['taxonomies'] = array_values([...$others, ...array_map('intval', $data[$key] ?? [])]);
+            }
         }
 
         $variants = [];

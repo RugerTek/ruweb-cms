@@ -73,7 +73,7 @@ final class ProductOperations
             }
             $baseLocale = $data['locale'] === Locale::baseCode();
             $relations = [];
-            foreach (['featured_image', 'gallery', 'brands', 'variants'] as $key) {
+            foreach (['featured_image', 'gallery', 'brands', 'categories', 'variants'] as $key) {
                 if (! $partial || array_key_exists($key, $data)) {
                     $relations[$key] = $data[$key] ?? null;
                 }
@@ -211,6 +211,9 @@ final class ProductOperations
         }
         if (array_key_exists('brands', $relations)) {
             $product->syncTaxonomies(array_map('intval', $relations['brands'] ?? []), Product::BRAND_TAXONOMY);
+        }
+        if (array_key_exists('categories', $relations)) {
+            $product->syncTaxonomies(array_map('intval', $relations['categories'] ?? []), Product::CATEGORY_TAXONOMY);
         }
         if (array_key_exists('variants', $relations)) {
             $this->replaceVariants($product, $relations['variants'] ?? []);

@@ -16,7 +16,8 @@ use Illuminate\Validation\Validator as ValidationValidator;
  * Validation shared by the panel and MCP for shop products. Amounts are integers in `cms.shop.currency` (the panel
  * turns typed values such as "150.000" into integers with MoneyHelper::parseInput before calling it); a null price
  * is a catalog item without a public price. Commerce fields (sku, prices, stock, variants) belong to the
- * base-language row and are rejected on translations. `variants`, when present, is the whole list.
+ * base-language row and are rejected on translations. `variants`, `brands` and `categories`, when present, are the
+ * whole list; terms must be of their type and of the product's language.
  */
 final class ProductInput
 {
@@ -25,6 +26,9 @@ final class ProductInput
     public const COMMERCE_FIELDS = ['sku', 'price_amount', 'compare_at_price_amount', 'has_variants', 'track_stock', 'allow_backorder', 'stock', 'weight_grams', 'dimensions_json', 'variants'];
 
     public const MAX_VARIANTS = 100;
+
+    /** Categories one product may carry; the feed uses the first one (lowest id). */
+    public const MAX_CATEGORIES = 20;
 
     public function __construct(private array $data, private ?Product $product = null, private bool $partial = false, private bool $draftOnly = false) {}
 
@@ -61,6 +65,8 @@ final class ProductInput
             'variants.*.price_amount.required_with' => __('shop.compare_at_price_greater'),
             'price_amount.required_with' => __('shop.compare_at_price_greater'),
             '*.prohibited' => __('shop.commerce_fields_base_only'),
+            'categories.*.exists' => __('shop.category_invalid'),
+            'categories.*.integer' => __('shop.category_invalid'),
         ]);
         $validator->after(fn (ValidationValidator $validator) => $this->checkVariantList($validator));
         if (! $this->partial) {
@@ -106,6 +112,8 @@ final class ProductInput
             'gallery.*' => ['integer', 'distinct', 'exists:media,id'],
             'brands' => ['nullable', 'array'],
             'brands.*' => ['integer', 'distinct', Rule::exists('taxonomies', 'id')->where('type', Product::BRAND_TAXONOMY)->where('locale', $locale)],
+            'categories' => ['nullable', 'array', 'max:'.self::MAX_CATEGORIES],
+            'categories.*' => ['integer', 'distinct', Rule::exists('taxonomies', 'id')->where('type', Product::CATEGORY_TAXONOMY)->where('locale', $locale)],
             'meta_json' => ['nullable', 'array'],
             'meta_json.title' => ['nullable', 'string', 'max:255'],
             'meta_json.description' => ['nullable', 'string', 'max:320'],

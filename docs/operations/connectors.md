@@ -6,8 +6,8 @@
 A connector links the site to an external platform without code: the administrator opens **Connectors** in the
 panel, turns a connector on and follows the guide on its screen. The first one is **Meta**: a product feed that
 Commerce Manager downloads on a schedule, so the shop's products appear in the catalog used by Facebook and
-Instagram shops and catalog ads. v1 is feed-only (Meta pulls a URL); there is no Catalog API push, Pixel or
-"Connect with Facebook" login.
+Instagram shops and catalog ads. v1 is feed-only (Meta pulls a URL); there is no Catalog API push or
+"Connect with Facebook" login yet ([Planned connectors](#planned-connectors)).
 
 ## What the administrator sees
 
@@ -21,7 +21,8 @@ duplicated on the card.
   profiles ([../concepts/admin-profiles.md](../concepts/admin-profiles.md)).
 - `/admin/connectors` is a grid of cards, one per registered connector, grouped under a heading per
   `Connector::category()` (`App\Connectors\ConnectorCategory`, in the order of its cases: "Sales channels" for
-  Meta, "Payment methods" for Bancard; empty groups are not shown), each with its status
+  Meta, "Payment methods" for Bancard, "Advertising and measurement" for the Meta Pixel; empty groups are not
+  shown), each with its status
   (`App\Connectors\ConnectorStatus`):
 
   | Status | When | The card offers |
@@ -43,15 +44,15 @@ All texts live in `lang/es/connectors.php` / `lang/en/connectors.php` (parity ru
 
 | Piece | Where | Owns |
 |---|---|---|
-| Registry entries | `config/cms.php`: `connectors` (key => class) and `catalog_sources` (key => class) | Which connectors and sources exist. Today `meta` and `bancard`, and the `products` source. |
+| Registry entries | `config/cms.php`: `connectors` (key => class) and `catalog_sources` (key => class) | Which connectors and sources exist. Today `meta`, `bancard` and `meta_pixel`, and the `products` source. |
 | `Connector` | `app/Contracts/Connectors/Connector.php` | `key()`, `label()` and `description()` (translation keys), `icon()` (Blade view), `category()` (`ConnectorCategory`: grid group), `requirements()`, `defaults()`, `rules()` |
 | `FeedConnector` | `app/Contracts/Connectors/FeedConnector.php` | Extends `Connector` for platforms that download a file: `source()`, `check()`, `write()`, `contentType()`, `extension()`, `fetchAgents()` |
 | `CatalogSource` | `app/Contracts/Catalog/CatalogSource.php` | Where a feed reads items from: `key()`, `available()`, `items()` (a cursor-backed `LazyCollection`, never the whole catalog in memory), `count()` (items) and `groupCount()` (products: the variants of one product count once) |
-| `CatalogItem` | `app/Connectors/CatalogItem.php` | Immutable item handed from source to connector: id, group id, title, plain-text description, relative URL, media ids, `Money` price and sale price, availability, brand, variant attributes, panel edit URL |
+| `CatalogItem` | `app/Connectors/CatalogItem.php` | Immutable item handed from source to connector: id, group id, title, plain-text description, relative URL, media ids, `Money` price and sale price, availability, brand, variant attributes, panel edit URL, category path (top level first) |
 | `ConnectorRequirement`, `ConnectorAction` | `app/Connectors/` | What a connector needs from the site and the panel button that resolves it (`ConnectorRequirement::shopCatalog()`) |
 | `FeedWarning`, `FeedResult` | `app/Connectors/` | Why an item is skipped or only flagged; the totals, sample and warnings of a run |
 | `ConnectorRegistry` | `app/Connectors/ConnectorRegistry.php` | Read side: resolves classes on every call, status, effective settings (defaults + stored), and `feedRecord()` that decides whether a public feed request gets a document or a 404 |
-| `Connector` model | `app/Models/Connector.php`, table `connectors` | One row per connector, created on first activation: `enabled`, `settings_json`, token hash and encrypted token, fetch log and counters |
+| `Connector` model | `app/Models/Connector.php`, table `connectors` | One row per connector, created on first activation: `enabled`, `settings_json`, token hash and encrypted token, fetch log and counters, and `secrets` (encrypted credentials for an external API, today the Meta Pixel's Conversions API token) with the `bound_origin` they were saved under |
 | `ConnectorOperations` | `app/Services/Connectors/ConnectorOperations.php` | The only write path, shared by the panel and MCP |
 | `ConnectorServiceProvider` | `app/Providers/ConnectorServiceProvider.php` | Gate `manage-connectors` (administrators), the `feeds` rate limiter, and the model listeners that mark feeds stale |
 
@@ -104,9 +105,9 @@ Never write a `connectors` row any other way: the panel, MCP and tests all go th
 A new **catalog source** (records other than shop products) is a class implementing
 `App\Contracts\Catalog\CatalogSource` plus an entry in `cms.catalog_sources`. It owns which records are public
 (published, not expired, base language) and maps them to `CatalogItem`; the connector owns the destination
-format. v1 ships only the shop products source (`products`).
-
-The next planned connector is Google Merchant Center: same source, same `FeedResult`, its own writer and defaults.
+format. v1 ships only the shop products source (`products`). It sends the path of the product's first category
+(lowest id, like the brand) walking `parent_id` up to the top level, at most 10 levels (a parent loop in the data
+never hangs the feed).
 
 ## Bancard card
 
@@ -175,13 +176,13 @@ the card has no such link otherwise. The card's buttons that only navigate are l
 
 ## Meta feed format
 
-Sources consulted on **2026-11-23** (dates are the "Updated" line of each page; the Business Help Center pages
-carry no date):
+Sources consulted on **2026-11-23**, the fields page again on **2026-11-24** (dates are the "Updated" line of
+each page; the Business Help Center pages carry no date):
 
 | Topic | Source |
 |---|---|
 | Accepted formats, one field per line in XML | [Catalog reference](https://developers.facebook.com/documentation/ads-commerce/catalog/reference/) (Updated: Apr 22, 2026) |
-| Fields and their rules | [Catalog fields](https://developers.facebook.com/documentation/ads-commerce/commerce-platform/catalog/fields) (Updated: Oct 5, 2026) |
+| Fields and their rules | [Catalog fields](https://developers.facebook.com/documentation/ads-commerce/commerce-platform/catalog/fields) (Updated: Oct 28, 2026) |
 | Official RSS sample | [dpa_product_catalog_sample_feed_rss.xml](https://lookaside.facebook.com/developers/resources/?id=dpa_product_catalog_sample_feed_rss.xml) |
 | Variants | [Product variants](https://developers.facebook.com/documentation/ads-commerce/catalog/guides/product-variants) |
 | Crawler user-agent, gzip | [Meta web crawlers](https://developers.facebook.com/documentation/sharing/webmasters/web-crawlers/) (Updated: May 21, 2026) |
@@ -211,6 +212,10 @@ always sends those eight plus `brand`.
 | `additional_image_link` | Gallery (without the featured image) as JPEG or PNG, comma-separated | Up to 50 images, ≤ 2,000 characters in total; the list is cut to fit |
 | `brand` | The product's `brand` term, or the connector default (site name) with a `default_brand` notice | ≤ 100 |
 | `google_product_category` | Optional connector default | Google taxonomy text or id |
+| `product_type` | The product's category path, top level first, joined with ` > ` (`Ropa > Remeras`); left out without a category | ≤ 1,000 |
+| `custom_label_0` | Top-level category (`Ropa`); left out without a category | ≤ 100 |
+| `custom_label_1` | `oferta` when the item has a `sale_price` (`MetaFeedWriter::SALE_LABEL`); left out otherwise | ≤ 100 |
+| `custom_label_2` | The product's own `brand` term; left out without one (the connector default brand goes only to `brand`) | ≤ 100 |
 | `color`, `size`, `gender`, `pattern`, `material` | Variant attributes with those keys (case-insensitive), also under the Spanish names `talle`, `talla`, `tamaño` → `size` and `estampado` → `pattern`, and `colour` → `color`. `gender` only when the value is `female`, `male` or `unisex` (sent in lowercase); any other value goes to `additional_variant_attribute` | ≤ 200 |
 | `additional_variant_attribute` | Remaining variant attributes as `Key:Value,Key:Value` (no space after the comma; `:` and `,` inside a key or value become spaces), up to 3 pairs | Up to 3 pairs |
 
@@ -218,6 +223,11 @@ Items left out (listed in the panel with their reason and an edit link): `missin
 `image_not_convertible` (the image could not become a JPEG) and `no_variants` (variants enabled but none exists).
 Notices that keep the item: `default_brand`, `image_too_small` (shorter side under 500 px; Meta decides),
 `title_truncated`, `description_from_title`.
+
+`product_type` and the custom labels exist so the client can build **product sets** in Commerce Manager (filters
+on these fields) and catalog campaigns by category, on sale or by brand; the guide says so in one line. Products get
+categories from the `category` taxonomy (`HasTaxonomies::categories()`), assigned in the product form and through
+the `products_*` MCP tools ([../shop/catalog.md](../shop/catalog.md)); a product without a category sends neither field.
 
 The feed carries only **published products in the base language**; per-language or per-country feeds are not in v1.
 
@@ -296,30 +306,54 @@ The detail screen shows these steps with the client's feed URL and currency (tra
 [Upload products with a data feed](https://business.facebook.com/business/help/125074381480892),
 [Create a catalog](https://business.facebook.com/business/help/1275400645914358) and
 [About scheduled data feed uploads](https://en-gb.facebook.com/business/help/2284463181837648), consulted
-2026-11-23 in English. The Spanish labels of Meta's interface are not verified yet: correct them against real
-screenshots the first time a catalog is connected.
+2026-11-23, and the labels below were **verified on 2026-11-24** while connecting a test catalog in Commerce Manager
+with its interface in Spanish (Spain). The English texts in `lang/en/connectors.php` translate those labels; Meta's
+English interface may word them slightly differently.
 
 0. Requirement: a Meta business portfolio (Business Manager) with full control.
-1. Open [Commerce Manager](https://business.facebook.com/commerce_manager). Without a catalog, create one: type
-   **Online products**, no platform connection, choose the portfolio and a name; the pixel can be skipped.
-2. In the catalog: **Catalog** tab → **Data sources** → **+ Add** → **Data file**.
-3. In "Which platform is your file formatted for?" keep **Commerce Manager**.
-4. Choose **Use a URL** and paste the feed URL copied from the connector screen.
-5. Next. If Meta offers to map fields, nothing needs changing: the feed uses Meta's field names.
-6. Name the feed and choose the site currency (**PYG** by default, `cms.shop.currency`) as default currency.
-7. Schedule: **daily** (Meta fetches at most once an hour:
-   [scheduled feeds](https://developers.facebook.com/documentation/ads-commerce/catalog/guides/scheduled-feeds/)).
-   Keep **Replace**, so a product that is unpublished also leaves the catalog.
-8. **Upload**. Data sources shows how many products entered and the errors
-   ([Troubleshoot data feed errors](https://business.facebook.com/business/help/2041876302542944)).
+1. Open [Commerce Manager](https://business.facebook.com/commerce_manager) → «Añadir productos» (or create a
+   catalog): online products type, **do not** tick «Conectarse a una plataforma de socios», choose the portfolio and
+   a name → «Siguiente» (this accepts Meta's catalog terms).
+2. «Elige cómo añadir tus productos o servicios» → «Sube un archivo de datos» → «Siguiente».
+3. «¿Para qué plataforma está formateado tu archivo?» → keep «Commerce Manager».
+4. «Elige cómo quieres subir el archivo» → «Utiliza una URL u Hojas de cálculo de Google» → paste the feed URL
+   copied from the connector screen. Leave «Información de inicio de sesión» empty → «Siguiente».
+5. «Confirmar configuración»: a name, and «Divisa predeterminada», which comes set to **USD**: change it to the
+   site currency (**PYG** by default, `cms.shop.currency`; each item carries its currency anyway).
+6. «Programación de la lista de datos» → frequency «Cada hora» (the default; keep it: Meta fetches at most once an
+   hour, [scheduled feeds](https://developers.facebook.com/documentation/ads-commerce/catalog/guides/scheduled-feeds/))
+   → «Subir».
+7. Result: «Catálogo» → «Orígenes de datos» shows the item count and «Sin errores»; «Actualizar» makes Meta read the
+   feed right away ([Troubleshoot data feed errors](https://business.facebook.com/business/help/2041876302542944)).
+8. «Productos»: every product reads «Cumple los requisitos».
 9. Back on the connector screen, "Meta last downloaded the catalog" must show a date.
+
+Below the steps, one line tells the client that the category, sale and brand labels of the feed
+([Meta feed format](#meta-feed-format)) are there to build product sets and campaigns by category.
 
 When the client regenerates the URL, the new one goes in the feed's **Settings** tab in Data sources. If several
 scheduled fetches fail, Meta pauses the schedule: after fixing the cause, **Resume** it from the same tab.
 
-## Not in v1
+## Meta Pixel card
 
-- **"Connect with Facebook"** (Meta Business Extension: login, catalog chosen in a dialog, products pushed by API)
-  needs a Meta app owned by a verified business, advanced access through App Review and one central app for
-  every site. It would reuse `CatalogSource` and `FeedResult` with a different writer.
-- Per-language or per-country feeds, Pixel and Conversions API, and onsite checkout fields.
+The Meta Pixel and Conversions API connector (`meta_pixel`, v1.1) is in the "Advertising and measurement" group and
+works with the shop off. Unlike the feed, its settings (pixel ID, encrypted Conversions API token, test events code
+and the "Send test event" button) live on its own detail, `/admin/connectors/meta_pixel`; the card shows the status
+and whether the pixel ID is missing. Browser and server events share an `event_id` so Meta deduplicates them, and
+their `content_ids` are the feed's `g:id`. Everything else: [meta-pixel.md](meta-pixel.md).
+
+## Planned connectors
+
+Nothing below exists in the code yet; each item names what it would reuse.
+
+- **v2 — "Connect with Facebook"** (Meta Business Extension: login, catalog chosen in a dialog, products pushed by
+  API, Meta's rejections shown in Ruweb). It needs a Meta app owned by RugerTek's verified business, advanced access
+  through App Review (weeks, outside our control) and one central app for every site. It would reuse
+  `CatalogSource` and `FeedResult` with a different writer; the URL feed stays as the fallback.
+- **Per-language and per-country feeds**: one feed per public language or market, from the translated product rows
+  (today only the base language is sent).
+- **Google Merchant Center**: same source, same `FeedResult`, its own writer and defaults.
+- **Amiba**: connect the Ruweb site to Amiba, RugerTek's chatbot platform, so the client gets a chatbot on the
+  website easily and self-managed, turned on from its card in Connectors. Design pending: how the site authenticates
+  with Amiba and what data it shares (pages, products, contact details) is to be defined with Rubén.
+- Onsite checkout fields (paying inside Facebook or Instagram) are not planned: the purchase ends on the Ruweb site.

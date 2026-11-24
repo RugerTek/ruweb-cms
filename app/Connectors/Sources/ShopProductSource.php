@@ -9,6 +9,7 @@ use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Taxonomy;
 use App\Support\ShopModule;
 use App\ValueObjects\Money;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +28,12 @@ class ShopProductSource implements CatalogSource
 
     /** Products read per query while streaming; relations are eager loaded per chunk. */
     private const CHUNK = 200;
+
+    /** Deepest category level walked up to the top one; guards against a parent loop in the data. */
+    private const CATEGORY_DEPTH = 10;
+
+    /** @var array<int, array{name: string, parent_id: ?int}>|null category id => name and parent, loaded once per items() run */
+    private ?array $categoryTree = null;
 
     public function __construct(private readonly ShopModule $shop) {}
 
@@ -48,8 +55,10 @@ class ShopProductSource implements CatalogSource
 
     public function items(): LazyCollection
     {
+        $this->categoryTree = null;
+
         return $this->products()
-            ->with(['variants', 'media', 'brands'])
+            ->with(['variants', 'media', 'brands', 'categories'])
             ->lazyById(self::CHUNK)
             ->flatMap(fn (Product $product) => $this->itemsFor($product));
     }
@@ -91,6 +100,7 @@ class ShopProductSource implements CatalogSource
             'additionalImageMediaIds' => $this->galleryIds($product),
             'brand' => $this->brand($product),
             'editUrl' => $this->editUrl($product),
+            'categoryPath' => $this->categoryPath($product),
         ];
 
         if (! $product->has_variants) {
@@ -139,6 +149,7 @@ class ShopProductSource implements CatalogSource
             brand: $common['brand'],
             variantAttributes: $attributes,
             editUrl: $common['editUrl'],
+            categoryPath: $common['categoryPath'],
         );
     }
 
@@ -217,6 +228,33 @@ class ShopProductSource implements CatalogSource
         $name = $product->brands->sortBy('id')->first()?->name;
 
         return filled($name) ? (string) $name : null;
+    }
+
+    /**
+     * Names of the product's first category (lowest id, like the brand) and its parents, top level first.
+     *
+     * @return list<string>
+     */
+    private function categoryPath(Product $product): array
+    {
+        $category = $product->categories->sortBy('id')->first();
+        if (! $category instanceof Taxonomy) {
+            return [];
+        }
+        $tree = $this->categoryTree ??= Taxonomy::query()->ofType('category')->get(['id', 'name', 'parent_id'])
+            ->mapWithKeys(fn (Taxonomy $term) => [(int) $term->id => ['name' => (string) $term->name, 'parent_id' => $term->parent_id === null ? null : (int) $term->parent_id]])
+            ->all();
+
+        $path = [];
+        $id = (int) $category->id;
+        while ($id !== null && isset($tree[$id]) && count($path) < self::CATEGORY_DEPTH) {
+            if (filled($tree[$id]['name'])) {
+                array_unshift($path, $tree[$id]['name']);
+            }
+            $id = $tree[$id]['parent_id'];
+        }
+
+        return $path;
     }
 
     /** @return array<string, string> scalar variant attributes (`color` => `Rojo`) */

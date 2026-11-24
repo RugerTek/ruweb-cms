@@ -1,0 +1,56 @@
+<?php
+
+// Meta Pixel connector (App\Connectors\MetaPixel\MetaPixelConnector, docs/operations/meta-pixel.md).
+return [
+    'label' => 'Meta Pixel',
+    'description' => 'Tells Facebook and Instagram what visitors do on your site (view a product, buy, contact you) so your ads reach the right people and you can measure the results.',
+    'requirement_pixel_id' => 'The pixel ID is missing: copy it from Events Manager and save it in the detail.',
+    'action_configure' => 'Configure',
+
+    'settings_title' => 'Settings',
+    'settings_help' => 'The pixel ID is enough to measure from the browser. With the Conversions API token too, the site also tells Meta from the server, and Meta counts each action once.',
+    'field_pixel_id' => 'Pixel (dataset) ID',
+    'field_pixel_id_help' => 'Digits only. You find it in :link › Data sources, under your pixel name.',
+    'field_access_token' => 'Conversions API token (optional)',
+    'field_access_token_help' => 'Generate it in Events Manager › your pixel › Settings › Conversions API › "Generate access token". It is stored encrypted and never shown again. :link',
+    'link_meta_guide' => 'Meta guide',
+    'token_saved' => 'Token saved, ends in :suffix.',
+    'token_missing' => 'No token yet: only the browser measures.',
+    'token_unusable' => 'A token is saved, but it was entered under another site address or key: paste it again to use it here.',
+    'token_placeholder' => 'Paste the token here',
+    'token_placeholder_replace' => 'Leave it empty to keep the current one',
+    'token_forget' => 'Delete the saved token',
+    'field_test_event_code' => 'Test events code (optional)',
+    'field_test_event_code_help' => 'Events Manager › Test events gives it (for example TEST12345). While it is set, server events show up on that screen: delete it when you finish testing.',
+    'saved' => 'Pixel settings saved.',
+    'error_token_format' => 'That does not look like a Meta token. Copy the whole token, without spaces.',
+
+    'test_title' => 'Test the connection',
+    'test_help' => 'Sends a test visit through the Conversions API now, with your test events code. Open :link in Events Manager to see it arrive.',
+    'link_test_events' => 'Test events',
+    'action_test' => 'Send test event',
+    'test_needs_pixel_id' => 'To test, save the pixel ID first.',
+    'test_needs_token' => 'To test, save the Conversions API token first.',
+    'test_needs_code' => 'To test, save the test events code first (Events Manager › Test events).',
+    'test_sent' => 'Meta received the test event. Check Events Manager › Test events.',
+    'test_failed' => 'Meta did not accept the test event: :message',
+    'test_connection' => 'Meta could not be reached. Try again in a while.',
+
+    'events_title' => 'What Meta is told',
+    'events_help' => 'Each action goes from the browser and, with the token, from the server too, with the same identifier so Meta does not count it twice. Products are identified as in the Meta catalog.',
+    'event_PageView' => 'someone opens any page of the site.',
+    'event_ViewContent' => 'someone views a product page.',
+    'event_AddToCart' => 'someone adds a product to the cart.',
+    'event_InitiateCheckout' => 'someone starts filling in their details to buy.',
+    'event_Purchase' => 'the payment of an order is confirmed (with the total and the products).',
+    'event_Lead' => 'someone sends the contact form.',
+    'events_without_shop' => 'With the shop off, page views and contact forms are measured.',
+    'events_not_measured' => 'Nothing is measured while you are signed in to the panel or in previews, so your visits do not mix with your customers\'.',
+
+    'privacy_title' => 'Privacy',
+    'privacy_help' => 'The pixel uses Meta cookies. Say in your privacy policy that you use the Meta Pixel and what for. The email, phone, name and city of an order are sent to Meta hashed (they cannot be read) and only to recognise the purchase.',
+
+    'card_browser_and_server' => 'Measuring from the browser and the server.',
+    'card_browser_only' => 'Measuring from the browser. Add the token to measure from the server too.',
+    'confirm_deactivate' => 'The pixel stops loading and nothing else is sent to Meta. Nothing is deleted: the ID, token and code are kept.',
+];

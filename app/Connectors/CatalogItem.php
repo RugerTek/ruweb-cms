@@ -27,6 +27,7 @@ final class CatalogItem
      * @param  string|null  $brand  brand term name; null means the connector's default brand
      * @param  array<string, string>  $variantAttributes  variant attributes (`color` => `Rojo`)
      * @param  string|null  $editUrl  panel URL to edit the record, for the skipped list
+     * @param  list<string>  $categoryPath  names of the record's category from the top level down (`['Ropa', 'Remeras']`); empty without one
      */
     public function __construct(
         public readonly string $id,
@@ -42,6 +43,7 @@ final class CatalogItem
         public readonly ?string $brand = null,
         public readonly array $variantAttributes = [],
         public readonly ?string $editUrl = null,
+        public readonly array $categoryPath = [],
     ) {
         if ($id === '') {
             throw new InvalidArgumentException('A catalog item needs an id.');

@@ -3,6 +3,7 @@
 use App\Providers\AppServiceProvider;
 use App\Providers\BrevoMailServiceProvider;
 use App\Providers\ConnectorServiceProvider;
+use App\Providers\MetaPixelServiceProvider;
 use App\Providers\SecurityServiceProvider;
 use App\Providers\ShopServiceProvider;
 
@@ -12,4 +13,5 @@ return [
     BrevoMailServiceProvider::class,
     ShopServiceProvider::class,
     ConnectorServiceProvider::class,
+    MetaPixelServiceProvider::class,
 ];

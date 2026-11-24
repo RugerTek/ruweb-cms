@@ -17,4 +17,7 @@ Route::prefix('connectors/{connector}')->where(['connector' => '[a-z0-9_]+'])->n
     Route::put('settings', [ConnectorController::class, 'updateSettings'])->name('settings');
     Route::post('rotate', [ConnectorController::class, 'rotateToken'])->name('rotate');
     Route::post('enable-catalog', [ConnectorController::class, 'enableCatalog'])->name('enable-catalog');
+    // Meta Pixel only (other keys answer 404): settings with the encrypted access token, and the test event.
+    Route::put('meta-pixel', [ConnectorController::class, 'updateMetaPixel'])->name('meta-pixel.update');
+    Route::post('meta-pixel/test-event', [ConnectorController::class, 'sendMetaPixelTest'])->middleware('throttle:6,1')->name('meta-pixel.test');
 });
