@@ -7,6 +7,8 @@ use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorStatus;
 use App\Connectors\FeedResult;
+use App\Connectors\Meta\Connect\MetaConnectionStore;
+use App\Connectors\Meta\MetaCatalogConnector;
 use App\Connectors\MetaPixel\MetaPixelConnector;
 use App\Contracts\Connectors\Connector as ConnectorContract;
 use App\Contracts\Connectors\FeedConnector;
@@ -133,7 +135,23 @@ class ConnectorController extends Controller
     {
         $this->operations->rotateToken($request->user(), $connector);
 
-        return redirect()->route('admin.connectors.show', ['connector' => $connector])->with('success', __('connectors.token_rotated'));
+        return redirect()->route('admin.connectors.show', ['connector' => $connector])
+            ->with('success', __(self::metaKeepsFeedUrl($connector) ? 'connectors.token_rotated_connected' : 'connectors.token_rotated'));
+    }
+
+    /**
+     * True when Ruweb itself hands the feed URL to Meta («Conectar con Facebook», working connection): regenerating
+     * it updates the Meta feed on its own (ConnectorOperations::rotateToken → MetaCatalogSync::refreshFeedUrl), so
+     * the panel must not ask to paste anything.
+     */
+    private static function metaKeepsFeedUrl(string $key): bool
+    {
+        if ($key !== MetaCatalogConnector::KEY) {
+            return false;
+        }
+        $connection = app(MetaConnectionStore::class)->get();
+
+        return $connection->isConnected() && ! $connection->needsReconnect();
     }
 
     /**
@@ -269,6 +287,7 @@ class ConnectorController extends Controller
             // An active connector whose requirement broke afterwards (the shop was turned off).
             'paused' => $status === ConnectorStatus::NeedsAction && (bool) $record?->enabled,
             'isMeta' => $key === 'meta',
+            'metaKeepsFeedUrl' => self::metaKeepsFeedUrl($key),
             'sourceCount' => $sourceAvailable ? $source->count() : null,
             // Products, as the administrator counts them (the variants of one product are one).
             'groupCount' => $sourceAvailable ? $source->groupCount() : null,

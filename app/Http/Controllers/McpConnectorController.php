@@ -6,6 +6,8 @@ use App\Connectors\CatalogItem;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorRequirement;
 use App\Connectors\FeedWarning;
+use App\Connectors\Meta\Connect\MetaConnectionStore;
+use App\Connectors\Meta\MetaCatalogConnector;
 use App\Connectors\MetaPixel\MetaPixelConnector;
 use App\Contracts\Connectors\FeedConnector;
 use App\Exceptions\RevisionConflict;
@@ -27,7 +29,8 @@ use Illuminate\Validation\Validator as ValidatorInstance;
  * operation the panel uses. The feed token and the feed URL never leave this controller: the URL is shown only in
  * the panel (Connector::feedUrl()), like transport credentials (docs/operations/mcp-surface.md). The Meta Pixel's
  * pixel ID and test events code are ordinary settings here; its Conversions API access token is set only in the panel
- * and reported as `conversions_api.token_configured`.
+ * and reported as `conversions_api.token_configured`. The Meta catalog reports its «Conectar con Facebook» state as
+ * `meta_connection` (mode, business, catalog, «termina en»), never the Graph token.
  */
 class McpConnectorController extends Controller
 {
@@ -204,6 +207,9 @@ class McpConnectorController extends Controller
                 'events' => MetaPixelConnector::EVENTS,
             ];
         }
+        if ($definition instanceof MetaCatalogConnector) {
+            $data['meta_connection'] = $this->metaConnection();
+        }
         if ($summary) {
             return $data;
         }
@@ -219,6 +225,29 @@ class McpConnectorController extends Controller
             'feed_url_location' => $definition instanceof FeedConnector ? 'Secret: shown only in the admin panel ('.$this->panelUrl($key).'), never through MCP.' : null,
             'activated_at' => $record?->created_at?->toISOString(),
             'updated_at' => $record?->updated_at?->toISOString(),
+        ];
+    }
+
+    /**
+     * Meta v2 «Conectar con Facebook» (plan-meta-v2): how the catalog reaches Meta. Never the access token (only its
+     * last 4 characters, like the panel's «termina en»); connecting and disconnecting happen only in the panel, because
+     * they need the administrator's Facebook login.
+     */
+    private function metaConnection(): array
+    {
+        $connection = app(MetaConnectionStore::class)->get();
+
+        return [
+            'mode' => $connection->mode,
+            'connected' => $connection->isConnected() && ! $connection->needsReconnect(),
+            'needs_reconnect' => $connection->needsReconnect(),
+            'business_id' => $connection->businessId,
+            'catalog' => $connection->catalogId === null ? null : ['id' => $connection->catalogId, 'name' => $connection->catalogName],
+            'product_feed_id' => $connection->productFeedId,
+            'connected_at' => $connection->connectedAt?->format(DATE_ATOM),
+            'token_ends_in' => $connection->tokenSuffix,
+            'last_error' => $connection->lastError,
+            'connect_location' => 'Only in the admin panel ('.$this->panelUrl(MetaCatalogConnector::KEY).'#meta-connection): «Conectar con Facebook» needs the administrator\'s Facebook login. The token is never available here.',
         ];
     }
 

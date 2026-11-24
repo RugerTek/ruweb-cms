@@ -6,8 +6,10 @@ use App\Connectors\CatalogItem;
 use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRequirement;
 use App\Connectors\FeedWarning;
+use App\Connectors\Meta\Connect\MetaConnectionStore;
 use App\Connectors\Sources\ShopProductSource;
 use App\Contracts\Connectors\FeedConnector;
+use App\Contracts\Connectors\RemoteConnector;
 use App\Models\Media;
 use App\Models\Setting;
 use App\Services\Media\FeedImage;
@@ -17,8 +19,10 @@ use Illuminate\Validation\Rule;
  * Meta (Facebook and Instagram) catalog feed (`cms.connectors.meta`, PLAN.md §4.3–4.7): the shop products as an
  * RSS XML file that Commerce Manager downloads on a schedule. check() decides what enters (skips and notices);
  * MetaFeedWriter writes the document. The URLs below are Meta's official pages, used by the panel guide.
+ * Meta v2 («Conectar con Facebook», plan-meta-v2) keeps its connection in App\Connectors\Meta\Connect\MetaConnectionStore;
+ * a v1 site stays in manual mode and nothing here changes for it.
  */
-class MetaCatalogConnector implements FeedConnector
+class MetaCatalogConnector implements FeedConnector, RemoteConnector
 {
     public const KEY = 'meta';
 
@@ -39,6 +43,7 @@ class MetaCatalogConnector implements FeedConnector
     public function __construct(
         private readonly MetaFeedWriter $writer,
         private readonly FeedImage $images,
+        private readonly MetaConnectionStore $connection,
     ) {}
 
     public function key(): string
@@ -89,6 +94,12 @@ class MetaCatalogConnector implements FeedConnector
             'availability' => ['required', Rule::in([CatalogItem::IN_STOCK, CatalogItem::OUT_OF_STOCK])],
             'google_product_category' => ['nullable', 'string', 'max:250'],
         ];
+    }
+
+    /** Meta v2: the client removed the app (190/102) and the stored connection lost its token. Manual (v1) never. */
+    public function needsReconnect(): bool
+    {
+        return $this->connection->get()->needsReconnect();
     }
 
     public function source(): string

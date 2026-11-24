@@ -104,6 +104,25 @@ return [
         'phone_country_code' => '595',
     ],
 
+    // Meta v2 «Conectar con Facebook» (plan-meta-v2): Graph API calls of the catalog connector with the system user token
+    // delivered by the RugerTek Connect broker. The token and the broker credentials are per site, encrypted in the
+    // connectors table (App\Connectors\Meta\Connect\MetaConnectionStore), never here.
+    'meta' => [
+        // Graph API version of every catalog call (v27.0, the version the spike verified on 2026-11-24).
+        'graph_version' => 'v27.0',
+        'graph_url' => 'https://graph.facebook.com',
+        // Seconds to wait for Meta; calls are never retried blindly.
+        'timeout' => 20,
+        'connection_timeout' => 10,
+        // RugerTek Connect broker (one redirect URI and the app secret live there). Empty: the panel offers only the
+        // manual feed (v1).
+        'connect_url' => env('RUWEB_CONNECT_URL'),
+        // http:// broker URL for development; honoured only in the local and testing environments.
+        'connect_allow_http' => (bool) env('RUWEB_CONNECT_ALLOW_HTTP', false),
+        // Seconds to wait for the broker.
+        'connect_timeout' => 10,
+    ],
+
     // Where feed connectors read items from: key => class implementing App\Contracts\Catalog\CatalogSource.
     'catalog_sources' => [
         'products' => ShopProductSource::class,

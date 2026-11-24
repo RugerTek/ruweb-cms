@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ConnectorFeedController;
+use App\Http\Controllers\RuwebConnectChallengeController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -21,3 +22,11 @@ Route::get('/feeds/{connector}/{token}.xml', [ConnectorFeedController::class, 's
     ->middleware('throttle:feeds')
     ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class, EncryptCookies::class, AddQueuedCookiesToResponse::class])
     ->name('connectors.feed');
+
+// RugerTek Connect site challenge (plan-meta-v2): the broker fetches it once while registering this origin. Same
+// stateless middleware as the feeds; 404 unless a registration is in progress (RuwebConnectChallengeController).
+Route::get('/.well-known/ruweb-connect/{token}', RuwebConnectChallengeController::class)
+    ->where('token', '[A-Za-z0-9_-]{16,128}')
+    ->middleware('throttle:30,1')
+    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class, EncryptCookies::class, AddQueuedCookiesToResponse::class])
+    ->name('connectors.ruweb-connect.challenge');

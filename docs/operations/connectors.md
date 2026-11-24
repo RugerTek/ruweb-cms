@@ -6,8 +6,10 @@
 A connector links the site to an external platform without code: the administrator opens **Connectors** in the
 panel, turns a connector on and follows the guide on its screen. The first one is **Meta**: a product feed that
 Commerce Manager downloads on a schedule, so the shop's products appear in the catalog used by Facebook and
-Instagram shops and catalog ads. v1 is feed-only (Meta pulls a URL); there is no Catalog API push or
-"Connect with Facebook" login yet ([Planned connectors](#planned-connectors)).
+Instagram shops and catalog ads. Two modes: the **manual feed** (v1: the client pastes the URL in Commerce Manager)
+and **Connect with Facebook** (v2: Ruweb creates the feed in the client's catalog through the Graph API and pushes
+changes at once; [Connect with Facebook (v2)](#connect-with-facebook-v2)). The manual feed stays available as the
+fallback.
 
 ## What the administrator sees
 
@@ -30,6 +32,7 @@ duplicated on the card.
   | `available` | Requirements met, connector not active | Published product count (and the feed item count when variants make it differ), how many would enter the feed, and Activate |
   | `needs_action` | A requirement is unmet (for Meta: the product catalog is off), even if the connector is active; the chip reads "Paused" for an active connector | What is missing and, when the administrator can fix it, the button that does (for Meta: turn on the product catalog, through `ShopModuleOperations::setMode()`, see [../shop/catalog.md](../shop/catalog.md)) |
   | `connected` | Active and every requirement met | Included and skipped counts of the last generated file, last download by the platform (for Meta, "never downloaded" until Meta fetches it) |
+  | `needs_reconnect` | A remote connection (`App\Contracts\Connectors\RemoteConnector`; today Meta v2) was rejected by the platform: Meta revoked the token or the client removed the catalog | What happened and a direct "Connect again" button ([Revocation](#revocation-and-needs_reconnect)) |
 
 - `/admin/connectors/{key}` is the detail: status and last downloads, the feed URL with Copy and Regenerate, the
   setup guide, the default values form, a preview of the first items with the full list of skipped items (with
@@ -149,8 +152,10 @@ the card has no such link otherwise. The card's buttons that only navigate are l
   report status, counters and `token_rotated_at`, and only say where the URL is shown, `feed_url_location`:
   [mcp.md](mcp.md#connectors)). A snapshot restored under another `APP_KEY` keeps serving (validation uses the
   hash) and the panel asks to regenerate the URL.
-- **Regenerate** invalidates the old URL at once: the client must paste the new one into Commerce Manager, or
-  Meta's next scheduled fetch fails.
+- **Regenerate** invalidates the old URL at once. In manual mode the client must paste the new one into Commerce
+  Manager, or Meta's next scheduled fetch fails; with Connect with Facebook, Ruweb points the Meta feed at the new
+  URL by itself and the panel texts (`confirm_rotate_connected`, `token_rotated_connected`) say there is nothing to
+  paste.
 - **Throttle** `feeds`: 30 requests per minute per IP.
 - **No session.** The route drops the session, CSRF and cookie middleware of the `web` group: a download sets no
   cookie and opens no session, so the public answer can be cached.
@@ -331,8 +336,140 @@ English interface may word them slightly differently.
 Below the steps, one line tells the client that the category, sale and brand labels of the feed
 ([Meta feed format](#meta-feed-format)) are there to build product sets and campaigns by category.
 
-When the client regenerates the URL, the new one goes in the feed's **Settings** tab in Data sources. If several
+When the client regenerates the URL (manual mode), the new one goes in the feed's **Settings** tab in Data sources. If several
 scheduled fetches fail, Meta pauses the schedule: after fixing the cause, **Resume** it from the same tab.
+
+## Connect with Facebook (v2)
+
+The client clicks **Connect with Facebook** on the Meta detail, ticks a catalog in Meta's dialog, and Ruweb keeps
+that catalog up to date: no URL to paste. The connection is stored encrypted in the `secrets` of the `meta` row
+(`App\Connectors\Meta\Connect\MetaConnectionStore`, bound to the site origin like the Meta Pixel token); the panel
+and MCP only ever show the last 4 characters of the token.
+
+### Requirements
+
+- **A «Productos online» (commerce) catalog** created by the client in Commerce Manager, or an existing one. Ruweb
+  cannot create it: Meta refuses catalog creation by API for this kind of token, and the dialog's own «Crear
+  catálogo» makes a `generic` catalog that cannot be used. A non-commerce catalog is refused with steps to create
+  the right one.
+- **The RugerTek Connect broker**: `RUWEB_CONNECT_URL` in `.env` ([ruweb-connect.md](ruweb-connect.md)). Empty
+  (the default): the button is disabled with an explanation and the manual guide stays.
+- **A server that answers two requests at once.** While the panel waits for the broker to register the site, the
+  broker reads `/.well-known/ruweb-connect/{token}` from the same site. `php artisan serve` handles one request at a
+  time: set `PHP_CLI_SERVER_WORKERS=2` (or more) for local tests; production behind php-fpm (or any multi-worker
+  server) is fine.
+- The product catalog module on (the same requirement as the manual feed), and the queue worker for retries
+  ([Synchronization](#synchronization)).
+
+### Connect, choose the catalog, disconnect
+
+Routes in `routes/connectors-admin.php` (administrators only), controller
+`App\Http\Controllers\Admin\MetaConnectController`:
+
+1. **Connect** (`admin.connectors.meta.connect`): the first time, the site registers with the broker (it serves the
+   challenge at `/.well-known/ruweb-connect/{token}` for 10 minutes and receives a site secret, stored encrypted),
+   then sends the browser to the broker's signed start link with a one-time nonce kept in the session for 10
+   minutes.
+2. Meta's dialog: the client logs in, picks the business portfolio and ticks the catalog.
+3. **Back** (`admin.connectors.meta.connected`): the nonce must match, belong to the same administrator and be
+   fresh; the site collects the token from the broker once (server to server; one signed retry on a network
+   failure). Cancelling in Facebook is a friendly message that changes nothing.
+4. **Catalog**: with exactly one commerce catalog it is chosen at once; with several the administrator chooses
+   (`admin.connectors.meta.catalog`, only commerce catalogs are offered); with none the panel explains how to create
+   one. Choosing provisions the sync (`MetaCatalogSync::provision()`) and activates the connector. "Change catalog"
+   reads the shared catalogs from Meta again. Reconnecting the same business keeps its catalog.
+5. **Disconnect** (`admin.connectors.meta.disconnect`): drops the token and the connection state and goes back to
+   the manual mode. Optionally ("also delete the feed Ruweb created on Meta") the `Ruweb – <site>` feed is deleted in
+   the catalog; a Meta failure there is only logged. **Never deleted**: the client's catalog, its products, the
+   connector and its feed URL (if the Meta feed is kept, Meta keeps reading it while the URL works), and the
+   broker site credentials. To remove Ruweb's access entirely the client also removes the app in Meta's business
+   settings (the panel links there).
+
+### States
+
+| `meta_connection.mode` / state | Meaning | Panel |
+|---|---|---|
+| `manual` | v1: no connection, the client pastes the feed URL | Commerce Manager guide + "Connect with Facebook" when the broker is configured |
+| `connected` | Token and (once chosen) catalog; Ruweb syncs | Catalog, business, since when and by whom, "termina en …"; Change catalog; Disconnect; the "Sync with Meta" block. The manual guide is hidden |
+| `needs_reconnect` | Meta rejected the connection explicitly ([Revocation](#revocation-and-needs_reconnect)); the token was dropped | Red notice + "Connect again"; the card status is `needs_reconnect` |
+
+### Synchronization
+
+`App\Services\Connectors\Meta\MetaCatalogSync`:
+
+- **Feed by API.** On provisioning, Ruweb creates (or reuses) a scheduled feed named `Ruweb – <site>` in the chosen
+  catalog with schedule `HOURLY` pointing at the site's feed URL and the shop currency, then asks Meta for an upload
+  right away, so the catalog fills within minutes instead of waiting for the first hour.
+- **Retries.** When Meta does not answer, the step is queued as `App\Jobs\SyncMetaCatalogFeed` with backoff 60, 300,
+  900 and 3600 seconds (5 tries). With `QUEUE_CONNECTION=sync` there is no waiting: the failure is shown and the
+  administrator retries with "Sync now".
+- **"Sync now"** (`admin.connectors.meta.sync`): makes sure the feed exists and points at the current URL, then
+  asks Meta to read it. At most once a minute (route throttle 6/min + a 60 s cooldown).
+- **Regenerating the feed URL updates Meta** (`ConnectorOperations::rotateToken()` → `refreshFeedUrl()`): the
+  schedule URL changes, nothing to paste.
+- **Status** in the detail: last read, products loaded, and what Meta flagged (upload errors and warnings plus the
+  item problems of the last batches, up to 20), cached 5 minutes (1 minute when Meta did not answer).
+
+### Changes at once (items_batch)
+
+The hourly feed is the source of truth (it replaces the whole catalog); `App\Services\Connectors\Meta\MetaItemsPublisher`
+is the fast path:
+
+- **What triggers a batch** (`App\Listeners\Connectors\MetaCatalogChanges`): saving or deleting a product
+  (including publishing, unpublishing, price, SKU, has-variants changes), saving or deleting a variant, an order
+  whose stock is applied or given back (payment, cancellation, refund), and replacing or deleting an image.
+- **Debounce 60 s**: the first change queues `App\Jobs\PublishMetaItems` with a 60-second delay; later changes join
+  the same batch. On the `sync` queue driver the batch goes out after the response.
+- **One `items_batch` call** (`PRODUCT_ITEM`) with UPDATE for every item the feed would include (same fields as the
+  feed, `App\Connectors\Meta\MetaItemFields`; Meta creates missing items) and DELETE for what left (unpublished,
+  deleted, an old SKU or variant, or now skipped). Only the changed products are read
+  (`ShopProductSource::itemsFor()`), never the whole catalog. `requests` travels form-encoded as one JSON string,
+  as Graph expects.
+- **What only arrives with the hourly feed**: scheduled publication (a product whose publish date arrives fires no
+  save) and category or brand changes (taxonomy edits do not touch the product row).
+- **Limits and backoff**: at most 3000 requests per call (bigger batches are split); when Meta's usage header asks
+  to slow down, a pause of at least 60 s; rate-limit codes (4, 17, 32, 613, 80009, 80014) and outages keep the
+  pending products and retry after 60, 300, 900 and 3600 seconds; when the retries run out the panel says Meta did
+  not answer and the next change (or the hourly feed) carries them.
+- **Per-product notices**: `App\Jobs\CheckMetaItemsBatch` reads `check_batch_request_status` (backoff 10 s to 15
+  min) and its errors **and warnings** (Meta reports an invalid price as a warning) are shown in the detail with an
+  "Edit product" link, until that product is sent again. Problems of DELETE requests are not shown.
+- Only ids and handles sit in the cache and the queue: the token is read when the call is made.
+
+### Daily health check
+
+`php artisan meta:health-check` (`App\Console\Commands\MetaHealthCheckCommand`) is scheduled daily in
+`routes/console.php`, so **the scheduler must run** (`php artisan schedule:run` every minute from cron). In connected mode it reads the token (`/me`), the chosen catalog and the Ruweb
+feed (a feed deleted in Commerce Manager is flagged, not recreated: "Sync now" does that).
+
+- An explicit rejection → `needs_reconnect` ([Revocation](#revocation-and-needs_reconnect)) and **one** email
+  "Reconnect your Meta catalog" to every administrator with a valid address (or the contact email when there is
+  none).
+- **Meta not answering never drops the connection.** A day without an answer is recorded as the last error ("we
+  will try again tomorrow"). From **3 consecutive days** on (`App\Services\Connectors\Meta\MetaUnreachableStreak`),
+  the detail shows "Meta has not answered for N days; check the server's connection" and the administrators get
+  one email for the whole streak; the token stays and everything resumes by itself the first day Meta answers (the
+  warning disappears and a later streak emails again). A day without a run breaks the streak.
+- **Emails need mail turned on** (`mail_enabled` in Settings, same mailer and queue as the order emails); otherwise
+  only a log line is written.
+
+### Revocation and needs_reconnect
+
+Only Meta's explicit answers move the connection to `needs_reconnect`, whoever sees them (health check, sync,
+items_batch):
+
+- **190 (any subcode, e.g. 464 when the client removed the app) or 102**: the token is no longer valid.
+- **100 with subcode 33 on the chosen catalog**: the client removed Ruweb's access to that catalog.
+
+The token is dropped, the business and catalog are kept so the panel can say what was connected, pending changes
+are discarded (the next feed carries everything after reconnecting) and the administrators get the email once per
+connection. `debug_token` cannot detect a revocation, so it is not used.
+
+### Permissions and the pixel
+
+The Meta app asks only for `catalog_management` (plus `public_profile`); no `ads_management`. The Meta Pixel stays
+configured by hand with its own token ([Meta Pixel card](#meta-pixel-card)): the catalog token cannot read the
+pixel's dataset.
 
 ## Meta Pixel card
 
@@ -346,10 +483,9 @@ their `content_ids` are the feed's `g:id`. Everything else: [meta-pixel.md](meta
 
 Nothing below exists in the code yet; each item names what it would reuse.
 
-- **v2 — "Connect with Facebook"** (Meta Business Extension: login, catalog chosen in a dialog, products pushed by
-  API, Meta's rejections shown in Ruweb). It needs a Meta app owned by RugerTek's verified business, advanced access
-  through App Review (weeks, outside our control) and one central app for every site. It would reuse
-  `CatalogSource` and `FeedResult` with a different writer; the URL feed stays as the fallback.
+- **Connect with Facebook in production**: the code is done ([Connect with Facebook (v2)](#connect-with-facebook-v2));
+  real clients need the production Meta app in RugerTek's verified business portfolio, advanced access through App
+  Review (weeks, outside our control) and the broker hosted on a public HTTPS domain.
 - **Per-language and per-country feeds**: one feed per public language or market, from the translated product rows
   (today only the base language is sent).
 - **Google Merchant Center**: same source, same `FeedResult`, its own writer and defaults.

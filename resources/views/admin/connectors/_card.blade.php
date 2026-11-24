@@ -10,6 +10,7 @@
     $chip = match ($status) {
         \App\Connectors\ConnectorStatus::Connected => 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
         \App\Connectors\ConnectorStatus::Available => 'bg-sky-500/10 text-sky-400 ring-sky-500/20',
+        \App\Connectors\ConnectorStatus::NeedsReconnect => 'bg-red-500/10 text-red-400 ring-red-500/20',
         default => 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
     };
     $shopPath = app(\App\Support\ShopModule::class)->path();
@@ -99,6 +100,19 @@
         @if($record?->enabled && $key === \App\Connectors\MetaPixel\MetaPixelConnector::KEY && $status === \App\Connectors\ConnectorStatus::Connected)
             @php($capi = app(\App\Services\Marketing\MetaPixel::class)->accessToken() !== null)
             <p data-meta-pixel-status="{{ $capi ? 'browser_and_server' : 'browser' }}">{{ $capi ? __('meta_pixel.card_browser_and_server') : __('meta_pixel.card_browser_only') }}</p>
+        @endif
+
+        {{-- Meta v2 (plan-meta-v2): connected with Facebook, or Meta revoked the access (direct «Volver a conectar»). Manual mode shows nothing new. --}}
+        @if($connector instanceof \App\Connectors\Meta\MetaCatalogConnector)
+            @php($metaConnection = app(\App\Connectors\Meta\Connect\MetaConnectionStore::class)->get())
+            @if($metaConnection->needsReconnect())
+                <p class="text-red-300" data-meta-card="needs_reconnect">{{ __('connectors.meta_card_reconnect') }}</p>
+                @if(! $detail && \App\Http\Controllers\Admin\MetaConnectController::available())
+                    <a href="{{ route('admin.connectors.meta.connect') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors" data-meta-connect="reconnect">{{ __('connectors.meta_action_reconnect') }}</a>
+                @endif
+            @elseif($metaConnection->isConnected())
+                <p class="text-emerald-300" data-meta-card="connected">{{ $metaConnection->catalogId === null ? __('connectors.meta_card_connected_no_catalog') : __('connectors.meta_card_connected', ['catalog' => $metaConnection->catalogName ?? $metaConnection->catalogId]) }}</p>
+            @endif
         @endif
 
         {{-- Fetch log: only connectors that publish a feed (Bancard and the Meta Pixel have none). --}}

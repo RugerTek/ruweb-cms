@@ -34,6 +34,10 @@ if (class_exists(ShopExpirePaymentsCommand::class)) {
     Schedule::command('shop:expire-payments')->everyFiveMinutes()->withoutOverlapping();
 }
 
+// Meta v2 «Conectar con Facebook» (plan-meta-v2, track 3c): token, chosen catalog and feed once a day; a cut connection
+// goes to needs_reconnect and the administrators get one email. Manual (v1) sites: nothing is called.
+Schedule::command('meta:health-check')->daily()->withoutOverlapping();
+
 // Guest carts expire after cms.shop.checkout.cart_days without activity; their lines go with them (cascade).
 Artisan::command('shop:prune-carts', function () {
     $this->line('Expired carts deleted: '.Cart::query()->expired()->delete());

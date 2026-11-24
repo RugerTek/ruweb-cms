@@ -5,6 +5,7 @@ namespace App\Connectors;
 use App\Contracts\Catalog\CatalogSource;
 use App\Contracts\Connectors\Connector as ConnectorContract;
 use App\Contracts\Connectors\FeedConnector;
+use App\Contracts\Connectors\RemoteConnector;
 use App\Models\Connector;
 use LogicException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -115,11 +116,18 @@ final class ConnectorRegistry
         return $active;
     }
 
-    /** Unmet requirement → NeedsAction (even if active); active row → Connected; otherwise Available. */
+    /**
+     * Unmet requirement → NeedsAction (even if active); a revoked remote connection → NeedsReconnect; active row →
+     * Connected; otherwise Available.
+     */
     public function status(string $key): ConnectorStatus
     {
         if ($this->unmet($key) !== []) {
             return ConnectorStatus::NeedsAction;
+        }
+        $connector = $this->get($key);
+        if ($connector instanceof RemoteConnector && $connector->needsReconnect()) {
+            return ConnectorStatus::NeedsReconnect;
         }
 
         return $this->record($key)?->enabled ? ConnectorStatus::Connected : ConnectorStatus::Available;

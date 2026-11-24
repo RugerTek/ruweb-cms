@@ -60,7 +60,33 @@ class ShopProductSource implements CatalogSource
         return $this->products()
             ->with(['variants', 'media', 'brands', 'categories'])
             ->lazyById(self::CHUNK)
-            ->flatMap(fn (Product $product) => $this->itemsFor($product));
+            ->flatMap(fn (Product $product) => $this->productItems($product));
+    }
+
+    /**
+     * Items of these products only, with the same rules as items() (live, base language; unknown, unpublished or
+     * translated ids yield nothing), so a change batch (MetaItemsPublisher) does not walk the whole catalog. Product
+     * ids are queried in chunks of CHUNK.
+     *
+     * @param  array<int|string>  $productIds
+     * @return LazyCollection<int, CatalogItem>
+     */
+    public function itemsFor(array $productIds): LazyCollection
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $productIds), fn (int $id): bool => $id > 0)));
+        sort($ids);
+        $this->categoryTree = null;
+
+        return LazyCollection::make(function () use ($ids) {
+            foreach (array_chunk($ids, self::CHUNK) as $chunk) {
+                $products = $this->products()->whereIn('id', $chunk)->with(['variants', 'media', 'brands', 'categories'])->get();
+                foreach ($products as $product) {
+                    foreach ($this->productItems($product) as $item) {
+                        yield $item;
+                    }
+                }
+            }
+        });
     }
 
     public function count(): int
@@ -91,7 +117,7 @@ class ShopProductSource implements CatalogSource
     }
 
     /** @return list<CatalogItem> */
-    private function itemsFor(Product $product): array
+    private function productItems(Product $product): array
     {
         $productId = $this->productId($product);
         $common = [

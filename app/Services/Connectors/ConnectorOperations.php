@@ -5,9 +5,11 @@ namespace App\Services\Connectors;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorRequirement;
 use App\Connectors\FeedResult;
+use App\Connectors\Meta\MetaCatalogConnector;
 use App\Exceptions\RevisionConflict;
 use App\Models\Connector;
 use App\Models\User;
+use App\Services\Connectors\Meta\MetaCatalogSync;
 use App\Services\Shop\ShopModuleOperations;
 use App\Support\ShopModule;
 use App\Support\SiteUrl;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 /**
  * The single write path of connectors, shared by the panel (Admin > Connectors) and MCP (`connectors_*`). Every
@@ -118,7 +121,9 @@ final class ConnectorOperations
 
     /**
      * New feed token; the previous URL stops working at once. The plain token is returned for the panel only
-     * (MCP must not expose it).
+     * (MCP must not expose it). For Meta connected by API (plan-meta-v2), MetaCatalogSync::refreshFeedUrl() then points
+     * the scheduled feed in Meta at the new URL, so the client changes nothing there (a Meta failure never undoes the
+     * rotation: it is retried in the queue or shown in the panel).
      *
      * @throws AuthorizationException when the actor is not an administrator
      * @throws ValidationException (`connector`) when the connector was never activated
@@ -128,7 +133,7 @@ final class ConnectorOperations
         $this->authorize($actor);
         $this->registry->get($key);
 
-        return DB::transaction(function () use ($key) {
+        $token = DB::transaction(function () use ($key) {
             $connector = $this->row($key, lock: true);
             if (! $connector->exists) {
                 throw ValidationException::withMessages(['connector' => __('connectors.error_not_activated')]);
@@ -138,6 +143,15 @@ final class ConnectorOperations
 
             return $token;
         });
+        if ($key === MetaCatalogConnector::KEY) {
+            try {
+                app(MetaCatalogSync::class)->refreshFeedUrl();
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $token;
     }
 
     /**

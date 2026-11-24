@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Connectors\Meta\Connect\MetaConnection;
+use App\Connectors\Meta\Connect\MetaConnectionStore;
+use App\Connectors\Meta\MetaCatalogConnector;
 use App\Connectors\MetaPixel\MetaPixelConnector;
+use App\Connectors\Sources\ShopProductSource;
 use App\Http\Controllers\McpServerController;
 use App\Http\Middleware\EnforceMcpScopes;
 use App\Models\Connector;
@@ -294,5 +298,29 @@ class McpConnectorsTest extends TestCase
         $this->rpc('connectors_rotate_token', ['connector' => 'meta_pixel', 'expected_revision' => $revision])->assertOk()->assertJsonPath('error.code', -32602);
         $this->rpc('connectors_preview', ['connector' => 'meta_pixel'])->assertOk()->assertJsonPath('error.code', -32602);
         $this->assertSame($revision, $get()['revision'], 'Nothing was written.');
+    }
+
+    public function test_the_meta_catalog_reports_its_facebook_connection_without_the_token(): void
+    {
+        config(['cms.connectors' => ['meta' => MetaCatalogConnector::class], 'cms.catalog_sources' => ['products' => ShopProductSource::class]]);
+        $this->useShop('catalog');
+        $get = fn () => $this->rpcData($this->rpc('connectors_get', ['connector' => 'meta']))['data']['meta_connection'];
+        $this->assertSame(['manual', false, false, null], [$get()['mode'], $get()['connected'], $get()['needs_reconnect'], $get()['token_ends_in']]);
+
+        $token = 'EAAFakeSystemUserTokenForMcp0123456789WXYZ';
+        app(MetaConnectionStore::class)->save(
+            MetaConnection::connected('1828876861482638', 'v27.0', ['catalog_management'], $this->admin->id)->withCatalog('1140865528694664', 'Tienda'),
+            $token,
+        );
+        $meta = $get();
+        $this->assertSame(['connected', true, '1828876861482638', ['id' => '1140865528694664', 'name' => 'Tienda'], 'WXYZ'], [$meta['mode'], $meta['connected'], $meta['business_id'], $meta['catalog'], $meta['token_ends_in']]);
+        $this->assertStringContainsString('admin panel', $meta['connect_location']);
+        $this->assertSame('connected', $this->rpcData($this->rpc('connectors_list'))['data'][0]['meta_connection']['mode']);
+        foreach ([$this->rpc('connectors_get', ['connector' => 'meta']), $this->rpc('connectors_list'), $this->getJson('/mcp/connectors/meta')] as $response) {
+            $this->assertStringNotContainsString($token, (string) $response->getContent());
+        }
+
+        app(MetaConnectionStore::class)->markNeedsReconnect('190/464');
+        $this->assertSame([false, true, null], [$get()['connected'], $get()['needs_reconnect'], $get()['token_ends_in']]);
     }
 }

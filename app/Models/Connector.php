@@ -82,6 +82,15 @@ class Connector extends Model
         return is_string($value) && $value !== '' ? $value : null;
     }
 
+    /**
+     * One stored entry of any type (a nested array of App\Connectors\Meta\Connect\MetaConnectionStore), with the same
+     * rules as secret(): null when missing, unreadable here or saved under another site origin.
+     */
+    public function secretValue(string $name): mixed
+    {
+        return $this->usableSecrets()[$name] ?? null;
+    }
+
     /** Whether secrets are stored but cannot be used on this site (unreadable or saved under another origin). */
     public function secretsUnusable(): bool
     {

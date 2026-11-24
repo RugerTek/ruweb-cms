@@ -25,12 +25,13 @@
 <div class="max-w-4xl space-y-4">
     {{-- 1. Status, totals and the fetch log --}}
     @include('admin.connectors._card', ['detail' => true])
+    @if($isMeta) @include('admin.connectors._meta-sync') @endif
 
     {{-- 2. Feed URL: copy and regenerate --}}
     @if($record?->token_hash !== null)
         <section class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-5" aria-labelledby="feed-url-title">
             <h2 id="feed-url-title" class="text-sm font-semibold text-white">{{ __('connectors.feed_url') }}</h2>
-            <p class="text-xs text-gray-500 mt-1 mb-3">{{ __('connectors.feed_url_help') }}</p>
+            <p class="text-xs text-gray-500 mt-1 mb-3">{{ __($metaKeepsFeedUrl ? 'connectors.feed_url_help_connected' : 'connectors.feed_url_help') }}</p>
             @if($feedUrl)
                 <div class="flex flex-col sm:flex-row gap-2">
                     <label for="feed-url" class="sr-only">{{ __('connectors.feed_url') }}</label>
@@ -45,7 +46,7 @@
                 <p class="text-sm text-yellow-300/90">{{ __('connectors.token_unreadable') }}</p>
             @endif
             <form method="POST" action="{{ route('admin.connectors.rotate', ['connector' => $key]) }}" class="mt-3"
-                  data-confirm="{{ __('connectors.confirm_rotate') }}"
+                  data-confirm="{{ __($metaKeepsFeedUrl ? 'connectors.confirm_rotate_connected' : 'connectors.confirm_rotate') }}"
                   data-confirm-title="{{ __('connectors.action_rotate') }}"
                   data-confirm-label="{{ __('connectors.action_rotate') }}"
                   data-confirm-tone="danger">
@@ -57,8 +58,9 @@
         </section>
     @endif
 
-    {{-- 3. Step by step guide (Meta) --}}
-    @if($isMeta)
+    {{-- 3. Step by step guide (Meta); «Conectar con Facebook» replaces it while connected (plan-meta-v2) --}}
+    @includeWhen($connector instanceof \App\Connectors\Meta\MetaCatalogConnector, 'admin.connectors._meta-connection')
+    @if($isMeta && ! ($connector instanceof \App\Connectors\Meta\MetaCatalogConnector && app(\App\Connectors\Meta\Connect\MetaConnectionStore::class)->get()->isConnected()))
         @include('admin.connectors._meta-guide')
     @endif
 

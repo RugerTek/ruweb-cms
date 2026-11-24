@@ -14,6 +14,12 @@ enum ConnectorStatus: string
     /** Active and with every requirement met: the feed answers. */
     case Connected = 'connected';
 
+    /**
+     * The connector talks to an external API through a connection the other side revoked (Meta: the client removed
+     * the app, Graph error 190/102): the card asks to connect again. Reported by RemoteConnector::needsReconnect().
+     */
+    case NeedsReconnect = 'needs_reconnect';
+
     /** Translation key of the chip (`connectors.status_needs_action`). */
     public function label(): string
     {

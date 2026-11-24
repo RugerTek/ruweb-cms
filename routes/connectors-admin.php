@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\ConnectorController;
+use App\Http\Controllers\Admin\MetaConnectController;
+use App\Http\Controllers\Admin\MetaSyncController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,6 +11,17 @@ use Illuminate\Support\Facades\Route;
  * `{connector}` is a `cms.connectors` key; the controller answers 404 for unknown keys (ConnectorRegistry::get()).
  */
 Route::get('connectors', [ConnectorController::class, 'index'])->name('connectors.index');
+
+// Meta v2 «Conectar con Facebook» (plan-meta-v2): fixed paths, the RugerTek Connect broker redirects to `connected`.
+Route::prefix('connectors/meta')->name('connectors.meta.')->group(function () {
+    Route::get('connect', [MetaConnectController::class, 'connect'])->middleware('throttle:10,1')->name('connect');
+    Route::get('connected', [MetaConnectController::class, 'connected'])->middleware('throttle:10,1')->name('connected');
+    Route::get('catalog', [MetaConnectController::class, 'chooseCatalog'])->name('catalog');
+    Route::post('catalog', [MetaConnectController::class, 'selectCatalog'])->middleware('throttle:10,1')->name('catalog.select');
+    Route::post('disconnect', [MetaConnectController::class, 'disconnect'])->name('disconnect');
+    // «Sincronizar ahora» of the feed created by API (track 2c, MetaCatalogSync::syncNow()).
+    Route::post('sync', [MetaSyncController::class, 'sync'])->middleware('throttle:6,1')->name('sync');
+});
 
 Route::prefix('connectors/{connector}')->where(['connector' => '[a-z0-9_]+'])->name('connectors.')->group(function () {
     Route::get('/', [ConnectorController::class, 'show'])->name('show');

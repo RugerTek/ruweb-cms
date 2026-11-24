@@ -208,7 +208,8 @@ through `App\Services\Connectors\ConnectorOperations`, the operation the panel u
 - **The feed token and the feed URL are secret and never appear in any MCP or REST response**, like transport
   credentials ([mcp-surface.md](mcp-surface.md)). The administrator copies the URL from the panel
   (`/admin/connectors/{key}`); responses only say where (`feed_url_location`).
-- `connectors_list` and `connectors_get` return `status` (`available`, `needs_action`, `connected`), the
+- `connectors_list` and `connectors_get` return `status` (`available`, `needs_action`, `connected`,
+  `needs_reconnect`: Meta rejected the «Connect with Facebook» connection and an administrator must connect again), the
   requirements (an unmet `shop_catalog` one carries `resolution`: `settings_update` on `shop_mode` with
   `catalog`), effective `settings`, `defaults`, `setting_keys`, the last feed totals (`last_item_count`,
   `last_skipped_count`), `last_meta_fetched_at`, the last fetch by any client and `revision`.
@@ -224,6 +225,12 @@ through `App\Services\Connectors\ConnectorOperations`, the operation the panel u
 - `connectors_rotate_token {connector, expected_revision}` makes the previous URL stop working at once and answers
   only `rotated_at` and the new `revision`. Connectors without a feed (`bancard`, `meta_pixel`) have no token: it
   and `connectors_preview` answer `-32602` (REST: 404).
+- `meta` also returns `meta_connection` in `connectors_list` and `connectors_get`
+  ([connectors.md](connectors.md#connect-with-facebook-v2)): `mode` (`manual` or `connected`), `connected`,
+  `needs_reconnect`, `business_id`, `catalog` (`id`, `name`), `product_feed_id`, `connected_at`, `token_ends_in` (last
+  4 characters), `last_error` (panel language; for example Meta not answering for several days) and
+  `connect_location`. **Connecting, choosing the catalog and disconnecting happen only in the admin panel** (they
+  need the administrator's Facebook login); no tool does them and the Graph token never appears in any response.
 - `meta_pixel` ([meta-pixel.md](meta-pixel.md)) has `setting_keys` `pixel_id` and `test_event_code`, and an extra
   `conversions_api` block: `token_configured` (a usable Conversions API token is saved), `token_needs_reentry`
   (one is saved but was entered under another origin or `APP_KEY`), `token_location`, `graph_api_version` and

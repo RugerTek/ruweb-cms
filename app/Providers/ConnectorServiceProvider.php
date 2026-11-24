@@ -3,6 +3,11 @@
 namespace App\Providers;
 
 use App\Connectors\ConnectorRegistry;
+use App\Connectors\Meta\Connect\HttpRuwebConnectClient;
+use App\Connectors\Meta\Graph\HttpMetaGraphClient;
+use App\Contracts\Connectors\MetaGraphClient;
+use App\Contracts\Connectors\RuwebConnectClient;
+use App\Listeners\Connectors\MetaCatalogChanges;
 use App\Models\Connector;
 use App\Models\Media;
 use App\Models\Product;
@@ -13,6 +18,7 @@ use App\Services\Media\FeedImage;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -30,6 +36,9 @@ class ConnectorServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ConnectorRegistry::class);
+        // Meta v2 (plan-meta-v2): Graph API and RugerTek Connect clients; tests swap them for Tests\Support fakes.
+        $this->app->bind(MetaGraphClient::class, HttpMetaGraphClient::class);
+        $this->app->bind(RuwebConnectClient::class, HttpRuwebConnectClient::class);
     }
 
     public function boot(): void
@@ -52,5 +61,7 @@ class ConnectorServiceProvider extends ServiceProvider
             }
         });
         Connector::deleted($touch);
+        // Meta v2: the same changes, published at once to the connected catalog (items_batch, plan-meta-v2 track 3a).
+        Event::subscribe(MetaCatalogChanges::class);
     }
 }

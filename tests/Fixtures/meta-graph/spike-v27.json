@@ -1,0 +1,488 @@
+{
+  "_source": "plans/ruweb-ecommerce-conectores/spike-meta-v2/03-api/calls.jsonl (Graph v27.0, 2026-11-24): real answers with a system user token that only had catalog_management. Tunnel URLs replaced by https://tienda.example and feed tokens by a placeholder; paging cursors removed.",
+  "responses": {
+    "me": {
+      "label": "me",
+      "method": "GET",
+      "path": "me",
+      "status": 200,
+      "body": {
+        "id": "122094445749568433",
+        "client_business_id": "1828876861482638",
+        "name": "Ruweb Conectores (dev) System User"
+      },
+      "usage": null
+    },
+    "assigned_product_catalogs": {
+      "label": "assigned tras re-login (token nuevo)",
+      "method": "GET",
+      "path": "me/assigned_product_catalogs",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "29126310230344924",
+            "name": "Ruweb prueba feed",
+            "vertical": "commerce"
+          },
+          {
+            "id": "1652153386366048",
+            "name": "Ruweb spike v2 Catalog",
+            "vertical": "generic"
+          },
+          {
+            "id": "1140865528694664",
+            "name": "Ruweb spike v2 commerce",
+            "vertical": "commerce"
+          }
+        ]
+      },
+      "usage": "{\"1652153386366048\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}],\"29126310230344924\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}],\"1828876861482638\":[{\"type\":\"business_integration_system_user_platform_endpoints\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}],\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":0,\"total_cputime\":0,\"total_time\":0,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "assigned_product_catalogs_after_unshare": {
+      "label": "[revocacion parcial] assigned catalogs",
+      "method": "GET",
+      "path": "me/assigned_product_catalogs",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "29126310230344924",
+            "name": "Ruweb prueba feed"
+          }
+        ]
+      },
+      "usage": "{\"29126310230344924\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}],\"1828876861482638\":[{\"type\":\"business_integration_system_user_platform_endpoints\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "catalog": {
+      "label": "[commerce] catalogo",
+      "method": "GET",
+      "path": "1140865528694664",
+      "status": 200,
+      "body": {
+        "id": "1140865528694664",
+        "name": "Ruweb spike v2 commerce",
+        "vertical": "commerce",
+        "product_count": 0
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "catalog_generic": {
+      "label": "spike catalog",
+      "method": "GET",
+      "path": "1652153386366048",
+      "status": 200,
+      "body": {
+        "id": "1652153386366048",
+        "name": "Ruweb spike v2 Catalog",
+        "vertical": "generic",
+        "product_count": 0
+      },
+      "usage": "{\"1652153386366048\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "product_feeds": {
+      "label": "catalog/product_feeds",
+      "method": "GET",
+      "path": "29126310230344924/product_feeds",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "1666548451688052",
+            "name": "Ruweb feed Meta (prueba)",
+            "product_count": 3,
+            "default_currency": "USD",
+            "latest_upload": {
+              "id": "1666786728330891",
+              "start_time": "2026-11-24T21:27:56+0000",
+              "end_time": "2026-11-24T21:37:36+0000"
+            },
+            "schedule": {
+              "id": "2369248540562621",
+              "interval": "HOURLY",
+              "url": "https://tienda.example/feeds/meta/FEEDTOKEN000000000000000000000000000000000000000.xml",
+              "minute": 37,
+              "hour": 13,
+              "timezone": "America/Asuncion",
+              "interval_count": 1
+            }
+          }
+        ]
+      },
+      "usage": "{\"29126310230344924\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "create_product_feed": {
+      "label": "[commerce] crear product_feed HOURLY",
+      "method": "POST",
+      "path": "1140865528694664/product_feeds",
+      "status": 200,
+      "body": {
+        "id": "1449316787271140"
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "product_feed": {
+      "label": "[commerce] feed estado",
+      "method": "GET",
+      "path": "1449316787271140",
+      "status": 200,
+      "body": {
+        "id": "1449316787271140",
+        "product_count": 3,
+        "name": "Ruweb spike v2 feed",
+        "latest_upload": {
+          "id": "1449316803937805",
+          "start_time": "2026-11-24T22:09:12+0000",
+          "end_time": "2026-11-24T22:09:23+0000"
+        },
+        "schedule": {
+          "id": "2058069124896118",
+          "interval": "HOURLY",
+          "url": "https://tienda.example/feeds/meta/FEEDTOKEN000000000000000000000000000000000000000.xml",
+          "minute": 9,
+          "hour": 14,
+          "timezone": "America/Los_Angeles",
+          "interval_count": 1
+        },
+        "default_currency": "PYG"
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "update_product_feed": {
+      "label": "[commerce] actualizar URL del feed (token regenerado simulado)",
+      "method": "POST",
+      "path": "1449316787271140",
+      "status": 200,
+      "body": {
+        "success": true
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "product_feed_after_update": {
+      "label": "[commerce] feed schedule tras update",
+      "method": "GET",
+      "path": "1449316787271140",
+      "status": 200,
+      "body": {
+        "id": "1449316787271140",
+        "schedule": {
+          "id": "2058069124896118",
+          "interval": "HOURLY",
+          "url": "https://tienda.example/feeds/meta/TOKENREGENERADO0000000000000000000000000000000000.xml",
+          "minute": 10,
+          "hour": 14,
+          "timezone": "America/Los_Angeles",
+          "interval_count": 1
+        }
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "delete_product_feed": {
+      "label": "borrar feed (catalogo generic)",
+      "method": "DELETE",
+      "path": "2403704960370610",
+      "status": 200,
+      "body": {
+        "success": true
+      },
+      "usage": null
+    },
+    "create_upload": {
+      "label": "[commerce] disparar upload",
+      "method": "POST",
+      "path": "1449316787271140/uploads",
+      "status": 200,
+      "body": {
+        "id": "1449316803937805"
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "upload": {
+      "label": "[commerce] upload estado",
+      "method": "GET",
+      "path": "1449316803937805",
+      "status": 200,
+      "body": {
+        "id": "1449316803937805",
+        "start_time": "2026-11-24T22:09:12+0000",
+        "end_time": "2026-11-24T22:09:23+0000",
+        "error_count": 0,
+        "num_detected_items": 3,
+        "num_persisted_items": 3,
+        "num_invalid_items": 0,
+        "num_deleted_items": 0,
+        "warning_count": 0
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "upload_errors": {
+      "label": "[commerce] upload errors",
+      "method": "GET",
+      "path": "1449316803937805/errors",
+      "status": 200,
+      "body": {
+        "data": []
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "upload_failed": {
+      "label": "[commerce] upload 404 estado",
+      "method": "GET",
+      "path": "1449317557271063",
+      "status": 200,
+      "body": {
+        "id": "1449317557271063",
+        "start_time": "2026-11-24T22:10:17+0000",
+        "end_time": "2026-11-24T22:10:28+0000",
+        "error_count": 1,
+        "num_detected_items": 0,
+        "num_persisted_items": 0,
+        "num_invalid_items": 0,
+        "num_deleted_items": 0,
+        "warning_count": 0
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "upload_failed_errors": {
+      "label": "[commerce] upload 404 errors",
+      "method": "GET",
+      "path": "1449317557271063/errors",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "1449317683937717",
+            "summary": "No se ha podido acceder al archivo de fuente de datos",
+            "description": "Comprueba que el archivo de fuente de datos esté disponible en la URL que has proporcionado y vuelve a añadirla. Para comprobarlo, abre una nueva pestaña y pega la URL para verificar que el archivo se descarga.",
+            "error_type": "feed_file_not_found",
+            "severity": "fatal",
+            "total_count": 0
+          }
+        ]
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "upload_wrong_format_errors": {
+      "label": "upload errors",
+      "method": "GET",
+      "path": "2403705050370601/errors",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "id": "2403705160370590",
+            "summary": "No se admite el formato de archivo",
+            "description": "Los productos con un formato de archivo de lista de datos no compatible no se subirán al catálogo. Asegúrate de que el archivo esté en un formato compatible: XLSX, CSV, TSV, RSS XML o ATOM XML, y vuelve a cargarlo.",
+            "error_type": "wrong_format",
+            "severity": "fatal",
+            "total_count": 0
+          }
+        ]
+      },
+      "usage": "{\"1652153386366048\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "items_batch": {
+      "label": "[commerce] items_batch CREATE x3",
+      "method": "POST",
+      "path": "1140865528694664/items_batch",
+      "status": 200,
+      "body": {
+        "handles": [
+          "Acy37irLPGY7UJ0P6BdfwVx6O2SEa4Xkb9TkOjMAA8KCM_p0tz6kreBOTE9pAbA24pso3dIBWv3S9vbrBv4B-55o"
+        ]
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_batch_catalog_level_per_minute\",\"call_count\":0,\"total_cputime\":0,\"total_time\":0,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "batch_status": {
+      "label": "[commerce] check_batch CREATE x3",
+      "method": "GET",
+      "path": "1140865528694664/check_batch_request_status",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "handle": "Acy37irLPGY7UJ0P6BdfwVx6O2SEa4Xkb9TkOjMAA8KCM_p0tz6kreBOTE9pAbA24pso3dIBWv3S9vbrBv4B-55o",
+            "status": "finished",
+            "errors_total_count": 0,
+            "errors": [],
+            "warnings": [],
+            "ids_of_invalid_requests": []
+          }
+        ]
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "batch_status_warnings": {
+      "label": "[commerce] check_batch UPDATE/DELETE/invalido",
+      "method": "GET",
+      "path": "1140865528694664/check_batch_request_status",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "handle": "Acx587W-ZMFEJUc7vpW2BFyycqQBlKGKO4s6fhjkAohsHwR2PBs4yucNut1BfHZAz8wN8Jairt96Nsu3EFvFbQHL",
+            "status": "finished",
+            "errors_total_count": 0,
+            "errors": [],
+            "warnings": [
+              {
+                "message": "Valores no válidos: Para mostrarse en tu tienda y anuncios, los valores deben ser correctos.  Ve a tu origen de datos original y comprueba los valores introducidos para cada campo. A continuación, actualízalos de la misma manera que los creaste.",
+                "line": 3,
+                "id": "SPIKE-B"
+              }
+            ],
+            "ids_of_invalid_requests": []
+          }
+        ]
+      },
+      "usage": "{\"1140865528694664\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "batch_status_errors": {
+      "label": "check_batch_request_status #1",
+      "method": "GET",
+      "path": "1652153386366048/check_batch_request_status",
+      "status": 200,
+      "body": {
+        "data": [
+          {
+            "handle": "Acx-XnU6qnicSGZK6z-RT5PiddTfAnZ9n7FV87K9i0iZVAeg3btCLIn7-PPgLGePWbFKHbeNvwreZwp44nwOHPIN",
+            "status": "finished",
+            "errors_total_count": 3,
+            "errors": [
+              {
+                "message": "El sector de catálogo del artículo es incorrecto: El artículo de catálogo no se admite en este sector.",
+                "line": 2,
+                "id": "SPIKE-B"
+              },
+              {
+                "message": "El sector de catálogo del artículo es incorrecto: El artículo de catálogo no se admite en este sector.",
+                "line": 1,
+                "id": "SPIKE-A"
+              },
+              {
+                "message": "El sector de catálogo del artículo es incorrecto: El artículo de catálogo no se admite en este sector.",
+                "line": 3,
+                "id": "SPIKE-C"
+              }
+            ],
+            "warnings": [],
+            "ids_of_invalid_requests": [
+              "SPIKE-B",
+              "SPIKE-A",
+              "SPIKE-C"
+            ]
+          }
+        ]
+      },
+      "usage": "{\"1652153386366048\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    },
+    "error_app_removed": {
+      "label": "[revocacion total] /me",
+      "method": "GET",
+      "path": "me",
+      "status": 400,
+      "body": {
+        "error": {
+          "message": "Error validating access token: Sessions for the user are not allowed because the user is not a confirmed user.",
+          "type": "OAuthException",
+          "code": 190,
+          "error_subcode": 464,
+          "fbtrace_id": "ADgzFeaoZgF80OdasU3WOSF"
+        }
+      },
+      "usage": null
+    },
+    "error_catalog_unshared": {
+      "label": "[revocacion parcial] GET catalogo quitado",
+      "method": "GET",
+      "path": "1140865528694664",
+      "status": 400,
+      "body": {
+        "error": {
+          "message": "Unsupported get request. Please read the Graph API documentation at https://developers.facebook.com/docs/graph-api",
+          "code": 100,
+          "type": "GraphMethodException",
+          "error_subcode": 33,
+          "fbtrace_id": "AwV4nm1V-a4rh0bqXn71Zwn"
+        }
+      },
+      "usage": null
+    },
+    "error_items_batch_catalog_unshared": {
+      "label": "[revocacion parcial] items_batch catalogo quitado",
+      "method": "POST",
+      "path": "1140865528694664/items_batch",
+      "status": 400,
+      "body": {
+        "error": {
+          "message": "Unsupported post request. Object with ID '1140865528694664' does not exist, cannot be loaded due to missing permissions, or does not support this operation. Please read the Graph API documentation at https://developers.facebook.com/docs/graph-api",
+          "code": 100,
+          "type": "GraphMethodException",
+          "error_subcode": 33,
+          "fbtrace_id": "A3__Ra7Vgn6qFeSvtKgrK5O"
+        }
+      },
+      "usage": null
+    },
+    "error_create_catalog": {
+      "label": "crear catalogo BISU",
+      "method": "POST",
+      "path": "1828876861482638/owned_product_catalogs",
+      "status": 400,
+      "body": {
+        "error": {
+          "message": "Application does not have permission for this action",
+          "type": "OAuthException",
+          "code": 10,
+          "error_subcode": 1690129,
+          "is_transient": false,
+          "error_user_title": "Permiso requerido para crear catálogo",
+          "error_user_msg": "No tienes permiso para crear un catálogo de productos porque no eres administrador de esta empresa.",
+          "fbtrace_id": "AqR2EnJVtm_0YYc-hrqU0qQ"
+        }
+      },
+      "usage": null
+    },
+    "error_business_management": {
+      "label": "business/owned_product_catalogs",
+      "method": "GET",
+      "path": "1828876861482638/owned_product_catalogs",
+      "status": 403,
+      "body": {
+        "error": {
+          "message": "(#200) Requires business_management permission to manage the object",
+          "type": "OAuthException",
+          "code": 200,
+          "fbtrace_id": "Ak9jdZsmELQtbeyyG_4W1dF"
+        }
+      },
+      "usage": null
+    },
+    "error_generic_catalog_products": {
+      "label": "spike catalog products",
+      "method": "GET",
+      "path": "1652153386366048/products",
+      "status": 400,
+      "body": {
+        "error": {
+          "message": "Unknown method",
+          "code": 3,
+          "type": "OAuthException",
+          "error_data": {
+            "blame_field_specs": [
+              [
+                "vertical"
+              ]
+            ]
+          },
+          "error_subcode": 1798083,
+          "is_transient": false,
+          "error_user_msg": "Datos disponibles solo para catálogos del tipo \"commerce\"",
+          "error_user_title": "Extremo no admitido para este sector",
+          "fbtrace_id": "AZF-f8_su4QOKMPfaYF3haS"
+        }
+      },
+      "usage": "{\"1652153386366048\":[{\"type\":\"catalog_management\",\"call_count\":1,\"total_cputime\":1,\"total_time\":1,\"estimated_time_to_regain_access\":0}]}"
+    }
+  }
+}
