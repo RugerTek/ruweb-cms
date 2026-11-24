@@ -324,7 +324,8 @@ return [
 
     // Connectors: Bancard card
     'connector_bancard_label' => 'Bancard',
-    'connector_bancard_description' => 'Take credit and debit card payments on your site with the Bancard vPOS.',
+    'connector_bancard_description' => 'Take credit and debit card payments on your site through Bancard.',
+    'connector_bancard_all_methods' => 'See all payment methods',
     'connector_bancard_configure' => 'Set up payments',
     'connector_bancard_needs_checkout' => 'Turn on online selling to take payments with Bancard.',
 

@@ -112,6 +112,61 @@ class AdminConnectorsTest extends TestCase
         $this->actingAs($this->editor)->get($show)->assertForbidden();
     }
 
+    public function test_cards_are_grouped_by_category_and_empty_groups_are_hidden(): void
+    {
+        $this->actingAs($this->admin);
+
+        // Only the (fake) Meta feed: one sales channel group, no payments heading.
+        $this->get(route('admin.connectors.index'))->assertOk()
+            ->assertSeeInOrder(['data-connector-group="sales_channel"', __('connectors.category_sales_channel'), 'data-connector="meta"'], false)
+            ->assertDontSee('data-connector-group="payments"', false)
+            ->assertDontSee(__('connectors.category_payments'));
+
+        config(['cms.connectors.bancard' => BancardConnector::class, 'cms.shop.payment_providers.bancard' => BancardProvider::class]);
+        $this->get(route('admin.connectors.index'))->assertOk()
+            ->assertSeeInOrder([
+                'data-connector-group="sales_channel"', __('connectors.category_sales_channel'), 'data-connector="meta"',
+                'data-connector-group="payments"', __('connectors.category_payments'), 'data-connector="bancard"',
+            ], false);
+    }
+
+    public function test_bancard_card_says_what_it_does_and_links_to_every_payment_method_once_the_catalog_is_on(): void
+    {
+        config(['cms.connectors.bancard' => BancardConnector::class, 'cms.shop.payment_providers.bancard' => BancardProvider::class]);
+        $this->actingAs($this->admin);
+        $card = fn (): string => (function (string $html): string {
+            $start = (int) strpos($html, 'data-connector="bancard"');
+
+            return substr($html, $start, (int) strpos($html, '</article>', $start) - $start);
+        })($this->get(route('admin.connectors.index'))->assertOk()->getContent());
+
+        // Catalog off: the card explains itself and offers the catalog, with no link to a screen that is not there.
+        $off = $card();
+        $this->assertStringContainsString(e(__('checkout.connector_bancard_description')), $off);
+        $this->assertStringContainsString(route('admin.connectors.enable-catalog', ['connector' => 'bancard']), $off);
+        $this->assertStringNotContainsString(e(__('checkout.connector_bancard_all_methods')), $off);
+        $this->assertStringNotContainsString(route('admin.shop-payments.edit'), $off);
+        $this->assertStringNotContainsString('href="'.route('admin.connectors.show', ['connector' => 'bancard']).'"', $off);
+
+        // Catalog on: name and footer lead straight to Payments and shipping, where every method is configured.
+        $this->useShop('catalog');
+        $on = $card();
+        $this->assertStringContainsString(e(__('checkout.connector_bancard_description')), $on);
+        $this->assertStringContainsString(e(__('checkout.connector_bancard_all_methods')), $on);
+        $this->assertStringContainsString('href="'.route('admin.shop-payments.edit').'" class="inline-flex items-center gap-1', $on);
+        $this->assertStringNotContainsString('href="'.route('admin.connectors.show', ['connector' => 'bancard']).'"', $on);
+        $this->assertStringNotContainsString(e(__('connectors.view_details')), $on);
+    }
+
+    public function test_bancard_description_tells_the_owner_what_it_does(): void
+    {
+        $this->assertSame('Cobrá con tarjeta de crédito y débito en tu sitio, a través de Bancard.', trans('checkout.connector_bancard_description', [], 'es'));
+        $this->assertSame('Take credit and debit card payments on your site through Bancard.', trans('checkout.connector_bancard_description', [], 'en'));
+        $this->assertSame('Ver todos los medios de pago', trans('checkout.connector_bancard_all_methods', [], 'es'));
+        $this->assertSame('Medios de pago', trans('connectors.category_payments', [], 'es'));
+        $this->assertSame('Canales de venta', trans('connectors.category_sales_channel', [], 'es'));
+    }
+
     public function test_card_button_turns_the_catalog_on_and_returns_to_the_card(): void
     {
         $this->actingAs($this->admin);

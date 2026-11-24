@@ -3,6 +3,7 @@
 namespace App\Connectors\Meta;
 
 use App\Connectors\CatalogItem;
+use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRequirement;
 use App\Connectors\FeedWarning;
 use App\Connectors\Sources\ShopProductSource;
@@ -58,6 +59,11 @@ class MetaCatalogConnector implements FeedConnector
     public function icon(): string
     {
         return 'admin.connectors.icons.meta';
+    }
+
+    public function category(): ConnectorCategory
+    {
+        return ConnectorCategory::SalesChannel;
     }
 
     public function requirements(): array

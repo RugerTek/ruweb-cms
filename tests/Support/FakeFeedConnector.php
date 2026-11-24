@@ -3,6 +3,7 @@
 namespace Tests\Support;
 
 use App\Connectors\CatalogItem;
+use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRequirement;
 use App\Connectors\FeedWarning;
 use App\Contracts\Connectors\FeedConnector;
@@ -40,6 +41,11 @@ final class FakeFeedConnector implements FeedConnector
     public function icon(): string
     {
         return 'admin.connectors.icons.generic';
+    }
+
+    public function category(): ConnectorCategory
+    {
+        return ConnectorCategory::SalesChannel;
     }
 
     public function requirements(): array

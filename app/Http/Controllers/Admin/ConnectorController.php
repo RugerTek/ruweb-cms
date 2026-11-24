@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Connectors\Bancard\BancardConnector;
+use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorStatus;
 use App\Connectors\FeedResult;
@@ -46,14 +47,21 @@ class ConnectorController extends Controller
         private readonly ConnectorOperations $operations,
     ) {}
 
+    /**
+     * The grid, one group per ConnectorCategory (in the order of its cases) with the cards of that category; empty
+     * groups are left out.
+     */
     public function index(): View
     {
-        $cards = [];
+        $groups = [];
+        foreach (ConnectorCategory::cases() as $category) {
+            $groups[$category->value] = ['category' => $category, 'cards' => []];
+        }
         foreach ($this->registry->all() as $key => $connector) {
-            $cards[] = $this->card($key, $connector);
+            $groups[$connector->category()->value]['cards'][] = $this->card($key, $connector);
         }
 
-        return view('admin.connectors.index', ['cards' => $cards]);
+        return view('admin.connectors.index', ['groups' => array_values(array_filter($groups, fn (array $group): bool => $group['cards'] !== []))]);
     }
 
     /**
@@ -179,7 +187,26 @@ class ConnectorController extends Controller
             'included' => $storedTotals ? $record->last_item_count : $preview?->included,
             'skipped' => $storedTotals ? (int) $record->last_skipped_count : $preview?->skipped,
             'newProductUrl' => $this->newProductUrl($source?->key()),
+            ...$this->detailLink($key, $connector),
         ];
+    }
+
+    /**
+     * Where the card's name and footer link lead. Bancard has no detail of its own: its card links to every payment
+     * method (Admin > Payments and shipping) while the catalog is on, and to nothing otherwise (the card offers to
+     * turn the catalog on instead).
+     *
+     * @return array{detailUrl: ?string, detailLabel: ?string}
+     */
+    private function detailLink(string $key, ConnectorContract $connector): array
+    {
+        if ($connector instanceof BancardConnector) {
+            return app(ShopModule::class)->catalog() && Route::has('admin.shop-payments.edit')
+                ? ['detailUrl' => route('admin.shop-payments.edit'), 'detailLabel' => 'checkout.connector_bancard_all_methods']
+                : ['detailUrl' => null, 'detailLabel' => null];
+        }
+
+        return ['detailUrl' => route('admin.connectors.show', ['connector' => $key]), 'detailLabel' => 'connectors.view_details'];
     }
 
     /** "New product" link for the empty catalog notice: only where the panel can create products (Full). */

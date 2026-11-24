@@ -1,7 +1,8 @@
 {{--
     One connector card (Admin > Connectors grid and top of the detail). Receives the array built by
     Admin\ConnectorController::card(): $key, $connector, $status, $record, $unmet, $paused, $isMeta, $sourceCount,
-    $groupCount, $included, $skipped, $newProductUrl. $detail = true (top of the detail page, whose h1 already
+    $groupCount, $included, $skipped, $newProductUrl, $detailUrl and $detailLabel (where the name and the footer link
+    lead: the detail, or for Bancard every payment method; null shows no link). $detail = true (top of the detail page, whose h1 already
     names the connector) hides the name and the "View details" link.
 --}}
 @php
@@ -23,9 +24,13 @@
         <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2">
                 @unless($detail)
-                    <h2 class="text-sm font-semibold text-white">
-                        <a href="{{ route('admin.connectors.show', ['connector' => $key]) }}" class="hover:text-sky-400 transition-colors">{{ __($connector->label()) }}</a>
-                    </h2>
+                    <h3 class="text-sm font-semibold text-white">
+                        @if($detailUrl)
+                            <a href="{{ $detailUrl }}" class="hover:text-sky-400 transition-colors">{{ __($connector->label()) }}</a>
+                        @else
+                            {{ __($connector->label()) }}
+                        @endif
+                    </h3>
                 @endunless
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 {{ $chip }}" data-status-chip>{{ $paused ? __('connectors.status_paused') : __($status->label()) }}</span>
             </div>
@@ -111,12 +116,12 @@
         @endif
     </div>
 
-    @unless($detail)
+    @if(! $detail && $detailUrl)
         <footer class="mt-auto pt-3 border-t border-white/[0.06]">
-            <a href="{{ route('admin.connectors.show', ['connector' => $key]) }}" class="inline-flex items-center gap-1 text-sm text-sky-400 hover:text-sky-300 transition-colors">
-                {{ __('connectors.view_details') }}
+            <a href="{{ $detailUrl }}" class="inline-flex items-center gap-1 text-sm text-sky-400 hover:text-sky-300 transition-colors" data-connector-detail>
+                {{ __($detailLabel) }}
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
         </footer>
-    @endunless
+    @endif
 </article>

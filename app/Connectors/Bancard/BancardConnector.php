@@ -3,6 +3,7 @@
 namespace App\Connectors\Bancard;
 
 use App\Connectors\ConnectorAction;
+use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRequirement;
 use App\Contracts\Connectors\Connector;
 use App\Models\PaymentMethod;
@@ -56,6 +57,11 @@ class BancardConnector implements Connector
     public function icon(): string
     {
         return 'admin.connectors.icons.bancard';
+    }
+
+    public function category(): ConnectorCategory
+    {
+        return ConnectorCategory::Payments;
     }
 
     public function requirements(): array

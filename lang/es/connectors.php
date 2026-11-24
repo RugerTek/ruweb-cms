@@ -14,6 +14,10 @@ return [
     'status_paused' => 'En pausa',
     'status_connected' => 'Conectado',
 
+    // Card groups (App\Connectors\ConnectorCategory)
+    'category_sales_channel' => 'Canales de venta',
+    'category_payments' => 'Medios de pago',
+
     // Requirements and actions that resolve them
     'requirement_shop_catalog' => 'Activá el catálogo de productos para usar este conector.',
     'requirement_shop_unavailable' => 'La tienda no está habilitada para este sitio.',

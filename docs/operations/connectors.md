@@ -11,11 +11,17 @@ Instagram shops and catalog ads. v1 is feed-only (Meta pulls a URL); there is no
 
 ## What the administrator sees
 
+Rule: **Connectors is the showcase and the status of everything external (sales channels and payment methods); the
+settings of each one live in a single place** (Meta on its detail, Bancard in Admin > Payments and shipping), never
+duplicated on the card.
+
 - **Connectors is always in the sidebar for administrators**, whatever modules are on: it is how a client finds
   out what the site can connect to. Editors do not see it and its routes answer 403 (`role:admin` group of
   `routes/admin.php`, routes in `routes/connectors-admin.php`). It is an operational screen, valid in both admin
   profiles ([../concepts/admin-profiles.md](../concepts/admin-profiles.md)).
-- `/admin/connectors` is a grid of cards, one per registered connector, each with its status
+- `/admin/connectors` is a grid of cards, one per registered connector, grouped under a heading per
+  `Connector::category()` (`App\Connectors\ConnectorCategory`, in the order of its cases: "Sales channels" for
+  Meta, "Payment methods" for Bancard; empty groups are not shown), each with its status
   (`App\Connectors\ConnectorStatus`):
 
   | Status | When | The card offers |
@@ -38,7 +44,7 @@ All texts live in `lang/es/connectors.php` / `lang/en/connectors.php` (parity ru
 | Piece | Where | Owns |
 |---|---|---|
 | Registry entries | `config/cms.php`: `connectors` (key => class) and `catalog_sources` (key => class) | Which connectors and sources exist. Today `meta` and `bancard`, and the `products` source. |
-| `Connector` | `app/Contracts/Connectors/Connector.php` | `key()`, `label()` and `description()` (translation keys), `icon()` (Blade view), `requirements()`, `defaults()`, `rules()` |
+| `Connector` | `app/Contracts/Connectors/Connector.php` | `key()`, `label()` and `description()` (translation keys), `icon()` (Blade view), `category()` (`ConnectorCategory`: grid group), `requirements()`, `defaults()`, `rules()` |
 | `FeedConnector` | `app/Contracts/Connectors/FeedConnector.php` | Extends `Connector` for platforms that download a file: `source()`, `check()`, `write()`, `contentType()`, `extension()`, `fetchAgents()` |
 | `CatalogSource` | `app/Contracts/Catalog/CatalogSource.php` | Where a feed reads items from: `key()`, `available()`, `items()` (a cursor-backed `LazyCollection`, never the whole catalog in memory), `count()` (items) and `groupCount()` (products: the variants of one product count once) |
 | `CatalogItem` | `app/Connectors/CatalogItem.php` | Immutable item handed from source to connector: id, group id, title, plain-text description, relative URL, media ids, `Money` price and sale price, availability, brand, variant attributes, panel edit URL |
@@ -73,7 +79,8 @@ Never write a `connectors` row any other way: the panel, MCP and tests all go th
 1. **A class** implementing `App\Contracts\Connectors\Connector`, or `FeedConnector` when the platform downloads a
    file. `key()` returns its config key (lowercase letters, digits, `_`); `label()` and `description()` return
    translation keys; `icon()` returns a view under `resources/views/admin/connectors/icons/`
-   (`resources/views/admin/connectors/icons/generic.blade.php` is the fallback shape to copy).
+   (`resources/views/admin/connectors/icons/generic.blade.php` is the fallback shape to copy); `category()` returns
+   the `ConnectorCategory` it is listed under (`SalesChannel` for a feed connector, `Payments` for a payment method).
 2. **Requirements** are evaluated on every call, never cached. Reuse `ConnectorRequirement::shopCatalog()` when
    the connector needs products; an unmet requirement sets `needs_action`, blocks `activate()` and turns the feed
    off without touching the stored row.
@@ -124,8 +131,9 @@ otherwise. It is resynced on every payment method write (panel and MCP) and when
 (`ShopModuleOperations::setMode()`), so the card never says `connected` on a site that does not sell.
 
 `/admin/connectors/bancard` redirects to Admin > Payments and shipping (`#bancard`) while the catalog is on, and back
-to the grid otherwise (where the card offers to turn the catalog on). The card's buttons that only navigate are
-links (GET), not forms.
+to the grid otherwise (where the card offers to turn the catalog on). For the same reason the card's name and its
+footer link ("See all payment methods") lead straight to Admin > Payments and shipping while the catalog is on, and
+the card has no such link otherwise. The card's buttons that only navigate are links (GET), not forms.
 
 ## The feed URL
 

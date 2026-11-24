@@ -2,6 +2,7 @@
 
 namespace App\Contracts\Connectors;
 
+use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRequirement;
 
 /**
@@ -23,6 +24,9 @@ interface Connector
 
     /** Blade view rendering the card icon (`admin.connectors.icons.meta`). */
     public function icon(): string;
+
+    /** Group the card is listed under in Admin > Connectors (a feed connector is usually a sales channel). */
+    public function category(): ConnectorCategory;
 
     /**
      * What the site must have before the connector can work, evaluated on every call (never cached). Any unmet

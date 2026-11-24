@@ -16,15 +16,22 @@
     </div>
 @endif
 
-@if($cards === [])
+@if($groups === [])
     <div class="text-center py-20 text-gray-600">
         @include('admin.connectors.icons.generic', ['class' => 'w-12 h-12 mx-auto mb-4'])
         <p class="text-sm font-medium text-gray-500">{{ __('connectors.empty') }}</p>
     </div>
 @else
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        @foreach($cards as $card)
-            @include('admin.connectors._card', $card)
+    <div class="space-y-8">
+        @foreach($groups as $group)
+            <section data-connector-group="{{ $group['category']->value }}" aria-labelledby="connector-group-{{ $group['category']->value }}">
+                <h2 id="connector-group-{{ $group['category']->value }}" class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">{{ __($group['category']->label()) }}</h2>
+                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach($group['cards'] as $card)
+                        @include('admin.connectors._card', $card)
+                    @endforeach
+                </div>
+            </section>
         @endforeach
     </div>
 @endif

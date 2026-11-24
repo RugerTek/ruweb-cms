@@ -324,7 +324,8 @@ return [
 
     // Connectors: Bancard card
     'connector_bancard_label' => 'Bancard',
-    'connector_bancard_description' => 'Cobrá con tarjetas de crédito y débito en tu sitio con el vPOS de Bancard.',
+    'connector_bancard_description' => 'Cobrá con tarjeta de crédito y débito en tu sitio, a través de Bancard.',
+    'connector_bancard_all_methods' => 'Ver todos los medios de pago',
     'connector_bancard_configure' => 'Configurar pagos',
     'connector_bancard_needs_checkout' => 'Activá la venta en línea para cobrar con Bancard.',
 
