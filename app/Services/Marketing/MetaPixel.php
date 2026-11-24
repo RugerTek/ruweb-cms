@@ -32,7 +32,7 @@ use Throwable;
  * - Purchase: server, App\Listeners\Marketing\SendMetaPixelPurchase on OrderPaid; browser, the order page once the
  *   order is paid, once per order (purchaseInBrowser()). event_id `purchase-{order number}` on both sides.
  * - Lead: Public\ContactFormController::store() after a real submission (the browser event shows on the page it
- *   redirects to).
+ *   redirects to); the server event carries the email, phone and name of the form, hashed.
  *
  * Nothing is sent while the connector is off or has no pixel ID, inside the panel's previews, for a signed-in panel
  * user (their visits would muddy the numbers) or when the consent hook says no (resolveConsentUsing()). A failure is
@@ -125,8 +125,9 @@ final class MetaPixel
      * measured.
      *
      * @param  array<string, mixed>|Closure(): array<string, mixed>  $customData  a closure is only run for a measured visit
+     * @param  array<string, string>  $userData  extra `user_data` for the server event, ALREADY hashed (MetaPixelUserData::fromContact()); never sent to the browser
      */
-    public function track(string $name, array|Closure $customData = [], bool $redirect = false, ?string $eventId = null): ?string
+    public function track(string $name, array|Closure $customData = [], bool $redirect = false, ?string $eventId = null, array $userData = []): ?string
     {
         try {
             $request = request();
@@ -144,7 +145,7 @@ final class MetaPixel
                 $this->pending[] = $browserEvent;
             }
             if ($this->accessToken() !== null) {
-                $this->dispatch($this->serverEvent($name, $eventId, $customData, MetaPixelUserData::fromRequest($request), $this->sourceUrl($request)));
+                $this->dispatch($this->serverEvent($name, $eventId, $customData, [...$userData, ...MetaPixelUserData::fromRequest($request)], $this->sourceUrl($request)));
             }
 
             return $eventId;

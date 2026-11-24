@@ -8,6 +8,7 @@ use App\Models\ContactSubmission;
 use App\Models\Page;
 use App\Services\Forms\SubmissionNotifier;
 use App\Services\Marketing\MetaPixel;
+use App\Services\Marketing\MetaPixelUserData;
 use Illuminate\Http\RedirectResponse;
 
 /**
@@ -35,8 +36,11 @@ class ContactFormController extends Controller
         ]);
 
         $notifier->notify($submission, $page);
-        // Meta Pixel Lead (browser event on the page it returns to, server event queued); never fails the request.
-        app(MetaPixel::class)->track('Lead', redirect: true);
+        // Meta Pixel Lead (browser event on the page it returns to, server event queued with the visitor's email,
+        // phone and name hashed, for matching; docs/operations/meta-pixel.md#privacy-and-consent); never fails the request.
+        app(MetaPixel::class)->track('Lead', redirect: true, userData: MetaPixelUserData::fromContact(
+            $submission->name, $submission->email, $submission->phone,
+        ));
 
         return $redirect;
     }

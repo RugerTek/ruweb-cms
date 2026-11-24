@@ -43,7 +43,7 @@
             <div>
                 <label for="pixel-id" class="block text-xs text-gray-400 mb-1">{{ __('meta_pixel.field_pixel_id') }}</label>
                 <input type="text" id="pixel-id" name="pixel_id" inputmode="numeric" value="{{ old('pixel_id', $settings['pixel_id'] ?? '') }}" class="{{ $input }} font-mono" placeholder="123456789012345">
-                <p class="text-xs text-gray-500 mt-1">{!! __('meta_pixel.field_pixel_id_help', ['link' => '<a href="'.e($links['events_manager']).'" target="_blank" rel="noopener" class="'.$link.'">Events Manager</a>']) !!}</p>
+                <p class="text-xs text-gray-500 mt-1">{!! __('meta_pixel.field_pixel_id_help', ['link' => '<a href="'.e($links['events_manager']).'" target="_blank" rel="noopener" class="'.$link.'">'.e(__('meta_pixel.link_events_manager')).'</a>']) !!}</p>
                 @error('pixel_id')<p class="text-red-400 text-xs mt-1" role="alert">{{ $message }}</p>@enderror
             </div>
             <div>
@@ -58,6 +58,7 @@
                 <input type="password" id="access-token" name="access_token" value="" class="{{ $input }} font-mono" autocomplete="new-password"
                        placeholder="{{ $tokenSuffix !== null ? __('meta_pixel.token_placeholder_replace') : __('meta_pixel.token_placeholder') }}">
                 <p class="text-xs text-gray-500 mt-1">{!! __('meta_pixel.field_access_token_help', ['link' => '<a href="'.e($links['access_token']).'" target="_blank" rel="noopener" class="'.$link.'">'.e(__('meta_pixel.link_meta_guide')).'</a>']) !!}</p>
+                <p class="text-xs text-yellow-300/90 mt-1" data-meta-pixel-no-meta-integration>{{ __('meta_pixel.field_access_token_no_meta_integration') }}</p>
                 @error('access_token')<p class="text-red-400 text-xs mt-1" role="alert">{{ $message }}</p>@enderror
                 @if($tokenSuffix !== null || $tokenUnusable)
                     <label class="mt-2 inline-flex items-center gap-2 text-xs text-gray-400">

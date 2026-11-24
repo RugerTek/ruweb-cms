@@ -10,9 +10,11 @@ return [
     'settings_title' => 'Settings',
     'settings_help' => 'The pixel ID is enough to measure from the browser. With the Conversions API token too, the site also tells Meta from the server, and Meta counts each action once.',
     'field_pixel_id' => 'Pixel (dataset) ID',
-    'field_pixel_id_help' => 'Digits only. You find it in :link › Data sources, under your pixel name.',
+    'field_pixel_id_help' => 'Digits only. You find it in :link › "Datasets": it is the "ID" shown under your pixel name.',
+    'link_events_manager' => 'Events Manager',
     'field_access_token' => 'Conversions API token (optional)',
-    'field_access_token_help' => 'Generate it in Events Manager › your pixel › Settings › Conversions API › "Generate access token". It is stored encrypted and never shown again. :link',
+    'field_access_token_help' => 'Generate it in Events Manager › "Datasets" › your pixel › "Settings" › "Conversions API" › "Set up direct integration" › "Set up without Dataset Quality API" › "Generate access token". It is stored encrypted and never shown again. :link',
+    'field_access_token_no_meta_integration' => 'If you saved the token here, do NOT use "Conversions API with Meta" › "Connect now" on that same Meta screen: there would be two server integrations sending the same events to your pixel.',
     'link_meta_guide' => 'Meta guide',
     'token_saved' => 'Token saved, ends in :suffix.',
     'token_missing' => 'No token yet: only the browser measures.',
@@ -21,7 +23,7 @@ return [
     'token_placeholder_replace' => 'Leave it empty to keep the current one',
     'token_forget' => 'Delete the saved token',
     'field_test_event_code' => 'Test events code (optional)',
-    'field_test_event_code_help' => 'Events Manager › Test events gives it (for example TEST12345). While it is set, server events show up on that screen: delete it when you finish testing.',
+    'field_test_event_code_help' => 'You find it in your pixel › "Test events": choose "Website" in "Select a channel" and open "Confirm your server events…"; it shows as test_event_code (for example TEST12345). It is only for testing: while it is set, every server event is sent as a test. Meta asks not to keep it in normal use, so delete it as soon as you finish.',
     'saved' => 'Pixel settings saved.',
     'error_token_format' => 'That does not look like a Meta token. Copy the whole token, without spaces.',
 
@@ -31,8 +33,8 @@ return [
     'action_test' => 'Send test event',
     'test_needs_pixel_id' => 'To test, save the pixel ID first.',
     'test_needs_token' => 'To test, save the Conversions API token first.',
-    'test_needs_code' => 'To test, save the test events code first (Events Manager › Test events).',
-    'test_sent' => 'Meta received the test event. Check Events Manager › Test events.',
+    'test_needs_code' => 'To test, save the test events code first (Events Manager › your pixel › "Test events").',
+    'test_sent' => 'Meta received the test event. Check it in Events Manager › "Test events". When you finish testing, delete the test events code.',
     'test_failed' => 'Meta did not accept the test event: :message',
     'test_connection' => 'Meta could not be reached. Try again in a while.',
 
@@ -48,7 +50,7 @@ return [
     'events_not_measured' => 'Nothing is measured while you are signed in to the panel or in previews, so your visits do not mix with your customers\'.',
 
     'privacy_title' => 'Privacy',
-    'privacy_help' => 'The pixel uses Meta cookies. Say in your privacy policy that you use the Meta Pixel and what for. The email, phone, name and city of an order are sent to Meta hashed (they cannot be read) and only to recognise the purchase.',
+    'privacy_help' => 'The pixel uses Meta cookies. Say in your privacy policy that you use the Meta Pixel and what for. The email, phone, name and city of an order, and the email, phone and name of whoever writes to you through the contact form, are sent to Meta hashed (they cannot be read) and only to recognise that person. The subject and the message are not sent.',
 
     'card_browser_and_server' => 'Measuring from the browser and the server.',
     'card_browser_only' => 'Measuring from the browser. Add the token to measure from the server too.',

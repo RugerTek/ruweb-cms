@@ -65,6 +65,29 @@ class MetaPixelPanelTest extends TestCase
             ->assertDontSee('data-fetch-log', false);
     }
 
+    public function test_the_help_names_meta_screens_as_events_manager_shows_them(): void
+    {
+        // Labels seen in Events Manager (Spanish UI) on 2026-11-24.
+        $es = fn (string $key) => trans('meta_pixel.'.$key, [], 'es');
+        $this->assertStringContainsString('«Conjuntos de datos»', $es('field_pixel_id_help'));
+        $this->assertStringContainsString('«Identificador»', $es('field_pixel_id_help'));
+        foreach (['«Configurar la integración directa»', '«Configurar sin Dataset Quality API»', '«Generar identificador de acceso»'] as $label) {
+            $this->assertStringContainsString($label, $es('field_access_token_help'));
+        }
+        foreach (['«Sitio web»', '«Selecciona un canal»', 'test_event_code'] as $label) {
+            $this->assertStringContainsString($label, $es('field_test_event_code_help'));
+        }
+        $this->assertStringContainsString('«Conectar ahora»', $es('field_access_token_no_meta_integration'));
+        foreach (array_keys(require lang_path('es/meta_pixel.php')) as $key) {
+            $this->assertStringNotContainsString('Events Manager', $es($key), "meta_pixel.{$key} uses Meta's Spanish name.");
+        }
+
+        $this->actingAs($this->admin)->get(route('admin.connectors.show', ['connector' => 'meta_pixel']))
+            ->assertOk()
+            ->assertSee('data-meta-pixel-no-meta-integration', false)
+            ->assertSee('>'.e(__('meta_pixel.link_events_manager')).'</a>', false);
+    }
+
     public function test_the_admin_saves_the_pixel_and_an_encrypted_token_that_is_never_shown(): void
     {
         $this->update(['pixel_id' => self::PIXEL, 'access_token' => self::TOKEN, 'test_event_code' => 'TEST12345'])

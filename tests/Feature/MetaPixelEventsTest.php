@@ -140,8 +140,37 @@ class MetaPixelEventsTest extends TestCase
         $this->assertSame('127.0.0.1', $event['user_data']['client_ip_address']);
         $this->assertSame('fb.1.1700000000000.1234567890', $event['user_data']['fbp']);
         $this->assertMatchesRegularExpression('/^fb\.1\.\d{13}\.AbC_123-x$/', $event['user_data']['fbc']);
-        $this->assertArrayNotHasKey('em', $event['user_data'], 'Contact details only exist for an order.');
+        $this->assertArrayNotHasKey('em', $event['user_data'], 'Contact details only exist for an order or a contact form.');
         $this->assertStringNotContainsString(self::TOKEN, serialize($this->serverEvents()), 'The token never goes into the queue.');
+    }
+
+    public function test_fbc_is_worked_out_once_per_request_and_the_browser_cookie_wins(): void
+    {
+        // Built from fbclid (no _fbc yet): the same value for every event of the request, however much time passes.
+        $request = Request::create('/productos/mate', 'GET', ['fbclid' => 'AbC_123-x']);
+        $first = MetaPixelUserData::browserIds($request)['fbc'];
+        $this->travel(5)->seconds();
+        $this->assertSame($first, MetaPixelUserData::browserIds($request)['fbc']);
+        $this->assertSame($first, MetaPixelUserData::fromRequest($request)['fbc']);
+        $this->travelBack();
+
+        // The _fbc cookie Meta's script wrote is sent as it is (subdomain index 2 included).
+        $cookie = 'fb.2.1795542211725.AbC_123-x';
+        $this->assertSame(['fbc' => $cookie], MetaPixelUserData::browserIds(Request::create('/', 'GET', ['fbclid' => 'AbC_123-x'], ['_fbc' => $cookie])));
+        $this->assertSame(['fbc' => $cookie], MetaPixelUserData::browserIds(Request::create('/', 'GET', [], ['_fbc' => $cookie])));
+        // A new ad click (another fbclid) wins over the old cookie, as Meta asks.
+        $this->assertMatchesRegularExpression('/^fb\.1\.\d{13}\.NewClick$/', MetaPixelUserData::browserIds(Request::create('/', 'GET', ['fbclid' => 'NewClick'], ['_fbc' => $cookie]))['fbc']);
+
+        // Through a real page: PageView and ViewContent of one request share the fbc.
+        Bus::fake([SendMetaPixelEvent::class]);
+        $this->useCheckout();
+        $this->activate();
+        $mate = CheckoutFixtures::product(['title' => 'Mate', 'sku' => 'MATE-1']);
+        $this->get($mate->url().'?fbclid=Click_9')->assertOk();
+        $fbcs = array_unique(array_map(fn (array $event) => $event['user_data']['fbc'], $this->serverEvents()));
+        $this->assertSame(['PageView', 'ViewContent'], collect($this->serverEvents())->pluck('event_name')->sort()->values()->all());
+        $this->assertCount(1, $fbcs);
+        $this->assertMatchesRegularExpression('/^fb\.1\.\d{13}\.Click_9$/', $fbcs[0]);
     }
 
     public function test_panel_users_previews_and_a_refused_consent_are_not_measured(): void
@@ -267,7 +296,21 @@ class MetaPixelEventsTest extends TestCase
         $lead = $this->serverEvent('Lead');
         $this->assertBrowserEvent($response, 'Lead', $lead['event_id']);
         $this->assertArrayNotHasKey('custom_data', $lead);
-        $this->assertArrayNotHasKey('em', $lead['user_data']);
+        // The visitor's contact details, normalized and hashed like an order's (email lowercase, phone with 595).
+        $user = $lead['user_data'];
+        $this->assertSame(
+            [hash('sha256', 'ana@example.com'), hash('sha256', '595981123456'), hash('sha256', 'ana'), hash('sha256', 'pérez')],
+            [$user['em'], $user['ph'], $user['fn'], $user['ln']],
+        );
+        $this->assertSame('127.0.0.1', $user['client_ip_address']);
+        $serialized = serialize($this->serverEvents());
+        foreach (['ana@example.com', '0981 123 456', 'Ana Pérez', 'Consulta', 'quisiera'] as $plain) {
+            $this->assertStringNotContainsString($plain, $serialized, 'Nothing of the form goes in clear.');
+        }
+        $this->assertStringNotContainsString(hash('sha256', 'ana@example.com'), $response->getContent(), 'Customer data never goes to the browser event.');
+
+        // Without phone: only what was typed.
+        $this->assertSame(['em' => hash('sha256', 'luis@example.com')], MetaPixelUserData::fromContact(null, ' Luis@Example.com ', ''));
     }
 
     public function test_the_job_sends_to_the_configured_graph_version_and_logs_failures_without_secrets(): void
