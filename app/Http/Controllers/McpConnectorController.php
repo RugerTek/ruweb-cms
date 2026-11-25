@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Connectors\AmibaChat\AmibaChatConnector;
 use App\Connectors\CatalogItem;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorRequirement;
@@ -13,6 +14,7 @@ use App\Contracts\Connectors\FeedConnector;
 use App\Exceptions\RevisionConflict;
 use App\Models\Connector;
 use App\Models\User;
+use App\Services\AmibaChat\AmibaChat;
 use App\Services\Connectors\ConnectorOperations;
 use App\Services\Marketing\MetaPixel;
 use App\Support\ShopModule;
@@ -30,7 +32,8 @@ use Illuminate\Validation\Validator as ValidatorInstance;
  * the panel (Connector::feedUrl()), like transport credentials (docs/operations/mcp-surface.md). The Meta Pixel's
  * pixel ID and test events code are ordinary settings here; its Conversions API access token is set only in the panel
  * and reported as `conversions_api.token_configured`. The Meta catalog reports its «Conectar con Facebook» state as
- * `meta_connection` (mode, business, catalog, «termina en»), never the Graph token.
+ * `meta_connection` (mode, business, catalog, «termina en»), never the Graph token. The Amiba chatbot's widget handle is
+ * public (it is in the HTML of every page), so it is returned in `amiba_chat`; a pasted snippet is accepted as `handle`.
  */
 class McpConnectorController extends Controller
 {
@@ -210,6 +213,9 @@ class McpConnectorController extends Controller
         if ($definition instanceof MetaCatalogConnector) {
             $data['meta_connection'] = $this->metaConnection();
         }
+        if ($definition instanceof AmibaChatConnector) {
+            $data['amiba_chat'] = $this->amibaChat($key);
+        }
         if ($summary) {
             return $data;
         }
@@ -248,6 +254,26 @@ class McpConnectorController extends Controller
             'token_ends_in' => $connection->tokenSuffix,
             'last_error' => $connection->lastError,
             'connect_location' => 'Only in the admin panel ('.$this->panelUrl(MetaCatalogConnector::KEY).'#meta-connection): «Conectar con Facebook» needs the administrator\'s Facebook login. The token is never available here.',
+        ];
+    }
+
+    /**
+     * Amiba chatbot (level 1): the widget handle, whether the chat is on the public pages now, and the exact origin to
+     * allow in Amiba. The "Test" against Amiba's API runs only in the panel.
+     */
+    private function amibaChat(string $key): array
+    {
+        $chat = app(AmibaChat::class);
+        $settings = $this->registry->settings($key);
+
+        return [
+            'handle' => AmibaChatConnector::validHandle($settings['handle'] ?? null) ? $settings['handle'] : null,
+            'on_public_pages' => $chat->handle() !== null,
+            'hide_on_checkout' => $chat->hideOnCheckout(),
+            'loader_url' => AmibaChat::loaderUrl(),
+            'site_origin' => AmibaChat::siteOrigin(),
+            'allowed_origin_hint' => 'In Amiba, the widget\'s Web Chat node > Widget settings > Allowed origins must list site_origin exactly (or be empty, which allows any site).',
+            'test_location' => 'Only in the admin panel ('.$this->panelUrl($key).'): the Test button asks Amiba for the widget.',
         ];
     }
 

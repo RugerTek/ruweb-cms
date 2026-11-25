@@ -223,7 +223,7 @@ through `App\Services\Connectors\ConnectorOperations`, the operation the panel u
   connector on or off, in one transaction: a stale revision is `-32009` and an activation refused by an unmet
   requirement is `-32602`, with nothing saved. Deactivating keeps settings and the URL.
 - `connectors_rotate_token {connector, expected_revision}` makes the previous URL stop working at once and answers
-  only `rotated_at` and the new `revision`. Connectors without a feed (`bancard`, `meta_pixel`) have no token: it
+  only `rotated_at` and the new `revision`. Connectors without a feed (`bancard`, `meta_pixel`, `amiba_chat`) have no token: it
   and `connectors_preview` answer `-32602` (REST: 404).
 - `meta` also returns `meta_connection` in `connectors_list` and `connectors_get`
   ([connectors.md](connectors.md#connect-with-facebook-v2)): `mode` (`manual` or `connected`), `connected`,
@@ -236,6 +236,12 @@ through `App\Services\Connectors\ConnectorOperations`, the operation the panel u
   (one is saved but was entered under another origin or `APP_KEY`), `token_location`, `graph_api_version` and
   `events`. **The access token is set only in the panel and never appears in any response**; an `access_token`
   sent in `settings` is ignored and reported as `unknown_setting`.
+- `amiba_chat` ([connectors.md](connectors.md#amiba-chatbot-card)) has `setting_keys` `handle` and `hide_on_checkout`,
+  and an `amiba_chat` block in `connectors_list` and `connectors_get`: `handle` (public: it is in the HTML of every
+  page), `on_public_pages`, `hide_on_checkout`, `loader_url`, `site_origin` (the exact line to add to the widget's
+  allowed origins in Amiba), `allowed_origin_hint` and `test_location`. `connectors_update` accepts the handle alone or
+  the snippet pasted from Amiba (only the handle is kept; anything else is `-32602`). The test against Amiba's API runs
+  only in the panel.
 - `connectors_list`, `connectors_get` and `connectors_preview` are allowed to read-only and draft-only credentials
   (still administrator only); `connectors_update` and `connectors_rotate_token` need full scope.
 

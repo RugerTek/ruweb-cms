@@ -1,5 +1,6 @@
 <?php
 
+use App\Connectors\AmibaChat\AmibaChatConnector;
 use App\Connectors\Bancard\BancardConnector;
 use App\Connectors\Meta\MetaCatalogConnector;
 use App\Connectors\MetaPixel\MetaPixelConnector;
@@ -87,6 +88,19 @@ return [
         'meta' => MetaCatalogConnector::class,
         'bancard' => BancardConnector::class,
         'meta_pixel' => MetaPixelConnector::class,
+        'amiba_chat' => AmibaChatConnector::class,
+    ],
+
+    // Amiba chatbot, level 1 (App\Connectors\AmibaChat, docs/operations/connectors.md#amiba-chatbot-card). The widget
+    // handle and its options are per site (connectors table), never here. Production URLs of Amiba, read from its code
+    // on 2026-11-25: the loader is served by widget.amiba.io and the widget talks to api.amiba.io.
+    'amiba_chat' => [
+        // Origin of `loader.js` (the floating button and the chat iframe).
+        'widget_url' => 'https://widget.amiba.io',
+        // Amiba API the "Test" button asks for the widget (GET /webchat/{handle}/config).
+        'api_url' => 'https://api.amiba.io',
+        // Seconds to wait for Amiba when testing from the panel.
+        'timeout' => 8,
     ],
 
     // Meta Pixel + Conversions API (App\Connectors\MetaPixel, docs/operations/meta-pixel.md). The pixel ID, the

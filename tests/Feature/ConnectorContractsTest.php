@@ -55,7 +55,8 @@ class ConnectorContractsTest extends TestCase
 
     public function test_config_registers_meta_and_the_product_source(): void
     {
-        $this->assertSame(['meta', 'bancard', 'meta_pixel'], array_keys(config('cms.connectors')));
+        $this->assertSame(['meta', 'bancard', 'meta_pixel', 'amiba_chat'], array_keys(config('cms.connectors')));
+        $this->assertSame('App\Connectors\AmibaChat\AmibaChatConnector', config('cms.connectors.amiba_chat'));
         $this->assertSame('App\\Connectors\\MetaPixel\\MetaPixelConnector', config('cms.connectors.meta_pixel'));
         $this->assertSame('App\Connectors\Bancard\BancardConnector', config('cms.connectors.bancard'));
         $this->assertSame('App\Connectors\Meta\MetaCatalogConnector', config('cms.connectors.meta'));

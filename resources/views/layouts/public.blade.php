@@ -13,6 +13,7 @@
     <x-seo-meta :page="$page ?? null" :is-editor-preview="$isEditorPreview ?? false" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.meta-pixel', ['isEditorPreview' => $isEditorPreview ?? false])
+    @include('partials.amiba-chat', ['isEditorPreview' => $isEditorPreview ?? false])
     @stack('head')
     {!! $customCodeRenderer->render($customCodeTarget, 'head_end', ($isEditorPreview ?? false), $customCodeEvaluation) !!}
 </head>

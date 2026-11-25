@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Connectors\AmibaChat\AmibaChatConnector;
 use App\Connectors\Bancard\BancardConnector;
 use App\Connectors\ConnectorCategory;
 use App\Connectors\ConnectorRegistry;
@@ -15,6 +16,9 @@ use App\Contracts\Connectors\FeedConnector;
 use App\Exceptions\RevisionConflict;
 use App\Http\Controllers\Controller;
 use App\Models\Connector;
+use App\Services\AmibaChat\AmibaChat;
+use App\Services\AmibaChat\AmibaChatOperations;
+use App\Services\AmibaChat\AmibaChatTestResult;
 use App\Services\Connectors\ConnectorOperations;
 use App\Services\Marketing\MetaPixel;
 use App\Services\Marketing\MetaPixelOperations;
@@ -85,6 +89,9 @@ class ConnectorController extends Controller
         }
         if ($definition instanceof MetaPixelConnector) {
             return $this->showMetaPixel($connector, $definition);
+        }
+        if ($definition instanceof AmibaChatConnector) {
+            return $this->showAmibaChat($connector, $definition);
         }
         $card = $this->card($connector, $definition, withPreview: true);
         $record = $card['record'];
@@ -232,6 +239,68 @@ class ConnectorController extends Controller
     {
         $definition = $this->registry->get($connector);
         abort_unless($definition instanceof MetaPixelConnector, 404);
+
+        return $definition;
+    }
+
+    /**
+     * Amiba chatbot settings form: the widget code (the handle alone or the whole snippet pasted from Amiba) and
+     * "hide on the checkout", through ConnectorOperations::updateSettings() (the path MCP uses too).
+     */
+    public function updateAmibaChat(Request $request, string $connector): RedirectResponse
+    {
+        $this->amibaChat($connector);
+        $settings = ['handle' => (string) $request->input('handle', ''), 'hide_on_checkout' => $request->boolean('hide_on_checkout')];
+        $revision = $request->filled('expected_revision') ? (string) $request->input('expected_revision') : null;
+
+        try {
+            $this->operations->updateSettings($request->user(), $connector, $settings, $revision);
+        } catch (RevisionConflict) {
+            return back()->withInput()->withErrors(['expected_revision' => __('connectors.revision_conflict')]);
+        }
+
+        return redirect()->route('admin.connectors.show', ['connector' => $connector])->with('success', __('amiba_chat.saved'));
+    }
+
+    /** "Test": asks Amiba for the saved widget and explains the answer (found, not found, this site not allowed). */
+    public function testAmibaChat(Request $request, string $connector, AmibaChatOperations $chatOperations): RedirectResponse
+    {
+        $this->amibaChat($connector);
+        try {
+            $result = $chatOperations->test($request->user());
+        } catch (ValidationException $exception) {
+            return back()->withErrors(['test' => $exception->validator->errors()->first()]);
+        }
+        $redirect = redirect()->route('admin.connectors.show', ['connector' => $connector])->with('amiba_chat_test', [
+            'outcome' => $result->outcome,
+            'ok' => $result->ok(),
+            'message' => $result->message(),
+            'origin' => $result->origin,
+        ]);
+
+        return $result->outcome === AmibaChatTestResult::ORIGIN_NOT_ALLOWED ? $redirect->with('amiba_chat_add_origin', $result->origin) : $redirect;
+    }
+
+    /** The Amiba chatbot detail: status card, widget code form, test button and the guide to find the code in Amiba. */
+    private function showAmibaChat(string $connector, AmibaChatConnector $definition): View
+    {
+        $card = $this->card($connector, $definition);
+        $record = $card['record'];
+
+        return view('admin.connectors.amiba-chat', $card + [
+            'settings' => $this->registry->settings($connector),
+            'revision' => $this->operations->revision($record ?? new Connector(['key' => $connector, 'enabled' => false])),
+            'siteOrigin' => AmibaChat::siteOrigin(),
+            'loaderUrl' => AmibaChat::loaderUrl(),
+            'shopCheckout' => app(ShopModule::class)->checkout(),
+        ]);
+    }
+
+    /** 404 unless $connector is the Amiba chatbot. */
+    private function amibaChat(string $connector): AmibaChatConnector
+    {
+        $definition = $this->registry->get($connector);
+        abort_unless($definition instanceof AmibaChatConnector, 404);
 
         return $definition;
     }

@@ -33,4 +33,7 @@ Route::prefix('connectors/{connector}')->where(['connector' => '[a-z0-9_]+'])->n
     // Meta Pixel only (other keys answer 404): settings with the encrypted access token, and the test event.
     Route::put('meta-pixel', [ConnectorController::class, 'updateMetaPixel'])->name('meta-pixel.update');
     Route::post('meta-pixel/test-event', [ConnectorController::class, 'sendMetaPixelTest'])->middleware('throttle:6,1')->name('meta-pixel.test');
+    // Amiba chatbot only (other keys answer 404): the widget code and the test against Amiba's API.
+    Route::put('amiba-chat', [ConnectorController::class, 'updateAmibaChat'])->name('amiba-chat.update');
+    Route::post('amiba-chat/test', [ConnectorController::class, 'testAmibaChat'])->middleware('throttle:6,1')->name('amiba-chat.test');
 });

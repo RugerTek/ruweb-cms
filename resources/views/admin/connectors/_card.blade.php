@@ -102,6 +102,11 @@
             <p data-meta-pixel-status="{{ $capi ? 'browser_and_server' : 'browser' }}">{{ $capi ? __('meta_pixel.card_browser_and_server') : __('meta_pixel.card_browser_only') }}</p>
         @endif
 
+        @if($record?->enabled && $key === \App\Connectors\AmibaChat\AmibaChatConnector::KEY && $status === \App\Connectors\ConnectorStatus::Connected)
+            @php($amibaHidden = app(\App\Services\AmibaChat\AmibaChat::class)->hideOnCheckout())
+            <p data-amiba-chat-status="{{ $amibaHidden ? 'not_on_checkout' : 'every_page' }}">{{ $amibaHidden ? __('amiba_chat.card_live_not_checkout') : __('amiba_chat.card_live') }}</p>
+        @endif
+
         {{-- Meta v2 (plan-meta-v2): connected with Facebook, or Meta revoked the access (direct «Volver a conectar»). Manual mode shows nothing new. --}}
         @if($connector instanceof \App\Connectors\Meta\MetaCatalogConnector)
             @php($metaConnection = app(\App\Connectors\Meta\Connect\MetaConnectionStore::class)->get())
@@ -115,7 +120,7 @@
             @endif
         @endif
 
-        {{-- Fetch log: only connectors that publish a feed (Bancard and the Meta Pixel have none). --}}
+        {{-- Fetch log: only connectors that publish a feed (Bancard, the Meta Pixel and the Amiba chatbot have none). --}}
         @if($record?->enabled && $connector instanceof \App\Contracts\Connectors\FeedConnector)
             <div class="text-xs text-gray-400 space-y-1" data-fetch-log>
                 @if($isMeta)

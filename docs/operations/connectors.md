@@ -14,8 +14,8 @@ fallback.
 ## What the administrator sees
 
 Rule: **Connectors is the showcase and the status of everything external (sales channels and payment methods); the
-settings of each one live in a single place** (Meta on its detail, Bancard in Admin > Payments and shipping), never
-duplicated on the card.
+settings of each one live in a single place** (Meta, the Meta Pixel and the Amiba chatbot on their detail, Bancard in
+Admin > Payments and shipping), never duplicated on the card.
 
 - **Connectors is always in the sidebar for administrators**, whatever modules are on: it is how a client finds
   out what the site can connect to. Editors do not see it and its routes answer 403 (`role:admin` group of
@@ -23,8 +23,8 @@ duplicated on the card.
   profiles ([../concepts/admin-profiles.md](../concepts/admin-profiles.md)).
 - `/admin/connectors` is a grid of cards, one per registered connector, grouped under a heading per
   `Connector::category()` (`App\Connectors\ConnectorCategory`, in the order of its cases: "Sales channels" for
-  Meta, "Payment methods" for Bancard, "Advertising and measurement" for the Meta Pixel; empty groups are not
-  shown), each with its status
+  Meta, "Payment methods" for Bancard, "Advertising and measurement" for the Meta Pixel, "Customer service" for the
+  Amiba chatbot; empty groups are not shown), each with its status
   (`App\Connectors\ConnectorStatus`):
 
   | Status | When | The card offers |
@@ -479,6 +479,49 @@ and the "Send test event" button) live on its own detail, `/admin/connectors/met
 and whether the pixel ID is missing. Browser and server events share an `event_id` so Meta deduplicates them, and
 their `content_ids` are the feed's `g:id`. Everything else: [meta-pixel.md](meta-pixel.md).
 
+## Amiba chatbot card
+
+The Amiba chatbot connector (`amiba_chat`, level 1, `App\Connectors\AmibaChat\AmibaChatConnector`) is in the
+"Customer service" group (`ConnectorCategory::CustomerService`), always visible and independent of the shop. The
+client creates the chat in Amiba (RugerTek's chatbot platform), pastes its code on the detail
+(`/admin/connectors/amiba_chat`), presses **Test**, activates it, and the floating chat shows on the public pages.
+Nothing changes on the Amiba side.
+
+- **Widget code**: the field accepts the handle alone (Amiba's "Site key"), the floating widget snippet
+  `<script src="https://widget.amiba.io/loader.js" data-amiba-widget="HANDLE" async></script>` or the iframe embed
+  (`https://widget.amiba.io/w/HANDLE`); `AmibaChatConnector::normalizeSettings()` keeps only the handle, in lowercase,
+  for the panel and MCP alike. Amiba creates handles as a version 7 GUID (`Guid.CreateVersion7()` in andromeda-api),
+  so anything else is refused with `amiba_chat.error_handle_format`. Other loader attributes (`data-api`, `data-base`)
+  only point the widget at a non-production Amiba and are dropped; position, colour, title and language are set in
+  Amiba, not in the snippet. The handle is public (it is in the HTML of every page): it is no secret.
+- **Settings**: `handle` and `hide_on_checkout` (default `false`). The only requirement is a valid handle
+  (`amiba_handle`): without it the card is `needs_action` and activation is refused.
+- **Where it loads**: `resources/views/partials/amiba-chat.blade.php`, in the `<head>` of `layouts.public` next to the
+  Meta Pixel, renders Amiba's snippet (`async`, attributes escaped) while the connector is on with a handle
+  (`App\Services\AmibaChat\AmibaChat::handleFor()`). Never on `/admin` screens nor inside the panel's previews
+  (`$isEditorPreview`). Unlike the pixel it also shows to someone signed in to the panel: a chat measures nothing.
+  With `hide_on_checkout` it is left out of the checkout and the order (payment) pages
+  (`shop.checkout.*`, `shop.order.*` and their `localized.` twins); the cart and product pages keep it.
+- **Test**: `AmibaChatOperations::test()` asks Amiba from the server, with a timeout
+  (`cms.amiba_chat.timeout`), for `GET {cms.amiba_chat.api_url}/webchat/{handle}/config`, the public call the widget
+  itself makes. A 404 means the handle does not exist or its Web Chat is off. A 200 brings the widget's
+  `allowedOrigins`: Amiba accepts any site when the list is empty and otherwise an exact `scheme://host[:port]` match,
+  checked when a visitor's chat starts (`POST /webchat/{handle}/session` answers 403 `origin_not_allowed`). The test
+  compares this site's origin (`APP_URL`, normalized) with that list and, when it is missing, tells the client the
+  exact line to add in Amiba ("Web Chat" node › "Widget settings" › "Allowed origins"). A 403 `origin_not_allowed`,
+  a timeout and any other answer are explained too. The test writes nothing; the route allows 6 presses a minute.
+- **Guide on the detail**: in Amiba, the agent's "Web Chat" node ("Connect Web Chat" if needed) › "Embed on your
+  website" › "Floating widget" › "Copy"; then "Widget settings" › "Allowed origins" with the site origin shown on the
+  screen. Labels copied from Amiba's panel code (andromeda-crm `i18n/locales`) on 2026-11-25, not checked on a live
+  Amiba screen.
+- **Content Security Policy**: the base sends no CSP on public pages. A site that adds one must allow
+  `https://widget.amiba.io` in `script-src` and `frame-src` while the connector is on.
+- **MCP**: `connectors_list` and `connectors_get` return an `amiba_chat` block (handle, whether it is on the public
+  pages, the loader URL and the origin to allow in Amiba); `connectors_update` changes the handle (a pasted snippet
+  works) and switches it on or off ([mcp.md](mcp.md#connectors)). The Test runs only in the panel.
+- **Config**: `cms.amiba_chat.widget_url` (`https://widget.amiba.io`), `cms.amiba_chat.api_url`
+  (`https://api.amiba.io`, the API the production widget uses) and `cms.amiba_chat.timeout`.
+
 ## Planned connectors
 
 Nothing below exists in the code yet; each item names what it would reuse.
@@ -489,7 +532,10 @@ Nothing below exists in the code yet; each item names what it would reuse.
 - **Per-language and per-country feeds**: one feed per public language or market, from the translated product rows
   (today only the base language is sent).
 - **Google Merchant Center**: same source, same `FeedResult`, its own writer and defaults.
-- **Amiba**: connect the Ruweb site to Amiba, RugerTek's chatbot platform, so the client gets a chatbot on the
-  website easily and self-managed, turned on from its card in Connectors. Design pending: how the site authenticates
-  with Amiba and what data it shares (pages, products, contact details) is to be defined with Rubén.
+- **Amiba, level 2: the bot reads the shop**: Amiba's assistant answers about products, prices and stock by calling
+  the site's MCP (`products_*`) with a read-only key the site creates for it. Needs, on the Amiba side, a way to
+  register that MCP server and key per agent; on the Ruweb side, a read-only key bound to the connector.
+- **Amiba, level 3: «Connect with Amiba»**: one button instead of pasting the widget code; Ruweb creates or picks the
+  widget and adds the site to its allowed origins by itself. Needs an Amiba API with OAuth (or a broker like RugerTek
+  Connect) that does not exist yet. Level 1 (pasting the code) is done: [Amiba chatbot card](#amiba-chatbot-card).
 - Onsite checkout fields (paying inside Facebook or Instagram) are not planned: the purchase ends on the Ruweb site.

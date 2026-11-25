@@ -19,6 +19,7 @@ return [
     'category_sales_channel' => 'Sales channels',
     'category_payments' => 'Payment methods',
     'category_marketing' => 'Advertising and measurement',
+    'category_customer_service' => 'Customer service',
 
     // Requirements and actions that resolve them
     'requirement_shop_catalog' => 'Turn on the product catalog to use this connector.',

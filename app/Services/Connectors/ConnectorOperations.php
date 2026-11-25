@@ -2,6 +2,7 @@
 
 namespace App\Services\Connectors;
 
+use App\Connectors\AmibaChat\AmibaChatConnector;
 use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorRequirement;
 use App\Connectors\FeedResult;
@@ -94,7 +95,8 @@ final class ConnectorOperations
 
     /**
      * Partial update: the given keys replace the stored ones, the result (over the connector defaults) is
-     * validated with rules() and keys without a rule are dropped. Creates the row (disabled) if missing.
+     * validated with rules() and keys without a rule are dropped. Creates the row (disabled) if missing. The Amiba
+     * chatbot accepts the whole snippet Amiba hands out as `handle` (AmibaChatConnector::normalizeSettings()).
      *
      * @param  array<string, mixed>  $settings
      * @param  string|null  $expectedRevision  revision() read by the client; null skips the check
@@ -107,6 +109,9 @@ final class ConnectorOperations
     {
         $this->authorize($actor);
         $definition = $this->registry->get($key);
+        if ($definition instanceof AmibaChatConnector) {
+            $settings = AmibaChatConnector::normalizeSettings($settings);
+        }
 
         return DB::transaction(function () use ($key, $definition, $settings, $expectedRevision) {
             $connector = $this->row($key, lock: true);

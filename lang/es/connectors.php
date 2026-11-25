@@ -19,6 +19,7 @@ return [
     'category_sales_channel' => 'Canales de venta',
     'category_payments' => 'Medios de pago',
     'category_marketing' => 'Publicidad y medición',
+    'category_customer_service' => 'Atención al cliente',
 
     // Requirements and actions that resolve them
     'requirement_shop_catalog' => 'Activá el catálogo de productos para usar este conector.',
