@@ -4,6 +4,7 @@
 return [
     // Section and cards (Admin > Connectors)
     'title' => 'Connectors',
+    'intro_lead' => 'Connect your site to the platforms you already use to sell, get paid, measure your ads and help your customers. Each card shows its status and what is missing to turn it on.',
     'intro' => 'Connect your site to other platforms. Each card tells you what it needs to be turned on.',
     'empty' => 'No connectors are available on this site.',
     'view_details' => 'View details',
@@ -17,9 +18,13 @@ return [
 
     // Card groups (App\Connectors\ConnectorCategory)
     'category_sales_channel' => 'Sales channels',
+    'category_sales_channel_hint' => 'Show and sell your products on other platforms.',
     'category_payments' => 'Payment methods',
+    'category_payments_hint' => 'Get paid online by card and other methods.',
     'category_marketing' => 'Advertising and measurement',
+    'category_marketing_hint' => 'Measure your ads and reach the people who visit your site.',
     'category_customer_service' => 'Customer service',
+    'category_customer_service_hint' => 'Answer your visitors right away, from your site.',
 
     // Requirements and actions that resolve them
     'requirement_shop_catalog' => 'Turn on the product catalog to use this connector.',

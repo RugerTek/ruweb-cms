@@ -4,6 +4,7 @@
 return [
     // Section and cards (Admin > Connectors)
     'title' => 'Conectores',
+    'intro_lead' => 'Conectá tu sitio con las plataformas que ya usás para vender, cobrar, medir tus anuncios y atender a tus clientes. Cada tarjeta te muestra su estado y qué falta para activarla.',
     'intro' => 'Conectá tu sitio con otras plataformas. Cada tarjeta te dice qué hace falta para activarla.',
     'empty' => 'No hay conectores disponibles en este sitio.',
     'view_details' => 'Ver detalle',
@@ -17,9 +18,13 @@ return [
 
     // Card groups (App\Connectors\ConnectorCategory)
     'category_sales_channel' => 'Canales de venta',
+    'category_sales_channel_hint' => 'Mostrá y vendé tus productos en otras plataformas.',
     'category_payments' => 'Medios de pago',
+    'category_payments_hint' => 'Cobrá en línea a tus clientes, con tarjeta y otros medios.',
     'category_marketing' => 'Publicidad y medición',
+    'category_marketing_hint' => 'Medí tus anuncios y llegá a quienes visitan tu sitio.',
     'category_customer_service' => 'Atención al cliente',
+    'category_customer_service_hint' => 'Respondé a tus visitas al instante, desde tu sitio.',
 
     // Requirements and actions that resolve them
     'requirement_shop_catalog' => 'Activá el catálogo de productos para usar este conector.',

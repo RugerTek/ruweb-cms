@@ -1,4 +1,4 @@
-{{-- Meta connector icon (App\Contracts\Connectors\Connector::icon()). Optional $class sets the size. --}}
+{{-- Meta connector icon: a simple infinity loop (a monogram, not Meta's trademarked logo). Optional $class sets the size. --}}
 <svg class="{{ $class ?? 'w-8 h-8' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M3 15.5c0-4.5 2.2-8.5 4.8-8.5 2.2 0 3.6 2.6 5.2 5.4 1.6 2.9 2.9 5.6 4.6 5.6 1.6 0 2.4-1.5 2.4-3.4 0-3.9-1.9-7.6-4.4-7.6-1.9 0-3.3 2-4.6 4.2-1.4 2.4-3 6.8-5.4 6.8C4.1 18 3 17.1 3 15.5z"/>
+    <path d="M12 12c-1.9-3.3-3.4-5.25-5.5-5.25C4.3 6.75 2.75 9.1 2.75 12s1.55 5.25 3.75 5.25c2.1 0 3.6-1.95 5.5-5.25s3.4-5.25 5.5-5.25c2.2 0 3.75 2.35 3.75 5.25s-1.55 5.25-3.75 5.25c-2.1 0-3.6-1.95-5.5-5.25Z"/>
 </svg>
