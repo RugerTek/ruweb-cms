@@ -6,6 +6,7 @@ use App\Support\Username;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,6 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'two_factor_confirmed_at' => 'datetime',
             'security_version' => 'integer',
             'can_manage_custom_code' => 'boolean',
+            'is_support' => 'boolean',
             'password' => 'hashed',
             'mcp_api_key_generated_at' => 'datetime',
             'mcp_api_key_last_used_at' => 'datetime',
@@ -104,6 +106,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function canManageCustomCode(): bool
     {
         return $this->isAdmin() && $this->can_manage_custom_code;
+    }
+
+    /** RügerTek support account (docs/operations/support-access.md): enters only with a support pass. */
+    public function isSupport(): bool
+    {
+        return (bool) $this->is_support;
+    }
+
+    /**
+     * The site's own accounts: support accounts are hidden from user management, reviewer and assignee lists and
+     * site emails, and never count as one of the client's users.
+     */
+    public function scopeClientAccounts(Builder $query): Builder
+    {
+        return $query->where('is_support', false);
     }
 
     public function isEditor(): bool

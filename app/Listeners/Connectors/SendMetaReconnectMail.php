@@ -76,7 +76,7 @@ final class SendMetaReconnectMail
      */
     public static function recipients(): array
     {
-        $emails = User::query()->where('role', 'admin')->orderBy('id')->pluck('email')
+        $emails = User::query()->where('role', 'admin')->clientAccounts()->orderBy('id')->pluck('email')
             ->map(fn (mixed $email): string => trim((string) $email))
             ->filter(fn (string $email): bool => filter_var($email, FILTER_VALIDATE_EMAIL) !== false)
             ->unique()->values()->all();

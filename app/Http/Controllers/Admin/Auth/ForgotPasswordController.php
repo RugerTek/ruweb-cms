@@ -19,7 +19,8 @@ class ForgotPasswordController extends Controller
     {
         $request->validate(['email' => ['required', 'email']]);
 
-        Password::sendResetLink($request->only('email'));
+        // Support accounts never get a reset link (same answer, so it tells nothing): docs/operations/support-access.md.
+        Password::sendResetLink([...$request->only('email'), fn ($query) => $query->where('is_support', false)]);
 
         return back()->with('success', __('security.reset_sent'));
     }

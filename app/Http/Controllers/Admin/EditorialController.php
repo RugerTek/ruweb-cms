@@ -38,7 +38,7 @@ class EditorialController extends Controller
             'diff' => $version ? $this->history->diff($version->is_proposal ? $this->history->payload($model) : json_decode($version->payload, true), $version->is_proposal ? json_decode($version->payload, true) : $this->history->payload($model)) : [],
             'reviews' => $this->history->query($model, 'editorial_reviews')->latest('id')->get(),
             'comments' => DB::table('editorial_review_comments')->whereIn('review_id', $this->history->query($model, 'editorial_reviews')->pluck('id'))->orderBy('id')->get()->groupBy('review_id'),
-            'reviewers' => User::where('role', 'admin')->get(),
+            'reviewers' => User::where('role', 'admin')->clientAccounts()->get(),
             'authors' => User::all()->keyBy('id'),
             'editorLease' => $editorLease,
             'links' => $this->history->query($model, 'editorial_preview_links')->whereNull('revoked_at')->where('expires_at', '>', now())->get(),

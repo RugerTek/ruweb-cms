@@ -94,6 +94,7 @@ Defined in `app/Mcp/ToolRegistry.php`:
 | Orders and payments (catalog on, while selling or while orders exist) | `orders_list`, `orders_get`, `orders_transition`, `orders_note`, `payments_confirm`, `payments_fail`, `payments_refund` |
 | Payment methods and shipping (catalog on; administrator only) | `payment_methods_list`, `payment_methods_update`, `shipping_zones_list`, `shipping_zones_update` |
 | Connectors (administrator only) | `connectors_list`, `connectors_get`, `connectors_preview`, `connectors_update`, `connectors_rotate_token` |
+| Support activity (administrator only, read-only) | `support_activity_list` |
 | Taxonomies | `taxonomies_list`, `taxonomies_get`, `taxonomies_create`, `taxonomies_update`, `taxonomies_translate`, `taxonomies_delete` |
 | Media | `media_list`, `media_get`, `media_update_metadata`, `media_authorize_upload`, `media_usages`, `media_delete` |
 | Settings | `settings_list`, `settings_get`, `settings_update`, `settings_update_batch`, `settings_reset` |
@@ -247,6 +248,23 @@ through `App\Services\Connectors\ConnectorOperations`, the operation the panel u
 
 REST mirror: `GET /mcp/connectors`, `GET /mcp/connectors/{connector}`, `GET /mcp/connectors/{connector}/preview`,
 `PATCH /mcp/connectors/{connector}`, `POST /mcp/connectors/{connector}/rotate-token`.
+
+### Support activity
+
+Read-only mirror of Admin > Actividad de soporte ([support-access.md](support-access.md)): every RügerTek support
+session and what it changed. Administrator only (an editor gets `-32003`); any credential scope may call it. There is
+no tool to change, delete or switch off the record, and support accounts cannot use MCP keys at all.
+
+- `support_activity_list {limit?, session_id?}` without `session_id` answers the latest `limit` sessions (default 20,
+  max 50), newest first: `operator_email`, `operator_name`, `role`, `issuer`, `ip`, `started_at`, `expires_at`,
+  `ended_at`, `end_reason` (`exit`, `logout`, `expired`, `replaced`), `state` (`active`, `expired`, `ended`),
+  `duration_minutes`, `page_views_count` and `changes` (bounded to 50, `changes_truncated`). Each entry has `kind`
+  (`change` or `page_view`), `method`, `route_name`, `path` (never the query string), `subject_type`, `subject_id`,
+  `subject_label`, `changed_fields` (the NAMES of the submitted fields; values are never recorded), `status` and a
+  readable `summary`. With `session_id` it answers that session with every entry, page views included (bounded to 500,
+  `entries_truncated`); an unknown id is `-32602`. `meta.retention_days` says how long records are kept.
+
+REST mirror: `GET /mcp/support-activity`.
 
 ### Partial content edits
 

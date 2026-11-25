@@ -21,6 +21,10 @@ class AuthenticateMcpApiKey
 
         $key = McpApiKey::with('user')->where('key_hash', hash('sha256', $token))
             ->whereNull('revoked_at')->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))->first();
+        // RügerTek support accounts work only inside a support session in the panel, never through MCP keys.
+        if ($key && $key->user?->isSupport()) {
+            return $this->unauthorizedResponse('Invalid token.');
+        }
         if ($key) {
             $key->update(['last_used_at' => now()]);
             if ($key->user->mcp_api_key_hash === $key->key_hash) $key->user->markMcpApiKeyAsUsed();
@@ -37,7 +41,7 @@ class AuthenticateMcpApiKey
         // Compatibility for legacy API keys that have not been migrated.
         $user = User::findByMcpApiKey($token);
 
-        if ($user) {
+        if ($user && ! $user->isSupport()) {
             $user->markMcpApiKeyAsUsed();
             $request->setUserResolver(fn () => $user);
 

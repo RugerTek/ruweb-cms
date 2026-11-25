@@ -87,6 +87,7 @@
     </header>
 
     <main class="flex-1 p-6 pt-16 lg:pt-6 lg:ml-56 min-h-screen">
+        @include('admin.partials.support-bar', ['barClass' => 'sticky top-12 lg:top-0 z-30 mb-4 rounded-md'])
         @if(auth()->user()?->isAdmin())
             <div class="hidden lg:flex items-center justify-end mb-4">
                 @include('admin.partials.cache-refresh-button')

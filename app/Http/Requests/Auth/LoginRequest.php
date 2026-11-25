@@ -38,9 +38,11 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // RügerTek support accounts enter only with a support pass (docs/operations/support-access.md).
         if (! Auth::attempt([
             $this->identityColumn() => $this->input('login'),
             'password' => $this->input('password'),
+            fn ($query) => $query->where('is_support', false),
         ], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

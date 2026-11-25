@@ -58,6 +58,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 | [operations/connectors.md](operations/connectors.md) | Admin > Connectors: contracts, adding a connector or catalog source, the secret feed URL, Meta feed format, what the server and Cloudflare must allow, Commerce Manager guide, Connect with Facebook (v2: sync, instant changes, daily health check, revocation), the Bancard card, the Amiba chatbot card |
 | [operations/ruweb-connect.md](operations/ruweb-connect.md) | RugerTek Connect, the broker behind Connect with Facebook: site variables and the v1 HTTP contract |
 | [operations/agent-access.md](operations/agent-access.md) | First MCP connection, client compatibility, key rotation and lost-access recovery |
+| [operations/support-access.md](operations/support-access.md) | RügerTek support access: signed console pass (Ed25519), support accounts and sessions, what is recorded, Actividad de soporte, key rotation, local testing |
 | [operations/deploy-cpanel.md](operations/deploy-cpanel.md) | cPanel deployment |
 | [operations/deploy-droplet.md](operations/deploy-droplet.md) | Single-server deployment |
 | [operations/git.md](operations/git.md) | Starting a project from the starter, git hooks |

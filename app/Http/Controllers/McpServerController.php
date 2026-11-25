@@ -325,6 +325,9 @@ class McpServerController extends Controller
         $handlers['connectors_update'] = fn ($req, $args) => $this->connectors->update($this->synth($req, $this->without($args, 'connector')), $args['connector']);
         $handlers['connectors_rotate_token'] = fn ($req, $args) => $this->connectors->rotateToken($this->synth($req, $this->without($args, 'connector')), $args['connector']);
 
+        // Admin > Actividad de soporte: read-only, administrator only.
+        $handlers['support_activity_list'] = fn ($req, $args) => app(McpSupportActivityController::class)->index($this->synth($req, $args));
+
         foreach (['versions', 'version', 'diff', 'reviews'] as $action) {
             $handlers['content_'.$action] = fn ($req, $args) => $this->content->editorialRead($this->synth($req, $args), $args['type'], $args['id'], $action);
         }
