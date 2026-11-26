@@ -17,6 +17,9 @@ return [
     'readiness_missing' => 'Still missing:',
     'readiness_fix' => 'Fix it',
     'readiness_all_met' => 'Everything is ready to sell online.',
+    'mail_off_title' => 'Email sending is not active',
+    'mail_off_notice' => 'Your customers will not receive the order confirmation email and the shop gets no email notices either. Orders still appear in Orders, and the buyer sees the order number and the payment instructions on the confirmation page.',
+    'mail_off_action' => 'Set up email',
     'open_orders_warning' => '{0} There are no open orders.|{1} 1 order is still pending or undelivered: keep managing it in Orders.|[2,*] :count orders are still pending or undelivered: keep managing them in Orders.',
 
     // Cart
@@ -92,6 +95,7 @@ return [
     'order_title' => 'Order :number',
     'order_thanks' => 'Thank you for your purchase!',
     'order_link_hint' => 'Keep this link: it is the only way to see your order. We also sent it by email.',
+    'order_link_hint_no_mail' => 'Keep this link or write down the order number: it is the only way to see your order and its payment instructions again.',
     'order_number' => 'Order number',
     'order_date' => 'Date and time',
     'order_status' => 'Status',
@@ -333,7 +337,6 @@ return [
     'connector_bancard_activate_selling' => 'Turn on online selling',
 
     // Readiness and selling guard (stitching of stage 3)
-    'readiness_mail' => 'email sending turned on (Settings › Email)',
     'selling_would_stop' => 'Not saved: the shop is selling online and this change would leave it without :missing. Get another option ready first or turn off selling in Settings › Shop.',
 
     // Panel: orders and payments (track 3D1)

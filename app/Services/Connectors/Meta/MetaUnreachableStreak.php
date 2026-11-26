@@ -5,8 +5,8 @@ namespace App\Services\Connectors\Meta;
 use App\Connectors\Meta\Connect\MetaConnection;
 use App\Listeners\Connectors\SendMetaReconnectMail;
 use App\Mail\Connectors\MetaNotResponding;
-use App\Models\Setting;
 use App\Services\Forms\SubmissionNotifier;
+use App\Services\Mail\MailSettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -69,7 +69,7 @@ final class MetaUnreachableStreak
     public function mailOnce(MetaConnection $connection, int $days): bool
     {
         $context = ['connector' => 'meta', 'business_id' => $connection->businessId, 'days' => $days];
-        if (! Setting::get('mail_enabled')) {
+        if (! app(MailSettings::class)->enabled()) {
             Log::info('Meta not responding mail skipped: mail is disabled in settings.', $context);
 
             return false;

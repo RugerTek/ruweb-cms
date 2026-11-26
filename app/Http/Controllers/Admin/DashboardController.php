@@ -7,6 +7,7 @@ use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Setting;
 use App\Services\Editorial\EditorialInsightsService;
+use App\Services\Mail\MailSettings;
 use App\Services\Media\MediaHealthService;
 use App\Support\AdminLoginPath;
 use Illuminate\Http\Request;
@@ -55,9 +56,8 @@ class DashboardController extends Controller
         $siteLogo = Setting::getLocalized('site_logo');
         $defaultSocialImage = Setting::getLocalized('default_social_image');
         $adminLoginPathCustomized = AdminLoginPath::isCustomized();
-        $mailEnabled = (bool) Setting::get('mail_enabled');
-        $mailConfigured = $mailEnabled
-            && filled(Setting::get('brevo_api_key'))
+        // Brevo or SMTP (Admin > Email): on, complete and with a sender.
+        $mailConfigured = app(MailSettings::class)->active()
             && filled(Setting::get('mail_from_address'))
             && filled(Setting::get('mail_from_name'));
         $serverProtocol = strtoupper((string) $request->server('SERVER_PROTOCOL', ''));

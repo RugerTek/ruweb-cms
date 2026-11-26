@@ -8,6 +8,7 @@ use App\Mail\Connectors\MetaReconnectNeeded;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\Forms\SubmissionNotifier;
+use App\Services\Mail\MailSettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -37,7 +38,7 @@ final class SendMetaReconnectMail
         $context = ['connector' => 'meta', 'business_id' => $connection->businessId];
         Log::warning('Meta connection needs to be connected again.', $context + ['reason' => $event->reason]);
 
-        if (! Setting::get('mail_enabled')) {
+        if (! app(MailSettings::class)->enabled()) {
             Log::info('Meta reconnect mail skipped: mail is disabled in settings.', $context);
 
             return;

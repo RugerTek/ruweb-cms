@@ -462,8 +462,8 @@ feed (a feed deleted in Commerce Manager is flagged, not recreated: "Sync now" d
   the detail shows "Meta has not answered for N days; check the server's connection" and the administrators get
   one email for the whole streak; the token stays and everything resumes by itself the first day Meta answers (the
   warning disappears and a later streak emails again). A day without a run breaks the streak.
-- **Emails need mail turned on** (`mail_enabled` in Settings, same mailer and queue as the order emails); otherwise
-  only a log line is written.
+- **Emails need mail turned on** (`mail_enabled` in Admin > Email, Brevo or SMTP, same mailer and queue as the order
+  emails, [email.md](email.md)); otherwise only a log line is written and the warning in the panel is the notice.
 
 ### Revocation and needs_reconnect
 

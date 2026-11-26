@@ -28,7 +28,8 @@ taken when the payment is confirmed, no `shop_manager` role, no electronic invoi
 
 Settings > Shop offers **Catalog + selling** only when `CheckoutReadiness` (`app/Services/Shop/CheckoutReadiness.php`)
 reports nothing missing; `ShopModuleOperations::setMode('checkout')` refuses it otherwise (panel, MCP
-`settings_update` and the installer alike). The four requirements, each shown with a link to the screen that fixes
+`settings_update` and the installer alike). The three requirements (payment method, delivery, orders email; sending
+email is not one, see [Selling without email](#sin-email)), each shown with a link to the screen that fixes
 it, are listed in [catalog.md](catalog.md#sell-online).
 
 While selling, Admin > Payments and shipping and MCP cannot remove the last ready payment method or the last
@@ -128,7 +129,7 @@ Every transition is idempotent: repeating the one already done returns the recor
 or events; any move the state does not allow is a validation error. `OrderOperations` and `PaymentOperations` lock
 the order and then the attempt (`lockForUpdate`) and dispatch events after commit, once.
 
-| Event | Dispatched when | Emails (queued, only with `mail_enabled`) |
+| Event | Dispatched when | Emails (queued, only with `mail_enabled`; see [Selling without email](#sin-email)) |
 |---|---|---|
 | `OrderPlaced` | Order placed | Customer (with the order link) and the orders email |
 | `OrderPaid` | Order becomes paid | Customer |
@@ -142,6 +143,24 @@ register `handle*` methods a second time and send every mail twice). Each mail g
 event repeats, and the order link is built when the mail is rendered, so the token never sits in the queue.
 Payment emails for charges that do not belong to a paid order are in
 [payments.md](payments.md#stray-charges-late-payment-and-another-amount).
+
+<a id="sin-email"></a>
+
+## Selling without email
+
+Email is optional for selling ([../operations/email.md](../operations/email.md)): no panel feature may depend on an
+email going out. `CheckoutReadiness` does not ask for it, and while it is not active
+(`App\Services\Mail\MailSettings::active()`: switched on and the provider complete):
+
+| Where | What happens |
+|---|---|
+| Settings > Shop, Admin > Payments and shipping, Admin > Orders | A notice «El envío de emails no está activo»: customers get no confirmation email and the store no notices, orders still appear in Orders; administrators get a link to Admin > Email (`resources/views/admin/shop/_mail_notice.blade.php`) |
+| Order page right after placing the order | The order number, the payment block (bank details, cash-on-delivery text or Bancard) and the link, with «Guardá este enlace o anotá el número de pedido…» instead of «También te lo enviamos por email» (`data-order-link-hint="no-mail"`, `mail` otherwise) |
+| `SendOrderMails` and the other senders (Meta reconnect warning, contact notifications) | With `mail_enabled` off they skip and log (`Order mail skipped: mail is disabled in settings.`); a failure to queue or send is logged and recorded as the last email error. Nothing is rolled back and no request fails |
+| Admin > Orders | Orders, payment confirmation, cancellation and delivery work the same; «resend the customer email» answers that it could not be sent |
+
+Without email the buyer's only way back to the order page is the link they saw after buying, so the page asks them
+to keep it; once email works, the panel can resend it from the order.
 
 ## Stock
 
@@ -191,4 +210,4 @@ Bancard for `tests/Support/FakeBancard.php`. `tests/Support/CheckoutFixtures.php
 and orders, and `tests/Support/FakePaymentProvider.php` is an iframe provider without Bancard. Files:
 `CheckoutContractsTest` (tables, routes, readiness, reserved slugs), `CartTest`, `CheckoutFlowTest` (anti-spam,
 totals, token, order page), `OrderOperationsTest`, `PaymentOperationsTest`, `OrderMailTest`, `AdminOrdersTest`,
-`McpOrdersTest`, and `CheckoutEndToEndTest` (two full purchases through the panel and the public pages: a manual payment confirmed by hand up to delivery, and Bancard against the fake); Bancard tests are listed in [payments.md](payments.md#tests).
+`McpOrdersTest`, and `CheckoutEndToEndTest` (full purchases through the panel and the public pages: a manual payment confirmed by hand up to delivery, Bancard against the fake, and a shop without email that sells and sends nothing); Bancard tests are listed in [payments.md](payments.md#tests).

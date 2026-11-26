@@ -550,20 +550,16 @@ class CheckoutContractsTest extends TestCase
         $readiness = app(CheckoutReadiness::class);
         $operations = app(ShopModuleOperations::class);
 
-        $this->assertSame(['payment_method', 'delivery', 'orders_email', 'mail'], array_map(fn (ReadinessItem $item) => $item->key, $readiness->missing()));
-        $this->assertSame(['payment_method' => false, 'delivery' => false, 'orders_email' => false, 'mail' => false], collect($readiness->items())->mapWithKeys(fn (ReadinessItem $item) => [$item->key => $item->met])->all());
+        // Sending email is not a requirement: a shop sells without it (docs/shop/checkout.md#sin-email).
+        $this->assertSame(['payment_method', 'delivery', 'orders_email'], array_map(fn (ReadinessItem $item) => $item->key, $readiness->missing()));
+        $this->assertSame(['payment_method' => false, 'delivery' => false, 'orders_email' => false], collect($readiness->items())->mapWithKeys(fn (ReadinessItem $item) => [$item->key => $item->met])->all());
         $this->assertSame(route('admin.shop-payments.edit'), $readiness->missing()[0]->url());
-        $this->assertSame(route('admin.email.index'), $readiness->missing()[3]->url());
         $this->assertSame(__('checkout.readiness_payment_method'), $readiness->missing()[0]->toArray()['label']);
         $choices = collect($operations->choices())->keyBy('mode');
         $this->assertTrue($choices['checkout']['available']);
-        $this->assertCount(4, $choices['checkout']['missing']);
+        $this->assertCount(3, $choices['checkout']['missing']);
         $this->assertSame([], $choices['catalog']['missing']);
-        $this->assertBlocked($admin, [__('checkout.readiness_payment_method'), __('checkout.readiness_delivery'), __('checkout.readiness_orders_email'), __('checkout.readiness_mail')]);
-
-        // Mail: sending email turned on (Admin > Email); without it nobody hears about an order.
-        $this->setSetting('mail_enabled', '1');
-        $this->assertTrue($readiness->items()[3]->met);
+        $this->assertBlocked($admin, [__('checkout.readiness_payment_method'), __('checkout.readiness_delivery'), __('checkout.readiness_orders_email')]);
 
         // Payment: an enabled method counts only once it is complete, and never without a registered provider.
         PaymentMethod::query()->where('key', 'cod')->update(['enabled' => true]);
@@ -618,7 +614,6 @@ class CheckoutContractsTest extends TestCase
         $this->assertSame('catalog', app(ShopModule::class)->mode());
 
         $this->useCheckout();
-        $this->setSetting('mail_enabled', '1');
         $this->useShop('catalog');
         app(SettingOperations::class)->update($admin, [ShopModule::SETTING => 'checkout']);
         $this->assertSame('checkout', app(ShopModule::class)->mode());

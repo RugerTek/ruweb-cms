@@ -33,6 +33,8 @@
     </div>
 @endif
 
+@include('admin.shop._mail_notice')
+
 <div class="space-y-6 max-w-4xl">
     {{-- What selling online still needs (CheckoutReadiness), each with where to solve it. --}}
     <section class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-5" data-readiness>

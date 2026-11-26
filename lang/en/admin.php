@@ -500,7 +500,7 @@ return [
         ],
         'mail_enabled' => [
             'label' => 'Enable email sending',
-            'help' => 'When off, emails are written to the log instead of being sent.',
+            'help' => 'When off, no email goes out; the site keeps working (orders and messages stay in the panel) and each skipped email is logged.',
         ],
         'brevo_api_key' => [
             'label' => 'Brevo API Key',
@@ -513,6 +513,30 @@ return [
         'mail_from_name' => [
             'label' => 'From name',
             'help' => 'Name shown in the recipient\'s inbox.',
+        ],
+        'mail_provider' => [
+            'label' => 'Sending provider',
+            'help' => 'Brevo with its API key, or the SMTP server of your hosting or email provider.',
+        ],
+        'smtp_host' => [
+            'label' => 'SMTP server',
+            'help' => 'E.g. mail.yourdomain.com or smtp.gmail.com. Your hosting or email provider gives it to you.',
+        ],
+        'smtp_port' => [
+            'label' => 'Port',
+            'help' => 'Usually 587 with TLS or 465 with SSL.',
+        ],
+        'smtp_encryption' => [
+            'label' => 'Encryption',
+            'help' => 'TLS (STARTTLS, port 587), SSL (port 465) or none (only if your server does not support encryption).',
+        ],
+        'smtp_username' => [
+            'label' => 'Username',
+            'help' => 'Almost always the full email address. Empty if the server asks for no username.',
+        ],
+        'smtp_password' => [
+            'label' => 'Password',
+            'help' => 'Stored encrypted and never shown again. Leave blank when editing to keep the current one.',
         ],
         'contact_phone' => [
             'label' => 'Phone',
@@ -594,18 +618,32 @@ return [
     'brevo_last_updated' => 'Last updated: April 27, 2026. If you can\'t find the resources described here, check Brevo\'s documentation for updates.',
 
     // Email page
-    'email_subtitle' => 'Configure transactional email delivery via Brevo.',
+    'email_subtitle' => 'Configure the site\'s email delivery with Brevo or any SMTP server.',
+    'email_provider_brevo' => 'Brevo (API key)',
+    'email_provider_smtp' => 'SMTP server',
+    'email_encryption_tls' => 'TLS (STARTTLS)',
+    'email_encryption_ssl' => 'SSL',
+    'email_encryption_none' => 'None',
+    'email_section_provider' => 'Provider',
+    'email_section_brevo' => 'Brevo',
+    'email_section_smtp' => 'SMTP server',
+    'email_section_sender' => 'Sender',
+    'email_status_active' => 'Email sending is on (:provider).',
+    'email_status_disabled' => 'Email sending is off: no email goes out. The site keeps working and orders and messages stay in the panel.',
+    'email_status_incomplete' => 'Email sending is on but :provider is not complete: no email goes out through it until it is.',
+    'email_status_last_error' => 'Last delivery error (:date):',
     'email_saved' => 'Email settings saved successfully.',
 
     // Email test
     'email_test_title' => 'Send a test email',
-    'email_test_help' => 'Send a verification email to confirm the setup works.',
+    'email_test_help' => 'Sends an email with the saved settings. If it fails, the error returned by the server is shown.',
     'email_test_send' => 'Send test',
     'email_test_subject' => '[:app] Test email',
-    'email_test_body' => "Hi!\n\nThis is a test email sent from :app to verify delivery is working.\n\nIf you receive this, your Brevo setup is OK.",
+    'email_test_body' => "Hi!\n\nThis is a test email sent from :app to verify delivery is working.\n\nIf you receive this, your email setup is OK.",
     'email_test_success' => 'Test email sent to :email. Check the inbox (or spam).',
     'email_test_failed' => 'Email could not be sent: :error',
     'email_test_no_key' => 'Configure the Brevo API Key first.',
+    'email_test_no_smtp' => 'Fill in and save the SMTP server and port first.',
 
     // Analytics
     'analytics_saved' => 'Analytics settings saved successfully.',

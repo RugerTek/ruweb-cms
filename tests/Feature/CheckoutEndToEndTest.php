@@ -17,6 +17,7 @@ use App\Models\Setting;
 use App\Models\ShippingZone;
 use App\Models\User;
 use App\Services\Forms\FormToken;
+use App\Services\Mail\MailSettings;
 use App\Services\Shop\CartService;
 use App\Shop\Payments\Bancard\BancardProvider;
 use App\Support\SettingDefaults;
@@ -32,6 +33,7 @@ use Tests\TestCase;
  * Selling online from a fresh site, only through the panel and the public pages (PLAN.md Etapa 3): the shop off, the
  * administrator turns the catalog on, creates a product with variants and stock, sets up payments, shipping and email,
  * turns selling on; a visitor buys and the order is paid by hand (bank transfer) or through Bancard (FakeBancard).
+ * Email is optional (docs/shop/checkout.md#sin-email): a shop without it sells the same, and nobody gets an email.
  */
 class CheckoutEndToEndTest extends TestCase
 {
@@ -73,7 +75,8 @@ class CheckoutEndToEndTest extends TestCase
         $this->assertSame([Order::STATUS_PENDING, 205000, 10], [$order->status, $order->total_amount->amount, $small->fresh()->stock], 'Placing an order takes no stock.');
         $this->assertNull($cart->fresh(), 'The cart is gone once the order is placed.');
 
-        $this->get($url)->assertOk()->assertSee($order->number)->assertSee('Banco E2E')->assertSee('Gs. 205.000');
+        $this->get($url)->assertOk()->assertSee($order->number)->assertSee('Banco E2E')->assertSee('Gs. 205.000')
+            ->assertSee('data-order-link-hint="mail"', false)->assertSee(__('checkout.order_link_hint'));
         Mail::assertQueued(OrderPlacedCustomer::class, fn (OrderPlacedCustomer $mail) => $mail->hasTo('ana@example.com') && str_contains($mail->render(), $url));
         Mail::assertQueued(OrderPlacedStore::class, fn (OrderPlacedStore $mail) => $mail->hasTo('pedidos@example.com'));
 
@@ -121,13 +124,49 @@ class CheckoutEndToEndTest extends TestCase
         $this->get($url)->assertOk()->assertSee('data-order-payment="confirmed"', false)->assertSee('123456');
     }
 
+    public function test_a_shop_without_email_sells_and_shows_the_order_without_sending_anything(): void
+    {
+        [$product, $small] = $this->openTheShop(mail: false);
+        $this->assertFalse(app(MailSettings::class)->active());
+
+        // The panel sells, but says plainly that nobody gets an email.
+        $this->actingAs($this->admin)->get(route('admin.orders.index'))->assertOk()
+            ->assertSee('data-shop-mail-off', false)->assertSee(__('checkout.mail_off_title'));
+        auth()->logout();
+
+        $this->addToCart($product, $small, 1);
+        $response = $this->post(route('shop.checkout.store'), $this->payload(['delivery_method' => 'pickup', 'payment_method' => 'bank_transfer']))
+            ->assertSessionHasNoErrors();
+        $order = Order::query()->sole();
+        $url = $response->headers->get('Location');
+        $this->assertSame(route('shop.order.show', $order->plainAccessToken()), $url);
+        $this->assertSame(Order::STATUS_PENDING, $order->status);
+
+        // The confirmation page alone carries the order: number, bank details and the link, without promising an email.
+        $this->get($url)->assertOk()->assertSee($order->number)->assertSee('Banco E2E')->assertSee('555-1')
+            ->assertSee('data-order-link-hint="no-mail"', false)->assertSee(__('checkout.order_link_hint_no_mail'))
+            ->assertDontSee(__('checkout.order_link_hint'));
+        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
+
+        // The order is in Admin > Orders and is paid and delivered the same way.
+        $payment = $order->payments()->sole();
+        $this->actingAs($this->admin)->get(route('admin.orders.index'))->assertOk()->assertSee($order->number);
+        $this->post(route('admin.payments.confirm', $payment))->assertRedirect(route('admin.orders.show', $order));
+        $this->assertSame([Payment::STATUS_CONFIRMED, Order::STATUS_PAID, 9], [$payment->fresh()->status, $order->fresh()->status, $small->fresh()->stock]);
+        $this->post(route('admin.orders.transition', $order), ['status' => Order::STATUS_FULFILLED])->assertSessionHasNoErrors();
+        $this->assertSame(Order::STATUS_FULFILLED, $order->fresh()->status);
+        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
+    }
+
     /**
      * Through the panel: catalog on, a product with two variants and stock, bank transfer, pickup, one delivery zone,
-     * the orders email, email sending on, and then selling online.
+     * the orders email, email sending on with a Brevo key (unless $mail is false), and then selling online.
      *
      * @return array{0: Product, 1: ProductVariant}
      */
-    private function openTheShop(): array
+    private function openTheShop(bool $mail = true): array
     {
         $this->actingAs($this->admin);
         $this->put(route('admin.settings.shop.update'), ['mode' => 'catalog', 'confirm' => '1'])->assertSessionHasNoErrors();
@@ -151,8 +190,12 @@ class CheckoutEndToEndTest extends TestCase
             'shop_orders_email' => 'pedidos@example.com',
         ])->assertSessionHasNoErrors();
         $this->post(route('admin.shipping-zones.store'), ['name' => 'Asunción', 'price' => '25.000', 'enabled' => '1'])->assertSessionHasNoErrors();
-        Setting::query()->firstOrCreate(['key' => 'mail_enabled'], SettingDefaults::for('mail_enabled') ?? ['value' => null, 'type' => 'boolean', 'group' => 'mail']);
-        $this->put(route('admin.email.update'), ['settings' => ['mail_enabled' => '1']])->assertSessionHasNoErrors();
+        if ($mail) {
+            foreach (['mail_enabled', 'brevo_api_key'] as $key) {
+                Setting::query()->firstOrCreate(['key' => $key], SettingDefaults::for($key));
+            }
+            $this->put(route('admin.email.update'), ['settings' => ['mail_enabled' => '1', 'brevo_api_key' => 'xkeysib-e2e']])->assertSessionHasNoErrors();
+        }
 
         $this->put(route('admin.settings.shop.update'), ['mode' => 'checkout', 'confirm' => '1'])->assertSessionHasNoErrors();
         $this->assertTrue(app(ShopModule::class)->checkout());

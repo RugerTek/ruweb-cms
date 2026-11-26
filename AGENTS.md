@@ -28,6 +28,7 @@ App at `http://localhost:8000`, admin at `/admin`. The login path is the `admin_
 | Edit content already stored | `update-content` | [docs/content/updating-content.md](docs/content/updating-content.md) |
 | New collection (products, cases…) | `create-collection` | [docs/content/collections.md](docs/content/collections.md) |
 | Turn the optional shop on/off, product catalog | — | [docs/shop/catalog.md](docs/shop/catalog.md) |
+| Outgoing email (Brevo or SMTP, test send, selling without email) | — | [docs/operations/email.md](docs/operations/email.md) |
 | Connectors (Meta catalog feed, adding a connector or catalog source, feed URL/token, Cloudflare/gzip for Meta's crawler) | — | [docs/operations/connectors.md](docs/operations/connectors.md) |
 | Selling online: cart, checkout, orders, payments (manual, Bancard vPOS 2.0), shipping zones | — | [docs/shop/checkout.md](docs/shop/checkout.md) · [docs/shop/payments.md](docs/shop/payments.md) · [docs/shop/shipping.md](docs/shop/shipping.md) |
 | New public form | `create-form` | [docs/content/forms.md](docs/content/forms.md) |

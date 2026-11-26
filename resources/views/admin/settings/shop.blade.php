@@ -19,6 +19,10 @@
     <span class="px-3 py-2 text-sm font-medium border-b-2 border-sky-500 text-sky-400" aria-current="page">{{ __('shop.module_title') }}</span>
 </div>
 
+@if ($current === 'checkout' || collect($choices ?? [])->contains(fn ($choice) => $choice['mode'] === 'checkout' && $choice['available']))
+    @include('admin.shop._mail_notice')
+@endif
+
 <section class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-6 max-w-3xl" data-shop-module="{{ $current }}">
     <h2 class="text-base font-semibold text-white">{{ __('shop.module_title') }}</h2>
     <p class="text-sm text-gray-500 mt-1">{{ __('shop.module_help') }}</p>

@@ -19,8 +19,11 @@ use Illuminate\Validation\ValidationException;
  *    transfer with its bank details, cash on delivery with its text, Bancard with readable keys for its environment).
  * 2. `delivery`: store pickup on with its address, or at least one enabled delivery zone.
  * 3. `orders_email`: a valid address for order notices (`shop_orders_email`, or `contact_email` when it is empty).
- * 4. `mail`: sending email turned on (`mail_enabled`, Admin > Email): without it nobody hears about an order, neither
- *    the customer (their order link) nor the store (decision Hermes, stage 3 wave 2).
+ *
+ * Sending email is NOT a requirement (Fabrizio, «RuWeb hosteada/autohosteada y correo»: no panel feature may depend
+ * on email going out). Without it orders still arrive in Admin > Orders and the buyer's order page shows the number
+ * and the payment instructions; the panel warns with resources/views/admin/shop/_mail_notice.blade.php
+ * (App\Services\Mail\MailSettings::active()) and every order email is skipped with a log line (SendOrderMails).
  */
 final class CheckoutReadiness
 {
@@ -30,13 +33,8 @@ final class CheckoutReadiness
 
     public const ORDERS_EMAIL = 'orders_email';
 
-    public const MAIL = 'mail';
-
     /** Panel screen with payment methods, shipping and the orders email (App\Http\Controllers\Admin\ShopPaymentsController). */
     public const ROUTE = 'admin.shop-payments.edit';
-
-    /** Panel screen where sending email is configured and turned on (App\Http\Controllers\Admin\EmailController). */
-    public const MAIL_ROUTE = 'admin.email.index';
 
     public function __construct(private readonly PaymentProviderRegistry $payments) {}
 
@@ -51,7 +49,6 @@ final class CheckoutReadiness
             new ReadinessItem(self::PAYMENT_METHOD, $this->payments->available()->isNotEmpty(), self::ROUTE),
             new ReadinessItem(self::DELIVERY, $this->hasDelivery(), self::ROUTE),
             new ReadinessItem(self::ORDERS_EMAIL, $this->ordersEmail() !== null, self::ROUTE),
-            new ReadinessItem(self::MAIL, (bool) Setting::get('mail_enabled', false), self::MAIL_ROUTE),
         ];
     }
 

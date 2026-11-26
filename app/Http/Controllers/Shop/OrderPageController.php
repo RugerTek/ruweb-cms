@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\Mail\MailSettings;
 use App\Services\Shop\CartService;
 use App\Services\Shop\CheckoutService;
 use App\Services\Shop\PaymentOperations;
@@ -93,6 +94,8 @@ class OrderPageController extends Controller
                 'paymentStart' => $start instanceof PaymentStart ? $start : null,
                 'paymentStartFailed' => $startFailed,
                 'justPlaced' => (bool) $request->session()->get(CheckoutController::PLACED_FLASH, false),
+                // Without email the page must not promise one: the link and the number are all the buyer gets.
+                'mailActive' => app(MailSettings::class)->active(),
                 'orderUrl' => $this->orderUrl($token),
                 'payUrl' => CartService::route('order.pay', ['token' => $token]),
                 'refreshSeconds' => self::CONFIRMING_REFRESH_SECONDS,

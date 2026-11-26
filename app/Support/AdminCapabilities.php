@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Page;
+use App\Services\Mail\MailSettings;
 
 /** Deployment capabilities only. Never authorizes an actor or a credential. */
 final class AdminCapabilities
@@ -106,6 +107,8 @@ final class AdminCapabilities
             'admin_profile' => $this->profile(),
             // Optional modules (docs/shop/catalog.md): off | catalog | checkout. Deployment choice, like the profile.
             'modules' => ['shop' => app(ShopModule::class)->mode()],
+            // Outgoing email (docs/operations/email.md): provider, on/complete, last error; never a secret.
+            'mail' => app(MailSettings::class)->summary(),
             'stability' => 'stable',
             'capabilities' => ['public_site' => true, 'mcp' => true, 'identity' => true, 'custom_code' => true, 'live_editor' => $this->liveEditor(), 'specialized_editor_delivery' => $this->liveEditor()],
             'authorization' => 'Independent of profile: account role and credential scope apply to every operation.',

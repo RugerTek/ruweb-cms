@@ -17,6 +17,8 @@
     <h1 class="text-lg font-semibold text-white">{{ __('checkout.orders_title') }}</h1>
 </div>
 
+@include('admin.shop._mail_notice')
+
 <div class="flex gap-1 mb-6 border-b border-white/[0.06] overflow-x-auto">
     <a href="{{ route('admin.orders.index', $filterQuery) }}"
        class="px-3 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors {{ $filters['status'] === null ? 'border-sky-500 text-sky-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">

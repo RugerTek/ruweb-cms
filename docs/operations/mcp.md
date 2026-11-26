@@ -333,7 +333,8 @@ the conventions each write must keep (revision, operation key, warnings, error c
 
 Call `cms_capabilities` (or `GET /mcp/capabilities`) before development work. Its secret-free manifest is
 identical to `php artisan cms:capabilities`: selected profile, rollout stability, schemas, structured block
-support and section visual compatibility. The tool catalog is identical for full and essential, and this
+support, section visual compatibility and the outgoing email state (`mail`: provider, on/complete, last error,
+never a secret; [email.md](email.md#mcp)). The tool catalog is identical for full and essential, and this
 read is available to read-only and draft-only scopes. Profiles never grant account/credential permissions.
 See [administration profiles](../concepts/admin-profiles.md).
 
