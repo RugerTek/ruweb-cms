@@ -16,6 +16,7 @@ use App\Services\Editorial\EditorialOperations;
 use App\Services\Pages\PageOperations;
 use App\Services\Posts\PostOperations;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\SiteTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -107,7 +108,9 @@ class McpContentController extends Controller
     public function publication(Request $request, string $type, int $id): JsonResponse
     {
         $model = $this->model($type, $id);
-        $data = Validator::make($request->all(), ['action' => ['required', Rule::in(['schedule', 'unpublish', 'expire'])], 'published_at' => ['required_if:action,schedule', 'nullable', 'date', 'after:now'], 'expires_at' => ['present_if:action,expire', 'nullable', 'date', 'after:now'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
+        // A date without offset is in the site zone: convert it before `after:now`, which compares in UTC.
+        $input = SiteTime::toStorageKeys($request->all(), ['published_at', 'expires_at']);
+        $data = Validator::make($input, ['action' => ['required', Rule::in(['schedule', 'unpublish', 'expire'])], 'published_at' => ['required_if:action,schedule', 'nullable', 'date', 'after:now'], 'expires_at' => ['present_if:action,expire', 'nullable', 'date', 'after:now'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
         if ($data['action'] === 'expire') {
             $ops = $model instanceof Page ? app(PageOperations::class) : app(PostOperations::class);
             $result = $ops->setExpiry($request->user(), $model, $data['expires_at'], $data['expected_revision'] ?? null);

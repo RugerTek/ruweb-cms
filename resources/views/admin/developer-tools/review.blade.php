@@ -44,7 +44,7 @@
                 'original_name' => $original_name ?? $token,
                 'version' => ($summary['version'] ?? 'N/A').' → '.($report->destination['version'] ?? 'N/A'),
                 'format_version' => $summary['format_version'],
-                'created_at' => $summary['created_at'],
+                'created_at' => is_string($summary['created_at'] ?? null) ? \App\Support\SiteTime::format($summary['created_at'], 'd/m/Y H:i', $summary['created_at']) : null,
                 'origin_url' => $summary['origin_url'],
                 'destination_url' => $report->destination['url'] ?? null,
                 'origin_commit' => $summary['origin_commit'],

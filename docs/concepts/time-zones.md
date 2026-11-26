@@ -21,7 +21,8 @@
 2. Its starter value is `config('cms.display_timezone')`, read from `APP_DISPLAY_TIMEZONE` (default
    `America/Asuncion`). The install seeder, the data migration and `settings_reset` use it.
 3. A missing or invalid setting falls back to that configured value, and an invalid configured value to
-   `America/Asuncion`.
+   `America/Asuncion`. Old alias names (`America/Buenos_Aires`, `US/Eastern`) are not in the list and count as
+   invalid: use the current name (`America/Argentina/Buenos_Aires`, `America/New_York`).
 
 Changing the zone never touches stored data: the same instant is just shown at another local time.
 

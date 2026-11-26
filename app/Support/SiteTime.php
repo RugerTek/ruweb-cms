@@ -46,27 +46,40 @@ final class SiteTime
 
     public static function isValid(string $timezone): bool
     {
-        return in_array($timezone, DateTimeZone::listIdentifiers(DateTimeZone::ALL), true) || $timezone === 'UTC';
+        return isset(self::options()[$timezone]) || $timezone === 'UTC';
     }
 
     /** @return array<string, string> identifier => label, for the Settings select. */
     public static function options(): array
     {
-        $identifiers = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
+        // Built once per process: timezone() runs for every date shown on a page.
+        static $options = null;
 
-        return array_combine($identifiers, $identifiers);
+        if ($options === null) {
+            $identifiers = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
+            $options = array_combine($identifiers, $identifiers);
+        }
+
+        return $options;
     }
 
-    /** A stored date (UTC) moved to the site zone; null stays null. Strings without offset are read as UTC. */
+    /**
+     * A stored date (UTC) moved to the site zone; null stays null. Strings without offset are read as UTC. A string
+     * that is not a date (e.g. from an uploaded snapshot manifest) gives null, so views show their fallback.
+     */
     public static function local(DateTimeInterface|string|null $value): ?CarbonImmutable
     {
         if ($value === null || $value === '') {
             return null;
         }
 
-        $date = $value instanceof DateTimeInterface
-            ? CarbonImmutable::instance($value)
-            : CarbonImmutable::parse($value, 'UTC');
+        try {
+            $date = $value instanceof DateTimeInterface
+                ? CarbonImmutable::instance($value)
+                : CarbonImmutable::parse($value, 'UTC');
+        } catch (Throwable) {
+            return null;
+        }
 
         return $date->setTimezone(self::timezone());
     }
@@ -111,9 +124,8 @@ final class SiteTime
         }
 
         try {
-            $date = self::hasExplicitOffset($value)
-                ? CarbonImmutable::parse($value)
-                : CarbonImmutable::parse($value, self::timezone());
+            // The zone argument is only a default: PHP keeps an offset or zone written in the string itself.
+            $date = CarbonImmutable::parse($value, self::timezone());
         } catch (Throwable) {
             return $value;
         }
@@ -147,10 +159,5 @@ final class SiteTime
         }
 
         return [$day->startOfDay()->utc(), $day->endOfDay()->utc()];
-    }
-
-    private static function hasExplicitOffset(string $value): bool
-    {
-        return (bool) preg_match('/(Z|[+-]\d{2}:?\d{2})$/i', trim($value));
     }
 }

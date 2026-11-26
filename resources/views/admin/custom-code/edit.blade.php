@@ -55,7 +55,7 @@
         <p class="text-sm text-gray-400">{{ __('custom_code.state_'.$snippet['state']) }} · {{ __('custom_code.active_version') }} {{ $snippet['active_version_id'] ?? '—' }}</p>
         @foreach($versions as $version)
             <details class="border-b border-white/10 pb-3">
-                <summary class="text-gray-300">{{ __('custom_code.version') }} #{{ $version['id'] }} · {{ $version['created_at'] }}</summary>
+                <summary class="text-gray-300">{{ __('custom_code.version') }} #{{ $version['id'] }} · {{ \App\Support\SiteTime::format($version['created_at']) }}</summary>
                 <div class="grid sm:grid-cols-2 gap-3 mt-3">
                     <div><p class="text-sm text-gray-300">{{ __('custom_code.active_code') }}</p><pre class="text-xs text-gray-400 overflow-auto p-3">{{ $activePayload['code'] ?? '' }}</pre></div>
                     <div><p class="text-sm text-gray-300">{{ __('custom_code.proposed_code') }}</p><pre class="text-xs text-gray-400 overflow-auto p-3">{{ $version['payload']['code'] }}</pre></div>

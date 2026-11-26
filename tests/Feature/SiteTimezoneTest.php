@@ -73,6 +73,29 @@ class SiteTimezoneTest extends TestCase
         $this->assertSame('not a date', SiteTime::toStorage('not a date'));
         $this->assertNull(SiteTime::toStorage(null));
         $this->assertSame('', SiteTime::toStorage(''));
+        // A day-first date ends in "-2026", which is a year, not an offset.
+        $this->assertSame('2026-12-01T03:00:00Z', SiteTime::toStorage('01-12-2026'));
+    }
+
+    public function test_display_helpers_tolerate_values_that_are_not_dates(): void
+    {
+        // Uploaded snapshot manifests carry free-form created_at values.
+        $this->assertNull(SiteTime::local('yesterday-ish'));
+        $this->assertSame('N/A', SiteTime::format('yesterday-ish', 'd/m/Y H:i', 'N/A'));
+        $this->assertSame('26/11/2026 13:17', SiteTime::format('2026-11-26T16:17:00+00:00'));
+    }
+
+    public function test_mcp_publication_accepts_a_near_future_time_typed_in_the_site_zone(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Locale::create(['code' => 'es', 'name' => 'es', 'is_base' => true, 'is_active' => true]);
+        $post = app(PostOperations::class)->save($admin, ['title' => 'Mcp', 'slug' => 'mcp'], draftOnly: true);
+        $this->withToken(McpApiKey::issue($admin, 'Zona', 'full', null));
+
+        // 14:00 in Asunción is 17:00 UTC: after "now" (16:17 UTC), although 14:00 UTC would be before it.
+        $this->postJson('/mcp/rpc', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/call', 'params' => ['name' => 'content_publication', 'arguments' => ['type' => 'posts', 'id' => $post->id, 'action' => 'schedule', 'published_at' => '2026-11-26T14:00']]])
+            ->assertOk()->assertJsonPath('result.isError', false);
+        $this->assertSame('2026-11-26 17:00:00', $this->rawDate('posts', $post->id, 'published_at'));
     }
 
     public function test_scheduled_post_round_trips_through_the_panel_form(): void
