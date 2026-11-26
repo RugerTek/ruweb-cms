@@ -42,8 +42,8 @@
                                     <p class="text-xs text-gray-500 mt-1">{{ strtoupper($item->locale) }}</p>
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap"><span class="inline-flex px-2 py-1 text-xs font-medium rounded-md {{ $item->status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-400' }}">{{ __('admin.status_'.$item->status) }}</span></td>
-                                <td class="px-4 py-4 text-gray-300 whitespace-nowrap">@if($item->published_at)<time datetime="{{ $item->published_at->toIso8601String() }}">{{ $item->published_at->format('d/m/Y H:i') }}</time>@else<span class="text-gray-600">—</span>@endif</td>
-                                <td class="px-4 py-4 text-gray-300 whitespace-nowrap">@if($item->expires_at)<time datetime="{{ $item->expires_at->toIso8601String() }}">{{ $item->expires_at->format('d/m/Y H:i') }}</time>@else<span class="text-gray-600">—</span>@endif</td>
+                                <td class="px-4 py-4 text-gray-300 whitespace-nowrap">@if($item->published_at)<time datetime="{{ $item->published_at->toIso8601String() }}">{{ \App\Support\SiteTime::format($item->published_at) }}</time>@else<span class="text-gray-600">—</span>@endif</td>
+                                <td class="px-4 py-4 text-gray-300 whitespace-nowrap">@if($item->expires_at)<time datetime="{{ $item->expires_at->toIso8601String() }}">{{ \App\Support\SiteTime::format($item->expires_at) }}</time>@else<span class="text-gray-600">—</span>@endif</td>
                             </tr>
                         @endforeach
                     </tbody>

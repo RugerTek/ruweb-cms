@@ -6,6 +6,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
+## 1.3.3 - 2026-11-26
+
+- Fechas en la zona del sitio: la base sigue guardando UTC y el panel, el sitio público, el correo de contacto y los listados muestran la hora local (`App\Support\SiteTime`). Nuevo ajuste Ajustes › General «Zona horaria» (`site_timezone`, lista de zonas válidas, editable por MCP); su valor inicial sale de `APP_DISPLAY_TIMEZONE` (por defecto `America/Asuncion`) y una migración lo agrega a las instalaciones existentes sin tocar datos.
+- Lo que se escribe en los formularios (publicación y vencimiento programados de páginas y entradas, vencimiento de claves MCP) se interpreta en la zona del sitio y se guarda en UTC; los valores con desplazamiento explícito (`Z`, `-03:00`) lo conservan. Las fechas sin desplazamiento enviadas por MCP a `content_publication` ahora también se leen en la zona del sitio. El calendario editorial y los filtros por día de los envíos usan el mes y el día locales.
+- `TRUSTED_PROXIES` (vacío = ninguno, `*` o lista de IP/CIDR) habilita `X-Forwarded-*` de Cloudflare, túneles y balanceadores vía `config/trustedproxy.php` y `trustProxies` en `bootstrap/app.php`, compatible con `config:cache`; sin eso el admin detrás de un proxy HTTPS cargaba sin estilos.
+- Docs: `docs/concepts/time-zones.md`, despliegue en cPanel y droplet, ajustes, MCP y `.env.example`; pruebas `SiteTimezoneTest` (ida y vuelta del formulario) y `TrustedProxiesTest`.
+
 ## 1.3.2 - 2026-10-11
 
 - Las pruebas declaran el perfil requerido por los editores visuales y ejecutan los contratos compartidos en Full y Essential, sin imponer un perfil global ni depender de la elección local del proyecto.

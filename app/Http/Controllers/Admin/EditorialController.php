@@ -10,6 +10,7 @@ use App\Services\Content\ContentEditLock;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Editorial\EditorialOperations;
 use App\Support\AdminCapabilities;
+use App\Support\SiteTime;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -155,10 +156,12 @@ class EditorialController extends Controller
 
     public function calendar(Request $request)
     {
-        $month = $request->input('month', now()->format('Y-m'));
+        // The month is a calendar month in the site zone; the query bounds are its UTC instants.
+        $month = $request->input('month', SiteTime::now()->format('Y-m'));
         abort_unless(is_string($month) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month), 422);
-        $start = Carbon::parse($month.'-01')->startOfMonth();
-        $end = $start->copy()->endOfMonth();
+        $local = Carbon::parse($month.'-01', SiteTime::timezone());
+        $start = $local->copy()->startOfMonth()->utc();
+        $end = $local->copy()->endOfMonth()->utc();
         $items = collect();
         foreach ([Page::class, Post::class] as $class) {
             $items = $items->merge($class::where(fn ($q) => $q->whereBetween('published_at', [$start, $end])->orWhereBetween('expires_at', [$start, $end]))->get());

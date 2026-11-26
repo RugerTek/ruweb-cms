@@ -466,6 +466,10 @@ return [
         'site_name' => [
             'label' => 'Nombre del sitio',
         ],
+        'site_timezone' => [
+            'label' => 'Zona horaria',
+            'help' => 'Zona en la que se muestran las fechas y horas del panel, el sitio, los correos y las exportaciones, y en la que se interpretan las fechas que escribís en los formularios (por ejemplo, la publicación programada). La base de datos guarda siempre en UTC: cambiarla no modifica ningún dato.',
+        ],
         'site_description' => [
             'label' => 'Descripción del sitio',
             'help' => 'Se usa como meta descripción por defecto cuando una página no tiene la suya propia.',

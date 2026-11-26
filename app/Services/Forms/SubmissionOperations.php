@@ -5,6 +5,7 @@ namespace App\Services\Forms;
 use App\Exceptions\RevisionConflict;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\SiteTime;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -61,9 +62,13 @@ final class SubmissionOperations
                 }
             });
         }
+        // From/to are calendar days in the site zone; created_at is UTC, so compare against the day's UTC bounds.
         foreach (['from' => '>=', 'to' => '<='] as $key => $comparison) {
             if ($data[$key] ?? null) {
-                $query->whereDate('created_at', $comparison, $data[$key]);
+                $bounds = SiteTime::dayBoundsUtc((string) $data[$key]);
+                $bounds === null
+                    ? $query->whereDate('created_at', $comparison, $data[$key])
+                    : $query->where('created_at', $comparison, $key === 'from' ? $bounds[0] : $bounds[1]);
             }
         }
 

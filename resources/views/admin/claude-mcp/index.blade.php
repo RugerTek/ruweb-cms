@@ -82,7 +82,7 @@
             @forelse($apiKeys as $key)
             <li class="border-b border-white/10 pb-3">
                 <p>{{ $key->name }} · {{ $key->scope === 'custom-code' ? __('custom_code.credential_scope') : __('security.scope_'.$key->scope) }}</p>
-                <p class="text-xs text-gray-400">{{ __('security.key_expiry') }}: {{ $key->expires_at?->format('Y-m-d H:i') ?? __('security.never') }} · {{ __('admin.mcp_api_key_last_used_at') }}: {{ $key->last_used_at?->format('Y-m-d H:i') ?? '—' }}</p>
+                <p class="text-xs text-gray-400">{{ __('security.key_expiry') }}: {{ \App\Support\SiteTime::format($key->expires_at, 'Y-m-d H:i', __('security.never')) }} · {{ __('admin.mcp_api_key_last_used_at') }}: {{ \App\Support\SiteTime::format($key->last_used_at, 'Y-m-d H:i', '—') }}</p>
                 @if($key->revoked_at)
                     <p class="text-gray-400">{{ __('security.revoked') }}</p>
                 @elseif($key->expires_at && $key->expires_at->lte(now()))

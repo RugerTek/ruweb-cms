@@ -12,7 +12,7 @@
                     <tr>
                         <td style="padding:32px 32px 8px 32px;">
                             <h1 style="margin:0 0 8px 0;font-size:20px;color:#111;">{{ __('admin.submission_email_heading', ['site' => $siteName]) }}</h1>
-                            <p style="margin:0 0 16px 0;font-size:13px;color:#6b7280;">{{ $submission->created_at->format('d/m/Y H:i') }}</p>
+                            <p style="margin:0 0 16px 0;font-size:13px;color:#6b7280;">{{ \App\Support\SiteTime::format($submission->created_at) }}</p>
                         </td>
                     </tr>
                     <tr>

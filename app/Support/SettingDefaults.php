@@ -17,6 +17,8 @@ final class SettingDefaults
             ['key' => 'site_logo',              'value' => null,               'type' => 'media',  'group' => 'general', 'options' => null],
             ['key' => 'site_favicon',           'value' => null,               'type' => 'media',  'group' => 'general', 'options' => null],
             ['key' => 'default_social_image',   'value' => null,               'type' => 'media',  'group' => 'general', 'options' => null],
+            // Zone dates are shown in; storage stays UTC. Options are filled by the Settings screen (docs/concepts/time-zones.md).
+            ['key' => 'site_timezone',          'value' => SiteTime::configured(), 'type' => 'select', 'group' => 'general', 'options' => null],
             ['key' => 'homepage_translation_group_id', 'value' => null,         'type' => 'select', 'group' => 'general', 'options' => []],
             ['key' => 'admin_locale',           'value' => 'es',               'type' => 'select', 'group' => 'admin',   'options' => ['es' => 'Español', 'en' => 'English']],
             ['key' => 'admin_login_path',       'value' => 'login',            'type' => 'string', 'group' => 'admin',   'options' => null],

@@ -173,7 +173,9 @@ An absent secret value in a response is not evidence that the setting is unconfi
 `config('cms.mcp.settings_writable_keys')` is enforced, not documentation: today `homepage_translation_group_id`
 (a translation group whose base-language page is published, the same choice as the panel), `site_name`,
 `site_description`, `site_favicon`, `admin_login_path`, `contact_phone`, `contact_whatsapp`, `contact_email`,
-`contact_address`, `footer_tagline`, `footer_copyright`, plus the existing public layout/SEO fields:
+`contact_address`, `footer_tagline`, `footer_copyright`, `site_timezone` (a PHP time zone identifier; dates are
+stored in UTC and naive date-times sent to `content_publication` are read in this zone,
+[../concepts/time-zones.md](../concepts/time-zones.md)), plus the existing public layout/SEO fields:
 `site_logo`, `default_social_image`, `header_cta_enabled`, `header_cta_label`, `header_cta_page`,
 `header_cta_url`, `header_cta_new_tab`, `contact_location`, `contact_social_links`, `footer_credit_enabled`,
 `footer_credit`. This does not include email transport, analytics, credentials, profile or arbitrary configuration. Arbitrary keys are rejected and unknown keys

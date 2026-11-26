@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use App\Services\Content\ContentSchemaRegistry;
 use App\Models\Page;
 use App\Support\PageComposition;
+use App\Support\SiteTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -53,6 +54,8 @@ final class PageInput
         if (! $this->preserveContent) {
             $this->prepareForValidation();
         }
+        // Typed dates are in the site zone; storage is UTC (docs/concepts/time-zones.md).
+        $this->data = SiteTime::toStorageKeys($this->data, ['published_at', 'expires_at']);
         $validator = Validator::make($this->data, $this->rules(), $this->messages());
         if (! $this->partial) {
             $this->withValidator($validator);

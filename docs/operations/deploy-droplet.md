@@ -82,7 +82,19 @@ DB_DATABASE=project_database
 DB_USERNAME=project_user
 DB_PASSWORD=...
 SESSION_SECURE_COOKIE=true
+APP_DISPLAY_TIMEZONE=America/Asuncion
+TRUSTED_PROXIES=
 ```
+
+`APP_DISPLAY_TIMEZONE` is the starter value of Settings > General «Zona horaria»; the database always stores UTC
+([../concepts/time-zones.md](../concepts/time-zones.md)). Keep the server and PHP in UTC as well.
+
+`TRUSTED_PROXIES` lists the proxies allowed to set `X-Forwarded-*` (scheme, host, client IP). Leave it empty when
+Nginx on this server terminates HTTPS itself: Nginx talks to PHP-FPM directly and no forwarded headers are needed.
+When a load balancer, Cloudflare proxy or tunnel terminates HTTPS in front of the droplet, set it to the balancer's
+private IP/CIDR (`TRUSTED_PROXIES=10.10.0.0/16`), to Cloudflare's published ranges, or to `*` when only the proxy can
+reach the server; otherwise assets and forms come out as `http://` and the admin loads without styles. Details:
+[deploy-cpanel.md](deploy-cpanel.md#behind-cloudflare-a-tunnel-or-a-load-balancer).
 
 ## 4. Install Dependencies And Build Assets
 
@@ -150,7 +162,7 @@ PHP requests should be forwarded to the correct PHP-FPM socket or port for the i
 Use the team's preferred certificate workflow, such as:
 
 - Let's Encrypt with Certbot
-- a managed proxy or load balancer
+- a managed proxy or load balancer (then set `TRUSTED_PROXIES`, step 3)
 
 Ensure HTTP redirects to HTTPS after validation.
 

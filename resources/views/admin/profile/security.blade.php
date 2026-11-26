@@ -45,7 +45,7 @@
         @foreach($sessions as $session)
             <li class="border-b border-white/10 pb-3 break-words">
                 <p>{{ $session->ip_address }} · {{ $session->user_agent }}</p>
-                <p class="text-xs text-gray-400">{{ __('security.last_active') }}: {{ $session->last_active_at }}</p>
+                <p class="text-xs text-gray-400">{{ __('security.last_active') }}: {{ \App\Support\SiteTime::format($session->last_active_at, 'd/m/Y H:i') }}</p>
                 @if($session->id === $currentSession)
                     <span class="text-sky-400">{{ __('security.current_session') }}</span>
                 @else

@@ -466,6 +466,10 @@ return [
         'site_name' => [
             'label' => 'Site Name',
         ],
+        'site_timezone' => [
+            'label' => 'Time zone',
+            'help' => 'Zone used to show dates and times in the panel, the site, emails and exports, and to read the dates you type in forms (for example, scheduled publishing). The database always stores UTC: changing it does not modify any data.',
+        ],
         'site_description' => [
             'label' => 'Site Description',
             'help' => 'Used as the default meta description when a page has none of its own.',

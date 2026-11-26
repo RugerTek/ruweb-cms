@@ -12,6 +12,7 @@ use App\Services\Editorial\EditorialActor;
 use App\Services\Revisions\ContentRevisionLedger;
 use App\Support\AdminLoginPath;
 use App\Support\SettingDefaults;
+use App\Support\SiteTime;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -106,6 +107,7 @@ final class SettingOperations
             // Same choice as the panel: a translation group whose base-language page is published.
             'settings.homepage_translation_group_id' => ['sometimes', 'string', Rule::exists('pages', 'translation_group_id')->where('locale', Locale::baseCode())->where('status', 'published')],
             'settings.site_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'settings.site_timezone' => ['sometimes', 'required', 'string', Rule::in(array_keys(SiteTime::options()))],
             'settings.site_description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'settings.site_logo' => ['sometimes', 'nullable', 'integer', 'exists:media,id'],
             'settings.site_favicon' => ['sometimes', 'nullable', 'integer', 'exists:media,id'],

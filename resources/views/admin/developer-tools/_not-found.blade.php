@@ -41,7 +41,7 @@
                         <tr class="hover:bg-white/[0.02] transition-colors">
                             <td class="px-4 py-3 text-sm text-gray-300 font-mono">{{ $hit->path }}</td>
                             <td class="px-4 py-3 text-sm text-gray-400">{{ number_format($hit->hit_count) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">{{ $hit->last_seen_at?->format('d/m/Y H:i') }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">{{ \App\Support\SiteTime::format($hit->last_seen_at) }}</td>
                             <td class="px-4 py-3 text-xs text-gray-600 max-w-64 truncate" title="{{ $hit->referer }}">{{ $hit->referer ?: '—' }}</td>
                             <td class="px-4 py-3 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-3">

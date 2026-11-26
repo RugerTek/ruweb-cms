@@ -32,7 +32,7 @@
 
                         <div class="p-5">
                             <p class="text-xs text-gray-500 mb-2">
-                                {{ optional($post->published_at)?->translatedFormat('M d, Y') }}
+                                {{ \App\Support\SiteTime::translatedFormat($post->published_at, 'M d, Y') }}
                             </p>
                             <h2 class="text-lg font-semibold text-gray-900 leading-snug">
                                 <a href="{{ $blogShowRoute($post) }}" class="hover:text-sky-700 transition-colors">

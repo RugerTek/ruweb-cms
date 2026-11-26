@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\McpApiKey;
+use App\Support\SiteTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -26,11 +28,14 @@ class ClaudeMcpController extends Controller
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:100'],
             'scope' => ['nullable', Rule::in(['full', 'read-only', 'draft-only', 'custom-code'])],
-            'expires_at' => ['nullable', 'date', 'after:now'],
+            'expires_at' => ['nullable', 'date'],
         ]);
+        // The datetime-local value is in the site zone; the expiry is checked and stored in UTC.
+        $expiresAt = SiteTime::toStorage($validated['expires_at'] ?? null);
+        Validator::make(['expires_at' => $expiresAt], ['expires_at' => ['nullable', 'date', 'after:now']])->validate();
         abort_if(($validated['scope'] ?? null) === 'custom-code' && ! $request->user()->canManageCustomCode(), 403);
         $plainApiKey = McpApiKey::issue($request->user(), $validated['name'] ?? __('security.key_default'),
-            $validated['scope'] ?? 'read-only', $validated['expires_at'] ?? null);
+            $validated['scope'] ?? 'read-only', $expiresAt);
 
         return redirect()
             ->route('admin.claude-mcp.index')

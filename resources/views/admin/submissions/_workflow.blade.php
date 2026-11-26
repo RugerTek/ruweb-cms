@@ -30,7 +30,7 @@
 <section class="bg-[#111111] border border-white/10 rounded-lg p-4 space-y-4">
     <h2 class="text-sm font-semibold text-white">{{ __('submissions.notes') }}</h2>
     @forelse($submission->notes as $note)
-        <div class="border-b border-white/10 pb-3"><p class="text-xs text-gray-500">{{ $note->author?->name ?? __('submissions.deleted_user') }} · {{ $note->created_at->format('d/m/Y H:i') }}</p><p class="text-sm text-gray-200 whitespace-pre-wrap mt-1">{{ $note->body }}</p></div>
+        <div class="border-b border-white/10 pb-3"><p class="text-xs text-gray-500">{{ $note->author?->name ?? __('submissions.deleted_user') }} · {{ \App\Support\SiteTime::format($note->created_at) }}</p><p class="text-sm text-gray-200 whitespace-pre-wrap mt-1">{{ $note->body }}</p></div>
     @empty<p class="text-sm text-gray-500">{{ __('submissions.no_notes') }}</p>@endforelse
     <form method="POST" action="{{ route('admin.submissions.notes', ['form' => $form, 'submission' => $submission->id]) }}" class="space-y-2">
         @csrf

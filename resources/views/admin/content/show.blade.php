@@ -12,14 +12,14 @@
     </header>
     <dl class="grid gap-4 sm:grid-cols-3 rounded-xl bg-[#141414] p-5 text-sm">
         <div><dt class="text-gray-500">{{ __('admin.col_status') }}</dt><dd class="mt-1 text-white">{{ __('admin.'.app(\App\Support\AdminCapabilities::class)->publicationState($model)) }}</dd></div>
-        <div><dt class="text-gray-500">{{ __('admin.content_publication_date') }}</dt><dd class="mt-1 text-white">{{ $model->published_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
-        <div><dt class="text-gray-500">{{ __('editorial.expires_at') }}</dt><dd class="mt-1 text-white">{{ $model->expires_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
+        <div><dt class="text-gray-500">{{ __('admin.content_publication_date') }}</dt><dd class="mt-1 text-white">{{ \App\Support\SiteTime::format($model->published_at, 'd/m/Y H:i', '—') }}</dd></div>
+        <div><dt class="text-gray-500">{{ __('editorial.expires_at') }}</dt><dd class="mt-1 text-white">{{ \App\Support\SiteTime::format($model->expires_at, 'd/m/Y H:i', '—') }}</dd></div>
     </dl>
     <section class="rounded-xl bg-[#141414] p-5 space-y-4">
         <h2 class="text-sm font-semibold text-white">{{ __('editorial.versions') }}</h2>
         @forelse($versions as $item)
             <div class="flex flex-wrap justify-between gap-3 border-b border-white/10 pb-3 text-sm text-gray-400">
-                <span>#{{ $item->id }} · {{ $item->created_at }} @if($item->is_proposal)· {{ __('editorial.proposal') }}@endif</span>
+                <span>#{{ $item->id }} · {{ \App\Support\SiteTime::format($item->created_at, 'd/m/Y H:i:s') }} @if($item->is_proposal)· {{ __('editorial.proposal') }}@endif</span>
                 <a class="text-sky-400" href="{{ route('admin.content.show', [$type, $model->id, 'version' => $item->id]) }}">{{ __('editorial.compare') }}</a>
             </div>
         @empty<p class="text-sm text-gray-500">{{ __('editorial.no_versions') }}</p>@endforelse
