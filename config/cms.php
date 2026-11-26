@@ -138,23 +138,27 @@ return [
     ],
 
     // «Acceso de soporte RügerTek» (docs/operations/support-access.md): operators enter the admin with a pass signed
-    // (Ed25519) by the RuWeb Cloud console. The site keeps only the console's PUBLIC key(s); without them the feature is
-    // off and /_ruweb/support/enter answers 404. There is no panel switch: the record in Admin > Actividad de soporte
-    // is the transparency.
+    // ES256 (ECDSA P-256) by the RuWeb Cloud console through Azure Key Vault, always with a reason. The site keeps only
+    // the console's PUBLIC key(s); without them the feature is off and /_ruweb/support/enter answers 404. Each site can
+    // also turn it off from Admin > Actividad de soporte (client administrators only; SupportAccessSwitch).
     'support_access' => [
-        // Base64 Ed25519 public keys, comma separated; the first two are used (current + next, for rotation).
+        // P-256 public keys: a JWK ({"kty":"EC","crv":"P-256","x":…,"y":…}, as Key Vault exports it) or a PEM
+        // SubjectPublicKeyInfo (armored or its base64 body), comma separated; the first two are used (current + next,
+        // for rotation). Quote the value in .env when it holds a JWK.
         'public_keys' => env('RUWEB_SUPPORT_PUBLIC_KEYS'),
         // `iss` the passes must carry.
         'issuer' => env('RUWEB_SUPPORT_ISSUER', 'ruweb-cloud'),
         // Operators are identified by an email of exactly this domain.
         'operator_domain' => env('RUWEB_SUPPORT_OPERATOR_DOMAIN', 'rugertek.com'),
-        // Development signing key for `support:issue-pass`; honoured only with APP_ENV=local or testing.
+        // Development P-256 signing key (PKCS#8 PEM body) for `support:issue-pass`; honoured only with APP_ENV=local
+        // or testing.
         'dev_private_key' => env('RUWEB_SUPPORT_DEV_PRIVATE_KEY'),
         // Days support sessions and their activity are kept (`support:prune`, daily).
         'retention_days' => (int) env('RUWEB_SUPPORT_RETENTION_DAYS', 365),
-        // Pass lifetime cap (exp - iat) and tolerated clock difference with the console, in seconds.
-        'max_pass_lifetime' => 120,
-        'clock_skew' => 60,
+        // Pass lifetime cap (exp - iat): the pass expires in seconds. Tolerated clock difference with the console on
+        // iat and exp, in seconds (both servers are NTP-synced; a pass is never accepted more than 60 s after iat).
+        'max_pass_lifetime' => 30,
+        'clock_skew' => 30,
         // Support session length when the pass does not say, and the cap, in seconds.
         'default_session_ttl' => 7200,
         'max_session_ttl' => 14400,

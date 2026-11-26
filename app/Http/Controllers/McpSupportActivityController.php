@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SupportAudit;
 use App\Models\SupportSession;
+use App\Services\SupportAccess\SupportAccessSwitch;
 use App\Services\SupportAccess\SupportActivitySummary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\Validator;
 /**
  * `support_activity_list` and its REST mirror GET /mcp/support-activity (docs/operations/mcp.md#support-activity):
  * read-only view of Admin > Actividad de soporte for administrators. Like the screen it holds field names, never
- * values; there is no tool to change or delete the record.
+ * values; there is no tool to change or delete the record. `meta.access` says whether the site allows support access
+ * (the switch itself is panel-only: a support account is an administrator too and must never flip it).
  */
 class McpSupportActivityController extends Controller
 {
@@ -25,7 +27,7 @@ class McpSupportActivityController extends Controller
 
     public const ENTRIES_MAX = 500;
 
-    public function __construct(private readonly SupportActivitySummary $summary) {}
+    public function __construct(private readonly SupportActivitySummary $summary, private readonly SupportAccessSwitch $switch) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -60,8 +62,16 @@ class McpSupportActivityController extends Controller
                     'changes_truncated' => $changes->count() > self::CHANGES_PER_SESSION,
                 ];
             })->values()->all(),
-            'meta' => ['retention_days' => (int) config('cms.support_access.retention_days', 365)],
+            'meta' => ['retention_days' => (int) config('cms.support_access.retention_days', 365), 'access' => $this->access()],
         ]);
+    }
+
+    /** @return array{allowed: bool, changed_by: ?string, changed_at: ?string} */
+    private function access(): array
+    {
+        $state = $this->switch->state();
+
+        return ['allowed' => $state['allowed'], 'changed_by' => $state['changed_by'], 'changed_at' => $state['changed_at']?->toIso8601String()];
     }
 
     /** @return array<string, mixed> */
@@ -72,6 +82,8 @@ class McpSupportActivityController extends Controller
             'operator_email' => $session->operator_email,
             'operator_name' => $session->operator_name,
             'role' => $session->role,
+            'reason' => $session->reason,
+            'ticket' => $session->ticket,
             'issuer' => $session->issuer,
             'ip' => $session->ip,
             'started_at' => $session->started_at->toIso8601String(),

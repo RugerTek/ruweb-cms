@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\SupportAccess\SupportAccessSwitch;
 use App\Services\SupportAccess\SupportActivityRecorder;
 use App\Services\SupportAccess\SupportSessions;
 use Closure;
@@ -12,7 +13,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Admin requests of a RügerTek support account (docs/operations/support-access.md#support-sessions): they need a
- * live support session, which ends at its fixed expiry whatever the activity. The support account cannot create
+ * live support session, which ends at its fixed expiry whatever the activity, or at once when the client turns support
+ * access off (SupportAccessSwitch). The support account cannot create
  * credentials that would outlive the session (password, email, two-factor, MCP keys). For ordinary users it only
  * drops a stray support marker.
  */
@@ -29,7 +31,7 @@ class EnforceSupportSession
         'admin.claude-mcp.api-key.generate',
     ];
 
-    public function __construct(private readonly SupportSessions $sessions, private readonly SupportActivityRecorder $recorder) {}
+    public function __construct(private readonly SupportSessions $sessions, private readonly SupportActivityRecorder $recorder, private readonly SupportAccessSwitch $switch) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -43,6 +45,10 @@ class EnforceSupportSession
         }
 
         $sessionId = $request->session()->get(SupportSessions::SESSION_KEY);
+        if (! $this->switch->allowed()) {
+            // The client turned support access off: an open session ends on its next request.
+            $this->sessions->endCurrent($request, SupportAccessSwitch::END_REASON);
+        }
         $support = $this->sessions->active($user, $sessionId);
         if ($support === null) {
             $expired = $sessionId !== null;
@@ -51,7 +57,7 @@ class EnforceSupportSession
             $request->session()->regenerateToken();
 
             return $expired
-                ? response()->view('support.ended', [], 403)
+                ? response()->view('support.ended', ['disabled' => ! $this->switch->allowed()], 403)
                 : response()->view('errors.404', [], 404);
         }
 

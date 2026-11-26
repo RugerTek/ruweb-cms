@@ -15,5 +15,7 @@ final class SupportPass
         public readonly int $expiresAt,
         public readonly string $jti,
         public readonly int $sessionTtl,
+        public readonly string $reason,
+        public readonly ?string $ticket = null,
     ) {}
 }

@@ -15,6 +15,10 @@
 
 <div class="bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-4 mb-6">
     <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+        <div class="sm:col-span-2 lg:col-span-3">
+            <dt class="text-xs text-gray-500">{{ __('support.reason') }}</dt>
+            <dd class="text-gray-200">{{ $session->reason ?? __('support.reason_missing') }}@if ($session->ticket) <span class="text-gray-500">· {{ __('support.ticket_line', ['ticket' => $session->ticket]) }}</span>@endif</dd>
+        </div>
         <div>
             <dt class="text-xs text-gray-500">{{ __('support.col_state') }}</dt>
             <dd class="text-gray-200">{{ __('support.states.'.$state) }}@if ($session->end_reason) · {{ __('support.end_reasons.'.$session->end_reason) }}@endif</dd>

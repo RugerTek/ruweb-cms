@@ -64,6 +64,8 @@ class SupportSessions
             'role' => $pass->role,
             'issuer' => $pass->issuer,
             'jti' => $pass->jti,
+            'reason' => $pass->reason,
+            'ticket' => $pass->ticket,
             'ip' => $request->ip(),
             'user_agent' => mb_substr((string) $request->userAgent(), 0, 500),
             'started_at' => $now,

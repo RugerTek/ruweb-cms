@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SupportSession;
+use App\Services\SupportAccess\SupportAccessSwitch;
 use App\Services\SupportAccess\SupportActivitySummary;
+use App\Services\SupportAccess\SupportNotices;
 use App\Services\SupportAccess\SupportSessions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,9 +15,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * Admin > Actividad de soporte (administrators, the client's included): every RügerTek support session, who, when,
- * how long and what changed. There is deliberately no switch to turn support access off; this record is the
- * transparency (docs/operations/support-access.md#activity-screen). Also «Salir del modo soporte».
+ * Admin > Actividad de soporte (administrators, the client's included): every RügerTek support session, who, when, why,
+ * how long and what changed (docs/operations/support-access.md#activity-screen). Also the switch «Permitir acceso de
+ * soporte de RügerTek» (client administrators only, never a support account), the dismissal of the home notice and
+ * «Salir del modo soporte».
  */
 class SupportActivityController extends Controller
 {
@@ -24,7 +27,7 @@ class SupportActivityController extends Controller
 
     public const DETAIL_LIMIT = 1000;
 
-    public function index(SupportActivitySummary $summary): View
+    public function index(Request $request, SupportActivitySummary $summary, SupportAccessSwitch $switch): View
     {
         $sessions = SupportSession::query()
             ->withCount([
@@ -39,6 +42,8 @@ class SupportActivityController extends Controller
             'sessions' => $sessions,
             'summary' => $summary,
             'retentionDays' => (int) config('cms.support_access.retention_days', 365),
+            'access' => $switch->state(),
+            'canChangeAccess' => $switch->canChange($request->user()),
         ]);
     }
 
@@ -51,6 +56,32 @@ class SupportActivityController extends Controller
             'entries' => $session->audits()->orderBy('at')->orderBy('id')->limit(self::DETAIL_LIMIT)->get(),
             'summary' => $summary,
         ]);
+    }
+
+    /** «Permitir acceso de soporte de RügerTek»: on or off, confirmed, recorded with who and when. */
+    public function access(Request $request, SupportAccessSwitch $switch): RedirectResponse
+    {
+        abort_unless($switch->canChange($request->user()), 403, __('support.access.only_client_admins'));
+        $validated = $request->validate([
+            'allowed' => ['required', 'boolean'],
+            'confirm' => ['accepted'],
+        ], ['confirm.accepted' => __('support.access.confirm_required')]);
+
+        $allowed = (bool) $validated['allowed'];
+        $closed = $switch->set($allowed, $request->user(), $request);
+
+        return redirect()->route('admin.support-activity.index')->with('success', $allowed
+            ? __('support.access.turned_on')
+            : trans_choice('support.access.turned_off', $closed, ['count' => $closed]));
+    }
+
+    /** Hides the home notice of the support entries so far, for this administrator only. */
+    public function dismissNotice(Request $request, SupportNotices $notices): RedirectResponse
+    {
+        abort_unless($notices->visibleTo($request->user()), 403);
+        $notices->dismiss($request->user());
+
+        return redirect()->back(fallback: route('admin.dashboard'));
     }
 
     /** «Salir del modo soporte»: closes the support session at once and signs the operator out. */

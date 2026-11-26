@@ -185,9 +185,12 @@ Route::middleware(['auth', 'role:admin,editor', EnforceSupportSession::class, En
         Route::post('languages', [LanguageController::class, 'store'])->name('languages.store');
         Route::put('languages', [LanguageController::class, 'update'])->name('languages.update');
 
-        // Admin > Actividad de soporte: every RügerTek support session and what it changed (no switch to hide it).
+        // Admin > Actividad de soporte: every RügerTek support session and what it changed, the switch «Permitir acceso
+        // de soporte de RügerTek» (client administrators only) and the dismissal of the home notice.
         Route::get('support-activity', [SupportActivityController::class, 'index'])->name('support-activity.index');
         Route::get('support-activity/{supportSession}', [SupportActivityController::class, 'show'])->whereNumber('supportSession')->name('support-activity.show');
+        Route::post('support-activity/access', [SupportActivityController::class, 'access'])->name('support-activity.access');
+        Route::post('support-activity/notice/dismiss', [SupportActivityController::class, 'dismissNotice'])->name('support-activity.notice.dismiss');
 
         // Admin > Connectors: always registered and visible to administrators (routes/connectors-admin.php).
         require __DIR__.'/connectors-admin.php';

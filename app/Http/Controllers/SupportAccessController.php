@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\SupportAccess\InvalidSupportPass;
+use App\Services\SupportAccess\SupportAccessSwitch;
 use App\Services\SupportAccess\SupportOperatorConflict;
 use App\Services\SupportAccess\SupportPassVerifier;
 use App\Services\SupportAccess\SupportSessions;
@@ -13,15 +14,22 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * GET /_ruweb/support/enter?t=<pass>: a RügerTek operator enters the admin with a pass signed by the RuWeb Cloud
- * console, without a password (docs/operations/support-access.md#flow). Every rejection answers the same plain 404,
+ * console, without a password (docs/operations/support-access.md#flow). Every rejection, and a site whose client
+ * turned support access off, answers the same plain 404,
  * rendered here instead of thrown so the 404 monitor never stores the URL; the log gets a reason code and the IP,
  * never the pass.
  */
 class SupportAccessController extends Controller
 {
-    public function enter(Request $request, SupportPassVerifier $verifier, SupportSessions $sessions): Response
+    public function enter(Request $request, SupportPassVerifier $verifier, SupportSessions $sessions, SupportAccessSwitch $switch): Response
     {
         if (! $verifier->enabled()) {
+            return $this->notFound();
+        }
+        if (! $switch->allowed()) {
+            // The client turned support access off: same 404 as any other rejection, the pass is not even read.
+            Log::warning('Support pass rejected.', ['reason' => 'switched_off', 'ip' => $request->ip()]);
+
             return $this->notFound();
         }
         try {

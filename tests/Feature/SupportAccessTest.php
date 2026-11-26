@@ -2,20 +2,27 @@
 
 namespace Tests\Feature;
 
+use App\Mcp\ToolRegistry;
 use App\Models\McpApiKey;
 use App\Models\NotFoundHit;
 use App\Models\SupportAudit;
 use App\Models\SupportSession;
 use App\Models\User;
+use App\Services\SupportAccess\Es256Signature;
+use App\Services\SupportAccess\SupportAccessKeys;
 use App\Services\SupportAccess\SupportActivitySummary;
+use App\Services\SupportAccess\SupportNotices;
 use App\Services\SupportAccess\SupportPassIssuer;
+use App\Services\SupportAccess\SupportPassVerifier;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\TestResponse;
+use OpenSSLAsymmetricKey;
 use Tests\TestCase;
 
 /** «Acceso de soporte RügerTek» (docs/operations/support-access.md). */
@@ -25,27 +32,29 @@ class SupportAccessTest extends TestCase
 
     private const AUDIENCE = 'http://localhost:8000';
 
-    private string $secretKey;
+    private const REASON = 'Revisar por qué no sincroniza el catálogo de Meta';
 
-    private string $publicKey;
+    /** One P-256 key per test class run: generating keys is the slow part of these tests. */
+    private static ?OpenSSLAsymmetricKey $sharedKey = null;
+
+    private OpenSSLAsymmetricKey $privateKey;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $pair = sodium_crypto_sign_keypair();
-        $this->secretKey = sodium_crypto_sign_secretkey($pair);
-        $this->publicKey = sodium_crypto_sign_publickey($pair);
+        $this->privateKey = self::$sharedKey ??= SupportPassIssuer::generateKey();
         config([
             'app.url' => self::AUDIENCE,
-            'cms.support_access.public_keys' => base64_encode($this->publicKey),
+            // The JWK form, as Azure Key Vault exports the console key.
+            'cms.support_access.public_keys' => SupportAccessKeys::publicJwk($this->privateKey),
             'cms.support_access.issuer' => 'ruweb-cloud',
             'cms.support_access.operator_domain' => 'rugertek.com',
         ]);
     }
 
-    private function pass(array $overrides = [], ?string $secretKey = null, string $email = 'ana@rugertek.com', string $role = 'operacion', ?int $ttl = null): string
+    private function pass(array $overrides = [], ?OpenSSLAsymmetricKey $key = null, string $email = 'ana@rugertek.com', string $role = 'operacion', ?int $ttl = null, ?string $ticket = null): string
     {
-        return SupportPassIssuer::issue($secretKey ?? $this->secretKey, self::AUDIENCE, 'ruweb-cloud', $email, 'Ana', $role, $ttl, $overrides);
+        return SupportPassIssuer::issue($key ?? $this->privateKey, self::AUDIENCE, 'ruweb-cloud', $email, 'Ana', self::REASON, $role, $ttl, $ticket, $overrides);
     }
 
     private function enter(string $pass): TestResponse
@@ -77,6 +86,8 @@ class SupportAccessTest extends TestCase
         $this->assertSame('ana@rugertek.com', $session->operator_email);
         $this->assertSame('operacion', $session->role);
         $this->assertSame('ruweb-cloud', $session->issuer);
+        $this->assertSame(self::REASON, $session->reason);
+        $this->assertNull($session->ticket);
         $this->assertEqualsWithDelta(7200, $session->started_at->diffInSeconds($session->expires_at), 2);
 
         $this->get(route('admin.dashboard'))->assertOk()->assertSee('data-support-bar', false)
@@ -85,18 +96,25 @@ class SupportAccessTest extends TestCase
 
     public function test_rejected_passes_answer_a_plain_404_and_never_log_or_store_the_pass(): void
     {
-        $other = sodium_crypto_sign_secretkey(sodium_crypto_sign_keypair());
+        $other = SupportPassIssuer::generateKey();
         $valid = $this->pass();
         [$payload, $signature] = explode('.', $valid);
         $tamperedPayload = rtrim(strtr(base64_encode(str_replace('"Ana"', '"Eve"', base64_decode(strtr($payload, '-_', '+/')))), '+/', '-_'), '=');
         $now = time();
         $cases = [
             'tampered payload' => $tamperedPayload.'.'.$signature,
-            'foreign signing key' => $this->pass(secretKey: $other),
+            'foreign signing key' => $this->pass(key: $other),
             'other site' => $this->pass(['aud' => 'https://otro-sitio.com.py']),
-            'expired' => $this->pass(['iat' => $now - 400, 'exp' => $now - 300]),
-            'issued in the future' => $this->pass(['iat' => $now + 300, 'exp' => $now + 360]),
-            'lifetime over 120 s' => $this->pass(['iat' => $now, 'exp' => $now + 600]),
+            'expired' => $this->pass(['iat' => $now - 400, 'exp' => $now - 380]),
+            'issued in the future' => $this->pass(['iat' => $now + 300, 'exp' => $now + 320]),
+            'lifetime over 30 s' => $this->pass(['iat' => $now, 'exp' => $now + 31]),
+            'v1 pass' => $this->pass(['v' => 1]),
+            'missing reason' => $this->pass(['reason' => null]),
+            'short reason' => $this->pass(['reason' => 'Revisar']),
+            'long reason' => $this->pass(['reason' => str_repeat('Revisar el sitio. ', 30)]),
+            'html in reason' => $this->pass(['reason' => '<b>Revisar</b> el catálogo de Meta']),
+            'reason not a string' => $this->pass(['reason' => ['Revisar el catálogo de Meta']]),
+            'bad ticket' => $this->pass(['ticket' => '<script>alert(1)</script>']),
             'foreign email' => $this->pass(email: 'ana@gmail.com'),
             'look-alike domain' => $this->pass(email: 'ana@rugertek.com.evil.io'),
             'unknown claim' => $this->pass(['admin' => true]),
@@ -166,27 +184,114 @@ class SupportAccessTest extends TestCase
         config(['cms.support_access.public_keys' => 'not base64 !!']);
         $this->enter($this->pass())->assertNotFound();
 
+        // A v1 (Ed25519) public key left in .env is not a valid key any more: the feature stays off.
+        config(['cms.support_access.public_keys' => base64_encode(random_bytes(32))]);
+        $this->enter($this->pass())->assertNotFound();
+
         $this->assertGuest();
         $this->assertSame(0, User::query()->count());
     }
 
     public function test_two_public_keys_allow_a_rotation_and_a_third_is_ignored(): void
     {
-        $next = sodium_crypto_sign_keypair();
-        $third = sodium_crypto_sign_keypair();
-        config(['cms.support_access.public_keys' => base64_encode(random_bytes(32)).', '.base64_encode(sodium_crypto_sign_publickey($next)).','.base64_encode(sodium_crypto_sign_publickey($third))]);
+        $next = SupportPassIssuer::generateKey();
+        $third = SupportPassIssuer::generateKey();
+        // Current key as a JWK (Key Vault `key show`), next one as a PEM body (Key Vault `key download -e PEM`).
+        config(['cms.support_access.public_keys' => SupportAccessKeys::publicJwk($this->privateKey).', '.SupportAccessKeys::publicPemBody($next).','.SupportAccessKeys::publicJwk($third)]);
 
-        $this->enter($this->pass(secretKey: sodium_crypto_sign_secretkey($third)))->assertNotFound();
-        $this->enter($this->pass(secretKey: $this->secretKey))->assertNotFound();
-        $this->enter($this->pass(secretKey: sodium_crypto_sign_secretkey($next)))->assertRedirect(route('admin.dashboard'));
+        $this->enter($this->pass(key: $third))->assertNotFound();
+        $this->enter($this->pass())->assertRedirect(route('admin.dashboard'));
+        $this->post(route('admin.support.exit'));
+        $this->enter($this->pass(key: $next))->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticated();
+
+        // After the rotation only the next key remains: passes of the old one stop working at once.
+        $this->post(route('admin.support.exit'));
+        config(['cms.support_access.public_keys' => SupportAccessKeys::publicPemBody($next)]);
+        $this->enter($this->pass())->assertNotFound();
+        $this->enter($this->pass(key: $next))->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_public_keys_are_accepted_as_jwk_or_pem_and_nothing_else(): void
+    {
+        $details = openssl_pkey_get_details($this->privateKey);
+        $jwk = json_decode(SupportAccessKeys::publicJwk($this->privateKey), true);
+        $armored = $details['key'];
+        $accepted = [
+            'jwk' => json_encode($jwk),
+            'jwk as az keyvault key show prints it' => json_encode(['kid' => 'https://kv.vault.azure.net/keys/ruweb-support/abc', 'kty' => 'EC-HSM', 'key_ops' => ['sign', 'verify'], 'crv' => 'P-256', 'x' => $jwk['x'], 'y' => $jwk['y']]),
+            'armored pem' => $armored,
+            'pem with \\n escapes' => str_replace("\n", '\\n', trim($armored)),
+            'pem body' => SupportAccessKeys::publicPemBody($this->privateKey),
+        ];
+        foreach ($accepted as $label => $value) {
+            $this->assertNotNull(SupportAccessKeys::parsePublicKey($value), $label);
+        }
+
+        // An empty openssl.cnf: PHP builds for Windows ship without a default one (see SupportPassIssuer::generateKey()).
+        $config = tempnam(sys_get_temp_dir(), 'ossl');
+        $rsa = openssl_pkey_get_details(openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 2048, 'config' => $config]))['key'];
+        @unlink($config);
+        $rejected = [
+            'ed25519 public key (v1)' => base64_encode(random_bytes(32)),
+            'jwk of another curve' => json_encode(['kty' => 'EC', 'crv' => 'P-384', 'x' => $jwk['x'], 'y' => $jwk['y']]),
+            'jwk with a private part' => json_encode($jwk + ['d' => $jwk['x']]),
+            'jwk point off the curve' => json_encode(['kty' => 'EC', 'crv' => 'P-256', 'x' => $jwk['x'], 'y' => $jwk['x']]),
+            'private key pem' => '-----BEGIN PRIVATE KEY-----'.SupportPassIssuer::privateKeyBody($this->privateKey).'-----END PRIVATE KEY-----',
+            'garbage' => 'not a key',
+            'rsa key' => $rsa,
+        ];
+        foreach ($rejected as $label => $value) {
+            $this->assertNull(SupportAccessKeys::parsePublicKey($value), $label);
+        }
+        $this->assertSame(['{"a":1,"b":2}', 'abc'], SupportAccessKeys::splitKeys(' {"a":1,"b":2} , abc ,'));
+    }
+
+    public function test_es256_signatures_use_the_key_vault_r_s_format(): void
+    {
+        $pass = $this->pass();
+        [$payload, $signature] = explode('.', $pass);
+        $raw = SupportAccessKeys::base64UrlDecode($signature);
+        $this->assertSame(64, strlen($raw), 'JWS / Key Vault ES256 signatures are r||s, 64 bytes');
+        $der = Es256Signature::rawToDer($raw);
+        $this->assertSame(1, openssl_verify(SupportPassVerifier::SIGNING_CONTEXT.$payload, $der, openssl_pkey_get_details($this->privateKey)['key'], OPENSSL_ALGO_SHA256));
+        $this->assertSame($raw, Es256Signature::derToRaw($der));
+
+        // High bit set and leading zeros round-trip; a zero r or s is not a signature.
+        $edge = "\0\0".str_repeat("\x81", 30).str_repeat("\xff", 32);
+        $this->assertSame($edge, Es256Signature::derToRaw(Es256Signature::rawToDer($edge)));
+        $this->assertNull(Es256Signature::rawToDer(str_repeat("\0", 32).str_repeat("\x01", 32)));
+        $this->assertNull(Es256Signature::rawToDer(str_repeat("\x01", 63)));
+
+        // The DER form itself (what a non-JWS signer would send) is not accepted: only the 64-byte form.
+        $this->enter($payload.'.'.SupportAccessKeys::base64UrlEncode($der))->assertNotFound();
+        $this->enter($pass)->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_the_pass_expires_in_seconds_with_a_documented_clock_tolerance(): void
+    {
+        $this->freezeTime();
+        $now = Carbon::now()->getTimestamp();
+        $this->withServerVariables(['REMOTE_ADDR' => '10.1.0.1']);
+        $this->enter($this->pass(['iat' => $now, 'exp' => $now + 31]))->assertNotFound();
+        // Exactly 30 s is fine, and so is a console clock 25 s behind or ahead.
+        $this->enter($this->pass(['iat' => $now, 'exp' => $now + 30]))->assertRedirect(route('admin.dashboard'));
+        $this->post(route('admin.support.exit'));
+        $this->enter($this->pass(['iat' => $now - 50, 'exp' => $now - 25]))->assertRedirect(route('admin.dashboard'));
+        $this->post(route('admin.support.exit'));
+        $this->enter($this->pass(['iat' => $now + 25, 'exp' => $now + 50]))->assertRedirect(route('admin.dashboard'));
+        $this->post(route('admin.support.exit'));
+        // Beyond the tolerance (exp more than 30 s ago, iat more than 30 s ahead): rejected.
+        $this->enter($this->pass(['iat' => $now - 61, 'exp' => $now - 31]))->assertNotFound();
+        $this->enter($this->pass(['iat' => $now + 31, 'exp' => $now + 50]))->assertNotFound();
+        $this->assertSame(3, SupportSession::query()->count());
     }
 
     public function test_the_support_account_is_created_once_and_reused(): void
     {
         $this->enter($this->pass())->assertRedirect();
         $this->post(route('admin.support.exit'));
-        $this->enter(SupportPassIssuer::issue($this->secretKey, self::AUDIENCE, 'ruweb-cloud', 'ANA@rugertek.com', 'Ana María', 'desarrollo'))->assertRedirect();
+        $this->enter(SupportPassIssuer::issue($this->privateKey, self::AUDIENCE, 'ruweb-cloud', 'ANA@rugertek.com', 'Ana María', self::REASON, 'desarrollo'))->assertRedirect();
 
         $this->assertSame(1, User::query()->count());
         $user = User::query()->sole();
@@ -377,10 +482,14 @@ class SupportAccessTest extends TestCase
 
     public function test_issue_pass_command_works_locally_and_refuses_in_production(): void
     {
-        config(['cms.support_access.dev_private_key' => base64_encode($this->secretKey)]);
-        $this->artisan('support:issue-pass', ['email' => 'ana@rugertek.com', '--name' => 'Ana', '--ttl' => 900])
+        config(['cms.support_access.dev_private_key' => SupportPassIssuer::privateKeyBody($this->privateKey)]);
+        $this->artisan('support:issue-pass', ['email' => 'ana@rugertek.com', '--name' => 'Ana', '--ttl' => 900, '--reason' => self::REASON, '--ticket' => 'TK-1234'])
             ->expectsOutputToContain(self::AUDIENCE.'/_ruweb/support/enter?t=')
             ->assertSuccessful();
+        $this->artisan('support:issue-pass', ['email' => 'ana@rugertek.com'])
+            ->expectsOutputToContain('--reason is required')
+            ->assertFailed();
+        $this->artisan('support:issue-pass', ['email' => 'ana@rugertek.com', '--reason' => self::REASON, '--ticket' => 'no spaces allowed'])->assertFailed();
 
         $this->app['env'] = 'production';
         $this->artisan('support:issue-pass', ['email' => 'ana@rugertek.com'])->assertFailed();
@@ -391,7 +500,7 @@ class SupportAccessTest extends TestCase
     {
         config(['cms.support_access.dev_private_key' => null]);
         $this->artisan('support:issue-pass', ['email' => 'ana@rugertek.com'])->assertFailed();
-        $this->artisan('support:keypair')->expectsOutputToContain('RUWEB_SUPPORT_PUBLIC_KEYS=')->assertSuccessful();
+        $this->artisan('support:keypair')->expectsOutputToContain('RUWEB_SUPPORT_PUBLIC_KEYS=\'{"kty":"EC","crv":"P-256"')->assertSuccessful();
     }
 
     public function test_prune_keeps_the_retention_period(): void
@@ -409,5 +518,193 @@ class SupportAccessTest extends TestCase
         $this->assertSame(0, SupportAudit::query()->count());
         $this->assertSame(0, DB::table('support_pass_jtis')->count());
         $this->assertSame(1, User::query()->where('is_support', true)->count());
+    }
+
+    public function test_the_reason_and_ticket_are_stored_and_shown_to_the_client(): void
+    {
+        $this->enter($this->pass(ticket: 'TK-1234'))->assertRedirect(route('admin.dashboard'));
+        $this->post(route('admin.support.exit'));
+        $session = SupportSession::query()->sole();
+        $this->assertSame(self::REASON, $session->reason);
+        $this->assertSame('TK-1234', $session->ticket);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)->get(route('admin.support-activity.index'))->assertOk()
+            ->assertSee('Motivo: '.self::REASON)->assertSee('Ticket TK-1234');
+        $this->actingAs($admin)->get(route('admin.support-activity.show', $session->id))->assertOk()
+            ->assertSee(self::REASON)->assertSee('Ticket TK-1234');
+    }
+
+    public function test_line_breaks_in_the_reason_are_collapsed(): void
+    {
+        $this->enter($this->pass(['reason' => "Revisar el catálogo\n  de Meta\tque no sincroniza"]))->assertRedirect();
+
+        $this->assertSame('Revisar el catálogo de Meta que no sincroniza', SupportSession::query()->sole()->reason);
+    }
+
+    public function test_a_client_admin_turns_support_access_off_and_on(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'name' => 'Laura Dueña']);
+        $this->actingAs($admin)->get(route('admin.support-activity.index'))->assertOk()
+            ->assertSee('Permitir acceso de soporte de RügerTek')->assertSee('Activado')
+            ->assertSee(route('admin.support-activity.access'), false);
+
+        // Without the confirmation nothing changes.
+        $this->actingAs($admin)->post(route('admin.support-activity.access'), ['allowed' => 0])->assertSessionHasErrors('confirm');
+        $this->assertSame(0, DB::table('support_access_changes')->count());
+
+        $this->actingAs($admin)->post(route('admin.support-activity.access'), ['allowed' => 0, 'confirm' => 1])
+            ->assertRedirect(route('admin.support-activity.index'))->assertSessionHas('success');
+        $change = DB::table('support_access_changes')->sole();
+        $this->assertFalse((bool) $change->allowed);
+        $this->assertSame($admin->id, (int) $change->user_id);
+        $this->assertSame('Laura Dueña', $change->user_name);
+        $this->actingAs($admin)->get(route('admin.support-activity.index'))->assertOk()
+            ->assertSee('Desactivado')->assertSee('Lo desactivó Laura Dueña el');
+
+        auth()->guard('web')->logout();
+        $this->enter($this->pass())->assertNotFound();
+        $this->assertGuest();
+        $this->assertSame(0, SupportSession::query()->count());
+
+        $this->actingAs($admin)->post(route('admin.support-activity.access'), ['allowed' => 1, 'confirm' => 1])->assertRedirect();
+        auth()->guard('web')->logout();
+        $this->enter($this->pass())->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_turning_it_off_closes_an_open_support_session_on_its_next_request(): void
+    {
+        $this->enterAsSupport();
+        $this->get(route('admin.dashboard'))->assertOk();
+        // Another administrator, in another browser, turns it off.
+        DB::table('support_access_changes')->insert(['allowed' => false, 'user_id' => null, 'user_name' => 'Laura', 'changed_at' => now()]);
+
+        $this->get(route('admin.settings.index'))->assertForbidden()
+            ->assertSee(__('support.ended_disabled_body', [], 'es'));
+        $this->assertGuest();
+        $session = SupportSession::query()->sole();
+        $this->assertSame('disabled', $session->end_reason);
+        $this->assertNotNull($session->ended_at);
+    }
+
+    public function test_turning_it_off_from_the_panel_closes_open_sessions_at_once(): void
+    {
+        $this->enterAsSupport();
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->post(route('admin.support-activity.access'), ['allowed' => 0, 'confirm' => 1])
+            ->assertSessionHas('success', trans_choice('support.access.turned_off', 1, ['count' => 1], 'es'));
+
+        $this->assertSame('disabled', SupportSession::query()->sole()->end_reason);
+        $this->actingAs($admin)->get(route('admin.support-activity.show', SupportSession::query()->sole()->id))->assertOk()->assertSee('Se desactivó el acceso de soporte', false);
+    }
+
+    public function test_a_support_account_cannot_change_the_switch(): void
+    {
+        $this->enterAsSupport();
+
+        $this->get(route('admin.support-activity.index'))->assertOk()
+            ->assertSee('Solo un administrador del sitio puede cambiar esto')
+            ->assertDontSee(route('admin.support-activity.access'), false);
+        $this->post(route('admin.support-activity.access'), ['allowed' => 0, 'confirm' => 1])->assertForbidden();
+        $this->post(route('admin.support-activity.access'), ['allowed' => 1, 'confirm' => 1])->assertForbidden();
+
+        $this->assertSame(0, DB::table('support_access_changes')->count());
+        $attempt = SupportAudit::query()->where('route_name', 'admin.support-activity.access')->firstOrFail();
+        $this->assertSame(403, $attempt->status);
+        $this->assertAuthenticated();
+    }
+
+    public function test_an_editor_cannot_change_the_switch(): void
+    {
+        $editor = User::factory()->create(['role' => 'editor']);
+
+        $this->actingAs($editor)->post(route('admin.support-activity.access'), ['allowed' => 0, 'confirm' => 1])->assertForbidden();
+        $this->assertSame(0, DB::table('support_access_changes')->count());
+    }
+
+    public function test_the_mcp_tool_reports_reason_and_the_switch_but_cannot_change_it(): void
+    {
+        $this->enter($this->pass(ticket: 'TK-9'))->assertRedirect();
+        $this->post(route('admin.support.exit'));
+        $admin = User::factory()->create(['role' => 'admin', 'name' => 'Laura']);
+        $this->actingAs($admin)->post(route('admin.support-activity.access'), ['allowed' => 0, 'confirm' => 1]);
+
+        auth()->guard('web')->logout();
+        $data = $this->withToken(McpApiKey::issue($admin, 'Read', 'read-only', null))->getJson('/mcp/support-activity')->assertOk()->json();
+        $this->assertSame(self::REASON, $data['data'][0]['reason']);
+        $this->assertSame('TK-9', $data['data'][0]['ticket']);
+        $this->assertFalse($data['meta']['access']['allowed']);
+        $this->assertSame('Laura', $data['meta']['access']['changed_by']);
+
+        $names = array_column(ToolRegistry::all(), 'name');
+        $this->assertSame([], array_values(array_filter($names, fn (string $name): bool => str_contains($name, 'support') && $name !== 'support_activity_list')));
+    }
+
+    public function test_the_client_admin_sees_a_notice_of_who_entered_when_and_why(): void
+    {
+        $this->enter($this->pass(ticket: 'TK-77'))->assertRedirect();
+        $session = SupportSession::query()->sole();
+        // The operator never sees the notice about themselves.
+        $this->get(route('admin.dashboard'))->assertOk()->assertDontSee('data-support-notice', false);
+        $this->post(route('admin.support.exit'));
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $editor = User::factory()->create(['role' => 'editor']);
+        $time = $session->started_at->timezone(config('app.timezone'))->format('H:i');
+        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk()
+            ->assertSee('data-support-notice', false)
+            ->assertSee('Soporte RügerTek (Ana) entró hoy a las '.$time)
+            ->assertSee('Motivo: '.self::REASON)
+            ->assertSee('Ticket TK-77')
+            ->assertSee(route('admin.support-activity.show', $session->id), false);
+        $this->actingAs($editor)->get(route('admin.dashboard'))->assertOk()->assertDontSee('data-support-notice', false);
+
+        // Dismissed: gone for this administrator only, back with the next entry.
+        $other = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)->post(route('admin.support-activity.notice.dismiss'))->assertRedirect();
+        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk()->assertDontSee('data-support-notice', false);
+        $this->actingAs($other)->get(route('admin.dashboard'))->assertOk()->assertSee('data-support-notice', false);
+        $this->actingAs($editor)->post(route('admin.support-activity.notice.dismiss'))->assertForbidden();
+
+        $this->travel(1)->minutes();
+        auth()->guard('web')->logout();
+        $this->enter($this->pass())->assertRedirect();
+        $this->post(route('admin.support.exit'));
+        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk()->assertSee('data-support-notice', false);
+
+        // Seven days later it is gone by itself.
+        $this->travel(SupportNotices::DAYS)->days();
+        $this->travel(1)->minutes();
+        $this->actingAs($other)->get(route('admin.dashboard'))->assertOk()->assertDontSee('data-support-notice', false);
+    }
+
+    public function test_the_notice_says_yesterday_or_the_date(): void
+    {
+        app()->setLocale('es');
+        $notices = app(SupportNotices::class);
+        $this->travelTo(Carbon::parse('2026-11-26 18:00:00', config('app.timezone')));
+
+        $this->assertSame('hoy a las 15:20', $notices->when(Carbon::parse('2026-11-26 15:20:00', config('app.timezone'))));
+        $this->assertSame('ayer a las 09:05', $notices->when(Carbon::parse('2026-11-25 09:05:00', config('app.timezone'))));
+        $this->assertSame('el 22/11 a las 23:59', $notices->when(Carbon::parse('2026-11-22 23:59:00', config('app.timezone'))));
+    }
+
+    public function test_page_views_read_as_screens_by_name(): void
+    {
+        $this->enterAsSupport();
+        $this->get(route('admin.connectors.show', 'amiba_chat'))->assertOk();
+        $this->get(route('admin.settings.index'))->assertOk();
+        $this->get(route('admin.pages.create'))->assertOk();
+        $summary = app(SupportActivitySummary::class);
+
+        $lines = SupportAudit::query()->orderBy('id')->get()->map(fn (SupportAudit $audit) => $summary->describe($audit))->all();
+        $this->assertSame(['Vio el conector Chatbot Amiba', 'Vio los ajustes del sitio', 'Abrió el formulario para crear una página'], $lines);
+
+        $session = SupportSession::query()->sole();
+        $unknown = new SupportAudit(['session_id' => $session->id, 'method' => 'GET', 'route_name' => null, 'path' => '/admin/algo-nuevo']);
+        $this->assertSame('Vio /admin/algo-nuevo', $summary->describe($unknown));
+        $write = new SupportAudit(['session_id' => $session->id, 'method' => 'PUT', 'route_name' => 'admin.connectors.settings', 'path' => '/admin/connectors/amiba_chat/settings', 'subject_type' => 'connector', 'subject_label' => 'amiba_chat', 'status' => 302]);
+        $this->assertSame('Editó el conector Chatbot Amiba', $summary->describe($write));
     }
 }

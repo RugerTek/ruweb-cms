@@ -8,6 +8,8 @@
     <p class="text-sm text-gray-500 mt-0.5">{{ __('admin.welcome_back', ['name' => auth()->user()->name]) }}</p>
 </div>
 
+@include('admin.support.notice')
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <a href="{{ route('admin.editorial-control.index', ['issue' => 'featured_image']) }}#editorial-completeness"
        class="block bg-[#141414] ring-1 ring-white/[0.06] rounded-xl p-5 hover:ring-white/[0.12] transition-all">

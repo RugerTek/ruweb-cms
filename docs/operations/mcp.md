@@ -252,17 +252,19 @@ REST mirror: `GET /mcp/connectors`, `GET /mcp/connectors/{connector}`, `GET /mcp
 ### Support activity
 
 Read-only mirror of Admin > Actividad de soporte ([support-access.md](support-access.md)): every RügerTek support
-session and what it changed. Administrator only (an editor gets `-32003`); any credential scope may call it. There is
-no tool to change, delete or switch off the record, and support accounts cannot use MCP keys at all.
+session, why and what it changed. Administrator only (an editor gets `-32003`); any credential scope may call it. There
+is no tool to change or delete the record or to turn support access on or off (that switch is panel-only, for the
+client's administrators), and support accounts cannot use MCP keys at all.
 
 - `support_activity_list {limit?, session_id?}` without `session_id` answers the latest `limit` sessions (default 20,
-  max 50), newest first: `operator_email`, `operator_name`, `role`, `issuer`, `ip`, `started_at`, `expires_at`,
-  `ended_at`, `end_reason` (`exit`, `logout`, `expired`, `replaced`), `state` (`active`, `expired`, `ended`),
+  max 50), newest first: `operator_email`, `operator_name`, `role`, `reason`, `ticket`, `issuer`, `ip`, `started_at`,
+  `expires_at`, `ended_at`, `end_reason` (`exit`, `logout`, `expired`, `replaced`, `disabled`), `state` (`active`, `expired`, `ended`),
   `duration_minutes`, `page_views_count` and `changes` (bounded to 50, `changes_truncated`). Each entry has `kind`
   (`change` or `page_view`), `method`, `route_name`, `path` (never the query string), `subject_type`, `subject_id`,
   `subject_label`, `changed_fields` (the NAMES of the submitted fields; values are never recorded), `status` and a
   readable `summary`. With `session_id` it answers that session with every entry, page views included (bounded to 500,
-  `entries_truncated`); an unknown id is `-32602`. `meta.retention_days` says how long records are kept.
+  `entries_truncated`); an unknown id is `-32602`. `meta.retention_days` says how long records are kept;
+  `meta.access` (`allowed`, `changed_by`, `changed_at`) whether the site currently allows support access.
 
 REST mirror: `GET /mcp/support-activity`.
 
