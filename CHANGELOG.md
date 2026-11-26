@@ -6,6 +6,14 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
+## 1.4.0 - 2026-11-26
+
+- Tienda opcional (`shop.mode`: apagada, catálogo o venta online), apagada por defecto y activable desde el panel: productos con variantes, categorías, stock e imágenes; carrito, checkout como invitado y pedidos.
+- Medios de pago: Bancard vPOS 2.0 (cobro, confirmación, anulación automática de cobros con monto distinto, devolución y «marcar como resuelto» con nota), transferencia y contra entrega. Envío fijo por zona y retiro gratis. El stock se descuenta al pagar; `CheckoutReadiness` impide vender sin medio de pago ni forma de entrega.
+- Sección **Conectores**, siempre visible y agrupada por tipo: catálogo de Meta por feed XML con token (regeneración programada y al cambiar el dominio, imágenes JPEG para Meta), Pixel de Meta + API de Conversiones (eventos compartidos por `event_id`, datos de contacto con SHA-256), «Conectar con Facebook» (v2, a través de RugerTek Connect, que entrega el token al sitio por un POST firmado y no lo guarda; publicación incremental con `items_batch` y chequeo diario con aviso de reconexión) y chatbot de Amiba (nivel 1).
+- MCP: herramientas de tienda, pedidos y conectores, sin devolver nunca tokens ni la URL del feed.
+- Documentación: `docs/shop/*` y `docs/operations/{connectors,meta-pixel,ruweb-connect}.md`.
+
 ## 1.3.2 - 2026-10-11
 
 - Las pruebas declaran el perfil requerido por los editores visuales y ejecutan los contratos compartidos en Full y Essential, sin imponer un perfil global ni depender de la elección local del proyecto.
