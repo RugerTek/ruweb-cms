@@ -67,14 +67,13 @@ class AdminShopPaymentsTest extends TestCase
         Setting::clearCache();
     }
 
-    /** Every CheckoutReadiness requirement met with manual methods, pickup, orders email and mail on. */
+    /** Every CheckoutReadiness requirement met with manual methods, pickup and orders email (email sending is not one). */
     private function readyToSell(): void
     {
         CheckoutFixtures::enableManualMethods();
         $this->setting('shop_pickup_enabled', '1');
         $this->setting('shop_pickup_address', 'Av. España 123, Asunción');
         $this->setting('shop_orders_email', 'pedidos@example.com');
-        $this->setting('mail_enabled', '1');
     }
 
     private function saveKeys(string $environment = 'staging', ?string $public = self::PUBLIC_KEY, ?string $private = self::PRIVATE_KEY): TestResponse
@@ -305,7 +304,10 @@ class AdminShopPaymentsTest extends TestCase
             ->assertSee('value="Banco Ejemplo"', false)
             ->assertSee('data-readiness-item="payment_method" data-met="1"', false)
             ->assertSee('data-readiness-item="delivery" data-met="1"', false)
-            ->assertSee('data-readiness-item="mail" data-met="0"', false)
+            ->assertDontSee('data-readiness-item="mail"', false)
+            // Email off is a notice, not a requirement: it links to Admin > Email.
+            ->assertSee('data-shop-mail-off', false)
+            ->assertSee(__('checkout.mail_off_notice'))
             ->assertSee(route('admin.email.index'), false);
     }
 
@@ -363,22 +365,22 @@ class AdminShopPaymentsTest extends TestCase
             ->assertSee('data-shop-mode-choice="checkout" data-selectable="0"', false)
             ->assertSee(__('checkout.readiness_missing'))
             ->assertSee(ucfirst(__('checkout.readiness_payment_method')))
-            ->assertSee(ucfirst(__('checkout.readiness_mail')))
+            ->assertDontSee('data-readiness-item="mail"', false)
             ->assertSee('href="'.route('admin.shop-payments.edit').'"', false)
+            ->assertSee('data-shop-mail-off', false)
             ->assertSee('href="'.route('admin.email.index').'"', false);
         // A hand-typed ?mode=checkout gets no confirmation while something is missing.
         $this->get(route('admin.settings.shop', ['mode' => 'checkout']))->assertOk()->assertDontSee('data-shop-module-confirm', false);
         $this->put(route('admin.settings.shop.update'), ['mode' => 'checkout', 'confirm' => '1'])->assertSessionHasErrors('mode');
 
+        // Email sending stays off: it does not block selling, the screen only warns.
         $this->readyToSell();
         $this->setting('mail_enabled', '0');
-        $this->assertSame([CheckoutReadiness::MAIL], array_map(fn ($item) => $item->key, app(CheckoutReadiness::class)->missing()));
-        $this->put(route('admin.settings.shop.update'), ['mode' => 'checkout', 'confirm' => '1'])
-            ->assertSessionHasErrors(['mode' => __('checkout.readiness_blocked', ['missing' => __('checkout.readiness_mail')])]);
-        $this->setting('mail_enabled', '1');
+        $this->assertSame([], app(CheckoutReadiness::class)->missing());
 
         $this->get(route('admin.settings.shop'))->assertOk()
             ->assertSee('data-shop-mode-choice="checkout" data-selectable="1"', false)
+            ->assertSee(__('checkout.mail_off_title'))
             ->assertDontSee('data-shop-readiness-missing', false)
             ->assertSee(__('checkout.readiness_all_met'));
         $this->get(route('admin.settings.shop', ['mode' => 'checkout']))->assertSee('data-shop-module-confirm="checkout"', false);

@@ -59,7 +59,6 @@ class ShopModuleSwitchTest extends TestCase
         $this->put(route('admin.settings.shop.update'), ['mode' => 'checkout', 'confirm' => '1'])
             ->assertSessionHasErrors(['mode' => __('checkout.readiness_blocked', ['missing' => implode(', ', [
                 __('checkout.readiness_payment_method'), __('checkout.readiness_delivery'), __('checkout.readiness_orders_email'),
-                __('checkout.readiness_mail'),
             ])])]);
         $this->assertSame('off', app(ShopModule::class)->mode());
 

@@ -335,7 +335,6 @@ class CmsInstallCommand extends Command
             CheckoutReadiness::PAYMENT_METHOD => 'an enabled and complete payment method',
             CheckoutReadiness::DELIVERY => 'a delivery option',
             CheckoutReadiness::ORDERS_EMAIL => 'an email for order notices',
-            CheckoutReadiness::MAIL => 'email sending turned on (Admin > Email)',
         ];
         try {
             $missing = array_map(fn (ReadinessItem $item): string => $item->key, app(CheckoutReadiness::class)->missing());

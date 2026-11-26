@@ -5,7 +5,7 @@ namespace App\Services\Forms;
 use App\Jobs\SendSubmissionNotification;
 use App\Models\ContactSubmission;
 use App\Models\Page;
-use App\Models\Setting;
+use App\Services\Mail\MailSettings;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,8 +13,8 @@ use Illuminate\Support\Str;
 
 /**
  * Sends the "new submission" email when the form section on the page has
- * notifications enabled. Uses the site's Brevo mailer when a key exists,
- * otherwise the default mailer. Failures are logged, never shown to the
+ * notifications enabled. Uses the provider chosen in Admin > Email (Brevo or
+ * SMTP, App\Services\Mail\MailSettings), otherwise the default mailer. Failures are logged, never shown to the
  * visitor: the submission is already stored. See docs/content/forms.md.
  */
 class SubmissionNotifier
@@ -28,7 +28,7 @@ class SubmissionNotifier
             return false;
         }
 
-        if (! Setting::get('mail_enabled')) {
+        if (! app(MailSettings::class)->enabled()) {
             Log::info('Submission notification skipped: mail is disabled in settings.');
 
             return false;
@@ -67,8 +67,9 @@ class SubmissionNotifier
         return $enqueue();
     }
 
+    /** Mailer of every site email: the provider chosen in Admin > Email (MailSettings::mailer()). */
     public function mailer(): string
     {
-        return trim((string) Setting::get('brevo_api_key')) !== '' || trim((string) config('mail.mailers.brevo.key')) !== '' ? 'brevo' : (string) config('mail.default');
+        return app(MailSettings::class)->mailer();
     }
 }

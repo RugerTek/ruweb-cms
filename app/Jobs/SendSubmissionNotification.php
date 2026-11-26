@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Mail\ContactSubmissionReceived;
 use App\Models\ContactSubmission;
-use App\Models\Setting;
 use App\Services\Forms\SubmissionNotifier;
+use App\Services\Mail\MailSettings;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -50,7 +50,7 @@ class SendSubmissionNotification implements ShouldQueue
         }
         $submission = ContactSubmission::findOrFail($this->submissionId);
         try {
-            if (! Setting::get('mail_enabled')) {
+            if (! app(MailSettings::class)->enabled()) {
                 throw new \RuntimeException('Mail is disabled.');
             }
             Mail::mailer($notifier->mailer())->to($submission->notification_email)->send(new ContactSubmissionReceived($submission));

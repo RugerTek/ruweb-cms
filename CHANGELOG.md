@@ -6,6 +6,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
+## 1.5.0 - 2026-11-26
+
+- Ajustes › Email: además de Brevo, cualquier servidor SMTP (servidor, puerto, cifrado TLS/SSL/ninguno, usuario, contraseña cifrada que nunca se vuelve a mostrar, remitente). «Enviar correo de prueba» usa lo guardado y muestra el error real del servidor sin secretos; el último error de envío queda visible hasta que sale un correo. Los sitios que ya enviaban con Brevo siguen igual.
+- Vender sin correo: `CheckoutReadiness` ya no exige el envío de emails. Sin correo activo, Ajustes › Tienda, Pagos y envíos y Pedidos muestran un aviso; la página de confirmación muestra número de pedido, instrucciones de pago y el enlace sin prometer un email; los avisos de pedidos, Meta y formularios se omiten con una línea en el log y nunca bloquean.
+- MCP: `cms_capabilities.mail` informa proveedor, estado y último error sin secretos; `settings_get`/`settings_list` siguen ocultando la clave de Brevo y la contraseña SMTP.
+- Documentación: `docs/operations/email.md` y `docs/shop/checkout.md#sin-email`.
+
 ## 1.4.0 - 2026-11-26
 
 - Tienda opcional (`shop.mode`: apagada, catálogo o venta online), apagada por defecto y activable desde el panel: productos con variantes, categorías, stock e imágenes; carrito, checkout como invitado y pedidos.

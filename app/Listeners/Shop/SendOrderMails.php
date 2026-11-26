@@ -18,8 +18,8 @@ use App\Mail\Shop\PaymentAmountMismatchStore;
 use App\Mail\Shop\StockShortfallStore;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\Setting;
 use App\Services\Forms\SubmissionNotifier;
+use App\Services\Mail\MailSettings;
 use App\Services\Shop\CheckoutReadiness;
 use Closure;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -149,7 +149,7 @@ final class SendOrderMails
 
             return false;
         }
-        if (! Setting::get('mail_enabled')) {
+        if (! app(MailSettings::class)->enabled()) {
             Log::info('Order mail skipped: mail is disabled in settings.', $context);
 
             return false;

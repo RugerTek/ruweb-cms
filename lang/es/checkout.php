@@ -17,6 +17,9 @@ return [
     'readiness_missing' => 'Te falta:',
     'readiness_fix' => 'Resolver',
     'readiness_all_met' => 'Todo listo para vender en línea.',
+    'mail_off_title' => 'El envío de emails no está activo',
+    'mail_off_notice' => 'Tus clientes no van a recibir el correo de confirmación de su pedido y la tienda tampoco recibe avisos por email. Los pedidos igual aparecen en Pedidos, y el comprador ve el número de pedido y las instrucciones de pago en la página de confirmación.',
+    'mail_off_action' => 'Configurar el email',
     'open_orders_warning' => '{0} No hay pedidos pendientes.|{1} Queda 1 pedido pendiente o sin entregar: lo seguís gestionando en Pedidos.|[2,*] Quedan :count pedidos pendientes o sin entregar: los seguís gestionando en Pedidos.',
 
     // Cart
@@ -92,6 +95,7 @@ return [
     'order_title' => 'Pedido :number',
     'order_thanks' => '¡Gracias por tu compra!',
     'order_link_hint' => 'Guardá este enlace: es la única forma de ver tu pedido. También te lo enviamos por email.',
+    'order_link_hint_no_mail' => 'Guardá este enlace o anotá el número de pedido: es la única forma de volver a ver tu pedido y sus instrucciones de pago.',
     'order_number' => 'Número de pedido',
     'order_date' => 'Fecha y hora',
     'order_status' => 'Estado',
@@ -333,7 +337,6 @@ return [
     'connector_bancard_activate_selling' => 'Activar la venta en línea',
 
     // Readiness and selling guard (stitching of stage 3)
-    'readiness_mail' => 'el envío de emails activado (Ajustes › Email)',
     'selling_would_stop' => 'No se guardó: la tienda está vendiendo en línea y este cambio la dejaría sin :missing. Dejá otra opción lista primero o desactivá la venta en Ajustes › Tienda.',
 
     // Panel: orders and payments (track 3D1)

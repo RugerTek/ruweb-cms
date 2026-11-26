@@ -500,7 +500,7 @@ return [
         ],
         'mail_enabled' => [
             'label' => 'Activar envío de emails',
-            'help' => 'Cuando está desactivado, los emails se escriben al log en lugar de enviarse.',
+            'help' => 'Cuando está desactivado no sale ningún email; el sitio sigue funcionando igual (pedidos y mensajes quedan en el panel) y cada email omitido queda en el log.',
         ],
         'brevo_api_key' => [
             'label' => 'API Key de Brevo',
@@ -513,6 +513,30 @@ return [
         'mail_from_name' => [
             'label' => 'Nombre remitente',
             'help' => 'Nombre visible en la bandeja de entrada del destinatario.',
+        ],
+        'mail_provider' => [
+            'label' => 'Proveedor de envío',
+            'help' => 'Brevo con su API key, o el servidor SMTP de tu hosting o de tu proveedor de correo.',
+        ],
+        'smtp_host' => [
+            'label' => 'Servidor SMTP',
+            'help' => 'Ej.: mail.tudominio.com o smtp.gmail.com. Te lo da tu hosting o tu proveedor de correo.',
+        ],
+        'smtp_port' => [
+            'label' => 'Puerto',
+            'help' => 'Normalmente 587 con TLS o 465 con SSL.',
+        ],
+        'smtp_encryption' => [
+            'label' => 'Cifrado',
+            'help' => 'TLS (STARTTLS, puerto 587), SSL (puerto 465) o ninguno (solo si tu servidor no admite cifrado).',
+        ],
+        'smtp_username' => [
+            'label' => 'Usuario',
+            'help' => 'Casi siempre es la dirección de correo completa. Vacío si el servidor no pide usuario.',
+        ],
+        'smtp_password' => [
+            'label' => 'Contraseña',
+            'help' => 'Se guarda cifrada y nunca se vuelve a mostrar. Déjala en blanco al editar para conservar la actual.',
         ],
         'contact_phone' => [
             'label' => 'Teléfono',
@@ -594,18 +618,32 @@ return [
     'brevo_last_updated' => 'Última actualización: 27 de abril de 2026. Si no encontrás los recursos indicados aquí, verificá actualizaciones en la documentación de Brevo.',
 
     // Email page
-    'email_subtitle' => 'Configura el envío de emails transaccionales mediante Brevo.',
+    'email_subtitle' => 'Configura el envío de emails del sitio con Brevo o con cualquier servidor SMTP.',
+    'email_provider_brevo' => 'Brevo (API key)',
+    'email_provider_smtp' => 'Servidor SMTP',
+    'email_encryption_tls' => 'TLS (STARTTLS)',
+    'email_encryption_ssl' => 'SSL',
+    'email_encryption_none' => 'Ninguno',
+    'email_section_provider' => 'Proveedor',
+    'email_section_brevo' => 'Brevo',
+    'email_section_smtp' => 'Servidor SMTP',
+    'email_section_sender' => 'Remitente',
+    'email_status_active' => 'El envío de emails está activo (:provider).',
+    'email_status_disabled' => 'El envío de emails está desactivado: no sale ningún email. El sitio sigue funcionando y los pedidos y mensajes quedan en el panel.',
+    'email_status_incomplete' => 'El envío de emails está activado pero falta completar :provider: hasta entonces no sale ningún email por ese proveedor.',
+    'email_status_last_error' => 'Último error de envío (:date):',
     'email_saved' => 'Configuración de email guardada correctamente.',
 
     // Email test
     'email_test_title' => 'Enviar email de prueba',
-    'email_test_help' => 'Envía un email de verificación para confirmar que la configuración funciona.',
+    'email_test_help' => 'Envía un email con la configuración guardada. Si falla, se muestra el error que devolvió el servidor.',
     'email_test_send' => 'Enviar prueba',
     'email_test_subject' => '[:app] Email de prueba',
-    'email_test_body' => "¡Hola!\n\nEste es un email de prueba enviado desde :app para verificar que el envío funciona correctamente.\n\nSi lo recibes, tu configuración de Brevo está OK.",
+    'email_test_body' => "¡Hola!\n\nEste es un email de prueba enviado desde :app para verificar que el envío funciona correctamente.\n\nSi lo recibes, tu configuración de email está OK.",
     'email_test_success' => 'Email de prueba enviado a :email. Revisa la bandeja de entrada (o spam).',
     'email_test_failed' => 'No se pudo enviar el email: :error',
     'email_test_no_key' => 'Configura primero la API Key de Brevo.',
+    'email_test_no_smtp' => 'Completa y guarda primero el servidor SMTP y el puerto.',
 
     // Analytics
     'analytics_saved' => 'Analytics guardado correctamente.',

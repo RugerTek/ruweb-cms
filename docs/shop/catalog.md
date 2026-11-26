@@ -190,10 +190,9 @@ links to the screen that fixes it:
 | `payment_method` | At least one payment method enabled **and** complete: bank transfer with its bank details, cash on delivery with its text, or Bancard with keys of its environment readable on this site | Admin > Payments and shipping |
 | `delivery` | Store pickup on with an address, or at least one enabled delivery zone | Admin > Payments and shipping |
 | `orders_email` | A valid address for order notices: `shop_orders_email`, or `contact_email` when it is empty | Admin > Payments and shipping |
-| `mail` | Sending email turned on (`mail_enabled`, off by default) | Admin > Email (`admin.email.index`) |
 
-The email requirement exists because without it nobody hears about an order: neither the customer (the email is
-the only way back to their order page) nor the store. `setMode('checkout')` refuses the switch with the same list
+Sending email is **not** a requirement: a shop sells without it, with a notice in the panel and an order page that
+carries everything the buyer needs ([checkout.md](checkout.md#sin-email)). `setMode('checkout')` refuses the switch with the same list
 from every entry point (panel, MCP `settings_update`, `cms:install --shop=checkout`), and `choices()` returns it for
 the panel. `shop_orders_email` is also writable over MCP (`settings_update`), with email validation; while selling, a change
 that leaves no valid orders address (it or `contact_email`) is refused.

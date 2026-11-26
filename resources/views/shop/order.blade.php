@@ -37,7 +37,7 @@
         @if($justPlaced)
             <div class="mb-8 rounded-xl border border-sky-200 bg-sky-50 p-5" role="status" data-order-placed>
                 <p class="text-lg font-semibold text-sky-900">{{ __('checkout.order_thanks') }}</p>
-                <p class="mt-1 text-sm text-sky-800">{{ __('checkout.order_link_hint') }}</p>
+                <p class="mt-1 text-sm text-sky-800" data-order-link-hint="{{ $mailActive ? 'mail' : 'no-mail' }}">{{ __($mailActive ? 'checkout.order_link_hint' : 'checkout.order_link_hint_no_mail') }}</p>
             </div>
         @endif
 
