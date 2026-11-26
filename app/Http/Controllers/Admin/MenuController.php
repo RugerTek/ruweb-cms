@@ -16,6 +16,7 @@ use App\Services\Menus\MenuOperations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -75,6 +76,8 @@ class MenuController extends Controller
             'pages' => Page::published()->where('locale', $menu->locale)->orderBy('title')->get(['id', 'title', 'slug']),
             'posts' => Post::published()->where('locale', $menu->locale)->orderBy('title')->get(['id', 'title', 'slug']),
             'taxonomies' => Taxonomy::where('locale', $menu->locale)->ordered()->get(['id', 'name', 'slug', 'type']),
+            // Empty unless the shop catalog is on (MenuOperations::linkableTypes()).
+            'products' => $this->linkableModels('product', $menu->locale),
             'locales' => Locale::where('is_active', true)->orderBy('sort_order')->get(),
             'menuTranslations' => Menu::where('slug', $menu->slug)->get()->keyBy('locale'),
         ]);
@@ -167,14 +170,18 @@ class MenuController extends Controller
             ->with('success', __('admin.menu_deleted'));
     }
 
+    /** @return class-string<Model>|null */
     private function resolveLinkableType(string $type): ?string
     {
-        return match ($type) {
-            'page' => Page::class,
-            'post' => Post::class,
-            'taxonomy' => Taxonomy::class,
-            default => null,
-        };
+        return MenuOperations::linkableTypes()[$type] ?? null;
+    }
+
+    /** Published targets of an optional linkable type in the menu language; empty when the type is not registered. */
+    private function linkableModels(string $type, string $locale): Collection
+    {
+        $class = $this->resolveLinkableType($type);
+
+        return $class ? $class::published()->where('locale', $locale)->orderBy('title')->get(['id', 'title', 'slug']) : collect();
     }
 
     private function translatedLinkableId(MenuItem $item, string $locale): ?int

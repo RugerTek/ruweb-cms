@@ -90,6 +90,10 @@ Defined in `app/Mcp/ToolRegistry.php`:
 | History and review | `content_versions`, `content_version`, `content_diff`, `content_restore`, `content_propose`, `content_review_request`, `content_review_decide`, `content_review_comment`, `content_reviews` |
 | Pages | `pages_list`, `pages_get`, `pages_create_draft`, `pages_update_draft`, `pages_update`, `pages_publish`, `pages_delete` |
 | Posts | `posts_list`, `posts_get`, `posts_create_draft`, `posts_update_draft`, `posts_update`, `posts_publish`, `posts_delete` |
+| Shop catalog (only while the shop catalog is on) | `products_list`, `products_get`, `products_create_draft`, `products_update_draft`, `products_update`, `products_publish`, `products_delete` |
+| Orders and payments (catalog on, while selling or while orders exist) | `orders_list`, `orders_get`, `orders_transition`, `orders_note`, `payments_confirm`, `payments_fail`, `payments_refund` |
+| Payment methods and shipping (catalog on; administrator only) | `payment_methods_list`, `payment_methods_update`, `shipping_zones_list`, `shipping_zones_update` |
+| Connectors (administrator only) | `connectors_list`, `connectors_get`, `connectors_preview`, `connectors_update`, `connectors_rotate_token` |
 | Taxonomies | `taxonomies_list`, `taxonomies_get`, `taxonomies_create`, `taxonomies_update`, `taxonomies_translate`, `taxonomies_delete` |
 | Media | `media_list`, `media_get`, `media_update_metadata`, `media_authorize_upload`, `media_usages`, `media_delete` |
 | Settings | `settings_list`, `settings_get`, `settings_update`, `settings_update_batch`, `settings_reset` |
@@ -111,6 +115,138 @@ its own call and republishing keeps the original `published_at`; no edit ever si
 kept, both listed in `warnings`; the base-language homepage cannot be deleted until another page is chosen with
 `settings_update` (`homepage_translation_group_id`). Every write runs inside a transaction with a row lock and
 records one restorable version of its result.
+
+### Shop catalog
+
+With the optional shop module off (the default; an administrator switches it in Settings > Shop or with
+`settings_update` on `shop_mode`) the `products_*` tools are not listed, calling one answers `-32601` and the
+`/mcp/products` REST routes answer 404. With `catalog` or `checkout` they
+behave like the post tools over `App\Services\Products\ProductOperations`, the operation the panel uses
+([../shop/catalog.md](../shop/catalog.md)):
+
+- `revision` comes from `ProductOperations::revision()`: the editorial fingerprint plus the variant list, so a
+  change to one variant also makes an older `expected_revision` stale (`-32009`, nothing written).
+- Prices are integers in `cms.shop.currency` (`150000`, never `"150.000"`); `null` is a product without a public
+  price. `price_amount` of a product with variants is ignored by the catalog: each variant carries its own.
+- `variants` is the whole list: rows with `id` are kept and updated, rows without one are created and stored
+  rows missing from the list are deleted. `has_variants: true` needs at least one; `false` removes them.
+- Commerce fields (`sku`, prices, stock, weight, dimensions, variants) live on the base-language row; sending them
+  for a translation is a `-32602`. `sku` is unique across products and variants.
+- `products_create_draft` accepts `operation_key`; draft-only credentials may call it and `products_update_draft`
+  (drafts only). `products_update` (live edit) is full scope; publishing and deleting are administrator-only.
+  Scheduling, expiry and unpublishing use `content_publication` (`type: products`).
+- `categories` (ids of `category` terms from `taxonomies_list`, base language of the product, up to 20) replaces
+  the product's list; `[]` empties it and omitting the key keeps it. `brands` works the same way.
+- `products_delete` removes the variants with the product and reports removed menu links and kept translations
+  in `warnings`.
+
+REST mirror (`routes/mcp-shop.php`): `GET /mcp/products`, `GET /mcp/products/{product}`,
+`POST /mcp/products/drafts`, `PATCH /mcp/products/{product}/draft`, `PATCH /mcp/products/{product}`,
+`POST /mcp/products/{product}/publish`, `DELETE /mcp/products/{product}`.
+
+`menus_sync_items` item types derive from `MenuOperations::linkableTypes()`: `custom_link`, `page`, `post`,
+`taxonomy` and, while the catalog is on, `product` (`linkable_id` = product id). With the catalog off, product items
+the menu already stores (as `menus_get` returns them) are kept when sent back; a new one is a `-32602`.
+
+### Orders and payments
+
+Selling online follows the panel (`app/Http/Controllers/McpOrderController.php`). The `orders_*` and `payments_*`
+tools exist while the catalog is on **and** the shop sells (`checkout`) or already has orders, like the "Orders"
+sidebar entry, so orders placed before selling was turned off stay manageable. `payment_methods_*` and
+`shipping_zones_*` exist with the catalog on, so an agent can complete what `settings_update` on `shop_mode` reports
+as missing before selling. With the shop off none is listed, calling one answers `-32601` and the REST routes
+answer 404. Writes go through `App\Services\Shop\OrderOperations` and `PaymentOperations`, the operations the panel
+uses; `App\Policies\OrderPolicy` decides the role.
+
+- **Never returned**: the order access token, its hash or the order page URL (only the customer email carries
+  them), payment method keys (Bancard public and private keys) and provider payloads (a Bancard notification
+  carries its md5 token and `security_information`). Payment events show only `type`, `token_valid`,
+  `status_before` and `created_at`.
+- `orders_list {status?, payment_method?, from?, to?, search?, page?, per_page?}` and `orders_get {order_id}`: any
+  CMS role. Amounts are integers in `currency`. `revision` covers status, internal notes, stock shortfall and every
+  attempt's status; `payments_*` take the revision **of the order**.
+- `orders_transition {order_id, expected_revision, status}` with `fulfilled` (any CMS role), `cancelled`, `paid`
+  (confirms the pending manual attempt) or `refunded` (through the provider) — administrator for the last three.
+  Cancelling a pending order whose online attempt reached the provider asks the provider first: paid there → the
+  payment is applied (the order becomes paid) and the cancellation is refused (`-32602`, refund instead); not paid →
+  cancelled at the provider. Repeating the current status is a no-op; an impossible move is `-32602`.
+- `orders_note {order_id, expected_revision, internal_notes}` replaces the internal notes (any CMS role).
+- `payments_confirm` / `payments_fail {payment_id, expected_revision}`: manual methods only (bank transfer, cash on
+  delivery), administrator. `payments_refund {payment_id, expected_revision, manual?}`: through the provider, or
+  `manual: true` once the money was returned by hand; when Bancard already settled the transaction the error says
+  so and nothing changes.
+- `payment_methods_list` / `payment_methods_update {method, expected_revision, enabled?, sort_order?, settings?,
+  credentials?}`: administrator. `settings` patches the public fields (`setting_keys`; `null` removes one; unknown
+  keys are ignored and reported in `warnings`). Bancard takes `credentials {environment, public_key, private_key}`
+  of one environment: stored encrypted and bound to this site's origin, write-only (responses say only
+  `credentials.<environment>.configured`). An enabled method must stay complete and, while selling, no change may
+  leave the checkout without a payment method or delivery option (`CheckoutReadiness::guard()`, as in the panel):
+  either is `-32602` with nothing saved. The Bancard
+  environment (test or production) is switched only in the panel, which asks for confirmation.
+- `shipping_zones_list` / `shipping_zones_update {expected_revision, zones?, pickup_enabled?, pickup_address?}`:
+  administrator. `zones` is the whole list (rows with `id` updated, without one created, missing ones deleted and
+  reported in `warnings`; orders keep the name and price they copied); list order is the display order.
+- Reads (`orders_list`, `orders_get`, `payment_methods_list`, `shipping_zones_list`) are allowed to read-only and
+  draft-only credentials (still with the role above); every write needs full scope.
+- Charges Bancard collected for an attempt already failed or expired, or for another amount, are reversed
+  automatically when MCP applies a provider answer too (`StrayChargeOperations::apply()`); `orders_get` shows the
+  outcome as payment events `late_payment_reversed`, `late_payment_review` and `late_payment_resolved`. Marking a
+  charge in review as resolved is a panel action, with no tool
+  ([../shop/payments.md](../shop/payments.md#stray-charges-late-payment-and-another-amount)).
+
+REST mirror (`routes/mcp-shop-checkout.php`): `GET /mcp/orders`, `GET /mcp/orders/{order}`,
+`POST /mcp/orders/{order}/transition`, `POST /mcp/orders/{order}/note`, `POST /mcp/payments/{payment}/confirm`,
+`POST /mcp/payments/{payment}/fail`, `POST /mcp/payments/{payment}/refund`, `GET /mcp/payment-methods`,
+`PATCH /mcp/payment-methods/{method}`, `GET /mcp/shipping-zones`, `PATCH /mcp/shipping-zones`.
+
+### Connectors
+
+Admin > Connectors ([connectors.md](connectors.md)) exists on every site, so the `connectors_*` tools are always
+listed, whatever the shop mode. All of them require an administrator account (an editor gets `-32003`); writes go
+through `App\Services\Connectors\ConnectorOperations`, the operation the panel uses.
+
+- **The feed token and the feed URL are secret and never appear in any MCP or REST response**, like transport
+  credentials ([mcp-surface.md](mcp-surface.md)). The administrator copies the URL from the panel
+  (`/admin/connectors/{key}`); responses only say where (`feed_url_location`).
+- `connectors_list` and `connectors_get` return `status` (`available`, `needs_action`, `connected`,
+  `needs_reconnect`: Meta rejected the «Connect with Facebook» connection and an administrator must connect again), the
+  requirements (an unmet `shop_catalog` one carries `resolution`: `settings_update` on `shop_mode` with
+  `catalog`), effective `settings`, `defaults`, `setting_keys`, the last feed totals (`last_item_count`,
+  `last_skipped_count`), `last_meta_fetched_at`, the last fetch by any client and `revision`.
+- `connectors_preview {connector, limit?}` walks the catalog through the connector without writing anything (no
+  counters either): `included`, `skipped`, the first `limit` (default 20, max 100) included items as the connector
+  checks them (`price_amount` in `currency`; `null` `brand`/`availability` mean the connector default), every
+  skip reason in `skipped_reasons` and notices that do not skip in `notices` (each list bounded to 200, with
+  `*_total`). With the catalog off it answers zeros plus the unmet requirement.
+- `connectors_update {connector, expected_revision, enabled?, settings?}` patches settings (validated with the
+  connector rules; unknown keys are ignored and reported in `warnings` as `unknown_setting`) and/or switches the
+  connector on or off, in one transaction: a stale revision is `-32009` and an activation refused by an unmet
+  requirement is `-32602`, with nothing saved. Deactivating keeps settings and the URL.
+- `connectors_rotate_token {connector, expected_revision}` makes the previous URL stop working at once and answers
+  only `rotated_at` and the new `revision`. Connectors without a feed (`bancard`, `meta_pixel`, `amiba_chat`) have no token: it
+  and `connectors_preview` answer `-32602` (REST: 404).
+- `meta` also returns `meta_connection` in `connectors_list` and `connectors_get`
+  ([connectors.md](connectors.md#connect-with-facebook-v2)): `mode` (`manual` or `connected`), `connected`,
+  `needs_reconnect`, `business_id`, `catalog` (`id`, `name`), `product_feed_id`, `connected_at`, `token_ends_in` (last
+  4 characters), `last_error` (panel language; for example Meta not answering for several days) and
+  `connect_location`. **Connecting, choosing the catalog and disconnecting happen only in the admin panel** (they
+  need the administrator's Facebook login); no tool does them and the Graph token never appears in any response.
+- `meta_pixel` ([meta-pixel.md](meta-pixel.md)) has `setting_keys` `pixel_id` and `test_event_code`, and an extra
+  `conversions_api` block: `token_configured` (a usable Conversions API token is saved), `token_needs_reentry`
+  (one is saved but was entered under another origin or `APP_KEY`), `token_location`, `graph_api_version` and
+  `events`. **The access token is set only in the panel and never appears in any response**; an `access_token`
+  sent in `settings` is ignored and reported as `unknown_setting`.
+- `amiba_chat` ([connectors.md](connectors.md#amiba-chatbot-card)) has `setting_keys` `handle` and `hide_on_checkout`,
+  and an `amiba_chat` block in `connectors_list` and `connectors_get`: `handle` (public: it is in the HTML of every
+  page), `on_public_pages`, `hide_on_checkout`, `loader_url`, `site_origin` (the exact line to add to the widget's
+  allowed origins in Amiba), `allowed_origin_hint` and `test_location`. `connectors_update` accepts the handle alone or
+  the snippet pasted from Amiba (only the handle is kept; anything else is `-32602`). The test against Amiba's API runs
+  only in the panel.
+- `connectors_list`, `connectors_get` and `connectors_preview` are allowed to read-only and draft-only credentials
+  (still administrator only); `connectors_update` and `connectors_rotate_token` need full scope.
+
+REST mirror: `GET /mcp/connectors`, `GET /mcp/connectors/{connector}`, `GET /mcp/connectors/{connector}/preview`,
+`PATCH /mcp/connectors/{connector}`, `POST /mcp/connectors/{connector}/rotate-token`.
 
 ### Partial content edits
 
@@ -150,8 +286,8 @@ Setting an image field with no real asset: select the placeholder matching the s
 `PATCH /mcp/pages/{page}/draft`, `PATCH /mcp/pages/{page}` (live edit), `DELETE /mcp/pages/{page}`,
 `POST /mcp/pages/{page}/publish`, the same shape for posts, plus `/mcp/media`, `/mcp/settings/{key}`,
 `POST /mcp/settings/reset`, `/mcp/menus` including `PUT /mcp/menus/{menu}/items`, `/mcp/taxonomies`
-(`POST /mcp/taxonomies/{taxonomy}/translations`), `/mcp/redirects`, `GET /mcp/not-found` and
-`POST /mcp/not-found/forget`.
+(`POST /mcp/taxonomies/{taxonomy}/translations`), `/mcp/redirects`, `GET /mcp/not-found`,
+`POST /mcp/not-found/forget` and `/mcp/connectors` ([Connectors](#connectors)).
 
 Media detail is `GET /mcp/media/{media}`. Update metadata with `PATCH /mcp/media/{media}` or the compatible
 `PATCH /mcp/media/{media}/metadata` route. Both accept optional `locale` (query string or JSON body on PATCH)
@@ -176,7 +312,9 @@ An absent secret value in a response is not evidence that the setting is unconfi
 `contact_address`, `footer_tagline`, `footer_copyright`, plus the existing public layout/SEO fields:
 `site_logo`, `default_social_image`, `header_cta_enabled`, `header_cta_label`, `header_cta_page`,
 `header_cta_url`, `header_cta_new_tab`, `contact_location`, `contact_social_links`, `footer_credit_enabled`,
-`footer_credit`. This does not include email transport, analytics, credentials, profile or arbitrary configuration. Arbitrary keys are rejected and unknown keys
+`footer_credit`, and `shop_mode` (the shop module switch: `off`, `catalog` or `checkout`, refused with `422` on
+`mode` above the `cms.shop.mode` limit or while checkout is not delivered; `settings_reset` turns the shop off,
+nothing is deleted, see [../shop/catalog.md](../shop/catalog.md)). This does not include email transport, analytics, credentials, profile or arbitrary configuration. Arbitrary keys are rejected and unknown keys
 report `Setting not found.`. `cms.mcp.per_page` defaults listing pagination to 20.
 
 `settings_reset {keys, locale?, expected_revisions?}` restores allowlisted keys to their starter value from

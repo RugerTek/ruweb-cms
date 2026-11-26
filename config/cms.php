@@ -1,11 +1,146 @@
 <?php
 
+use App\Connectors\AmibaChat\AmibaChatConnector;
+use App\Connectors\Bancard\BancardConnector;
+use App\Connectors\Meta\MetaCatalogConnector;
+use App\Connectors\MetaPixel\MetaPixelConnector;
+use App\Connectors\Sources\ShopProductSource;
 use App\Models\ContactSubmission;
 use App\Models\Post;
+use App\Models\Product;
+use App\Shop\Payments\Bancard\BancardProvider;
+use App\Shop\Payments\ManualPaymentProvider;
 
 return [
     // Versioned deployment choice. No database setting or environment override.
     'admin_profile' => 'full',
+
+    // Optional shop module. The administrator turns it on and off from the panel (Settings > Shop, the `shop_mode`
+    // setting); `mode` here is the versioned LIMIT a deployment allows, not the switch: off (the site cannot turn
+    // the shop on) | catalog (up to the catalog) | checkout (no limit). No environment override. Read the effective
+    // mode only through App\Support\ShopModule (docs/shop/catalog.md).
+    'shop' => [
+        'mode' => 'checkout',
+        // ISO 4217; one currency per site. Amounts are stored as integers (Guaraníes have no decimals).
+        'currency' => 'PYG',
+        // Public catalog prefix: /productos and /en/productos. Reserved for pages only while the module is on.
+        'path' => 'productos',
+        // Merged into taxonomy_types while the catalog is on.
+        'taxonomy_types' => ['brand'],
+        // Merged into collections.products while the catalog is on (App\Providers\ShopServiceProvider).
+        'collection' => [
+            'model' => Product::class,
+            'label' => 'shop.content_type_product',
+            'create_route' => 'admin.products.create',
+            'custom_code_public' => false,
+            'mcp_operations' => 'products',
+            // History, versions, proposals, shared previews, translation and content_* tools (App\Support\EditorialTypes).
+            'editorial_history' => true,
+        ],
+        // Merged into custom_code.indexes.shop while the catalog is on: code scoped to the public catalog listing.
+        'custom_code_index' => ['label' => 'Tienda', 'routes' => ['shop.index', 'localized.shop.index']],
+        // Merged into content_schemas.product while the catalog is on. Commerce fields (sku, prices, stock,
+        // variants) live on the base-language row only, so they are not translation paths.
+        'content_schema' => [
+            'title' => ['type' => 'text', 'translatable' => true],
+            'excerpt' => ['type' => 'textarea', 'translatable' => true],
+            'description' => ['type' => 'richtext', 'translatable' => true],
+            'meta_json.title' => ['type' => 'text', 'translatable' => true],
+            'meta_json.description' => ['type' => 'textarea', 'translatable' => true],
+            'featured_image' => ['type' => 'media', 'localized_media' => true],
+            'gallery' => ['type' => 'media', 'localized_media' => true],
+            'taxonomies' => ['type' => 'internal_reference', 'remap' => true],
+        ],
+        // Cart, checkout and orders (PLAN.md, stage 3). Active only while the effective mode is `checkout`.
+        'checkout' => [
+            // Days a guest cart (cookie `ruweb_cart`) lives without activity.
+            'cart_days' => 30,
+            // Orders with an automatic payment method still unpaid after this many hours are cancelled.
+            'unpaid_order_hours' => 48,
+            // Bancard attempts still pending after this many minutes are queried and, if unpaid, rolled back.
+            'bancard_pending_minutes' => 10,
+            // Order numbers: ORD-2026-000001.
+            'order_prefix' => 'ORD',
+        ],
+        // key => class implementing App\Contracts\Shop\PaymentProvider (App\Shop\Payments\PaymentProviderRegistry).
+        // The key is the `provider` column of payment_methods and payments.
+        'payment_providers' => [
+            'manual' => ManualPaymentProvider::class,
+            'bancard' => BancardProvider::class,
+        ],
+        // Bancard vPOS 2.0 (PLAN.md E3.1). Credentials are per site, encrypted in payment_methods, never here.
+        'bancard' => [
+            'urls' => [
+                'staging' => 'https://vpos.infonet.com.py:8888',
+                'production' => 'https://vpos.infonet.com.py',
+            ],
+            // Local fake server for development and tests; the Bancard client honours it only when
+            // app()->environment('local', 'testing'), so it can never redirect a real site's payments.
+            'staging_url_override' => env('BANCARD_STAGING_URL'),
+            // Version of {env}/checkout/javascript/dist/bancard-checkout-<version>.js the order page loads.
+            'checkout_js_version' => '5.0.1',
+        ],
+    ],
+
+    // Admin > Connectors (PLAN.md §4): key => class implementing App\Contracts\Connectors\Connector. Adding one is a
+    // class, an entry here, lang/{es,en}/connectors.php keys and tests; every connector shares the `connectors` table.
+    'connectors' => [
+        'meta' => MetaCatalogConnector::class,
+        'bancard' => BancardConnector::class,
+        'meta_pixel' => MetaPixelConnector::class,
+        'amiba_chat' => AmibaChatConnector::class,
+    ],
+
+    // Amiba chatbot, level 1 (App\Connectors\AmibaChat, docs/operations/connectors.md#amiba-chatbot-card). The widget
+    // handle and its options are per site (connectors table), never here. Production URLs of Amiba, read from its code
+    // on 2026-11-25: the loader is served by widget.amiba.io and the widget talks to api.amiba.io.
+    'amiba_chat' => [
+        // Origin of `loader.js` (the floating button and the chat iframe).
+        'widget_url' => 'https://widget.amiba.io',
+        // Amiba API the "Test" button asks for the widget (GET /webchat/{handle}/config).
+        'api_url' => 'https://api.amiba.io',
+        // Seconds to wait for Amiba when testing from the panel.
+        'timeout' => 8,
+    ],
+
+    // Meta Pixel + Conversions API (App\Connectors\MetaPixel, docs/operations/meta-pixel.md). The pixel ID, the
+    // access token (encrypted in the connectors table) and the test events code are per site, never here.
+    'meta_pixel' => [
+        // Graph API version of the Conversions API endpoint. v27.0 is the latest one (Meta changelog, released
+        // 2026-11-04, checked 2026-11-24); every version is supported for the Conversions API for at least two years.
+        'graph_api_version' => 'v27.0',
+        'graph_url' => 'https://graph.facebook.com',
+        // Seconds to wait for Meta in a server event or the panel's test event.
+        'timeout' => 10,
+        // ISO 3166-1 alpha-2 of the customers' country (`country` in user_data) and the calling code added to phone
+        // numbers written without one (0981 123456 → 595981123456), as Meta asks.
+        'country' => 'py',
+        'phone_country_code' => '595',
+    ],
+
+    // Meta v2 «Conectar con Facebook» (plan-meta-v2): Graph API calls of the catalog connector with the system user token
+    // delivered by the RugerTek Connect broker. The token and the broker credentials are per site, encrypted in the
+    // connectors table (App\Connectors\Meta\Connect\MetaConnectionStore), never here.
+    'meta' => [
+        // Graph API version of every catalog call (v27.0, the version the spike verified on 2026-11-24).
+        'graph_version' => 'v27.0',
+        'graph_url' => 'https://graph.facebook.com',
+        // Seconds to wait for Meta; calls are never retried blindly.
+        'timeout' => 20,
+        'connection_timeout' => 10,
+        // RugerTek Connect broker (one redirect URI and the app secret live there). Empty: the panel offers only the
+        // manual feed (v1).
+        'connect_url' => env('RUWEB_CONNECT_URL'),
+        // http:// broker URL for development; honoured only in the local and testing environments.
+        'connect_allow_http' => (bool) env('RUWEB_CONNECT_ALLOW_HTTP', false),
+        // Seconds to wait for the broker.
+        'connect_timeout' => 10,
+    ],
+
+    // Where feed connectors read items from: key => class implementing App\Contracts\Catalog\CatalogSource.
+    'catalog_sources' => [
+        'products' => ShopProductSource::class,
+    ],
 
     // Application version. Single source of truth is the VERSION file at the
     // repository root, bumped together with CHANGELOG.md (see skills/changelog-version).
@@ -332,6 +467,10 @@ return [
             'storage/*',
             'build/*',
             'up',
+            // Public connector feeds: requests with a wrong token must not fill the 404 monitor.
+            'feeds/*',
+            // Payment provider notifications (Bancard posts here, including an empty monitoring ping every 5 minutes).
+            'webhooks/*',
             // Discovery probes (MCP clients look for OAuth, which this starter does not offer) on every connection.
             '.well-known/*',
         ],
@@ -368,6 +507,10 @@ return [
             'contact_address',
             'footer_tagline',
             'footer_copyright',
+            // Shop module switch: validated against the config limit by App\Services\Shop\ShopModuleOperations.
+            'shop_mode',
+            // Where order notices go (empty = contact_email); guarded by CheckoutReadiness while selling online.
+            'shop_orders_email',
         ],
     ],
 ];

@@ -46,6 +46,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'mcp.auth' => AuthenticateMcpApiKey::class,
         ]);
         $middleware->redirectGuestsTo(fn () => '/');
+        // Payment providers post their notifications without a session (routes/shop-checkout.php, PLAN.md E3.2).
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (RevisionConflict $exception, Request $request) {

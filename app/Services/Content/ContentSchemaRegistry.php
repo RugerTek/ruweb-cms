@@ -4,6 +4,7 @@ namespace App\Services\Content;
 
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
 use App\Models\Taxonomy;
 use App\Support\CompositionBlocks;
 use App\Support\SectionRichText;
@@ -23,6 +24,11 @@ class ContentSchemaRegistry
 
         if ($entity instanceof Taxonomy) {
             return config('cms.content_schemas.taxonomy');
+        }
+
+        // Registered by ShopServiceProvider only while the catalog is on; null (not translatable) otherwise.
+        if ($entity instanceof Product) {
+            return config('cms.content_schemas.product');
         }
 
         return null;
@@ -170,6 +176,16 @@ class ContentSchemaRegistry
                 'title' => $entity->title,
                 'excerpt' => $entity->excerpt,
                 'content' => $entity->content,
+                'meta_json' => $entity->meta_json ?? [],
+            ];
+        }
+
+        // Commerce fields (sku, prices, stock, variants) belong to the base-language row: never translation data.
+        if ($entity instanceof Product) {
+            return [
+                'title' => $entity->title,
+                'excerpt' => $entity->excerpt,
+                'description' => $entity->description,
                 'meta_json' => $entity->meta_json ?? [],
             ];
         }

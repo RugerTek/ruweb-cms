@@ -27,6 +27,9 @@ App at `http://localhost:8000`, admin at `/admin`. The login path is the `admin_
 | New section in an existing template | `create-section` | [docs/content/templates.md](docs/content/templates.md) |
 | Edit content already stored | `update-content` | [docs/content/updating-content.md](docs/content/updating-content.md) |
 | New collection (products, cases…) | `create-collection` | [docs/content/collections.md](docs/content/collections.md) |
+| Turn the optional shop on/off, product catalog | — | [docs/shop/catalog.md](docs/shop/catalog.md) |
+| Connectors (Meta catalog feed, adding a connector or catalog source, feed URL/token, Cloudflare/gzip for Meta's crawler) | — | [docs/operations/connectors.md](docs/operations/connectors.md) |
+| Selling online: cart, checkout, orders, payments (manual, Bancard vPOS 2.0), shipping zones | — | [docs/shop/checkout.md](docs/shop/checkout.md) · [docs/shop/payments.md](docs/shop/payments.md) · [docs/shop/shipping.md](docs/shop/shipping.md) |
 | New public form | `create-form` | [docs/content/forms.md](docs/content/forms.md) |
 | Header, footer, business contact data | `create-layout-field` | [docs/admin/layout.md](docs/admin/layout.md) |
 | Trusted browser HTML/CSS/JavaScript snippets | `create-config` | [docs/operations/custom-code.md](docs/operations/custom-code.md) |

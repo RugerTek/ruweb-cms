@@ -95,7 +95,8 @@
 </script>
 @endif
 
-@if($metaPixelId && ! ($isEditorPreview ?? false))
+{{-- Admin > Analytics pixel; the Meta Pixel connector (partials.meta-pixel) replaces it while active. --}}
+@if($metaPixelId && ! ($isEditorPreview ?? false) && ! app(\App\Services\Marketing\MetaPixel::class)->active())
 <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

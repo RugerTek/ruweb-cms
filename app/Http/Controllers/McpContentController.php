@@ -7,6 +7,7 @@ use App\Mcp\SanitizationNotice;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Product;
 use App\Services\Content\ContentSchemaRegistry;
 use App\Services\Content\LocaleOperations;
 use App\Services\Content\TranslationOperations;
@@ -15,10 +16,13 @@ use App\Services\Editorial\EditorialHistory;
 use App\Services\Editorial\EditorialOperations;
 use App\Services\Pages\PageOperations;
 use App\Services\Posts\PostOperations;
+use App\Services\Products\ProductOperations;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\EditorialTypes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class McpContentController extends Controller
@@ -26,17 +30,19 @@ class McpContentController extends Controller
     public function schema(Request $request): JsonResponse
     {
         abort_unless(in_array($request->user()->role, config('cms.roles', []), true), 403);
-        $data = Validator::make($request->all(), ['type' => ['required', Rule::in(['pages', 'posts'])], 'template_key' => ['required_if:type,pages', Rule::in(array_keys(config('cms.templates', [])))]])->validate();
-        $schema = $data['type'] === 'pages' ? app(ContentSchemaRegistry::class)->forPageTemplate($data['template_key']) : config('cms.content_schemas.post');
+        $data = Validator::make($request->all(), ['type' => ['required', Rule::in(EditorialTypes::all())], 'template_key' => ['required_if:type,pages', Rule::in(array_keys(config('cms.templates', [])))]])->validate();
+        $schema = $data['type'] === 'pages' ? app(ContentSchemaRegistry::class)->forPageTemplate($data['template_key']) : config('cms.content_schemas.'.Str::singular($data['type']));
 
         return response()->json(['data' => ['type' => $data['type'], 'template_key' => $data['template_key'] ?? null, 'schema' => $schema, 'locales' => Locale::orderBy('sort_order')->get(['code', 'name', 'is_base', 'is_active', 'is_public']),
             'rules' => ['translatable' => 'Translate visible text.', 'preserve' => 'Copy unchanged.', 'remap' => 'Use an equivalent translated internal record; never silently link to base-language content.', 'localized_media' => 'Keep or replace with a valid media ID; localize metadata separately.',
-                'revision' => 'Send expected_revision from the latest read. A stale revision returns 409; read and merge before retry.', 'retry' => 'Use operation_key for draft creation. Retry identical input; reusing it for different input returns 409.', 'publication' => 'Draft edits reject published records. Administrators edit published content live with pages_update/posts_update; anyone stages changes with content_propose. Publication and scheduling require an admin and full credential scope.',
+                'revision' => 'Send expected_revision from the latest read. A stale revision returns 409; read and merge before retry.', 'retry' => 'Use operation_key for draft creation. Retry identical input; reusing it for different input returns 409.', 'publication' => 'Draft edits reject published records. Administrators edit published content live with <type>_update (pages_update, posts_update, products_update); anyone stages changes with content_propose. Publication and scheduling require an admin and full credential scope.',
                 'unknown_fields' => 'Only paths in this schema are accepted; * is a list index. Send null to remove a legacy key.', 'slug' => 'Lowercase words separated by hyphens; pages may nest with /. A first segment used by the site (admin, mcp, blog, the login path…) is rejected.',
-                'deletion' => 'pages_delete/posts_delete need the current revision; menu links to the record are removed and translations kept, both reported in warnings.'],
-            'example' => $data['type'] === 'pages'
-                ? ['title' => 'Example', 'slug' => 'example', 'template_key' => $data['template_key'], 'locale' => Locale::baseCode(), 'content_json' => $this->exampleContent($schema ?? []), 'operation_key' => 'example-draft-1']
-                : ['title' => 'Example', 'slug' => 'example', 'locale' => Locale::baseCode(), 'content' => '<p>Example</p>', 'operation_key' => 'example-post-1']]]);
+                'deletion' => '<type>_delete (pages_delete, posts_delete, products_delete) needs the current revision; menu links to the record are removed and translations kept, both reported in warnings.'],
+            'example' => match ($data['type']) {
+                'pages' => ['title' => 'Example', 'slug' => 'example', 'template_key' => $data['template_key'], 'locale' => Locale::baseCode(), 'content_json' => $this->exampleContent($schema ?? []), 'operation_key' => 'example-draft-1'],
+                'products' => ['title' => 'Example', 'slug' => 'example', 'locale' => Locale::baseCode(), 'description' => '<p>Example</p>', 'price_amount' => 150000, 'operation_key' => 'example-product-1'],
+                default => ['title' => 'Example', 'slug' => 'example', 'locale' => Locale::baseCode(), 'content' => '<p>Example</p>', 'operation_key' => 'example-'.Str::singular($data['type']).'-1'],
+            }]]);
     }
 
     /** A valid content_json for the schema, one entry per list, so agents start from a shape that saves. */
@@ -109,12 +115,16 @@ class McpContentController extends Controller
         $model = $this->model($type, $id);
         $data = Validator::make($request->all(), ['action' => ['required', Rule::in(['schedule', 'unpublish', 'expire'])], 'published_at' => ['required_if:action,schedule', 'nullable', 'date', 'after:now'], 'expires_at' => ['present_if:action,expire', 'nullable', 'date', 'after:now'], 'expected_revision' => ['nullable', 'string', 'size:64']])->validate();
         if ($data['action'] === 'expire') {
-            $ops = $model instanceof Page ? app(PageOperations::class) : app(PostOperations::class);
+            $ops = match (true) {
+                $model instanceof Page => app(PageOperations::class),
+                $model instanceof Product => app(ProductOperations::class),
+                default => app(PostOperations::class),
+            };
             $result = $ops->setExpiry($request->user(), $model, $data['expires_at'], $data['expected_revision'] ?? null);
         } elseif ($model instanceof Page) {
             $result = app(PageOperations::class)->setPublication($request->user(), $model, $data['action'] === 'schedule' ? $data['published_at'] : null, $data['expected_revision'] ?? null);
         } else {
-            $ops = app(PostOperations::class);
+            $ops = $model instanceof Product ? app(ProductOperations::class) : app(PostOperations::class);
             $result = $data['action'] === 'schedule' ? $ops->schedule($request->user(), $model, $data['published_at'], $data['expected_revision'] ?? null) : $ops->unpublish($request->user(), $model, $data['expected_revision'] ?? null);
         }
 
@@ -137,6 +147,7 @@ class McpContentController extends Controller
         $warnings = match (true) {
             $action !== 'propose' => [],
             $type === 'pages' => SanitizationNotice::forContent($request->input('changes.content_json'), $request->input('changes.template_key') ?? Page::find($id)?->template_key),
+            $type === 'products' => SanitizationNotice::forPost($request->input('changes.description')),
             default => SanitizationNotice::forPost($request->input('changes.content')),
         };
 
@@ -146,12 +157,12 @@ class McpContentController extends Controller
     public function readField(Request $request, string $type, int $id): JsonResponse
     {
         $model = $this->model($type, $id);
-        if ($model instanceof Post) {
-            $this->authorizeForUser($request->user(), 'view', $model);
-        } else {
+        if ($model instanceof Page) {
             abort_unless(in_array($request->user()->role, config('cms.roles', []), true), 403);
+        } else {
+            $this->authorizeForUser($request->user(), 'view', $model);
         }
-        $data = Validator::make($request->all(), ['field' => ['required', 'string', 'max:500', 'regex:/^(title|slug|excerpt|content|content_json(?:\.[a-zA-Z0-9_-]+)*|meta_json(?:\.[a-zA-Z0-9_-]+)*)$/'], 'offset' => ['sometimes', 'integer', 'min:0'], 'length' => ['sometimes', 'integer', 'min:1', 'max:8192']])->validate();
+        $data = Validator::make($request->all(), ['field' => ['required', 'string', 'max:500', 'regex:/^(title|slug|excerpt|content|description|content_json(?:\.[a-zA-Z0-9_-]+)*|meta_json(?:\.[a-zA-Z0-9_-]+)*)$/'], 'offset' => ['sometimes', 'integer', 'min:0'], 'length' => ['sometimes', 'integer', 'min:1', 'max:8192']])->validate();
         $value = data_get($model->attributesToArray(), $data['field']);
         abort_if($value === null, 404, 'Field '.$data['field'].' is not set on this record. Read the record or cms_schema for available paths.');
         abort_unless(is_string($value) || is_array($value), 422, 'Select a string or structured editorial field.');
@@ -167,15 +178,21 @@ class McpContentController extends Controller
         return response()->json(['data' => ['field' => $data['field'], 'value' => mb_substr($value, $offset, $length), 'offset' => $offset, 'length' => $length, 'total_characters' => mb_strlen($value), 'has_more' => $offset + $length < mb_strlen($value), 'revision' => app(EditorialHistory::class)->fingerprint($model)]]);
     }
 
-    private function model(string $type, int $id): Page|Post
+    private function model(string $type, int $id): Page|Post|Product
     {
-        abort_unless(in_array($type, ['pages', 'posts'], true), 404);
+        $class = EditorialTypes::model($type);
+        // Types with their shared operations wired here; any other registered editorial type answers 404.
+        abort_unless(in_array($class, [Page::class, Post::class, Product::class], true), 404);
 
-        return ($type === 'pages' ? Page::class : Post::class)::findOrFail($id);
+        return $class::findOrFail($id);
     }
 
-    private function detail(Request $request, Page|Post $model): JsonResponse
+    private function detail(Request $request, Page|Post|Product $model): JsonResponse
     {
-        return $model instanceof Page ? app(McpController::class)->pagesGet($request, $model) : app(McpController::class)->postsGet($request, $model);
+        return match (true) {
+            $model instanceof Page => app(McpController::class)->pagesGet($request, $model),
+            $model instanceof Product => app(McpProductController::class)->show($request, $model),
+            default => app(McpController::class)->postsGet($request, $model),
+        };
     }
 }

@@ -18,8 +18,8 @@ class SettingController extends Controller
 {
     use PersistsSettings;
 
-    /** Groups edited through dedicated screens instead of the Settings tabs. */
-    private const DEDICATED_GROUPS = ['analytics', 'email', 'header', 'footer'];
+    /** Groups edited through dedicated screens instead of the Settings tabs (`shop`: ShopSettingsController). */
+    private const DEDICATED_GROUPS = ['analytics', 'email', 'header', 'footer', 'shop'];
 
     public function index(): View
     {

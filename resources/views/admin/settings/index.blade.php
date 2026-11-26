@@ -27,6 +27,10 @@
                 {{ $groupLabel }}
             </button>
         @endforeach
+        {{-- The shop switch has its own screen with a confirmation step (docs/shop/catalog.md). --}}
+        @if (app(\App\Support\ShopModule::class)->limit() !== 'off')
+            <a href="{{ route('admin.settings.shop') }}" class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-300 transition-colors">{{ __('shop.module_title') }}</a>
+        @endif
     </div>
 
     {{-- Group panels --}}

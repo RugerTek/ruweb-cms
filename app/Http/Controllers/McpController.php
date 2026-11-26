@@ -11,7 +11,6 @@ use App\Models\MenuItem;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Setting;
-use App\Models\Taxonomy;
 use App\Services\Content\OperationReceipt;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Media\MediaOperations;
@@ -545,13 +544,9 @@ class McpController extends Controller
         ])->values()->all();
     }
 
+    /** Same registry as the menu operation: `product` only while the shop catalog is on. */
     protected function resolveLinkableType(string $type): ?string
     {
-        return match ($type) {
-            'page' => Page::class,
-            'post' => Post::class,
-            'taxonomy' => Taxonomy::class,
-            default => null,
-        };
+        return MenuOperations::linkableTypes()[$type] ?? null;
     }
 }

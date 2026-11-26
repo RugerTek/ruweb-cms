@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Page;
-use App\Models\Post;
 use App\Services\Content\ContentEditLock;
+use App\Support\EditorialTypes;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,15 +41,11 @@ class EditorLockController extends Controller
         });
     }
 
-    private function content(string $type, int $id): Page|Post
+    private function content(string $type, int $id): Model
     {
-        $class = match ($type) {
-            'pages' => Page::class,
-            'posts' => Post::class,
-            default => abort(404),
-        };
+        $class = EditorialTypes::model($type) ?? abort(404);
         $content = $class::findOrFail($id);
-        if ($content instanceof Post) {
+        if (! $content instanceof Page) {
             $this->authorize('update', $content);
         }
 

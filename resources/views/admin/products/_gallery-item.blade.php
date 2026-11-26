@@ -1,0 +1,20 @@
+{{-- One gallery image of the product editor (generic [data-repeater]); names re-index as items[gallery][<index>][media_id]. --}}
+<div class="flex items-start gap-2 rounded-lg border border-white/[0.08] bg-[#141414] px-3 py-2" data-repeater-item>
+    <div class="flex-1 min-w-0">
+        @include('admin.media._selector', ['name' => "items[gallery][{$index}][media_id]", 'value' => $mediaId ?? null, 'label' => __('shop.field_gallery'), 'type' => 'image', 'placeholder' => 'square'])
+    </div>
+    <div class="flex items-center gap-0.5 shrink-0">
+        <button type="button" data-repeater-move-up title="{{ __('admin.btn_move_up') }}" aria-label="{{ __('admin.btn_move_up') }}"
+                class="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded transition-colors disabled:opacity-25 disabled:pointer-events-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+        </button>
+        <button type="button" data-repeater-move-down title="{{ __('admin.btn_move_down') }}" aria-label="{{ __('admin.btn_move_down') }}"
+                class="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded transition-colors disabled:opacity-25 disabled:pointer-events-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <button type="button" data-repeater-remove title="{{ __('admin.remove') }}" aria-label="{{ __('admin.remove') }}"
+                class="p-1.5 text-red-500/70 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+    </div>
+</div>

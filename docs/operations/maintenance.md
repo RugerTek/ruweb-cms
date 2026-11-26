@@ -15,6 +15,7 @@
 | `snapshot:inspect {archive} [--json]` | Reports risks without touching the destination |
 | `snapshot:restore {archive}` | Restores database rows and uploads |
 | `snapshot:prune` | Drops pending uploads and work folders older than 24h and keeps the 3 newest automatic pre-restore backups. Scheduled daily; never touches named snapshots |
+| `meta:health-check` | Checks the Meta «Connect with Facebook» connection (token, chosen catalog, Ruweb feed). Scheduled daily; does nothing in manual mode ([connectors.md](connectors.md#daily-health-check)) |
 | `cms:rewrite-url --from= --to= [--dry-run]` | Replaces one origin with another in every stored text and JSON column, for a domain change made without a snapshot restore |
 | `cms:check-conventions [--staged] [--since=]` | Checks the code against the rules in `docs/` |
 

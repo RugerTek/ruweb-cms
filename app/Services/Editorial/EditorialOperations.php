@@ -5,15 +5,20 @@ namespace App\Services\Editorial;
 use App\Mcp\ContentPatch;
 use App\Mcp\ContentResponse;
 use App\Models\Page;
-use App\Models\Post;
+use App\Models\Product;
 use App\Models\User;
 use App\Services\Content\ContentEditLock;
 use App\Services\Content\RevisionGuard;
 use App\Services\Pages\PageInput;
 use App\Services\Posts\PostInput;
+use App\Services\Products\ProductInput;
+use App\Services\Products\ProductOperations;
+use App\Services\Products\ProductPreview;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\EditorialTypes;
 use App\Support\SiteUrl;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -23,6 +28,10 @@ use Illuminate\Validation\Rule;
 /** Shared editorial operations; transport permissions are an additional boundary. */
 final class EditorialOperations
 {
+    /** Product fields a proposal may change; publication state and dates stay with the publication operations. */
+    public const PRODUCT_PROPOSAL_FIELDS = ['title', 'slug', 'excerpt', 'description', 'meta_json', 'featured_image', 'gallery', 'brands', 'categories',
+        'sku', 'price_amount', 'compare_at_price_amount', 'has_variants', 'track_stock', 'allow_backorder', 'stock', 'weight_grams', 'dimensions_json', 'variants'];
+
     public function __construct(private EditorialHistory $history) {}
 
     public function read(User $actor, string $type, int $id, string $action, array $input = []): array
@@ -163,6 +172,9 @@ final class EditorialOperations
 
     private function proposeLocked(User $actor, Model $model, array $changes): array
     {
+        if ($model instanceof Product) {
+            return $this->proposeProductLocked($actor, $model, $changes);
+        }
         $allowed = $model instanceof Page
             ? ['title', 'slug', 'template_key', 'content_json', 'featured_image']
             : ['title', 'slug', 'excerpt', 'content', 'meta_json', 'featured_image', 'categories'];
@@ -191,6 +203,19 @@ final class EditorialOperations
             $other = DB::table('taxonomies')->whereIn('id', $payload['taxonomies'])->where('type', '!=', 'category')->pluck('id')->all();
             $payload['taxonomies'] = array_values(array_unique(array_merge($other, $data['categories'] ?? [])));
         }
+        $this->history->capture($model);
+        $version = $this->history->storeProposal($model, $payload);
+
+        return $this->versionArray($this->versionRow($model, $version), false);
+    }
+
+    /** Product proposals merge the changes over the saved product (variants included) with ProductPreview. */
+    private function proposeProductLocked(User $actor, Product $model, array $changes): array
+    {
+        Validator::make(['changes' => $changes], ['changes' => ['required', 'array:'.implode(',', self::PRODUCT_PROPOSAL_FIELDS)]])->validate();
+        $payload = app(ProductPreview::class)->payload($model, $changes, true);
+        $payload['attributes']['status'] = 'draft';
+        $payload['attributes']['updated_by'] = $actor->id;
         $this->history->capture($model);
         $version = $this->history->storeProposal($model, $payload);
 
@@ -285,6 +310,12 @@ final class EditorialOperations
         }
         $this->validatePayload($model, $payload);
         $this->history->capture($model);
+        if ($model instanceof Product) {
+            $this->applyProductPayload($actor, $model, $payload);
+            $this->history->capture($model->fresh());
+
+            return;
+        }
         $attributes = array_intersect_key($payload['attributes'], array_flip($model->getFillable()));
         foreach (['locale', 'translation_group_id', 'created_by'] as $identity) {
             $attributes[$identity] = $model->{$identity};
@@ -308,8 +339,49 @@ final class EditorialOperations
         $this->history->capture($model->fresh());
     }
 
+    /**
+     * A product version is written back through ProductOperations::save (full form), so prices go through the Money
+     * cast, variants are rebuilt (rows deleted since then are created again) and translation hashes stay right.
+     * Terms other than brands and categories, which the product form does not manage, are synced as for posts.
+     */
+    private function applyProductPayload(User $actor, Product $model, array $payload): void
+    {
+        $product = app(ProductOperations::class)->save($actor, $this->productInput($model, $payload), $model);
+        $product->taxonomies()->sync(DB::table('taxonomies')->whereIn('id', $payload['taxonomies'])->pluck('id')->all());
+    }
+
+    /** ProductInput form data for a version payload: current identity, existing media and terms, surviving variant ids. */
+    private function productInput(Product $model, array $payload): array
+    {
+        $attributes = EditorialHistory::plainAttributes($payload['attributes']);
+        $input = Arr::only($attributes, ['title', 'slug', 'excerpt', 'description', 'meta_json', 'status', 'published_at', 'expires_at']);
+        $media = collect($payload['media'] ?? [])->filter(fn ($entry) => DB::table('media')->where('id', $entry['id'])->exists());
+        $input['featured_image'] = $media->firstWhere('collection', 'featured_image')['id'] ?? null;
+        $input['gallery'] = $media->where('collection', 'gallery')->sortBy('order')->pluck('id')->values()->all();
+        foreach (['brands' => Product::BRAND_TAXONOMY, 'categories' => Product::CATEGORY_TAXONOMY] as $key => $type) {
+            $input[$key] = DB::table('taxonomies')->whereIn('id', $payload['taxonomies'] ?? [])->where('type', $type)->where('locale', $model->locale)->pluck('id')->all();
+        }
+        if ($model->isBaseLocale()) {
+            $input += Arr::only($attributes, array_diff(ProductInput::COMMERCE_FIELDS, ['variants']));
+            $existing = $model->variants()->pluck('id')->all();
+            $input['variants'] = array_map(function (array $variant) use ($existing) {
+                $variant = Arr::only($variant, ['id', 'sku', 'name', 'attributes_json', 'price_amount', 'compare_at_price_amount', 'stock', 'weight_grams']);
+                $variant['id'] = in_array($variant['id'] ?? null, $existing, true) ? $variant['id'] : null;
+
+                return $variant;
+            }, ($input['has_variants'] ?? false) ? ($payload['variants'] ?? []) : []);
+        }
+
+        return $input;
+    }
+
     private function validatePayload(Model $model, array $payload): void
     {
+        if ($model instanceof Product) {
+            (new ProductInput($this->productInput($model, $payload), $model))->validate();
+
+            return;
+        }
         $data = $payload['attributes'];
         // A version cannot move the record between translation identities. The
         // persisted locale remains valid for historical installations too.
@@ -350,7 +422,8 @@ final class EditorialOperations
         abort_unless($link, 404);
         abort_unless($actor->isAdmin() || (int) $link->user_id === (int) $actor->id, 403);
         $query->update(['revoked_at' => $link->revoked_at ?? now(), 'updated_at' => now()]);
-        $result = (array) $query->first();
+        // A fresh read: SQLite compiles the limited update above by rewriting the builder's selected columns.
+        $result = (array) DB::table('editorial_preview_links')->where('id', $link->id)->first();
         unset($result['token_hash']);
 
         return $result;
@@ -507,9 +580,9 @@ final class EditorialOperations
 
     private function authorize(User $actor, Model $model, bool $write = false): void
     {
-        abort_unless($model instanceof Page || $model instanceof Post, 404);
+        abort_unless(EditorialTypes::model($model->getTable()) === $model::class, 404);
         abort_unless(in_array($actor->role, config('cms.roles', []), true), 403);
-        if ($model instanceof Post) {
+        if (! $model instanceof Page) {
             Gate::forUser($actor)->authorize($write ? 'update' : 'view', $model);
         }
     }

@@ -60,7 +60,10 @@
             @endif
             @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
             @php
-                $postsGroupActive = request()->routeIs('admin.posts.*') || request()->routeIs('admin.taxonomies.*');
+                // Shop taxonomies (brands) belong to the Tienda group, not to Posts.
+                $postTaxonomyActive = request()->routeIs('admin.taxonomies.*')
+                    && ! in_array(request()->route('type'), config('cms.shop.taxonomy_types', []), true);
+                $postsGroupActive = request()->routeIs('admin.posts.*') || $postTaxonomyActive;
             @endphp
             <li>
                 <button type="button" data-sidebar-toggle="posts-group"
@@ -89,13 +92,53 @@
                     <li>
                         <a href="{{ route('admin.taxonomies.index', 'category') }}"
                            class="flex items-center px-2 py-1.5 rounded-md text-xs transition-colors
-                                  {{ request()->routeIs('admin.taxonomies.*') ? 'text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                                  {{ $postTaxonomyActive ? 'text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
                             {{ __('admin.categories') }}
                         </a>
                     </li>
                     @endif
                 </ul>
             </li>
+            @if(app(\App\Support\ShopModule::class)->catalog() && \Illuminate\Support\Facades\Route::has('admin.products.index'))
+            @php
+                $shopGroupActive = request()->routeIs('admin.products.*')
+                    || (request()->routeIs('admin.taxonomies.*') && request()->route('type') === \App\Models\Product::BRAND_TAXONOMY);
+            @endphp
+            <li>
+                <button type="button" data-sidebar-toggle="shop-group"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
+                               {{ $shopGroupActive ? 'text-gray-300' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span class="flex-1 text-left">{{ __('shop.shop') }}</span>
+                    <svg data-sidebar-chevron="shop-group"
+                         class="w-3 h-3 shrink-0 transition-transform duration-200 {{ $shopGroupActive ? 'rotate-180' : '' }}"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <ul id="shop-group"
+                    class="mt-0.5 ml-3 pl-3 border-l border-white/[0.06] space-y-0.5 {{ $shopGroupActive ? '' : 'hidden' }}">
+                    <li>
+                        <a href="{{ route('admin.products.index') }}"
+                           class="flex items-center px-2 py-1.5 rounded-md text-xs transition-colors
+                                  {{ request()->routeIs('admin.products.*') ? 'text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                            {{ __('shop.products') }}
+                        </a>
+                    </li>
+                    @if(in_array(\App\Models\Product::BRAND_TAXONOMY, config('cms.taxonomy_types', []), true))
+                    <li>
+                        <a href="{{ route('admin.taxonomies.index', \App\Models\Product::BRAND_TAXONOMY) }}"
+                           class="flex items-center px-2 py-1.5 rounded-md text-xs transition-colors
+                                  {{ request()->routeIs('admin.taxonomies.*') && request()->route('type') === \App\Models\Product::BRAND_TAXONOMY ? 'text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                            {{ __('shop.brands') }}
+                        </a>
+                    </li>
+                    @endif
+                </ul>
+            </li>
+            @endif
             @else
                 @foreach(config('cms.collections', []) as $collectionKey => $collection)
                     @if(\Illuminate\Support\Facades\Gate::allows('viewAny', $collection['model']))
@@ -110,6 +153,36 @@
                         </li>
                     @endif
                 @endforeach
+            @endif
+            @php
+                // Selling online (PLAN.md E3.5): Orders while selling or while orders exist; payments and shipping
+                // with the catalog on, so an administrator can prepare them before turning selling on.
+                $shopModule = app(\App\Support\ShopModule::class);
+                $showOrders = $shopModule->catalog() && ($shopModule->checkout() || \App\Models\Order::query()->exists());
+            @endphp
+            @if($showOrders)
+            <li>
+                <a href="{{ route('admin.orders.index') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
+                          {{ request()->routeIs('admin.orders.*') ? 'bg-sky-500/10 text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    <span>{{ __('checkout.orders') }}</span>
+                </a>
+            </li>
+            @endif
+            @if($shopModule->catalog() && auth()->user()->isAdmin())
+            <li>
+                <a href="{{ route('admin.shop-payments.edit') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
+                          {{ request()->routeIs('admin.shop-payments.*') ? 'bg-sky-500/10 text-sky-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    <span>{{ __('checkout.payments_and_shipping') }}</span>
+                </a>
+            </li>
             @endif
             @if(app(\App\Support\AdminCapabilities::class)->liveEditor())
             <li>
@@ -202,6 +275,19 @@
                 </ul>
             </li>
             @if(auth()->user()->isAdmin())
+            {{-- Connectors: always visible to administrators, whatever modules are on (each card states its requirements). --}}
+            <li>
+                <a href="{{ route('admin.connectors.index') }}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors
+                          {{ request()->routeIs('admin.connectors.*')
+                              ? 'bg-sky-500/10 text-sky-400'
+                              : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                    <span>{{ __('connectors.title') }}</span>
+                </a>
+            </li>
             <li>
                 <a href="{{ route('admin.settings.index', ['tab' => 'general']) }}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors

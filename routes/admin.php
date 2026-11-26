@@ -26,14 +26,19 @@ use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RedirectController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ShopSettingsController;
 use App\Http\Controllers\Admin\SubmissionController;
 use App\Http\Controllers\Admin\TaxonomyController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Middleware\EnsureAccountSession;
+use App\Http\Middleware\EnsureShopCatalog;
 use App\Http\Middleware\ProtectEditorialMutation;
 use App\Http\Middleware\ProtectLiveEditor;
 use App\Http\Middleware\RequireLiveEditor;
+use App\Http\Middleware\RequireRegisteredType;
+use App\Support\EditorialTypes;
+use App\Support\ShopModule;
 use Illuminate\Support\Facades\Route;
 
 // Authenticated admin routes
@@ -42,7 +47,10 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
     Route::get('content/{type}/{id}', [ContentStatusController::class, 'show'])->whereNumber('id')->name('content.show');
     Route::get('content/{type}/{id}/preview', [ContentStatusController::class, 'preview'])->whereNumber('id')->name('content.preview');
     Route::get('editorial-calendar', [EditorialController::class, 'calendar'])->name('editorial.calendar');
-    Route::prefix('editorial/{type}/{id}')->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editorial.')->group(function () {
+    // `{type}` constraints are compiled once (route:cache): they include the shop's types whatever its mode, and
+    // RequireRegisteredType answers 404 for a type that is not registered right now (docs/shop/catalog.md).
+    $editorialTypes = array_values(array_unique([...EditorialTypes::all(), ...app(ShopModule::class)->editorialTypes()]));
+    Route::prefix('editorial/{type}/{id}')->whereIn('type', $editorialTypes)->whereNumber('id')->name('editorial.')->middleware(RequireRegisteredType::class.':editorial')->group(function () {
         $controller = EditorialController::class;
         Route::get('/', [$controller, 'index'])->name('index');
         Route::middleware(RequireLiveEditor::class)->group(function () use ($controller) {
@@ -93,11 +101,13 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
     Route::post('posts/{post}/translations/{locale}', [PostController::class, 'translate'])->name('posts.translate')->middleware(RequireLiveEditor::class);
 
     Route::post('editor-locks/{type}/{id}/heartbeat', [EditorLockController::class, 'heartbeat'])
-        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.heartbeat')->middleware(RequireLiveEditor::class);
+        ->whereIn('type', $editorialTypes)->whereNumber('id')->name('editor-locks.heartbeat')->middleware([RequireRegisteredType::class.':editorial', RequireLiveEditor::class]);
     Route::post('editor-locks/{type}/{id}/release', [EditorLockController::class, 'release'])
-        ->whereIn('type', ['pages', 'posts'])->whereNumber('id')->name('editor-locks.release')->middleware(RequireLiveEditor::class);
+        ->whereIn('type', $editorialTypes)->whereNumber('id')->name('editor-locks.release')->middleware([RequireRegisteredType::class.':editorial', RequireLiveEditor::class]);
 
-    Route::prefix('taxonomies/{type}')->name('taxonomies.')->middleware(RequireLiveEditor::class)->group(function () {
+    // Only registered types (cms.taxonomy_types; brand only while the shop catalog is on): anything else is a 404.
+    $taxonomyTypes = array_values(array_unique([...config('cms.taxonomy_types', []), ...app(ShopModule::class)->taxonomyTypes()]));
+    Route::prefix('taxonomies/{type}')->name('taxonomies.')->whereIn('type', $taxonomyTypes)->middleware([RequireRegisteredType::class.':taxonomy', RequireLiveEditor::class])->group(function () {
         Route::get('/', [TaxonomyController::class, 'index'])->name('index');
         Route::get('/create', [TaxonomyController::class, 'create'])->name('create');
         Route::post('/', [TaxonomyController::class, 'store'])->name('store');
@@ -147,6 +157,9 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         Route::post('email/test', [EmailController::class, 'sendTestEmail'])->name('email.test');
         Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+        // Shop module switch, with a confirmation step (docs/shop/catalog.md).
+        Route::get('settings/shop', [ShopSettingsController::class, 'edit'])->name('settings.shop');
+        Route::put('settings/shop', [ShopSettingsController::class, 'update'])->name('settings.shop.update');
         // Header and footer: one screen each centralising what the client can edit (docs/admin/layout.md).
         Route::get('header', [HeaderController::class, 'index'])->name('header.index')->middleware(RequireLiveEditor::class);
         Route::put('header', [HeaderController::class, 'update'])->name('header.update')->middleware(RequireLiveEditor::class);
@@ -165,7 +178,16 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         Route::get('languages', [LanguageController::class, 'index'])->name('languages.index');
         Route::post('languages', [LanguageController::class, 'store'])->name('languages.store');
         Route::put('languages', [LanguageController::class, 'update'])->name('languages.update');
+
+        // Admin > Connectors: always registered and visible to administrators (routes/connectors-admin.php).
+        require __DIR__.'/connectors-admin.php';
     });
+
+    // Optional shop module: panel routes stay inside this authenticated group, always registered (route:cache)
+    // and answering 404 while the catalog is off (EnsureShopCatalog).
+    Route::middleware(EnsureShopCatalog::class)->group(base_path('routes/shop-admin.php'));
+    // Orders, payments and shipping (routes/shop-checkout-admin.php): with the catalog on, whether or not selling is.
+    Route::middleware(EnsureShopCatalog::class)->group(base_path('routes/shop-checkout-admin.php'));
 });
 
 // Guest routes

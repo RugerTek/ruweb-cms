@@ -30,11 +30,13 @@ Branding (logo, favicon) ships empty rather than with a sample ([../content/imag
 ## Groups
 
 `general`, `admin`, `email`, `analytics`, `security` (reCAPTCHA keys, [../content/forms.md](../content/forms.md)),
-`contact` (business data and social links, [layout.md](layout.md)), `header`, `footer`, `integrations`.
+`contact` (business data and social links, [layout.md](layout.md)), `header`, `footer`, `integrations`,
+`shop` (the shop module switch `shop_mode`, [../shop/catalog.md](../shop/catalog.md)).
 
 Groups map to Settings tabs, except those in `SettingController::DEDICATED_GROUPS`
-(`analytics`, `email`, `header`, `footer`), which are skipped by the generic screen and edited by their own
-controller. The Settings sidebar item always opens the General tab.
+(`analytics`, `email`, `header`, `footer`, `shop`), which are skipped by the generic screen and edited by their own
+controller. `shop_mode` is written only through `App\Services\Shop\ShopModuleOperations::setMode()` (config limit,
+confirmation in Settings > Shop): `SettingOperations::persist()` hands the key to it, so no other path can bypass it. The Settings sidebar item always opens the General tab.
 
 **The same setting may be edited from several screens** — `site_logo` appears in Settings > General, Header and
 Footer — as long as every input writes the same row. Never create a second setting for the same fact.

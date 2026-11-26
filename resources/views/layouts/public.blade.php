@@ -12,6 +12,8 @@
     <base href="{{ url('/') }}">
     <x-seo-meta :page="$page ?? null" :is-editor-preview="$isEditorPreview ?? false" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.meta-pixel', ['isEditorPreview' => $isEditorPreview ?? false])
+    @include('partials.amiba-chat', ['isEditorPreview' => $isEditorPreview ?? false])
     @stack('head')
     {!! $customCodeRenderer->render($customCodeTarget, 'head_end', ($isEditorPreview ?? false), $customCodeEvaluation) !!}
 </head>
@@ -19,7 +21,8 @@
     {!! $customCodeRenderer->render($customCodeTarget, 'body_start', ($isEditorPreview ?? false), $customCodeEvaluation) !!}
     @php($metaPixelId = \App\Models\Setting::get('meta_pixel_id'))
 
-    @if($metaPixelId && ! ($isEditorPreview ?? false))
+    {{-- Admin > Analytics pixel; the Meta Pixel connector (partials.meta-pixel) replaces it while active. --}}
+    @if($metaPixelId && ! ($isEditorPreview ?? false) && ! app(\App\Services\Marketing\MetaPixel::class)->active())
         <noscript>
             <img height="1" width="1" style="display:none"
                  src="https://www.facebook.com/tr?id={{ urlencode($metaPixelId) }}&ev=PageView&noscript=1"

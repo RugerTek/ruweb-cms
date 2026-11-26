@@ -2,7 +2,15 @@
 
 namespace App\Mcp;
 
+use App\Http\Controllers\McpOrderController;
 use App\Models\Locale;
+use App\Models\Order;
+use App\Models\PaymentMethod;
+use App\Services\Menus\MenuOperations;
+use App\Services\Shop\OrderOperations;
+use App\Support\CustomCodeDestinations;
+use App\Support\EditorialTypes;
+use App\Support\ShopModule;
 
 class ToolRegistry
 {
@@ -16,11 +24,133 @@ class ToolRegistry
             ...self::customCodeTools(),
             ...self::pageTools(),
             ...self::postTools(),
+            // Optional shop catalog: the tools exist only while cms.shop.mode enables it (docs/shop/catalog.md).
+            ...(app(ShopModule::class)->catalog() ? self::productTools() : []),
+            // Selling online, like the panel: orders while selling or while orders exist; payment methods and
+            // shipping with the catalog on, to prepare selling (docs/operations/mcp.md#orders-and-payments).
+            ...(McpOrderController::ordersAvailable() ? self::orderTools() : []),
+            ...(McpOrderController::settingsAvailable() ? self::shopSettingTools() : []),
             ...self::mediaTools(),
             ...self::settingTools(),
             ...self::menuTools(),
             ...self::taxonomyTools(),
             ...self::redirectTools(),
+            // Admin > Connectors exists on every site, so its tools do too (docs/operations/mcp.md#connectors).
+            ...self::connectorTools(),
+        ];
+    }
+
+    private static function connectorTools(): array
+    {
+        $key = ['connector' => ['type' => 'string', 'enum' => array_keys(config('cms.connectors', [])), 'description' => 'Connector key (cms.connectors).']];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64, 'description' => 'revision from connectors_get or connectors_list.']];
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => 'connectors_'.$name, 'description' => $description.' Administrator only. The feed token and feed URL are secret and never returned: they are shown only in the admin panel.', 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
+
+        return [
+            $tool('list', 'List the connectors (e.g. the Meta catalog feed) with status (available, needs_action, connected, needs_reconnect: Meta rejected the «Connect with Facebook» connection and an administrator must connect again in the panel), unmet requirements, revision and last feed totals; meta also returns meta_connection (mode, catalog, last_error, never the token).', []),
+            $tool('get', 'Read one connector: status, every requirement (with how to resolve it), effective settings, defaults, editable setting keys, feed totals, last fetch by Meta and by any client, and the revision to send back. For meta, meta_connection says whether «Connect with Facebook» is on; connecting or disconnecting is only possible in the admin panel.', $key, ['connector']),
+            $tool('preview', 'Walk the catalog through the connector without writing anything: how many items enter and are skipped, the first `limit` included items and the reason each skipped item is left out (plus notices that do not skip). Read-only.', $key + ['limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'description' => 'Sample size, default 20.']], ['connector']),
+            $tool('update', 'Switch the connector on or off and/or patch its settings in one step. settings keys replace the stored ones and are validated with the connector rules; unknown keys are ignored and reported in warnings. Activation fails (nothing saved) while a requirement is unmet. Deactivating keeps settings and the feed URL. Full credential scope; requires the current revision.', $key + $revision + [
+                'enabled' => ['type' => 'boolean'],
+                'settings' => ['type' => 'object', 'description' => 'Partial settings, e.g. {"brand": "Acme", "condition": "new"}; see setting_keys in connectors_get.'],
+            ], ['connector', 'expected_revision']),
+            $tool('rotate_token', 'Regenerate the secret feed URL: the previous one stops working at once and the new one must be pasted again in the platform (from the admin panel). Answers only rotated_at and the new revision. Full credential scope; requires the current revision.', $key + $revision, ['connector', 'expected_revision']),
+        ];
+    }
+
+    private static function orderTools(): array
+    {
+        $order = ['order_id' => ['type' => 'integer', 'minimum' => 1]];
+        $payment = ['payment_id' => ['type' => 'integer', 'minimum' => 1]];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64, 'description' => 'revision of the order from orders_get or orders_list.']];
+        $secret = ' The order access token and its page URL are never returned (only the customer email carries them).';
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => $name, 'description' => $description, 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
+
+        return [
+            $tool('orders_list', 'List orders, newest first, in bounded pages: number, status, customer, payment method and status, total (integer amount in currency) and revision. Filter by status, payment_method key, placed date range (from/to, YYYY-MM-DD) or search (number, customer name, email or phone). Any CMS role.'.$secret, [
+                'status' => ['type' => 'string', 'enum' => Order::STATUSES], 'payment_method' => ['type' => 'string', 'maxLength' => 50],
+                'from' => ['type' => 'string', 'format' => 'date'], 'to' => ['type' => 'string', 'format' => 'date'], 'search' => ['type' => 'string', 'maxLength' => 255],
+                'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]]),
+            $tool('orders_get', 'Read one order: items, delivery, amounts, customer and internal notes, stock shortfall, available_transitions, every payment attempt with its events (provider payloads excluded) and the revision. Any CMS role.'.$secret, $order, ['order_id']),
+            $tool('orders_transition', 'Change the order status like the panel: fulfilled (paid → delivered or picked up; any CMS role), cancelled (pending|paid; administrator; a paid order gets its stock back and its payment stays to refund), paid (confirms the pending manual payment; administrator), refunded (refunds the confirmed payment through its provider; administrator). Cancelling a pending order whose online payment reached the provider asks the provider first and refuses if it was paid there. Repeating the current status is a no-op. Full credential scope; requires the current revision.', $order + $revision + ['status' => ['type' => 'string', 'enum' => array_keys(OrderOperations::TRANSITION_ABILITIES)]], ['order_id', 'expected_revision', 'status']),
+            $tool('orders_note', 'Replace the internal notes of an order (team only, never shown to the customer); null or blank clears them. Any CMS role, full credential scope; requires the current revision.', $order + $revision + ['internal_notes' => ['type' => ['string', 'null'], 'maxLength' => 10000]], ['order_id', 'expected_revision', 'internal_notes']),
+            $tool('payments_confirm', 'Confirm a pending MANUAL payment (bank transfer, cash on delivery) once the money arrived: the order becomes paid, stock is taken and the customer is emailed. Online payments are confirmed by their provider. Administrator, full credential scope; expected_revision is the order revision.', $payment + $revision, ['payment_id', 'expected_revision']),
+            $tool('payments_fail', 'Mark a pending MANUAL payment as failed (the money never arrived); the order stays pending. Administrator, full credential scope; expected_revision is the order revision.', $payment + $revision, ['payment_id', 'expected_revision']),
+            $tool('payments_refund', 'Refund a confirmed payment: through its provider (Bancard rollback), or manual: true when the money was already returned by hand. When the provider cannot (already settled), the error says so and nothing changes. The order becomes refunded and its stock comes back. Administrator, full credential scope; expected_revision is the order revision.', $payment + $revision + ['manual' => ['type' => 'boolean']], ['payment_id', 'expected_revision']),
+        ];
+    }
+
+    private static function shopSettingTools(): array
+    {
+        $keys = PaymentMethod::query()->orderBy('sort_order')->orderBy('id')->pluck('key')->all();
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => $name, 'description' => $description.' Administrator only.', 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
+
+        return [
+            $tool('payment_methods_list', 'List the payment methods (bank_transfer, cod, bancard): enabled, order, ready and what is missing, offered at checkout, public settings (bank details, instructions) with their setting_keys, and the revision. For Bancard only whether the keys of each environment are configured: keys are never returned.', []),
+            $tool('payment_methods_update', 'Patch one payment method: enabled, sort_order, settings (public bank details or instructions; null on a key removes it; unknown keys are ignored and reported in warnings) and, for Bancard, credentials {environment, public_key (32 letters and digits), private_key} of one environment. Keys are stored encrypted, bound to this site, and NEVER returned by any tool. An enabled method must stay complete, and while selling no change may leave the checkout without a payment method: either fails with nothing saved. The Bancard environment (test or production) is switched only in the panel. Full credential scope; requires the method revision.', [
+                'method' => $keys === [] ? ['type' => 'string', 'maxLength' => 50] : ['type' => 'string', 'enum' => $keys],
+                'enabled' => ['type' => 'boolean'], 'sort_order' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 1000],
+                'settings' => ['type' => 'object', 'description' => 'e.g. {"bank_name": "…", "account_holder": "…", "account_number": "…"}; see setting_keys in payment_methods_list.'],
+                'credentials' => ['type' => 'object', 'description' => '{"environment": "staging"|"production", "public_key": "…", "private_key": "…"}; write-only.'],
+            ] + $revision, ['method', 'expected_revision']),
+            $tool('shipping_zones_list', 'Read delivery: zones (id, name, fixed price as an integer amount in currency, enabled, order), store pickup (pickup_enabled, pickup_address) and the revision.', []),
+            $tool('shipping_zones_update', 'Replace delivery settings. zones is the WHOLE list: rows with id are updated, rows without id created, stored zones missing from it deleted (existing orders keep the name and price they copied; deletions are reported in warnings); list order is the display order. pickup_enabled needs a pickup_address. While selling, a change that leaves no delivery option fails with nothing saved. Full credential scope; requires the current revision.', $revision + [
+                'zones' => ['type' => 'array', 'maxItems' => 100, 'items' => ['type' => 'object', 'required' => ['name', 'price_amount'], 'additionalProperties' => false, 'properties' => [
+                    'id' => ['type' => 'integer', 'minimum' => 1], 'name' => ['type' => 'string', 'maxLength' => 255],
+                    'price_amount' => ['type' => 'integer', 'minimum' => 0], 'enabled' => ['type' => 'boolean'],
+                ]]],
+                'pickup_enabled' => ['type' => 'boolean'], 'pickup_address' => ['type' => ['string', 'null'], 'maxLength' => 2000],
+            ], ['expected_revision']),
+        ];
+    }
+
+    private static function productTools(): array
+    {
+        $id = ['product_id' => ['type' => 'integer', 'minimum' => 1]];
+        $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
+        $amount = fn (string $description) => ['type' => ['integer', 'null'], 'minimum' => 0, 'description' => $description];
+        $currency = config('cms.shop.currency', 'PYG');
+        $media = ['type' => ['integer', 'null'], 'minimum' => 1, 'description' => 'Media id; null removes it.'];
+        $fields = [
+            'title' => ['type' => 'string', 'maxLength' => 255],
+            'slug' => ['type' => 'string', 'maxLength' => 255, 'pattern' => '^[a-z0-9]+(?:-[a-z0-9]+)*$', 'description' => 'Unique within the language.'],
+            'excerpt' => ['type' => ['string', 'null'], 'maxLength' => 500],
+            'description' => ['type' => ['string', 'null'], 'description' => 'Rich text HTML; disallowed markup is removed and reported in warnings.'],
+            'meta_json' => ['type' => ['object', 'null'], 'description' => 'SEO {title, description}. On updates a key patch: null on a key removes it.'],
+            'featured_image' => $media,
+            'gallery' => ['type' => ['array', 'null'], 'maxItems' => 50, 'items' => ['type' => 'integer', 'minimum' => 1], 'description' => 'Ordered media ids; replaces the whole gallery.'],
+            'brands' => ['type' => ['array', 'null'], 'items' => ['type' => 'integer', 'minimum' => 1], 'description' => 'brand taxonomy ids of the same language; replaces the list.'],
+            'categories' => ['type' => ['array', 'null'], 'maxItems' => 20, 'items' => ['type' => 'integer', 'minimum' => 1], 'description' => 'category taxonomy ids of the same language (taxonomies_list type category); replaces the list, [] removes them. The first one (lowest id) and its parents become product_type and custom_label_0 in the Meta feed.'],
+            'sku' => ['type' => ['string', 'null'], 'maxLength' => 100, 'description' => 'Unique across products and variants. Base language only, like every commerce field below.'],
+            'price_amount' => $amount("Integer amount in {$currency} (no decimals or separators); null = no public price."),
+            'compare_at_price_amount' => $amount("Integer {$currency} \"before\" price; must be greater than price_amount."),
+            'has_variants' => ['type' => 'boolean', 'description' => 'true requires at least one variant; false deletes the stored variants.'],
+            'track_stock' => ['type' => 'boolean'],
+            'allow_backorder' => ['type' => 'boolean'],
+            'stock' => ['type' => ['integer', 'null'], 'description' => 'Required when track_stock is on and there are no variants.'],
+            'weight_grams' => ['type' => ['integer', 'null'], 'minimum' => 0],
+            'dimensions_json' => ['type' => ['object', 'null'], 'description' => '{length, width, height} in centimetres.'],
+            'variants' => ['type' => ['array', 'null'], 'maxItems' => 100, 'description' => 'The WHOLE variant list: rows with id are kept and updated, rows without id are created, stored rows missing from the list are deleted. Order is the display order.',
+                'items' => ['type' => 'object', 'required' => ['name'], 'additionalProperties' => false, 'properties' => [
+                    'id' => ['type' => 'integer', 'minimum' => 1], 'name' => ['type' => 'string', 'maxLength' => 255], 'sku' => ['type' => ['string', 'null'], 'maxLength' => 100],
+                    'attributes_json' => ['type' => ['object', 'null'], 'description' => 'e.g. {"Color": "Rojo"}'], 'price_amount' => ['type' => ['integer', 'null'], 'minimum' => 0],
+                    'compare_at_price_amount' => ['type' => ['integer', 'null'], 'minimum' => 0], 'stock' => ['type' => ['integer', 'null']], 'weight_grams' => ['type' => ['integer', 'null'], 'minimum' => 0],
+                ]]],
+        ];
+        $tool = fn ($name, $description, $properties, $required = []) => ['name' => 'products_'.$name, 'description' => $description, 'inputSchema' => ['type' => 'object', 'properties' => $properties, 'required' => $required]];
+
+        return [
+            $tool('list', 'List shop catalog products (drafts included) with revision, price and status, newest first, in bounded pages. Filter by status, language, brand id or search (title, slug, sku).', [
+                'status' => ['type' => 'string', 'enum' => config('cms.statuses', ['draft', 'published'])], 'locale' => ['type' => 'string', 'enum' => Locale::installedCodes()],
+                'brand' => ['type' => 'integer', 'minimum' => 1], 'search' => ['type' => 'string', 'maxLength' => 255], 'fields' => ['type' => 'array', 'maxItems' => 30, 'items' => ['type' => 'string']],
+                'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]]),
+            $tool('get', 'Read one product with every field, its variants, media and revision. Use the revision as expected_revision; it changes when the product or any variant changes.', $id + ['fields' => ['type' => 'array', 'maxItems' => 30, 'items' => ['type' => 'string']]], ['product_id']),
+            $tool('create_draft', 'Create a product as a draft (any CMS role; draft-only credentials allowed). operation_key makes exact retries return the same product. Commerce fields (sku, prices, stock, variants) only on the base language.', ['locale' => ['type' => 'string', 'enum' => Locale::installedCodes()], 'operation_key' => ['type' => 'string', 'maxLength' => 100]] + $fields, ['title', 'slug']),
+            $tool('update_draft', 'Patch a draft product only; published products are refused untouched. Send only the fields to change; lists (gallery, brands, categories, variants) are replaced whole. Draft-only credentials allowed.', $id + $revision + $fields, ['product_id']),
+            $tool('update', 'Patch a product like the panel: a draft for any CMS role, or as an administrator a published product live (it stays published). Same fields and patch rules as products_update_draft. Full credential scope; requires the current revision.', $id + $revision + $fields, ['product_id', 'expected_revision']),
+            $tool('publish', 'Publish a product (administrator, full credential scope). Republishing keeps the original published_at. Send the current revision.', $id + $revision, ['product_id']),
+            $tool('delete', 'Permanently delete a product with its variants. Menu links to it are removed and its translations kept, both reported in warnings. Administrator and full credential scope; requires the current revision.', $id + $revision, ['product_id', 'expected_revision']),
         ];
     }
 
@@ -68,7 +198,7 @@ class ToolRegistry
     {
         $id = ['id' => ['type' => 'integer', 'minimum' => 1]];
         $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64], 'operation_key' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 100]];
-        $ref = ['type' => 'object', 'properties' => ['type' => ['type' => 'string', 'enum' => [...array_keys(app(\App\Support\CustomCodeDestinations::class)->models()), 'indexes']], 'id' => ['type' => ['integer', 'string']], 'locale' => ['type' => 'string'], 'group' => ['type' => 'boolean']], 'required' => ['type', 'id', 'locale'], 'additionalProperties' => false];
+        $ref = ['type' => 'object', 'properties' => ['type' => ['type' => 'string', 'enum' => [...array_keys(app(CustomCodeDestinations::class)->models()), 'indexes']], 'id' => ['type' => ['integer', 'string']], 'locale' => ['type' => 'string'], 'group' => ['type' => 'boolean']], 'required' => ['type', 'id', 'locale'], 'additionalProperties' => false];
         $tool = fn ($name, $description, $properties = [], $required = []) => ['name' => 'custom_code_'.$name, 'description' => $description.' Requires the explicit custom-code credential scope and account custom-code permission in either profile.', 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
 
         return [
@@ -102,7 +232,7 @@ class ToolRegistry
 
     private static function editorialTools(): array
     {
-        $entity = ['type' => ['type' => 'string', 'enum' => ['pages', 'posts']], 'id' => ['type' => 'integer', 'minimum' => 1]];
+        $entity = ['type' => ['type' => 'string', 'enum' => EditorialTypes::all()], 'id' => ['type' => 'integer', 'minimum' => 1]];
         $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
         $key = ['operation_key' => ['type' => 'string', 'maxLength' => 100]];
         $version = ['version_id' => ['type' => 'integer', 'minimum' => 1]];
@@ -125,7 +255,7 @@ class ToolRegistry
 
     private static function phaseThreeTools(): array
     {
-        $entity = ['type' => ['type' => 'string', 'enum' => ['pages', 'posts']], 'id' => ['type' => 'integer', 'minimum' => 1]];
+        $entity = ['type' => ['type' => 'string', 'enum' => EditorialTypes::all()], 'id' => ['type' => 'integer', 'minimum' => 1]];
         $revision = ['expected_revision' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]];
         $tool = fn (string $name, string $description, array $properties = [], array $required = []) => ['name' => $name, 'description' => $description, 'inputSchema' => ['type' => 'object', 'properties' => $properties ?: new \stdClass, 'required' => $required]];
 
@@ -133,7 +263,7 @@ class ToolRegistry
             $tool('settings_update_batch', 'Admin/full scope: atomically configure allowed layout, contact and SEO settings. One canonical row per fact; localized values only on supported keys. Secrets are excluded.', ['settings' => ['type' => 'object', 'properties' => array_fill_keys(config('cms.mcp.settings_writable_keys', []), new \stdClass), 'additionalProperties' => false], 'locale' => ['type' => 'string', 'enum' => Locale::installedCodes()], 'expected_revisions' => ['type' => 'object', 'additionalProperties' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]]], ['settings']),
             $tool('settings_reset', 'Admin/full scope: restore writable settings to their starter value. Without locale the value and all localized overrides are reset; with a non-base locale only that override is removed and the base value applies.', ['keys' => ['type' => 'array', 'maxItems' => 50, 'items' => ['type' => 'string', 'enum' => config('cms.mcp.settings_writable_keys', [])]], 'locale' => ['type' => 'string', 'enum' => Locale::installedCodes()], 'expected_revisions' => ['type' => 'object', 'additionalProperties' => ['type' => 'string', 'minLength' => 64, 'maxLength' => 64]]], ['keys']),
             $tool('content_read_field', 'Read an editorial string in character ranges or an array in item ranges after a clipped detail response. Check revision between reads.', $entity + ['field' => ['type' => 'string', 'maxLength' => 500], 'offset' => ['type' => 'integer', 'minimum' => 0], 'length' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 8192]], ['type', 'id', 'field']),
-            $tool('cms_schema', 'Discover the exact editorial schema, locale rules and creation example for an installed content type/template.', ['type' => ['type' => 'string', 'enum' => ['pages', 'posts']], 'template_key' => ['type' => 'string', 'enum' => array_keys(config('cms.templates', []))]], ['type']),
+            $tool('cms_schema', 'Discover the exact editorial schema, locale rules and creation example for an installed content type/template.', ['type' => ['type' => 'string', 'enum' => EditorialTypes::all()], 'template_key' => ['type' => 'string', 'enum' => array_keys(config('cms.templates', []))]], ['type']),
             $tool('locales_list', 'List installed languages, activation/publication flags and installable catalog.'),
             $tool('locales_configure', 'Admin only: install a catalog language and/or patch activation/publication flags. Base language stays active/public.', ['install' => ['type' => 'string', 'enum' => Locale::catalogCodes()], 'locales' => ['type' => 'object', 'additionalProperties' => ['type' => 'object', 'properties' => ['is_active' => ['type' => 'boolean'], 'is_public' => ['type' => 'boolean']], 'additionalProperties' => false]]]),
             $tool('content_translate', 'Create a draft translation in the same group, preserving media and remapping associations. Identical retries return the existing translation. Then patch translated copy and slug.', $entity + ['locale' => ['type' => 'string', 'enum' => Locale::installedCodes()]], ['type', 'id', 'locale']),
@@ -539,8 +669,8 @@ class ToolRegistry
                                     'id' => ['type' => 'integer', 'description' => 'ID temporal del cliente para resolver parent_id.'],
                                     'parent_id' => ['type' => 'integer', 'description' => 'ID temporal del item padre (referencia a id del mismo request).'],
                                     'label' => ['type' => 'string'],
-                                    'type' => ['type' => 'string', 'enum' => ['custom_link', 'page', 'post', 'taxonomy']],
-                                    'linkable_id' => ['type' => 'integer', 'description' => 'ID del recurso enlazado (para tipos page, post, taxonomy).'],
+                                    'type' => ['type' => 'string', 'enum' => ['custom_link', ...array_keys(MenuOperations::linkableTypes())]],
+                                    'linkable_id' => ['type' => 'integer', 'description' => 'ID del recurso enlazado (para tipos '.implode(', ', array_keys(MenuOperations::linkableTypes())).').'],
                                     'url' => ['type' => 'string', 'description' => 'URL para tipo custom_link.'],
                                     'target' => ['type' => 'string', 'enum' => ['_self', '_blank']],
                                     'order' => ['type' => 'integer', 'minimum' => 0],

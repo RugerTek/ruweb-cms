@@ -3,22 +3,30 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\Shop\CheckoutReadiness;
+use App\Services\Shop\ReadinessItem;
+use App\Services\Shop\ShopModuleOperations;
 use App\Support\AdminLoginPath;
+use App\Support\ShopModule;
 use App\Support\Username;
 use Database\Seeders\ContactPageSeeder;
 use Database\Seeders\HomepageSeeder;
 use Database\Seeders\LocaleSeeder;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use PDOException;
 
 class CmsInstallCommand extends Command
 {
-    protected $signature = 'cms:install {--profile= : Administration profile: full or essential}';
+    protected $signature = 'cms:install
+        {--profile= : Administration profile: full or essential}
+        {--shop= : Optional shop module: off, catalog or checkout (omitted: the site keeps its current choice)}';
 
     protected $description = 'Install Rüweb CMS: configure database, run migrations, create admin user';
 
@@ -58,6 +66,27 @@ class CmsInstallCommand extends Command
         );
         if (! in_array($profile, ['full', 'essential'], true)) {
             $this->error('Administration profile must be full or essential.');
+
+            return Command::FAILURE;
+        }
+
+        // The shop tables are ordinary migrations; --shop only stores the administrator's choice (shop_mode setting),
+        // checked here against the config limit before anything is touched.
+        $shop = $this->option('shop');
+        if ($shop !== null && ! in_array($shop, ShopModule::MODES, true)) {
+            $this->error('Shop module must be off, catalog or checkout.');
+
+            return Command::FAILURE;
+        }
+        if ($shop !== null && ! app(ShopModule::class)->allows($shop)) {
+            $this->error('Shop module '.$shop.' is not available: config/cms.php shop.mode allows at most '.app(ShopModule::class)->limit()
+                .($shop === 'checkout' ? ', and checkout is not delivered yet' : '').'.');
+
+            return Command::FAILURE;
+        }
+        if ($shop === 'checkout' && ($missing = $this->missingCheckoutRequirements()) !== []) {
+            $this->error('Shop module checkout needs '.implode(', ', $missing).'. Install with --shop=catalog, set them up in'
+                .' Admin > Payments and shipping and turn selling on from Settings > Shop.');
 
             return Command::FAILURE;
         }
@@ -163,9 +192,18 @@ class CmsInstallCommand extends Command
         $this->info('  ✓ Contact page seeded');
 
         $this->persistProfile($profile);
+        if ($shop !== null && $admin->isAdmin()) {
+            // Same write path as Settings > Shop and MCP, acting as the installed administrator.
+            app(ShopModuleOperations::class)->setMode($admin, $shop);
+        }
         Artisan::call('config:clear');
         Artisan::call('route:clear');
         $this->info('  ✓ Administration profile: '.$profile);
+        if ($shop !== null) {
+            $admin->isAdmin()
+                ? $this->info('  ✓ Shop module: '.$shop)
+                : $this->warn('  Shop module not changed: '.$admin->email.' is not an administrator; use Settings > Shop.');
+        }
         $this->line('  Restart running workers/server processes after reinstalling.');
 
         $assetsBuilt = $this->frontendAssetsAreBuilt();
@@ -284,5 +322,27 @@ class CmsInstallCommand extends Command
         }
 
         file_put_contents($envPath, $content);
+    }
+
+    /**
+     * What CheckoutReadiness still lacks, in English for the console. A database that is not migrated yet lacks all.
+     *
+     * @return list<string>
+     */
+    private function missingCheckoutRequirements(): array
+    {
+        $labels = [
+            CheckoutReadiness::PAYMENT_METHOD => 'an enabled and complete payment method',
+            CheckoutReadiness::DELIVERY => 'a delivery option',
+            CheckoutReadiness::ORDERS_EMAIL => 'an email for order notices',
+            CheckoutReadiness::MAIL => 'email sending turned on (Admin > Email)',
+        ];
+        try {
+            $missing = array_map(fn (ReadinessItem $item): string => $item->key, app(CheckoutReadiness::class)->missing());
+        } catch (QueryException|PDOException) {
+            $missing = array_keys($labels);
+        }
+
+        return array_values(array_map(fn (string $key): string => $labels[$key], $missing));
     }
 }

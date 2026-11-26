@@ -1,5 +1,10 @@
 @extends('admin.layouts.app')
 
+@php
+    // "Nueva marca", not "Nueva Marcas": the singular label when the type has one.
+    $newTaxonomyLabel = __('admin.taxonomy_new', ['type' => \Illuminate\Support\Facades\Lang::has('admin.taxonomy_singular_'.$type) ? __('admin.taxonomy_singular_'.$type) : __('admin.taxonomy_type_'.$type)]);
+@endphp
+
 @section('title', __('admin.taxonomy_type_' . $type))
 
 @section('content')
@@ -10,7 +15,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-        {{ __('admin.taxonomy_new', ['type' => __('admin.taxonomy_type_' . $type)]) }}
+        {{ $newTaxonomyLabel }}
     </a>
 </div>
 
@@ -36,7 +41,7 @@
         </svg>
         <p class="text-sm font-medium text-gray-500">{{ __('admin.taxonomy_none', ['type' => strtolower(__('admin.taxonomy_type_' . $type))]) }}</p>
         <a href="{{ route('admin.taxonomies.create', $type) }}" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors">
-            {{ __('admin.taxonomy_new', ['type' => __('admin.taxonomy_type_' . $type)]) }}
+            {{ $newTaxonomyLabel }}
         </a>
     </div>
 @else

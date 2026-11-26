@@ -8,10 +8,14 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Setting;
 use App\Models\User;
+use App\Providers\ShopServiceProvider;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Services\Shop\CheckoutReadiness;
+use App\Services\Shop\ShopModuleOperations;
 use App\Support\AdminLoginPath;
 use App\Support\SettingDefaults;
+use App\Support\ShopModule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -32,11 +36,18 @@ final class SettingOperations
     public function persist(User $actor, array $settings): void
     {
         abort_unless($actor->isAdmin(), 403);
-        EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($settings) {
+        EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $settings) {
             foreach ($settings as $key => $value) {
                 $existing = Setting::where('key', $key)->first();
 
                 if (! $existing) {
+                    continue;
+                }
+
+                // The shop switch has its own rules (config limit, delivered modes) and re-syncs the registries.
+                if ($key === ShopModule::SETTING) {
+                    app(ShopModuleOperations::class)->setMode($actor, (string) $value);
+
                     continue;
                 }
 
@@ -92,6 +103,9 @@ final class SettingOperations
             }, 3));
         } finally {
             Setting::clearCache();
+            if (in_array(ShopModule::SETTING, $keys, true)) {
+                ShopServiceProvider::syncRegistries();
+            }
         }
     }
 
@@ -110,6 +124,10 @@ final class SettingOperations
             'settings.site_logo' => ['sometimes', 'nullable', 'integer', 'exists:media,id'],
             'settings.site_favicon' => ['sometimes', 'nullable', 'integer', 'exists:media,id'],
             'settings.default_social_image' => ['sometimes', 'nullable', 'integer', 'exists:media,id'],
+            // The config limit and delivered modes are checked by ShopModuleOperations::setMode().
+            'settings.shop_mode' => ['sometimes', 'string', Rule::in(ShopModule::MODES)],
+            // Order notices (empty = contact_email), the same rule as Admin > Payments and shipping.
+            'settings.shop_orders_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'settings.admin_login_path' => ['sometimes', 'nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9-]+$/', function ($attribute, $value, $fail) {
                 $raw = strtolower(trim((string) $value));
                 $normalized = AdminLoginPath::normalize($raw);
@@ -128,7 +146,7 @@ final class SettingOperations
             $settings = $this->normalizeLinkDestination($settings, 'header_cta_page', 'header_cta_url');
         }
         try {
-            EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $settings, $locale, $revisions) {
+            $write = fn () => EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $settings, $locale, $revisions) {
                 foreach ($settings as $key => $value) {
                     $setting = Setting::where('key', $key)->lockForUpdate()->first();
                     abort_unless($setting, 404, 'Setting not found.');
@@ -147,6 +165,10 @@ final class SettingOperations
                     }
                 }
             }, 3));
+            // The address for order notices is a requirement to sell online: a selling site keeps one (PLAN.md E3.3).
+            array_intersect(array_keys($settings), ['shop_orders_email', 'contact_email']) !== []
+                ? app(CheckoutReadiness::class)->guard($write, 'settings')
+                : $write();
         } finally {
             Setting::clearCache();
         }

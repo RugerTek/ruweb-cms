@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fake Bancard — Pago</title>
+    <style>
+        body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #1f2937; background: #fff; }
+        .card { max-width: 420px; margin: 0 auto; padding: 20px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 600; }
+        h1 { font-size: 18px; margin: 12px 0 4px; }
+        .amount { font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+        dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; margin: 0 0 20px; }
+        dt { color: #6b7280; }
+        dd { margin: 0; word-break: break-all; }
+        .actions { display: flex; gap: 12px; }
+        button { flex: 1; padding: 12px; font-size: 16px; font-weight: 600; border: 0; border-radius: 8px; cursor: pointer; color: #fff; }
+        button[disabled] { opacity: .5; cursor: wait; }
+        #approve { background: #047857; }
+        #reject { background: #b91c1c; }
+        #result { margin-top: 16px; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="card" data-process-id="{{PROCESS_ID}}" data-status="{{STATUS}}">
+    <span class="badge">Bancard de prueba (fake) — no cobra nada</span>
+    <h1>{{DESCRIPTION}}</h1>
+    <div class="amount">{{CURRENCY}} {{AMOUNT}}</div>
+    <dl>
+        <dt>Pedido (shop_process_id)</dt><dd>{{SHOP_PROCESS_ID}}</dd>
+        <dt>process_id</dt><dd>{{PROCESS_ID}}</dd>
+        <dt>Estado</dt><dd id="status">{{STATUS}}</dd>
+    </dl>
+    <div class="actions" id="actions">
+        <button type="button" id="approve" data-decision="approve">Aprobar</button>
+        <button type="button" id="reject" data-decision="reject">Rechazar (51)</button>
+    </div>
+    <p id="result" role="status"></p>
+</div>
+<script>
+    (function () {
+        var card = document.querySelector('.card');
+        var processId = card.getAttribute('data-process-id');
+        var buttons = document.querySelectorAll('#actions button');
+        var result = document.getElementById('result');
+
+        function tellParent(data) {
+            // Like the real iframe: the page's library checks event.origin against the Bancard URL.
+            window.parent.postMessage(data, '*');
+        }
+
+        function setHeight() {
+            tellParent({ iframeHeight: document.body.scrollHeight });
+        }
+
+        if (card.getAttribute('data-status') !== 'pending') {
+            document.getElementById('actions').style.display = 'none';
+            result.textContent = 'Este pago ya fue procesado.';
+        }
+
+        Array.prototype.forEach.call(buttons, function (button) {
+            button.addEventListener('click', function () {
+                Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+                result.textContent = 'Procesando y avisando al sitio…';
+                fetch('/checkout/decide', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ process_id: processId, decision: button.getAttribute('data-decision') })
+                }).then(function (response) {
+                    return response.json();
+                }).then(function (data) {
+                    if (!data.message) {
+                        result.textContent = data.error || 'Error del fake.';
+                        return;
+                    }
+                    document.getElementById('status').textContent = data.message;
+                    result.textContent = 'Webhook al sitio: HTTP ' + data.webhook_status + '. Volviendo al comercio…';
+                    tellParent({ message: data.message, details: data.details, return_url: data.return_url });
+                }).catch(function (error) {
+                    result.textContent = 'Error del fake: ' + error;
+                    Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+                });
+            });
+        });
+
+        window.addEventListener('load', setHeight);
+        setHeight();
+    })();
+</script>
+</body>
+</html>
