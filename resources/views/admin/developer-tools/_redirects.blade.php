@@ -134,7 +134,7 @@
                             <td class="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">
                                 {{ number_format($redirect->hit_count) }}
                                 <span class="block text-xs text-gray-600">
-                                    {{ $redirect->last_used_at?->format('d/m/Y H:i') ?? __('admin.redirect_never_used') }}
+                                    {{ \App\Support\SiteTime::format($redirect->last_used_at, 'd/m/Y H:i', __('admin.redirect_never_used')) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right whitespace-nowrap">

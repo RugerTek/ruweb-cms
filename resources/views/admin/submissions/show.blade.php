@@ -8,7 +8,7 @@
         <div>
             <a href="{{ route('admin.submissions.index', ['form' => $form]) }}" class="text-xs text-gray-500 hover:text-gray-300">&larr; {{ __('admin.submissions') }} · {{ __('admin.forms.'.$form) }}</a>
             <h1 class="text-lg font-semibold text-white mt-1">{{ __('admin.submission_detail') }} #{{ $submission->id }}</h1>
-            <p class="text-sm text-gray-500 mt-0.5">{{ $submission->created_at->format('d/m/Y H:i') }}</p>
+            <p class="text-sm text-gray-500 mt-0.5">{{ \App\Support\SiteTime::format($submission->created_at) }}</p>
         </div>
         <form method="POST" action="{{ route('admin.submissions.destroy', ['form' => $form, 'submission' => $submission->id]) }}"
               data-confirm="{{ __('admin.confirm_delete_submission') }}" data-confirm-title="{{ __('admin.btn_delete') }}" data-confirm-label="{{ __('admin.btn_delete') }}" data-confirm-tone="danger">
@@ -30,9 +30,9 @@
             <div class="px-4 py-3 border-b border-white/[0.06]"><h2 class="text-sm font-semibold text-white">{{ __('admin.submission_metadata') }}</h2></div>
             <dl class="divide-y divide-white/[0.06] text-sm">
                 @foreach([
-                    'received_at' => $submission->created_at->format('d/m/Y H:i:s'),
-                    'read_at' => $submission->read_at?->format('d/m/Y H:i:s'),
-                    'notified_at' => $submission->notified_at?->format('d/m/Y H:i:s'),
+                    'received_at' => \App\Support\SiteTime::format($submission->created_at, 'd/m/Y H:i:s'),
+                    'read_at' => \App\Support\SiteTime::format($submission->read_at, 'd/m/Y H:i:s') ?: null,
+                    'notified_at' => \App\Support\SiteTime::format($submission->notified_at, 'd/m/Y H:i:s') ?: null,
                     'locale' => $submission->locale,
                     'page' => $submission->page?->title,
                     'ip' => $submission->ip,

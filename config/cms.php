@@ -11,6 +11,10 @@ return [
     // repository root, bumped together with CHANGELOG.md (see skills/changelog-version).
     'version' => trim((string) @file_get_contents(base_path('VERSION'))) ?: '0.0.0',
 
+    // Time zone dates are SHOWN in (panel, public site, emails, exports) until an admin picks another one in
+    // Settings > General. Storage stays in UTC (config/app.php). See docs/concepts/time-zones.md.
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'America/Asuncion'),
+
     'snapshots' => [
         // Base directory for everything the snapshot module writes: named
         // archives, pending uploads, work folders and pre-restore backups.
@@ -368,6 +372,7 @@ return [
             'contact_address',
             'footer_tagline',
             'footer_copyright',
+            'site_timezone',
         ],
     ],
 ];

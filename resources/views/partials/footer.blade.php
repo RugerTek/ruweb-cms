@@ -11,7 +11,7 @@
     $footerItems = $footerMenu?->tree(public: true) ?? collect();
     $hasContact = \App\Support\BusinessContact::hasAny();
     $socialLinks = \App\Support\BusinessContact::socialLinks();
-    $copyright = strtr((string) ($footerCopyright ?? ''), ['{year}' => date('Y'), '{site}' => $siteName]);
+    $copyright = strtr((string) ($footerCopyright ?? ''), ['{year}' => \App\Support\SiteTime::now()->format('Y'), '{site}' => $siteName]);
     $footerHomeHref = app()->getLocale() === \App\Models\Locale::baseCode()
         ? route('home')
         : route('localized.home', ['locale' => app()->getLocale()]);

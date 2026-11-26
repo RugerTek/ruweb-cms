@@ -12,6 +12,7 @@ use App\Services\Content\TranslationOperations;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\SiteTime;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -125,7 +126,7 @@ final class PostOperations
 
     public function schedule(User $actor, Post $post, string $publishedAt, ?string $expectedRevision = null): Post
     {
-        return $this->changePublication($actor, $post, ['status' => 'published', 'published_at' => $publishedAt], $expectedRevision);
+        return $this->changePublication($actor, $post, ['status' => 'published', 'published_at' => SiteTime::toStorage($publishedAt)], $expectedRevision);
     }
 
     public function setExpiry(User $actor, Post $post, ?string $expiresAt, ?string $expectedRevision = null): Post
@@ -134,6 +135,7 @@ final class PostOperations
         if (! $actor->isAdmin()) {
             throw new AuthorizationException(__('editorial.publish_forbidden'));
         }
+        $expiresAt = SiteTime::toStorage($expiresAt);
 
         return $this->transaction($actor, function () use ($actor, $post, $expiresAt, $expectedRevision) {
             $post = Post::query()->lockForUpdate()->findOrFail($post->id);

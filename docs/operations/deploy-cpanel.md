@@ -76,7 +76,32 @@ DB_HOST=localhost
 DB_DATABASE=project_database
 DB_USERNAME=project_user
 DB_PASSWORD=...
+APP_DISPLAY_TIMEZONE=America/Asuncion
+TRUSTED_PROXIES=
 ```
+
+`APP_DISPLAY_TIMEZONE` is the starter value of Settings > General «Zona horaria»; the database always stores UTC
+([../concepts/time-zones.md](../concepts/time-zones.md)). `TRUSTED_PROXIES` is explained below.
+
+### Behind Cloudflare, a tunnel or a load balancer
+
+When HTTPS ends at a proxy (Cloudflare with the orange cloud, `cloudflared`, a load balancer), PHP receives plain
+HTTP. Unless the proxy is trusted, Laravel builds `http://` URLs for CSS, JavaScript and forms, the browser blocks
+them as mixed content and the admin loads without styles. List the proxy in `.env`:
+
+```env
+TRUSTED_PROXIES=*
+```
+
+- Empty (the default) trusts nobody: `X-Forwarded-*` headers are ignored. Right for a site served directly.
+- `*` trusts whatever connects to PHP. Use it only when every request reaches PHP through the proxy (a tunnel to
+  localhost, a load balancer in a private network, a host that only accepts the proxy's IPs).
+- Otherwise a comma-separated list of IPs or CIDR ranges, e.g. the proxy's private address or Cloudflare's published
+  ranges: `TRUSTED_PROXIES=173.245.48.0/20,103.21.244.0/22`.
+
+The value is read by `config/trustedproxy.php` and applied by `TrustProxies` (`bootstrap/app.php`), so it works with
+`php artisan optimize`; run it again after changing `.env`. Check: open the admin over HTTPS and confirm stylesheets
+load from `https://`.
 
 ### 6. Run application setup commands
 

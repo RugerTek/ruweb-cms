@@ -5,6 +5,7 @@ namespace App\Services\Posts;
 use App\Http\Requests\Admin\Concerns\ValidatesStaleTranslationFields;
 use App\Models\Locale;
 use App\Models\Post;
+use App\Support\SiteTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -27,6 +28,8 @@ final class PostInput
 
     public function validate(): array
     {
+        // Typed dates are in the site zone; storage is UTC (docs/concepts/time-zones.md).
+        $this->data = SiteTime::toStorageKeys($this->data, ['published_at', 'expires_at']);
         $validator = Validator::make($this->data, $this->rules());
         if (! $this->partial) {
             $this->withValidator($validator);

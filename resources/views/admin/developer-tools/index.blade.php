@@ -191,7 +191,7 @@
                             <div class="flex-1 min-w-0">
                                 <p class="text-gray-200 truncate">{{ $item['original_name'] ?? $item['token'] }}</p>
                                 <p class="text-gray-500 text-xs mt-0.5">
-                                    {{ $summary['origin_url'] ?? 'N/A' }} · {{ $summary['created_at'] ?? 'N/A' }} · {{ $formatBytes($item['size']) }}
+                                    {{ $summary['origin_url'] ?? 'N/A' }} · {{ \App\Support\SiteTime::format($summary['created_at'] ?? null, 'd/m/Y H:i', 'N/A') }} · {{ $formatBytes($item['size']) }}
                                     · {{ count($item['report']->risks) }} {{ Str::lower(__('admin.snapshot_risks')) }}
                                 </p>
                             </div>

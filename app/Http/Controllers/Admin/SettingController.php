@@ -8,6 +8,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Setting;
 use App\Support\AdminLoginPath;
+use App\Support\SiteTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -47,6 +48,11 @@ class SettingController extends Controller
             $homepageSetting->options = $homepageOptions;
         }
 
+        $timezoneSetting = $groups->get('general')?->firstWhere('key', 'site_timezone');
+        if ($timezoneSetting) {
+            $timezoneSetting->options = SiteTime::options();
+        }
+
         return view('admin.settings.index', [
             'groups' => $groups,
         ]);
@@ -64,6 +70,7 @@ class SettingController extends Controller
         $request->validate([
             ...$this->contactSettingRules(),
             'settings.homepage_translation_group_id' => ['sometimes', 'string', Rule::in($allowedHomepageGroups)],
+            'settings.site_timezone' => ['sometimes', 'required', 'string', Rule::in(array_keys(SiteTime::options()))],
             'settings.admin_login_path' => [
                 'sometimes',
                 'nullable',

@@ -87,7 +87,7 @@
                         <td class="px-4 py-3 text-sm text-gray-300">{{ $submission->assignee?->name ?? __('submissions.unassigned') }}</td>
                         <td class="px-4 py-3 text-sm {{ $submission->notification_status === 'failed' ? 'text-red-400' : 'text-gray-400' }}">{{ __('submissions.'.$submission->notification_status) }}</td>
                         <td class="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">
-                            {{ $submission->created_at->format('d/m/Y H:i') }}
+                            {{ \App\Support\SiteTime::format($submission->created_at) }}
                             @unless($submission->isRead())
                                 <span class="ml-2 inline-block w-2 h-2 rounded-full bg-emerald-400 align-middle" title="{{ __('admin.submission_status_new') }}"></span>
                             @endunless

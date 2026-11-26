@@ -58,7 +58,7 @@
                                     #{{ $item->id }}
                                     @if($item->is_proposal)<span class="ml-2 inline-flex rounded-md bg-amber-500/10 px-2 py-1 text-xs text-amber-400">{{ __('editorial.proposal') }}</span>@endif
                                 </th>
-                                <td class="px-5 py-4 text-gray-400 whitespace-nowrap"><time datetime="{{ $item->created_at }}">{{ \Illuminate\Support\Carbon::parse($item->created_at)->format('d/m/Y H:i') }}</time></td>
+                                <td class="px-5 py-4 text-gray-400 whitespace-nowrap"><time datetime="{{ \App\Support\SiteTime::local($item->created_at)?->toIso8601String() }}">{{ \App\Support\SiteTime::format($item->created_at) }}</time></td>
                                 <td class="px-5 py-4 text-gray-300">{{ $authors->get($item->user_id)?->name ?? __('editorial.system') }}</td>
                                 <td class="px-5 py-3">
                                     <div class="flex items-center justify-end gap-2 whitespace-nowrap">
@@ -152,14 +152,14 @@
                     <article class="rounded-lg border border-white/[0.08] p-4 space-y-3">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="inline-flex rounded-md px-2 py-1 text-xs font-medium {{ $review->state === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : ($review->state === 'changes_requested' ? 'bg-amber-500/10 text-amber-400' : 'bg-sky-500/10 text-sky-400') }}">{{ __('editorial.'.$review->state) }}</span>
-                            <time class="text-xs text-gray-500" datetime="{{ $review->created_at }}">{{ \Illuminate\Support\Carbon::parse($review->created_at)->format('d/m/Y H:i') }}</time>
+                            <time class="text-xs text-gray-500" datetime="{{ \App\Support\SiteTime::local($review->created_at)?->toIso8601String() }}">{{ \App\Support\SiteTime::format($review->created_at) }}</time>
                         </div>
                         <p class="text-xs text-gray-500">{{ __('editorial.requested_by') }}: <span class="text-gray-300">{{ $authors->get($review->requested_by)?->name ?? __('editorial.system') }}</span> · {{ __('editorial.reviewer') }}: <span class="text-gray-300">{{ $authors->get($review->reviewer_id)?->name ?? __('editorial.system') }}</span></p>
                         @if($review->comment)<p class="text-sm text-gray-300 whitespace-pre-wrap break-words leading-6">{{ $review->comment }}</p>@endif
                         @if($review->version_id)<a class="inline-block text-sm text-sky-400 hover:text-sky-300 underline underline-offset-4" href="{{ route('admin.editorial.index', [$model->getTable(), $model->id, 'version' => $review->version_id]) }}">{{ __('editorial.compare_proposal') }}</a>@endif
                         @foreach($comments->get($review->id, collect()) as $comment)
                             <div class="rounded-md bg-white/[0.03] p-3">
-                                <p class="text-xs text-gray-500">{{ $authors->get($comment->user_id)?->name ?? __('editorial.system') }} · <time datetime="{{ $comment->created_at }}">{{ \Illuminate\Support\Carbon::parse($comment->created_at)->format('d/m/Y H:i') }}</time></p>
+                                <p class="text-xs text-gray-500">{{ $authors->get($comment->user_id)?->name ?? __('editorial.system') }} · <time datetime="{{ \App\Support\SiteTime::local($comment->created_at)?->toIso8601String() }}">{{ \App\Support\SiteTime::format($comment->created_at) }}</time></p>
                                 <p class="mt-2 text-sm text-gray-300 whitespace-pre-wrap break-words leading-6">{{ $comment->body }}</p>
                             </div>
                         @endforeach
@@ -209,7 +209,7 @@
                 @forelse($links as $link)
                     <form method="POST" action="{{ route('admin.editorial.revoke', [$model->getTable(), $model->id, $link->id]) }}" class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/[0.08] px-4 py-3">
                         @csrf @method('DELETE')
-                        <p class="text-sm text-gray-400">{{ __('editorial.expires_at') }}: <time datetime="{{ $link->expires_at }}">{{ \Illuminate\Support\Carbon::parse($link->expires_at)->format('d/m/Y H:i') }}</time></p>
+                        <p class="text-sm text-gray-400">{{ __('editorial.expires_at') }}: <time datetime="{{ \App\Support\SiteTime::local($link->expires_at)?->toIso8601String() }}">{{ \App\Support\SiteTime::format($link->expires_at) }}</time></p>
                         <button type="submit" class="rounded-md border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-2 text-sm font-medium text-red-400 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400">{{ __('editorial.revoke') }}</button>
                     </form>
                 @empty

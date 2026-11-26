@@ -50,7 +50,9 @@ Setting::allGrouped();
 ```
 
 Cross-cutting business data is read through `App\Support\BusinessContact`, never with scattered
-`Setting::get('contact_*')` calls.
+`Setting::get('contact_*')` calls. The site time zone (`site_timezone`, General) is read through
+`App\Support\SiteTime` ([../concepts/time-zones.md](../concepts/time-zones.md)); its options are filled by
+`SettingController`, not stored.
 
 Caching is a static in-process cache cleared after updates — not a persistent store, so nothing to invalidate
 between requests.

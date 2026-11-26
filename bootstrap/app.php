@@ -32,6 +32,16 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Sites behind Cloudflare, tunnels or load balancers: honour X-Forwarded-* from the proxies listed in
+        // TRUSTED_PROXIES (config/trustedproxy.php, read on every request by TrustProxies, so it works with
+        // config:cache; config is not loaded yet at this point). Empty trusts nobody. docs/operations/deploy-cpanel.md
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR
+            | Request::HEADER_X_FORWARDED_HOST
+            | Request::HEADER_X_FORWARDED_PORT
+            | Request::HEADER_X_FORWARDED_PROTO
+            | Request::HEADER_X_FORWARDED_PREFIX
+            | Request::HEADER_X_FORWARDED_AWS_ELB);
+
         $middleware->group('mcp', [
             AuthenticateMcpApiKey::class,
             EnforceMcpScopes::class,

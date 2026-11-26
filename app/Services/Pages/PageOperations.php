@@ -12,6 +12,7 @@ use App\Services\Content\RevisionGuard;
 use App\Services\Editorial\EditorialActor;
 use App\Services\Editorial\EditorialHistory;
 use App\Services\Revisions\ContentRevisionLedger;
+use App\Support\SiteTime;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -126,6 +127,7 @@ final class PageOperations
         if (! $actor->isAdmin()) {
             throw new AuthorizationException(__('editorial.publish_forbidden'));
         }
+        $date = SiteTime::toStorage($date);
         if ($date !== null) {
             Validator::make(['published_at' => $date], ['published_at' => ['required', 'date', 'after:now']])->validate();
         }
@@ -149,6 +151,7 @@ final class PageOperations
         if (! $actor->isAdmin()) {
             throw new AuthorizationException(__('editorial.publish_forbidden'));
         }
+        $expiresAt = SiteTime::toStorage($expiresAt);
 
         return EditorialActor::run($actor, fn () => app(ContentRevisionLedger::class)->transaction(function () use ($actor, $page, $expiresAt, $expectedRevision) {
             $page = Page::query()->lockForUpdate()->findOrFail($page->id);

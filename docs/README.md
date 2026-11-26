@@ -12,6 +12,7 @@ Repo-wide rules and the task → skill table live in [../AGENTS.md](../AGENTS.md
 | [concepts/content-model.md](concepts/content-model.md) | Shape of `content_json`: `meta`, `sections`, `is_visible`, media ids |
 | [concepts/editorial-contract.md](concepts/editorial-contract.md) | `Publishable`, `Seoable`, `Mediable`, `Previewable` and which entity implements what |
 | [concepts/multilanguage.md](concepts/multilanguage.md) | Locales, URL strategy, translation groups, editorial schema, fingerprints, localized settings, translation workflow |
+| [concepts/time-zones.md](concepts/time-zones.md) | UTC storage, the site time zone, printing and accepting dates with `SiteTime` |
 
 ## Content
 

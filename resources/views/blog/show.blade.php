@@ -13,7 +13,7 @@
         </a>
 
         <header>
-            <p class="text-sm text-gray-500 mb-2">{{ optional($post->published_at)?->translatedFormat('M d, Y') }}</p>
+            <p class="text-sm text-gray-500 mb-2">{{ \App\Support\SiteTime::translatedFormat($post->published_at, 'M d, Y') }}</p>
             <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900">{{ $post->title }}</h1>
             @if($post->excerpt)
                 <p class="mt-4 text-lg text-gray-600">{{ $post->excerpt }}</p>
