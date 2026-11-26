@@ -5,11 +5,12 @@ namespace App\Connectors\Meta\Connect;
 use SensitiveParameter;
 
 /**
- * Signatures of the RugerTek Connect HTTP contract v1 (plan-meta-v2), shared by the site and the broker:
- * - request (site → broker): headers X-Ruweb-Site, X-Ruweb-Timestamp and
+ * Signatures of the RugerTek Connect HTTP contract v2 (plan-meta-v2), shared by the site and the broker:
+ * - request (broker → site: the token delivery to /_ruweb/connect/meta/handoff, RuwebConnectHandoffReceiver; the
+ *   scheme also serves site → broker calls): headers X-Ruweb-Site, X-Ruweb-Timestamp and
  *   X-Ruweb-Signature = hex(hmac_sha256(site_secret, "<METHOD>\n<path>\n<timestamp>\n<sha256 hex of the body>")),
- *   accepted within ±300 s, compared in constant time. `path` is the contract path (`/v1/meta/handoff/<id>`), without
- *   query string nor the base path of RUWEB_CONNECT_URL.
+ *   accepted within ±300 s, compared in constant time. `path` is the contract path (`/_ruweb/connect/meta/handoff`),
+ *   without query string nor a base path.
  * - start link (browser): sig = hex(hmac_sha256(site_secret, "start\n<site_id>\n<nonce>\n<ts>")).
  */
 final class RuwebConnectSignature

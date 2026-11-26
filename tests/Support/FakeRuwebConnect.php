@@ -2,18 +2,21 @@
 
 namespace Tests\Support;
 
+use App\Connectors\Meta\Connect\RuwebConnectHandoffReceiver;
 use App\Connectors\Meta\Connect\RuwebConnectSignature;
 use Closure;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
+use Tests\TestCase;
 
 /**
- * Double of the RugerTek Connect broker (HTTP contract v1 of plan-meta-v2), installed with Http::fake on URL and set
+ * Double of the RugerTek Connect broker (HTTP contract v2 of plan-meta-v2), installed with Http::fake on URL and set
  * as `cms.meta.connect_url`. It checks what the real broker will: register body, the registration id on verify (and
- * the challenge, through challengeCheck when given), the signed handoff (X-Ruweb-* headers, HMAC of
- * "POST\n<path>\n<ts>\n<sha256(body)>" with SITE_SECRET, ±300 s) and single use (a second handoff → 404
- * handoff_not_found). issueHandoff() plays Meta's callback: it stores what the site will collect, with the real
- * values of the spike (business, catalogs, scopes) and FakeMetaGraph::TOKEN.
+ * the challenge, through challengeCheck when given). deliver() plays Meta's callback the way the broker does it: a
+ * signed POST of the token to the site's /_ruweb/connect/meta/handoff (X-Ruweb-* headers, HMAC of
+ * "POST\n<path>\n<ts>\n<sha256(body)>" with SITE_SECRET), with the real values of the spike (business, catalogs,
+ * scopes) and FakeMetaGraph::TOKEN. The broker stores nothing, so neither does the fake.
  */
 final class FakeRuwebConnect
 {
@@ -29,9 +32,6 @@ final class FakeRuwebConnect
 
     /** @var list<array{method: string, path: string, body: string, headers: array<string, list<string>>}> */
     private array $calls = [];
-
-    /** @var array<string, array<string, mixed>> */
-    private array $handoffs = [];
 
     private bool $registered = false;
 
@@ -50,14 +50,14 @@ final class FakeRuwebConnect
     }
 
     /**
-     * A finished OAuth on the broker: returns the handoff id the site gets on /admin/connectors/meta/connected.
+     * The JSON body the broker POSTs after a finished OAuth (contract v2).
      *
      * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
      */
-    public function issueHandoff(array $overrides = []): string
+    public static function payload(string $nonce, array $overrides = []): array
     {
-        $id = 'handoff'.(count($this->handoffs) + 1).'-'.bin2hex(random_bytes(6));
-        $this->handoffs[$id] = array_replace([
+        return array_replace([
             'access_token' => FakeMetaGraph::TOKEN,
             'token_type' => 'system_user',
             'business_id' => FakeMetaGraph::BUSINESS_ID,
@@ -68,9 +68,39 @@ final class FakeRuwebConnect
             ],
             'graph_version' => 'v27.0',
             'granted_scopes' => ['catalog_management', 'public_profile'],
+            'nonce' => $nonce,
         ], $overrides);
+    }
 
-        return $id;
+    /**
+     * Server variables of a broker → site delivery signed like the real broker (TokenDelivery).
+     *
+     * @return array<string, string>
+     */
+    public static function signedServer(string $body, ?int $timestamp = null, string $secret = self::SITE_SECRET, string $siteId = self::SITE_ID): array
+    {
+        $timestamp ??= now()->getTimestamp();
+
+        return [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_X_RUWEB_SITE' => $siteId,
+            'HTTP_X_RUWEB_TIMESTAMP' => (string) $timestamp,
+            'HTTP_X_RUWEB_SIGNATURE' => RuwebConnectSignature::request($secret, 'POST', RuwebConnectHandoffReceiver::PATH, $timestamp, $body),
+        ];
+    }
+
+    /**
+     * A finished OAuth on the broker: the signed POST of the token to the site, as the broker does it before sending
+     * the browser back. Returns the site's answer (200 accepted, 404 refused).
+     *
+     * @param  array<string, mixed>  $overrides  payload fields
+     */
+    public function deliver(TestCase $test, string $nonce, array $overrides = [], ?int $timestamp = null, string $secret = self::SITE_SECRET): TestResponse
+    {
+        $body = json_encode(self::payload($nonce, $overrides), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        return $test->call('POST', RuwebConnectHandoffReceiver::PATH, [], [], [], self::signedServer($body, $timestamp ?? $this->now, $secret), $body);
     }
 
     /** @return list<array{method: string, path: string, body: string, headers: array<string, list<string>>}> */
@@ -102,7 +132,7 @@ final class FakeRuwebConnect
         $this->calls[] = ['method' => $request->method(), 'path' => $path, 'body' => $request->body(), 'headers' => $request->headers()];
 
         if ($request->method() === 'GET' && $path === '/v1/health') {
-            return Http::response(['ok' => true, 'version' => '1']);
+            return Http::response(['ok' => true, 'version' => '2']);
         }
         if ($request->method() === 'POST' && $path === '/v1/sites/register') {
             $body = json_decode($request->body(), true);
@@ -130,29 +160,6 @@ final class FakeRuwebConnect
         }
         if (str_starts_with($path, '/v1/sites/register/')) {
             return $this->error(404, 'registration_not_found');
-        }
-        if ($request->method() === 'POST' && preg_match('#^/v1/meta/handoff/([^/]+)$#', $path, $match) === 1) {
-            $valid = ($request->header(RuwebConnectSignature::HEADER_SITE)[0] ?? null) === self::SITE_ID
-                && RuwebConnectSignature::verifyRequest(
-                    self::SITE_SECRET,
-                    'POST',
-                    $path,
-                    (string) ($request->header(RuwebConnectSignature::HEADER_TIMESTAMP)[0] ?? ''),
-                    $request->body(),
-                    (string) ($request->header(RuwebConnectSignature::HEADER_SIGNATURE)[0] ?? ''),
-                    $this->now,
-                );
-            if (! $valid) {
-                return $this->error(401, 'invalid_signature');
-            }
-            $id = rawurldecode($match[1]);
-            if (! isset($this->handoffs[$id])) {
-                return $this->error(404, 'handoff_not_found');
-            }
-            $payload = $this->handoffs[$id];
-            unset($this->handoffs[$id]);
-
-            return Http::response($payload);
         }
 
         return $this->error(404, 'not_found');

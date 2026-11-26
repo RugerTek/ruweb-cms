@@ -6,11 +6,7 @@ use App\Connectors\ConnectorRegistry;
 use App\Connectors\ConnectorStatus;
 use App\Connectors\Meta\Connect\MetaConnection;
 use App\Connectors\Meta\Connect\MetaConnectionStore;
-use App\Connectors\Meta\Connect\RuwebConnectException;
-use App\Connectors\Meta\Connect\RuwebConnectHandoff;
-use App\Connectors\Meta\Connect\RuwebConnectRegistration;
-use App\Connectors\Meta\Connect\RuwebConnectSite;
-use App\Contracts\Connectors\RuwebConnectClient;
+use App\Connectors\Meta\Connect\RuwebConnectHandoffReceiver;
 use App\Http\Controllers\Admin\MetaConnectController;
 use App\Models\Connector;
 use App\Models\McpApiKey;
@@ -19,20 +15,22 @@ use App\Services\Connectors\ConnectorOperations;
 use App\Services\Connectors\Meta\MetaCatalogSync;
 use App\Services\Connectors\Meta\MetaCatalogSyncException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Sleep;
 use Illuminate\Testing\TestResponse;
 use RuntimeException;
-use SensitiveParameter;
 use Tests\Support\FakeMetaGraph;
 use Tests\Support\FakeRuwebConnect;
 use Tests\TestCase;
 
 /**
- * Meta v2 «Conectar con Facebook» (plan-meta-v2, track 2b): registration with the broker, nonce, handoff, catalog
- * choice, disconnect, states on the card and the detail, and MCP without the token. The RugerTek Connect broker is
- * FakeRuwebConnect (Http::fake) and MetaCatalogSync (track 2c) is replaced by a recording double, so these tests
- * check only what this track decides. No request leaves the test.
+ * Meta v2 «Conectar con Facebook» (plan-meta-v2, track 2b, contract v2): registration with the broker, nonce, the
+ * broker's signed delivery of the token to /_ruweb/connect/meta/handoff, catalog choice, disconnect, states on the
+ * card and the detail, and MCP without the token. The RugerTek Connect broker is FakeRuwebConnect (Http::fake for its
+ * endpoints, FakeRuwebConnect::deliver() for its POST to the site) and MetaCatalogSync (track 2c) is replaced by a
+ * recording double, so these tests check only what this track decides. No request leaves the test.
  */
 class MetaConnectTest extends TestCase
 {
@@ -123,12 +121,13 @@ class MetaConnectTest extends TestCase
         return $query['nonce'];
     }
 
-    /** The broker sends the browser back with a handoff. */
+    /** The broker delivers the token to the site (it must be accepted), then sends the browser back with the nonce. */
     private function returnFromMeta(array $handoff = [], ?string $nonce = null): TestResponse
     {
         $nonce ??= $this->startConnect();
+        $this->broker->deliver($this, $nonce, $handoff)->assertOk()->assertExactJson(['ok' => true]);
 
-        return $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $this->broker->issueHandoff($handoff), 'nonce' => $nonce]));
+        return $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]));
     }
 
     private function oneCatalog(string $id = FakeMetaGraph::CATALOG_ID): array
@@ -233,26 +232,106 @@ class MetaConnectTest extends TestCase
 
     public function test_the_nonce_must_match_belong_to_the_admin_and_be_fresh(): void
     {
-        $handoff = $this->broker->issueHandoff($this->oneCatalog());
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $handoff, 'nonce' => 'n0nce-from-somewhere-else']))
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => 'n0nce-from-somewhere-else']))
             ->assertSessionHasErrors(['meta_connect' => __('connectors.meta_connect_expired')]);
 
         $nonce = $this->startConnect();
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $handoff, 'nonce' => $nonce.'x']))->assertSessionHasErrors('meta_connect');
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $handoff, 'nonce' => $nonce]))->assertSessionHasErrors('meta_connect');
+        $this->broker->deliver($this, $nonce, $this->oneCatalog())->assertOk();
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce.'x']))->assertSessionHasErrors('meta_connect');
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))->assertSessionHasErrors('meta_connect');
 
         $nonce = $this->startConnect();
+        $this->broker->deliver($this, $nonce, $this->oneCatalog())->assertOk();
         $this->travel(MetaConnectController::FLOW_TTL + 1)->seconds();
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $handoff, 'nonce' => $nonce]))->assertSessionHasErrors('meta_connect');
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))->assertSessionHasErrors('meta_connect');
 
         $this->travelBack();
         $nonce = $this->startConnect();
+        $this->broker->deliver($this, $nonce, $this->oneCatalog())->assertOk();
         $other = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($other)->get(route('admin.connectors.meta.connected', ['handoff' => $handoff, 'nonce' => $nonce]))->assertSessionHasErrors('meta_connect');
+        $this->actingAs($other)->withSession([MetaConnectController::SESSION_FLOW => ['nonce' => $nonce, 'expires_at' => now()->getTimestamp() + 60, 'user_id' => $other->id]])
+            ->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))
+            ->assertSessionHasErrors(['meta_connect' => __('connectors.meta_connect_retry')]);
 
         $this->assertTrue($this->store()->get()->isManual());
+        $this->assertNull($this->store()->accessToken());
         $this->assertSame([], $this->sync->provisioned);
-        $this->assertNotContains('POST /v1/meta/handoff/'.$handoff, $this->brokerCalls(), 'The handoff is never collected without a valid nonce.');
+    }
+
+    public function test_the_delivery_endpoint_accepts_only_a_signed_delivery_for_a_pending_nonce(): void
+    {
+        $nonce = $this->startConnect();
+        $payload = json_encode(FakeRuwebConnect::payload($nonce, $this->oneCatalog()));
+        $post = fn (array $server, ?string $body = null): TestResponse => $this->call('POST', RuwebConnectHandoffReceiver::PATH, [], [], [], $server, $body ?? $payload);
+
+        $refusals = [
+            'unsigned' => $post(['CONTENT_TYPE' => 'application/json']),
+            'other secret' => $post(FakeRuwebConnect::signedServer($payload, secret: 'not-the-site-secret')),
+            'other site' => $post(FakeRuwebConnect::signedServer($payload, siteId: '01JOTHERSITE000000000000000')),
+            'too old' => $post(FakeRuwebConnect::signedServer($payload, now()->getTimestamp() - 301)),
+            'body changed' => $post(FakeRuwebConnect::signedServer($payload), str_replace(FakeMetaGraph::TOKEN, 'EAAForgedToken123', $payload)),
+            'unknown nonce' => $this->broker->deliver($this, 'n0nce-nobody-started-0123456789'),
+            'no token' => $this->broker->deliver($this, $nonce, ['access_token' => '']),
+            'bad business' => $this->broker->deliver($this, $nonce, ['business_id' => 'x<script>']),
+        ];
+        foreach ($refusals as $case => $response) {
+            $this->assertSame(404, $response->status(), $case);
+            $this->assertSame(['message' => 'Not Found'], $response->json(), $case);
+        }
+        $this->assertNull($this->store()->pullDelivery($nonce, $this->admin->id), 'Nothing was kept from a refused delivery.');
+
+        // The real one is accepted once: the same signed request again, or a new one for the used nonce, is refused.
+        $server = FakeRuwebConnect::signedServer($payload);
+        $post($server)->assertOk()->assertExactJson(['ok' => true])->assertHeader('Cache-Control', 'no-store, private');
+        $this->assertSame(404, $post($server)->status(), 'replayed');
+        $this->assertSame(404, $this->broker->deliver($this, $nonce, [], now()->getTimestamp() + 1)->status(), 'nonce used');
+
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))->assertSessionHasNoErrors();
+        $this->assertSame(FakeMetaGraph::TOKEN, $this->store()->accessToken());
+    }
+
+    public function test_the_delivery_endpoint_is_stateless_and_never_logs_the_token(): void
+    {
+        $logged = [];
+        Event::listen(MessageLogged::class, function (MessageLogged $event) use (&$logged): void {
+            $logged[] = $event->message.' '.json_encode($event->context);
+        });
+        $nonce = $this->startConnect();
+
+        $response = $this->broker->deliver($this, $nonce, $this->oneCatalog());
+        $response->assertOk();
+        $this->assertSame([], $response->headers->getCookies(), 'No session or CSRF cookie on the delivery.');
+        $this->broker->deliver($this, $nonce, ['access_token' => 'EAAOtherTokenNeverLogged0123'])->assertNotFound();
+
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))->assertSessionHasNoErrors();
+        $this->assertNotEmpty($logged);
+        foreach ($logged as $line) {
+            $this->assertStringNotContainsString(FakeMetaGraph::TOKEN, $line);
+            $this->assertStringNotContainsString('EAAOtherTokenNeverLogged0123', $line);
+            $this->assertStringNotContainsString(FakeRuwebConnect::SITE_SECRET, $line);
+        }
+        $this->assertStringNotContainsString(FakeMetaGraph::TOKEN, (string) DB::table('connectors')->where('key', 'meta')->value('secrets'), 'Stored encrypted.');
+    }
+
+    public function test_a_delivery_for_an_admin_who_lost_the_role_is_refused(): void
+    {
+        $nonce = $this->startConnect();
+        $this->admin->forceFill(['role' => 'editor'])->save();
+
+        $this->broker->deliver($this, $nonce, $this->oneCatalog())->assertNotFound();
+        $this->assertNull($this->store()->pullDelivery($nonce, $this->admin->id));
+    }
+
+    public function test_an_unclaimed_delivery_leaves_with_the_flow(): void
+    {
+        $nonce = $this->startConnect();
+        $this->broker->deliver($this, $nonce, $this->oneCatalog())->assertOk();
+        $this->travel(MetaConnectController::FLOW_TTL + 1)->seconds();
+        $this->store()->startFlow('another-flow-nonce-0123456789', $this->admin->id, MetaConnectController::FLOW_TTL);
+
+        $secrets = Connector::query()->where('key', 'meta')->firstOrFail()->secretValue(MetaConnectionStore::DELIVERIES);
+        $this->assertNull($secrets, 'The expired delivery (and its token) is dropped on the next write.');
+        $this->assertNull($this->store()->pullDelivery($nonce, $this->admin->id));
     }
 
     public function test_cancelling_in_facebook_is_a_friendly_message_and_changes_nothing(): void
@@ -261,6 +340,7 @@ class MetaConnectTest extends TestCase
         $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['error' => 'cancelled', 'nonce' => $nonce]))
             ->assertSessionHas('success', __('connectors.meta_connect_cancelled'))
             ->assertSessionHasNoErrors();
+        $this->broker->deliver($this, $nonce, $this->oneCatalog())->assertNotFound();
         $this->assertTrue($this->store()->get()->isManual());
         $this->assertFalse((bool) app(ConnectorRegistry::class)->record('meta')?->enabled);
     }
@@ -322,72 +402,29 @@ class MetaConnectTest extends TestCase
         $this->assertTrue($this->store()->get()->isManual());
     }
 
-    public function test_a_used_or_forged_handoff_is_refused(): void
+    public function test_a_delivery_is_used_once(): void
     {
         $nonce = $this->startConnect();
-        $handoff = $this->broker->issueHandoff($this->oneCatalog());
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $handoff, 'nonce' => $nonce]))->assertSessionHasNoErrors();
+        $this->broker->deliver($this, $nonce, $this->oneCatalog())->assertOk();
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))->assertSessionHasNoErrors();
 
-        // The same handoff again (back button): the broker answers 404 and the connection stays as it was.
-        $nonce = $this->startConnect();
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $handoff, 'nonce' => $nonce]))
+        // The same return again (back button): the flow is gone and the connection stays as it was.
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))
             ->assertSessionHasErrors(['meta_connect' => __('connectors.meta_connect_expired')]);
         $this->assertTrue($this->store()->get()->canSync());
-
-        $nonce = $this->startConnect();
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => '../../etc', 'nonce' => $nonce]))->assertSessionHasErrors('meta_connect');
     }
 
-    public function test_a_handoff_the_broker_refuses_as_unsigned_forgets_the_site_credentials(): void
+    public function test_returning_without_a_delivery_asks_to_connect_again_and_changes_nothing(): void
     {
+        $this->returnFromMeta($this->oneCatalog());
+        $before = $this->store()->get()->toArray();
+
+        // The broker could not deliver (it shows «Volvé a intentar») but the browser came back anyway.
         $nonce = $this->startConnect();
-        $this->store()->saveConnectSite(FakeRuwebConnect::SITE_ID, 'a-secret-the-broker-no-longer-knows');
-        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['handoff' => $this->broker->issueHandoff(), 'nonce' => $nonce]))
+        $this->actingAs($this->admin)->get(route('admin.connectors.meta.connected', ['nonce' => $nonce]))
             ->assertSessionHasErrors(['meta_connect' => __('connectors.meta_connect_retry')]);
-        $this->assertNull($this->store()->connectSiteId(), 'The next «Conectar» registers again.');
-        $this->assertTrue($this->store()->get()->isManual());
-    }
-
-    public function test_a_handoff_that_fails_on_the_network_is_signed_again_once(): void
-    {
-        Sleep::fake();
-        $real = app(RuwebConnectClient::class);
-        $flaky = new class($real) implements RuwebConnectClient
-        {
-            public int $handoffs = 0;
-
-            public function __construct(private RuwebConnectClient $inner) {}
-
-            public function register(string $origin, string $name): RuwebConnectRegistration
-            {
-                return $this->inner->register($origin, $name);
-            }
-
-            public function verify(string $registrationId): RuwebConnectSite
-            {
-                return $this->inner->verify($registrationId);
-            }
-
-            public function startUrl(string $siteId, #[SensitiveParameter] string $siteSecret, string $nonce, ?int $timestamp = null): string
-            {
-                return $this->inner->startUrl($siteId, $siteSecret, $nonce, $timestamp);
-            }
-
-            public function handoff(string $siteId, #[SensitiveParameter] string $siteSecret, string $handoffId): RuwebConnectHandoff
-            {
-                if ($this->handoffs++ === 0) {
-                    throw new RuwebConnectException(RuwebConnectException::CONNECTION, 'timeout');
-                }
-
-                return $this->inner->handoff($siteId, $siteSecret, $handoffId);
-            }
-        };
-        $this->app->instance(RuwebConnectClient::class, $flaky);
-
-        $this->returnFromMeta($this->oneCatalog())->assertSessionHasNoErrors();
-        $this->assertSame(2, $flaky->handoffs);
-        Sleep::assertSleptTimes(1);
-        $this->assertTrue($this->store()->get()->canSync());
+        $this->assertSame($before, $this->store()->get()->toArray());
+        $this->assertSame(FakeMetaGraph::TOKEN, $this->store()->accessToken());
     }
 
     public function test_reconnecting_the_same_business_keeps_its_catalog_without_asking(): void

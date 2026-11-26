@@ -6,7 +6,6 @@ use App\Connectors\ConnectorRegistry;
 use App\Connectors\Meta\Connect\MetaConnection;
 use App\Connectors\Meta\Connect\MetaConnectionStore;
 use App\Connectors\Meta\Connect\RuwebConnectException;
-use App\Connectors\Meta\Connect\RuwebConnectHandoff;
 use App\Connectors\Meta\Graph\MetaCatalog;
 use App\Connectors\Meta\Graph\MetaGraphException;
 use App\Connectors\Meta\MetaCatalogConnector;
@@ -23,7 +22,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -35,17 +33,21 @@ use Throwable;
  *
  * - connect (GET): registers the site with the RugerTek Connect broker the first time (register → the broker reads
  *   /.well-known/ruweb-connect/{token} → verify → MetaConnectionStore::saveConnectSite()), keeps a single-use nonce in
- *   the session (10 minutes, bound to the administrator) and sends the browser to RuwebConnectClient::startUrl().
- * - connected (GET): the broker sends the browser back here. Checks the nonce, collects the handoff (token once,
- *   server to server), stores the connection and picks the catalog: the only `commerce` one at once (or the one
- *   already used when the same business reconnects), a choice screen when there are several, an explanation when
- *   there is none (then nothing is kept: an unusable token is not stored). Choosing the catalog activates the feed if
+ *   the session and in MetaConnectionStore::startFlow() (10 minutes, bound to the administrator) and sends the browser
+ *   to RuwebConnectClient::startUrl().
+ * - (contract v2) before sending the browser back, the broker POSTs the token to /_ruweb/connect/meta/handoff
+ *   (RuwebConnectHandoffReceiver), which keeps it for the administrator whose nonce it carries. The broker stores
+ *   nothing.
+ * - connected (GET): the broker sends the browser back here with the nonce. Checks it, takes the delivery kept for
+ *   this administrator (MetaConnectionStore::pullDelivery()), stores the connection and picks the catalog: the only
+ *   `commerce` one at once (or the one already used when the same business reconnects), a choice screen when there
+ *   are several, an explanation when there is none (then nothing is kept: an unusable token is not stored). Choosing the catalog activates the feed if
  *   needed and calls MetaCatalogSync::provision() (track 2c).
  * - catalog (GET/POST): the choice screen and the choice.
  * - disconnect (POST): MetaCatalogSync::teardown() (optionally deleting the feed Ruweb created in Meta), then the token
  *   and the Meta ids are always dropped, even when Meta fails. The client's catalog is never deleted.
  *
- * Nothing here logs or shows the token, the site secret or the handoff id; the log keeps who did what (actor id).
+ * Nothing here logs or shows the token or the site secret; the log keeps who did what (actor id).
  */
 class MetaConnectController extends Controller
 {
@@ -97,6 +99,8 @@ class MetaConnectController extends Controller
 
         $nonce = Str::random(48);
         $request->session()->put(self::SESSION_FLOW, ['nonce' => $nonce, 'expires_at' => now()->getTimestamp() + self::FLOW_TTL, 'user_id' => $user->id]);
+        // The broker's server-to-server delivery has no session: it is matched to this administrator by the nonce.
+        $this->store->startFlow($nonce, $user->id, self::FLOW_TTL);
         $request->session()->forget(self::SESSION_CATALOGS);
         Log::info('Meta connect: sent to Meta.', ['actor' => $user->id]);
 
@@ -115,27 +119,20 @@ class MetaConnectController extends Controller
 
         $error = $request->query('error');
         if (is_string($error) && $error !== '') {
+            $this->store->endFlow($nonce);
             Log::info('Meta connect: the dialog was not completed.', ['actor' => $user->id, 'error' => Str::limit($error, 40, '')]);
 
             return $error === 'cancelled'
                 ? $this->back()->with('success', __('connectors.meta_connect_cancelled'))
                 : $this->back()->withErrors(['meta_connect' => __('connectors.meta_connect_failed')]);
         }
-        $handoffId = $request->query('handoff');
-        if (! is_string($handoffId) || preg_match('/^[A-Za-z0-9_-]{1,128}$/', $handoffId) !== 1) {
-            return $this->back()->withErrors(['meta_connect' => __('connectors.meta_connect_failed')]);
-        }
+        // The token arrived before the browser (contract v2); nothing here means the broker delivered nothing for this
+        // nonce (or it expired): connecting again starts a new flow.
+        $handoff = $this->store->pullDelivery($nonce, $user->id);
+        if ($handoff === null) {
+            Log::warning('Meta connect: no delivery from RugerTek Connect for this flow.', ['actor' => $user->id]);
 
-        try {
-            $handoff = $this->collect($handoffId);
-        } catch (RuwebConnectException $exception) {
-            Log::warning('Meta connect: handoff failed.', ['actor' => $user->id, 'error' => $exception->errorCode, 'status' => $exception->httpStatus]);
-            if ($exception->httpStatus === 401) {
-                // The broker no longer accepts this site's secret (re-registered elsewhere): register again next time.
-                $this->store->forgetConnectSite();
-            }
-
-            return $this->back()->withErrors(['meta_connect' => $this->handoffError($exception)]);
+            return $this->back()->withErrors(['meta_connect' => __('connectors.meta_connect_retry')]);
         }
 
         $previous = $this->store->get();
@@ -289,31 +286,6 @@ class MetaConnectController extends Controller
     }
 
     /**
-     * The single-use handoff. A failure that may not have reached the broker (network, 5xx) is tried once more,
-     * signed again a second later: the broker refuses an identical signed request (replay protection).
-     *
-     * @throws RuwebConnectException
-     */
-    private function collect(string $handoffId): RuwebConnectHandoff
-    {
-        $siteId = $this->store->connectSiteId();
-        $secret = $this->store->connectSiteSecret();
-        if ($siteId === null || $secret === null) {
-            throw new RuwebConnectException('invalid_signature', 'This site has no RugerTek Connect credentials.', 401);
-        }
-        try {
-            return $this->broker->handoff($siteId, $secret, $handoffId);
-        } catch (RuwebConnectException $exception) {
-            if ($exception->httpStatus !== 0 && $exception->httpStatus < 500) {
-                throw $exception;
-            }
-            Sleep::for(1)->second();
-
-            return $this->broker->handoff($siteId, $secret, $handoffId);
-        }
-    }
-
-    /**
      * The `commerce` catalogs to choose from: the list of the handoff kept in the session, or (later visits) what
      * Meta reports now. Null when Meta cannot be read.
      *
@@ -359,16 +331,6 @@ class MetaConnectController extends Controller
             RuwebConnectException::NOT_CONFIGURED, RuwebConnectException::INSECURE_URL => __('connectors.meta_connect_unavailable'),
             'challenge_failed', 'invalid_origin' => __('connectors.meta_register_unreachable', ['origin' => SiteUrl::origin()]),
             'site_disabled' => __('connectors.meta_register_disabled'),
-            default => __('connectors.meta_connect_broker_down'),
-        };
-    }
-
-    private function handoffError(RuwebConnectException $exception): string
-    {
-        return match (true) {
-            $exception->errorCode === RuwebConnectException::HANDOFF_NOT_FOUND => __('connectors.meta_connect_expired'),
-            $exception->httpStatus === 401 => __('connectors.meta_connect_retry'),
-            $exception->errorCode === 'site_disabled' => __('connectors.meta_register_disabled'),
             default => __('connectors.meta_connect_broker_down'),
         };
     }

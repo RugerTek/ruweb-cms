@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ConnectorFeedController;
 use App\Http\Controllers\RuwebConnectChallengeController;
+use App\Http\Controllers\RuwebConnectHandoffController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -30,3 +31,11 @@ Route::get('/.well-known/ruweb-connect/{token}', RuwebConnectChallengeController
     ->middleware('throttle:30,1')
     ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class, EncryptCookies::class, AddQueuedCookiesToResponse::class])
     ->name('connectors.ruweb-connect.challenge');
+
+// RugerTek Connect token delivery (plan-meta-v2, contract v2): the broker POSTs the Meta token here, server to server,
+// signed with this site's secret, before sending the administrator back. Outside the session/CSRF middleware (the
+// signature authenticates it); any refusal is a bare 404 (RuwebConnectHandoffReceiver).
+Route::post('/_ruweb/connect/meta/handoff', RuwebConnectHandoffController::class)
+    ->middleware('throttle:30,1,ruweb-connect-handoff')
+    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, PreventRequestForgery::class, EncryptCookies::class, AddQueuedCookiesToResponse::class])
+    ->name('connectors.ruweb-connect.handoff');

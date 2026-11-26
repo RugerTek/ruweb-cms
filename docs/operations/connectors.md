@@ -358,6 +358,9 @@ and MCP only ever show the last 4 characters of the token.
   broker reads `/.well-known/ruweb-connect/{token}` from the same site. `php artisan serve` handles one request at a
   time: set `PHP_CLI_SERVER_WORKERS=2` (or more) for local tests; production behind php-fpm (or any multi-worker
   server) is fine.
+- **The broker can reach the site**: it POSTs the token to `/_ruweb/connect/meta/handoff` from its own servers
+  (contract v2). A firewall, WAF or bot protection in front of the site must let that `POST` through (it carries no
+  cookies; it is authenticated by its signature).
 - The product catalog module on (the same requirement as the manual feed), and the queue worker for retries
   ([Synchronization](#synchronization)).
 
@@ -368,17 +371,26 @@ Routes in `routes/connectors-admin.php` (administrators only), controller
 
 1. **Connect** (`admin.connectors.meta.connect`): the first time, the site registers with the broker (it serves the
    challenge at `/.well-known/ruweb-connect/{token}` for 10 minutes and receives a site secret, stored encrypted),
-   then sends the browser to the broker's signed start link with a one-time nonce kept in the session for 10
-   minutes.
+   then sends the browser to the broker's signed start link with a one-time nonce kept for 10 minutes in the session
+   and, as a hash bound to the administrator, in the connector secrets (`MetaConnectionStore::startFlow()`).
 2. Meta's dialog: the client logs in, picks the business portfolio and ticks the catalog.
-3. **Back** (`admin.connectors.meta.connected`): the nonce must match, belong to the same administrator and be
-   fresh; the site collects the token from the broker once (server to server; one signed retry on a network
-   failure). Cancelling in Facebook is a friendly message that changes nothing.
-4. **Catalog**: with exactly one commerce catalog it is chosen at once; with several the administrator chooses
+3. **Delivery** (contract v2, `connectors.ruweb-connect.handoff`): the broker exchanges the code and POSTs the token,
+   business, catalogs, scopes and the nonce to `/_ruweb/connect/meta/handoff`, signed with the site secret. The
+   route is outside the session/CSRF middleware and throttled (30/min); `App\Connectors\Meta\Connect\RuwebConnectHandoffReceiver`
+   accepts it only with our site id, a valid signature within ±300 s, a request not seen before, a valid body and the
+   pending nonce of an administrator who still may manage connectors. It keeps the delivery (encrypted, for that
+   administrator, until the flow expires) and answers 200; anything else is a bare 404 logged with the reason only.
+   **The broker stores nothing**: if the site does not answer 200 the client sees «Volvé a intentar» on the broker
+   and no token exists anywhere.
+4. **Back** (`admin.connectors.meta.connected?nonce=…`): the nonce must match the session, belong to the same
+   administrator and be fresh; the site takes the delivery kept for it (once). No delivery → «No pudimos terminar la
+   conexión…» and nothing changes. Cancelling in Facebook is a friendly message that changes nothing and drops the
+   pending nonce.
+5. **Catalog**: with exactly one commerce catalog it is chosen at once; with several the administrator chooses
    (`admin.connectors.meta.catalog`, only commerce catalogs are offered); with none the panel explains how to create
    one. Choosing provisions the sync (`MetaCatalogSync::provision()`) and activates the connector. "Change catalog"
    reads the shared catalogs from Meta again. Reconnecting the same business keeps its catalog.
-5. **Disconnect** (`admin.connectors.meta.disconnect`): drops the token and the connection state and goes back to
+6. **Disconnect** (`admin.connectors.meta.disconnect`): drops the token and the connection state and goes back to
    the manual mode. Optionally ("also delete the feed Ruweb created on Meta") the `Ruweb – <site>` feed is deleted in
    the catalog; a Meta failure there is only logged. **Never deleted**: the client's catalog, its products, the
    connector and its feed URL (if the Meta feed is kept, Meta keeps reading it while the URL works), and the

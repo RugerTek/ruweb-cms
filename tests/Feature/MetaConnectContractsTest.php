@@ -8,6 +8,8 @@ use App\Connectors\Meta\Connect\HttpRuwebConnectClient;
 use App\Connectors\Meta\Connect\MetaConnection;
 use App\Connectors\Meta\Connect\MetaConnectionStore;
 use App\Connectors\Meta\Connect\RuwebConnectException;
+use App\Connectors\Meta\Connect\RuwebConnectHandoff;
+use App\Connectors\Meta\Connect\RuwebConnectHandoffReceiver;
 use App\Connectors\Meta\Connect\RuwebConnectSignature;
 use App\Connectors\Meta\Graph\HttpMetaGraphClient;
 use App\Connectors\Meta\Graph\MetaBatchStatus;
@@ -17,7 +19,9 @@ use App\Contracts\Connectors\RuwebConnectClient;
 use App\Models\User;
 use App\Services\Connectors\ConnectorOperations;
 use DateTimeImmutable;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -327,6 +331,8 @@ class MetaConnectContractsTest extends TestCase
         $this->assertSame('b5955ba3d7cc2e9d2d293d8101ff7a2a7d9efaf26f28d16f9408f1348baee1c3', RuwebConnectSignature::request('ruweb-test-secret', 'POST', '/v1/meta/handoff/abc123', 1795558125, ''));
         $this->assertSame('b6cdd6d8fba6f0c23e49fb9d9c8ab0f7748595f290385dadf183a51130027e80', RuwebConnectSignature::request('ruweb-test-secret', 'post', '/v1/sites/register', 1795558125, '{"origin":"https://tienda.example","name":"Mi tienda"}'));
         $this->assertSame('92fc6bb0a0417b936f9a0907998ff99cf3723ffc3863967e98de9cfe9bcdf452', RuwebConnectSignature::start('ruweb-test-secret', '01JFAKESITE', 'n0nce', 1795558125));
+        // Contract v2, broker → site delivery: the same vector the broker's MetaCallbackTest and README check.
+        $this->assertSame('d90ae0722d201b8b038496270737f8d72a88bd714756bfe9695259506a55bfc8', RuwebConnectSignature::request('test-site-secret', 'POST', RuwebConnectHandoffReceiver::PATH, 1764000000, '{"nonce":"n"}'));
 
         $signature = RuwebConnectSignature::request('s', 'POST', '/p', 1000, 'b');
         $this->assertTrue(RuwebConnectSignature::verifyRequest('s', 'POST', '/p', '1000', 'b', $signature, 1300));
@@ -359,22 +365,38 @@ class MetaConnectContractsTest extends TestCase
         $this->assertTrue(FakeRuwebConnect::validStartUrl($start));
         $this->assertStringNotContainsString(FakeRuwebConnect::SITE_SECRET, $start);
 
-        $handoffId = $broker->issueHandoff();
-        $handoff = $client->handoff(FakeRuwebConnect::SITE_ID, FakeRuwebConnect::SITE_SECRET, $handoffId);
+        // Contract v2: the broker POSTs the token to the site for the pending nonce; the site keeps it for that admin.
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->store()->startFlow('nonce-0123456789abcdef', $admin->id, 600);
+        $broker->deliver($this, 'nonce-0123456789abcdef')->assertOk()->assertExactJson(['ok' => true]);
+        $this->assertNull($this->store()->pullDelivery('nonce-0123456789abcdef', $admin->id + 1), 'Only for the admin who started it.');
+        $this->store()->startFlow('nonce-0123456789abcdeg', $admin->id, 600);
+        $broker->deliver($this, 'nonce-0123456789abcdeg')->assertOk();
+        $handoff = $this->store()->pullDelivery('nonce-0123456789abcdeg', $admin->id);
         $this->assertSame(FakeMetaGraph::TOKEN, $handoff->accessToken);
         $this->assertSame(FakeMetaGraph::BUSINESS_ID, $handoff->businessId);
         $this->assertSame([FakeMetaGraph::OTHER_CATALOG_ID, FakeMetaGraph::CATALOG_ID], array_map(fn ($catalog) => $catalog->id, $handoff->commerceCatalogs()));
         $this->assertSame(['catalog_management', 'public_profile'], $handoff->grantedScopes);
         $this->assertStringNotContainsString(FakeMetaGraph::TOKEN, print_r($handoff, true));
-        $this->assertSame([FakeRuwebConnect::SITE_ID], $broker->calls()[2]['headers'][RuwebConnectSignature::HEADER_SITE]);
+        $this->assertNull($this->store()->pullDelivery('nonce-0123456789abcdeg', $admin->id), 'Single use.');
+        $this->assertCount(2, $broker->calls(), 'The site never calls the broker to collect a token.');
+    }
 
-        $again = $this->connectFailure(fn () => $client->handoff(FakeRuwebConnect::SITE_ID, FakeRuwebConnect::SITE_SECRET, $handoffId));
-        $this->assertSame([404, RuwebConnectException::HANDOFF_NOT_FOUND], [$again->httpStatus, $again->errorCode]);
-        $forged = $this->connectFailure(fn () => $client->handoff(FakeRuwebConnect::SITE_ID, 'another-secret', $broker->issueHandoff()));
-        $this->assertSame([401, 'invalid_signature'], [$forged->httpStatus, $forged->errorCode]);
-        $stale = $broker->issueHandoff();
-        $broker->now = time() + 301;
-        $this->assertSame('invalid_signature', $this->connectFailure(fn () => $client->handoff(FakeRuwebConnect::SITE_ID, FakeRuwebConnect::SITE_SECRET, $stale))->errorCode);
+    public function test_a_delivery_payload_is_validated_before_it_is_kept(): void
+    {
+        $valid = FakeRuwebConnect::payload('nonce-0123456789abcdef');
+        $this->assertInstanceOf(RuwebConnectHandoff::class, RuwebConnectHandoff::fromPayload($valid));
+        $this->assertSame(1828876861482638, (int) RuwebConnectHandoff::fromPayload(['business_id' => 1828876861482638] + $valid)->businessId);
+        foreach ([
+            ['access_token' => ''], ['access_token' => "EAA token\n"], ['access_token' => str_repeat('A', 4097)], ['access_token' => ['x']],
+            ['business_id' => ''], ['business_id' => '12a'], ['graph_version' => '27'], ['graph_version' => null], ['catalogs' => 'x'], ['granted_scopes' => 'x'],
+        ] as $override) {
+            $this->assertNull(RuwebConnectHandoff::fromPayload(array_replace($valid, $override)), json_encode($override));
+        }
+        $odd = RuwebConnectHandoff::fromPayload(array_replace($valid, ['catalogs' => [['name' => 'no id'], 'x', ['id' => '1', 'vertical' => 'commerce']], 'granted_scopes' => ['catalog_management', 'Bad Scope', 7]]));
+        $this->assertSame(['1'], array_map(fn ($catalog) => $catalog->id, $odd->catalogs));
+        $this->assertSame(['catalog_management'], $odd->grantedScopes);
+        $this->assertSame($valid['access_token'], RuwebConnectHandoff::fromPayload($odd->toPayload())->accessToken, 'Round trip through the store.');
     }
 
     public function test_ruweb_connect_needs_an_https_broker_url(): void
@@ -398,26 +420,33 @@ class MetaConnectContractsTest extends TestCase
 
     public function test_routes_are_registered_and_leak_nothing(): void
     {
-        foreach (['admin.connectors.meta.connect' => 'GET', 'admin.connectors.meta.connected' => 'GET', 'admin.connectors.meta.disconnect' => 'POST', 'connectors.ruweb-connect.challenge' => 'GET'] as $name => $method) {
+        foreach (['admin.connectors.meta.connect' => 'GET', 'admin.connectors.meta.connected' => 'GET', 'admin.connectors.meta.disconnect' => 'POST', 'connectors.ruweb-connect.challenge' => 'GET', 'connectors.ruweb-connect.handoff' => 'POST'] as $name => $method) {
             $this->assertTrue(Route::has($name), $name);
             $this->assertContains($method, Route::getRoutes()->getByName($name)->methods(), $name);
         }
         $this->assertSame('http://localhost:8000/admin/connectors/meta/connect', route('admin.connectors.meta.connect'));
         $this->assertSame('http://localhost:8000/.well-known/ruweb-connect/'.FakeRuwebConnect::CHALLENGE_TOKEN, route('connectors.ruweb-connect.challenge', ['token' => FakeRuwebConnect::CHALLENGE_TOKEN]));
+        $this->assertSame('http://localhost:8000'.RuwebConnectHandoffReceiver::PATH, route('connectors.ruweb-connect.handoff'));
+        $handoffRoute = Route::getRoutes()->getByName('connectors.ruweb-connect.handoff');
+        $this->assertContains(PreventRequestForgery::class, $handoffRoute->excludedMiddleware(), 'Signed, not CSRF-protected.');
+        $this->assertContains(StartSession::class, $handoffRoute->excludedMiddleware(), 'No session.');
+        // Without site credentials (never registered) any delivery is a bare 404.
+        $this->call('POST', RuwebConnectHandoffReceiver::PATH, [], [], [], FakeRuwebConnect::signedServer('{}'), '{}')->assertNotFound()->assertExactJson(['message' => 'Not Found']);
+        $this->get(RuwebConnectHandoffReceiver::PATH)->assertStatus(405);
 
         $this->get(route('admin.connectors.meta.connect'))->assertNotFound();
         $admin = User::factory()->create(['role' => 'admin']);
         $editor = User::factory()->create(['role' => 'editor']);
-        $this->actingAs($editor)->get(route('admin.connectors.meta.connected', ['handoff' => 'h1', 'nonce' => 'n']))->assertStatus(403);
+        $this->actingAs($editor)->get(route('admin.connectors.meta.connected', ['nonce' => 'n']))->assertStatus(403);
 
         // Track 2b filled them (tests/Feature/MetaConnectTest.php): without a broker or a nonce they change nothing.
         $detail = route('admin.connectors.show', ['connector' => 'meta']).'#meta-connection';
         config(['cms.meta.connect_url' => null]);
         $this->actingAs($admin)->get(route('admin.connectors.meta.connect'))->assertRedirect($detail)->assertSessionHasErrors('meta_connect');
         $this->actingAs($admin)->post(route('admin.connectors.meta.disconnect'))->assertRedirect($detail);
-        $back = $this->actingAs($admin)->get(route('admin.connectors.meta.connected', ['handoff' => 'secret-handoff-id', 'nonce' => 'n']));
+        $back = $this->actingAs($admin)->get(route('admin.connectors.meta.connected', ['nonce' => 'secret-nonce-from-elsewhere']));
         $back->assertRedirect($detail)->assertSessionHasErrors('meta_connect');
-        $this->assertStringNotContainsString('secret-handoff-id', (string) $back->headers->get('Location'));
+        $this->assertStringNotContainsString('secret-nonce-from-elsewhere', (string) $back->headers->get('Location'));
         $this->assertTrue($this->store()->get()->isManual(), 'Nothing changes without a valid nonce.');
 
         // The challenge only answers a registration in progress.

@@ -19,8 +19,6 @@ final class RuwebConnectException extends RuntimeException
 
     public const UNEXPECTED = 'unexpected';
 
-    public const HANDOFF_NOT_FOUND = 'handoff_not_found';
-
     public function __construct(
         public readonly string $errorCode,
         string $message,

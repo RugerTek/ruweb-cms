@@ -18,8 +18,11 @@ use SensitiveParameter;
  * as manual (v1) and asks to connect again.
  *
  * Entries: the MetaConnection (no secret), the Graph access token, the RugerTek Connect site credentials (site_id +
- * site_secret, delivered once by the broker) and the registration in progress (challenge served at
- * /.well-known/ruweb-connect/{token}). The token and the site secret only leave through accessToken() /
+ * site_secret, delivered once by the broker), the registration in progress (challenge served at
+ * /.well-known/ruweb-connect/{token}), and the flows of contract v2: the pending nonces of administrators who pressed
+ * «Conectar con Facebook» (hash only, 10 minutes) and the deliveries the broker POSTed for them
+ * (RuwebConnectHandoffReceiver), kept until that administrator's browser comes back to /admin/connectors/meta/connected
+ * and never longer than the flow. The token and the site secret only leave through accessToken() /
  * connectSiteSecret(), for MetaGraphClient and RuwebConnectClient; they are never shown (only tokenSuffix), returned
  * by MCP or logged. A repository: callers (2b/2c/3c operations) authorize the actor before writing.
  */
@@ -34,6 +37,18 @@ final class MetaConnectionStore
     public const SITE_SECRET = 'connect_site_secret';
 
     public const REGISTRATION = 'connect_registration';
+
+    /** Pending flows: list of {nonce (sha256), user_id, expires_at}. */
+    public const PENDING = 'connect_pending';
+
+    /** Deliveries waiting for the browser: sha256(nonce) => {user_id, expires_at, handoff}. */
+    public const DELIVERIES = 'connect_deliveries';
+
+    /** Concurrent flows kept (several administrators, or one who clicked twice); the oldest goes first. */
+    public const MAX_FLOWS = 5;
+
+    /** Every entry, in the order write() reads them. */
+    private const ENTRIES = [self::CONNECTION, self::ACCESS_TOKEN, self::SITE_ID, self::SITE_SECRET, self::REGISTRATION, self::PENDING, self::DELIVERIES];
 
     /** The connection, or MetaConnection::manual() when nothing usable is stored (v1 sites). */
     public function get(): MetaConnection
@@ -160,7 +175,7 @@ final class MetaConnectionStore
     public function forgetConnectSite(): void
     {
         $this->write(function (array $secrets): array {
-            unset($secrets[self::SITE_ID], $secrets[self::SITE_SECRET], $secrets[self::REGISTRATION]);
+            unset($secrets[self::SITE_ID], $secrets[self::SITE_SECRET], $secrets[self::REGISTRATION], $secrets[self::PENDING], $secrets[self::DELIVERIES]);
 
             return $secrets;
         });
@@ -211,6 +226,83 @@ final class MetaConnectionStore
         });
     }
 
+    /**
+     * «Conectar con Facebook» pressed (contract v2): remember the nonce (its hash) for the administrator, so the
+     * broker's delivery can be matched to who started it.
+     */
+    public function startFlow(string $nonce, int $userId, int $ttl): void
+    {
+        $this->write(function (array $secrets) use ($nonce, $userId, $ttl): array {
+            $pending = $secrets[self::PENDING] ?? [];
+            $pending[] = ['nonce' => hash('sha256', $nonce), 'user_id' => $userId, 'expires_at' => now()->getTimestamp() + max(1, $ttl)];
+            $secrets[self::PENDING] = array_slice($pending, -self::MAX_FLOWS);
+
+            return $secrets;
+        });
+    }
+
+    /**
+     * The broker delivered a token for $nonce: when the nonce is pending (not expired), consume it, keep the delivery
+     * for that administrator until the flow expires and return their id; else null and nothing changes.
+     */
+    public function acceptDelivery(string $nonce, RuwebConnectHandoff $handoff): ?int
+    {
+        $hash = hash('sha256', $nonce);
+        $userId = null;
+        $this->write(function (array $secrets) use ($hash, $handoff, &$userId): array {
+            foreach ($secrets[self::PENDING] ?? [] as $index => $flow) {
+                if (hash_equals($flow['nonce'], $hash)) {
+                    $userId = (int) $flow['user_id'];
+                    $expiresAt = (int) $flow['expires_at'];
+                    unset($secrets[self::PENDING][$index]);
+                    $secrets[self::PENDING] = array_values($secrets[self::PENDING]);
+                    $deliveries = $secrets[self::DELIVERIES] ?? [];
+                    $deliveries[$hash] = ['user_id' => $userId, 'expires_at' => $expiresAt, 'handoff' => $handoff->toPayload()];
+                    $secrets[self::DELIVERIES] = array_slice($deliveries, -self::MAX_FLOWS, null, true);
+
+                    break;
+                }
+            }
+
+            return $secrets;
+        });
+
+        return $userId;
+    }
+
+    /**
+     * The administrator's browser came back with $nonce: the delivery kept for them, once (it is removed whatever the
+     * answer), or null when the broker delivered nothing for this nonce, it expired or it belongs to someone else.
+     */
+    public function pullDelivery(string $nonce, int $userId): ?RuwebConnectHandoff
+    {
+        $hash = hash('sha256', $nonce);
+        $delivery = null;
+        $this->write(function (array $secrets) use ($hash, &$delivery): array {
+            $delivery = $secrets[self::DELIVERIES][$hash] ?? null;
+            unset($secrets[self::DELIVERIES][$hash]);
+
+            return $secrets;
+        });
+        if (! is_array($delivery) || (int) ($delivery['user_id'] ?? 0) !== $userId || ! is_array($delivery['handoff'] ?? null)) {
+            return null;
+        }
+
+        return RuwebConnectHandoff::fromPayload($delivery['handoff']);
+    }
+
+    /** The flow ended without a token (cancelled in Meta's dialog): drop its nonce and any delivery. */
+    public function endFlow(string $nonce): void
+    {
+        $hash = hash('sha256', $nonce);
+        $this->write(function (array $secrets) use ($hash): array {
+            $secrets[self::PENDING] = array_values(array_filter($secrets[self::PENDING] ?? [], fn (array $flow): bool => ! hash_equals($flow['nonce'], $hash)));
+            unset($secrets[self::DELIVERIES][$hash]);
+
+            return $secrets;
+        });
+    }
+
     /** @return array{id: string, challenge_token: string, expires_at: int}|null */
     private function registration(): ?array
     {
@@ -239,13 +331,13 @@ final class MetaConnectionStore
             $connector = Connector::query()->where('key', MetaCatalogConnector::KEY)->lockForUpdate()->first()
                 ?? new Connector(['key' => MetaCatalogConnector::KEY, 'enabled' => false]);
             $current = [];
-            foreach ([self::CONNECTION, self::ACCESS_TOKEN, self::SITE_ID, self::SITE_SECRET, self::REGISTRATION] as $name) {
+            foreach (self::ENTRIES as $name) {
                 $value = $connector->exists ? $connector->secretValue($name) : null;
                 if ($value !== null) {
                     $current[$name] = $value;
                 }
             }
-            $secrets = $change($current);
+            $secrets = self::withoutExpiredFlows($change(self::withoutExpiredFlows($current)));
             if ($secrets === [] && ! $connector->exists) {
                 return;
             }
@@ -253,5 +345,29 @@ final class MetaConnectionStore
             $connector->bound_origin = $secrets === [] ? null : SiteUrl::origin();
             $connector->save();
         });
+    }
+
+    /**
+     * Drops expired or malformed pending nonces and deliveries (a token nobody came back for leaves with the flow),
+     * and the entries once empty.
+     *
+     * @param  array<string, mixed>  $secrets
+     * @return array<string, mixed>
+     */
+    private static function withoutExpiredFlows(array $secrets): array
+    {
+        $now = now()->getTimestamp();
+        $live = fn (mixed $entry): bool => is_array($entry) && is_int($entry['expires_at'] ?? null) && $entry['expires_at'] >= $now;
+        $pending = array_values(array_filter(is_array($secrets[self::PENDING] ?? null) ? $secrets[self::PENDING] : [], fn (mixed $flow): bool => $live($flow) && is_string($flow['nonce'] ?? null)));
+        $deliveries = array_filter(is_array($secrets[self::DELIVERIES] ?? null) ? $secrets[self::DELIVERIES] : [], $live);
+        unset($secrets[self::PENDING], $secrets[self::DELIVERIES]);
+        if ($pending !== []) {
+            $secrets[self::PENDING] = $pending;
+        }
+        if ($deliveries !== []) {
+            $secrets[self::DELIVERIES] = $deliveries;
+        }
+
+        return $secrets;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Connectors\Meta\Connect;
 
-use App\Connectors\Meta\Graph\MetaCatalog;
 use App\Contracts\Connectors\RuwebConnectClient;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
@@ -15,7 +14,8 @@ use stdClass;
  * RuwebConnectClient over Laravel's HTTP client. Base URL `cms.meta.connect_url` (RUWEB_CONNECT_URL), HTTPS only:
  * `cms.meta.connect_allow_http` (RUWEB_CONNECT_ALLOW_HTTP) allows http:// only in the local and testing environments,
  * so a production site can never send its secret in clear. Timeout `cms.meta.connect_timeout`, no redirects followed,
- * no retries (a handoff is single use). Nothing here logs; secrets are #[SensitiveParameter].
+ * no retries. Nothing here logs; secrets are #[SensitiveParameter]. The token never comes through here (contract v2:
+ * the broker POSTs it to RuwebConnectHandoffReceiver).
  */
 final class HttpRuwebConnectClient implements RuwebConnectClient
 {
@@ -60,27 +60,6 @@ final class HttpRuwebConnectClient implements RuwebConnectClient
         ], '', '&', PHP_QUERY_RFC3986);
     }
 
-    public function handoff(string $siteId, #[SensitiveParameter] string $siteSecret, string $handoffId): RuwebConnectHandoff
-    {
-        $path = '/v1/meta/handoff/'.rawurlencode($handoffId);
-        $json = $this->call('POST', $path, null, RuwebConnectSignature::headers($siteId, $siteSecret, 'POST', $path, time(), ''));
-        $token = $json['access_token'] ?? null;
-        $business = $json['business_id'] ?? null;
-        if (! is_string($token) || $token === '' || ! is_scalar($business) || (string) $business === '') {
-            throw new RuwebConnectException(RuwebConnectException::UNEXPECTED, 'RugerTek Connect handoff answered without a token or business.', 200);
-        }
-        $catalogs = is_array($json['catalogs'] ?? null) ? array_values(array_map(fn (array $catalog) => MetaCatalog::fromGraph($catalog), array_filter($json['catalogs'], 'is_array'))) : [];
-
-        return new RuwebConnectHandoff(
-            $token,
-            (string) ($json['token_type'] ?? ''),
-            (string) $business,
-            $catalogs,
-            (string) ($json['graph_version'] ?? config('cms.meta.graph_version')),
-            is_array($json['granted_scopes'] ?? null) ? array_values(array_map('strval', $json['granted_scopes'])) : [],
-        );
-    }
-
     /**
      * Configured base URL without trailing slash.
      *
@@ -102,7 +81,7 @@ final class HttpRuwebConnectClient implements RuwebConnectClient
     }
 
     /**
-     * @param  array<string, mixed>|null  $body  JSON body; null sends an empty body (what the handoff signs)
+     * @param  array<string, mixed>|null  $body  JSON body; null sends an empty body
      * @param  array<string, string>  $headers
      * @return array<string, mixed>
      */
