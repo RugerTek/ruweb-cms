@@ -18,6 +18,9 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 // Public connector feeds, before the page catch-all (routes/connectors.php).
 require __DIR__.'/connectors.php';
 
+// RügerTek support entry with a signed pass, before the page catch-all (routes/support.php).
+require __DIR__.'/support.php';
+
 Route::middleware(['guest', 'admin.locale'])->group(function () {
     $loginPath = AdminLoginPath::segment();
 

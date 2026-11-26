@@ -18,7 +18,8 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = User::query()->latest();
+        // RügerTek support accounts are not the client's users: never listed, counted or editable here.
+        $query = User::query()->clientAccounts()->latest();
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -32,7 +33,7 @@ class UserController extends Controller
 
         return view('admin.users.index', [
             'users' => $query->paginate(15)->withQueryString(),
-            'totalCount' => User::count(),
+            'totalCount' => User::query()->clientAccounts()->count(),
         ]);
     }
 
@@ -66,6 +67,7 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        abort_if($user->isSupport(), 404);
         return view('admin.users.edit', [
             'user' => $user,
             'roles' => config('cms.roles', []),
@@ -74,6 +76,7 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        abort_if($user->isSupport(), 404);
         $data = $request->validated();
 
         if ($request->user()->is($user) && ($data['role'] ?? null) !== 'admin') {
@@ -109,6 +112,7 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
+        abort_if($user->isSupport(), 404);
         if ($request->user()->is($user)) {
             return redirect()
                 ->route('admin.users.index')

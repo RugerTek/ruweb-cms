@@ -38,6 +38,9 @@ if (class_exists(ShopExpirePaymentsCommand::class)) {
 // goes to needs_reconnect and the administrators get one email. Manual (v1) sites: nothing is called.
 Schedule::command('meta:health-check')->daily()->withoutOverlapping();
 
+// RügerTek support record: retention of sessions/activity and forgetting expired pass ids (docs/operations/support-access.md).
+Schedule::command('support:prune')->daily()->withoutOverlapping();
+
 // Guest carts expire after cms.shop.checkout.cart_days without activity; their lines go with them (cascade).
 Artisan::command('shop:prune-carts', function () {
     $this->line('Expired carts deleted: '.Cart::query()->expired()->delete());

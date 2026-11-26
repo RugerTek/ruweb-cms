@@ -6,6 +6,13 @@ Este changelog empieza **desde el primer snapshot funcional** del proyecto y se 
 - Regla práctica: **MINOR** para features/cambios funcionales, **PATCH** para fixes/docs/ajustes menores.
 - Nota: el commit raíz `4c90c74` sólo creó `.gitignore`/`README` (scaffolding), por eso no se considera un “release” funcional.
 
+## 1.5.0 - 2026-11-26
+
+- **Acceso de soporte RügerTek**: los operadores de RuWeb Cloud entran al admin de un sitio con un pase de un solo uso firmado con ES256 (la consola firma con una clave de Azure Key Vault no exportable; el sitio guarda solo la clave pública en `RUWEB_SUPPORT_PUBLIC_KEYS`, hasta dos para rotación). El pase vence en 30 s y exige un motivo; la sesión de soporte vence sola.
+- Una cuenta de soporte por operador, oculta en la gestión de usuarios del cliente y sin ingreso por contraseña. Todo queda registrado (quién, cuándo, IP, páginas y nombres de campos cambiados, nunca valores) en **Actividad de soporte** y por MCP (`support_activity_list`).
+- El administrador del cliente puede apagar el acceso (activado por defecto; el cambio queda registrado y cierra las sesiones abiertas) y ve en el inicio quién entró, cuándo y por qué.
+- Comandos solo para desarrollo: `support:keypair` y `support:issue-pass`. Documentación en `docs/operations/support-access.md`, con la revisión de Ciberseguridad requerida antes de mergear.
+
 ## 1.4.0 - 2026-11-26
 
 - Tienda opcional (`shop.mode`: apagada, catálogo o venta online), apagada por defecto y activable desde el panel: productos con variantes, categorías, stock e imágenes; carrito, checkout como invitado y pedidos.

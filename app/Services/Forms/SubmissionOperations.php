@@ -163,9 +163,9 @@ final class SubmissionOperations
         $this->forms->get($form);
         abort_unless(in_array($action, ['assign', 'set_status', 'add_note', 'retry_notification', 'update_workflow', 'mark_read', 'delete'], true), 404);
         $rules = match ($action) {
-            'assign' => ['assigned_to' => ['present', 'nullable', 'integer', Rule::exists('users', 'id')->whereIn('role', ['admin', 'editor'])]],
+            'assign' => ['assigned_to' => ['present', 'nullable', 'integer', Rule::exists('users', 'id')->whereIn('role', ['admin', 'editor'])->where('is_support', 0)]],
             'set_status' => ['workflow_status' => ['required', Rule::in(['new', 'in_progress', 'resolved'])]],
-            'update_workflow' => ['workflow_status' => ['required', Rule::in(['new', 'in_progress', 'resolved'])], 'assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')->whereIn('role', ['admin', 'editor'])]],
+            'update_workflow' => ['workflow_status' => ['required', Rule::in(['new', 'in_progress', 'resolved'])], 'assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')->whereIn('role', ['admin', 'editor'])->where('is_support', 0)]],
             'add_note' => ['body' => ['required', 'string', 'max:5000', 'regex:/\S/u']],
             default => [],
         };

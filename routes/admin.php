@@ -28,13 +28,16 @@ use App\Http\Controllers\Admin\RedirectController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ShopSettingsController;
 use App\Http\Controllers\Admin\SubmissionController;
+use App\Http\Controllers\Admin\SupportActivityController;
 use App\Http\Controllers\Admin\TaxonomyController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Middleware\EnsureAccountSession;
+use App\Http\Middleware\EnforceSupportSession;
 use App\Http\Middleware\EnsureShopCatalog;
 use App\Http\Middleware\ProtectEditorialMutation;
 use App\Http\Middleware\ProtectLiveEditor;
+use App\Http\Middleware\RecordSupportActivity;
 use App\Http\Middleware\RequireLiveEditor;
 use App\Http\Middleware\RequireRegisteredType;
 use App\Support\EditorialTypes;
@@ -42,7 +45,8 @@ use App\Support\ShopModule;
 use Illuminate\Support\Facades\Route;
 
 // Authenticated admin routes
-Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'admin.locale'])->prefix('admin')->name('admin.')->group(function () {
+// EnforceSupportSession + RecordSupportActivity: RügerTek support sessions (docs/operations/support-access.md).
+Route::middleware(['auth', 'role:admin,editor', EnforceSupportSession::class, EnsureAccountSession::class, 'admin.locale', RecordSupportActivity::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('content/{type}', [ContentStatusController::class, 'index'])->name('content.index');
     Route::get('content/{type}/{id}', [ContentStatusController::class, 'show'])->whereNumber('id')->name('content.show');
     Route::get('content/{type}/{id}/preview', [ContentStatusController::class, 'preview'])->whereNumber('id')->name('content.preview');
@@ -65,6 +69,8 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         });
     });
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+    // «Salir del modo soporte»: only a support account in a support session reaches it (others get 404).
+    Route::post('support/exit', [SupportActivityController::class, 'exit'])->name('support.exit');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('claude-mcp', [ClaudeMcpController::class, 'index'])->name('claude-mcp.index');
     Route::get('editorial-control', [EditorialControlController::class, 'index'])->name('editorial-control.index');
@@ -178,6 +184,13 @@ Route::middleware(['auth', 'role:admin,editor', EnsureAccountSession::class, 'ad
         Route::get('languages', [LanguageController::class, 'index'])->name('languages.index');
         Route::post('languages', [LanguageController::class, 'store'])->name('languages.store');
         Route::put('languages', [LanguageController::class, 'update'])->name('languages.update');
+
+        // Admin > Actividad de soporte: every RügerTek support session and what it changed, the switch «Permitir acceso
+        // de soporte de RügerTek» (client administrators only) and the dismissal of the home notice.
+        Route::get('support-activity', [SupportActivityController::class, 'index'])->name('support-activity.index');
+        Route::get('support-activity/{supportSession}', [SupportActivityController::class, 'show'])->whereNumber('supportSession')->name('support-activity.show');
+        Route::post('support-activity/access', [SupportActivityController::class, 'access'])->name('support-activity.access');
+        Route::post('support-activity/notice/dismiss', [SupportActivityController::class, 'dismissNotice'])->name('support-activity.notice.dismiss');
 
         // Admin > Connectors: always registered and visible to administrators (routes/connectors-admin.php).
         require __DIR__.'/connectors-admin.php';

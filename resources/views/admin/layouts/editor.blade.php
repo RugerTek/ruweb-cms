@@ -76,6 +76,7 @@
     </style>
 </head>
 <body class="bg-[#0a0a0a] text-gray-100 font-sans antialiased h-screen flex flex-col overflow-hidden">
+    @include('admin.partials.support-bar', ['barClass' => 'flex-none'])
 
     {{-- Top bar --}}
     <header class="flex-none flex items-center justify-between px-4 h-12 bg-[#111111] border-b border-white/[0.06]">

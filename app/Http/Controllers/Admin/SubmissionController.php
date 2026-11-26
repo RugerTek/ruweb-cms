@@ -41,7 +41,7 @@ class SubmissionController extends Controller
             'submissions' => $query->paginate(20)->withQueryString(),
             'currentStatus' => $status,
             'filters' => ['search' => $search, 'from' => $from, 'to' => $to, 'workflow' => $workflow, 'assignee' => $assignee, 'notification' => $notification],
-            'assignees' => User::whereIn('role', ['admin', 'editor'])->orderBy('name')->get(),
+            'assignees' => User::whereIn('role', ['admin', 'editor'])->clientAccounts()->orderBy('name')->get(),
         ]);
     }
 
@@ -53,7 +53,7 @@ class SubmissionController extends Controller
         return view('admin.submissions.show', [
             'form' => $form,
             'submission' => $record->load(['assignee', 'notes.author']),
-            'assignees' => User::whereIn('role', ['admin', 'editor'])->orderBy('name')->get(),
+            'assignees' => User::whereIn('role', ['admin', 'editor'])->clientAccounts()->orderBy('name')->get(),
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\SupportAccess\SupportSessions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,6 +39,7 @@ class LoginController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        app(SupportSessions::class)->endCurrent($request, 'logout');
         \Illuminate\Support\Facades\DB::table('admin_sessions')->where('id', hash('sha256', $request->session()->getId()))->update(['revoked_at' => now()]);
         Auth::logout();
         $request->session()->invalidate();

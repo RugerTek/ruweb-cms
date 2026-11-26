@@ -37,7 +37,21 @@ class ToolRegistry
             ...self::redirectTools(),
             // Admin > Connectors exists on every site, so its tools do too (docs/operations/mcp.md#connectors).
             ...self::connectorTools(),
+            // Admin > Actividad de soporte: read-only record of RügerTek support sessions (docs/operations/support-access.md).
+            ...self::supportTools(),
         ];
+    }
+
+    private static function supportTools(): array
+    {
+        return [[
+            'name' => 'support_activity_list',
+            'description' => 'Read-only record of RügerTek support sessions (Admin > Actividad de soporte): who entered with a support pass, when, why (reason and optional ticket), for how long, and what they changed. Without session_id: the latest sessions, each with its changes (route, subject, NAMES of the submitted fields, response status and a readable summary). With session_id: that session with every entry, page views included. Field values are never recorded. meta.access says whether the site currently allows support access (allowed, changed_by, changed_at); it can only be changed in the panel. Administrator only; any credential scope may read it.',
+            'inputSchema' => ['type' => 'object', 'properties' => [
+                'limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50, 'description' => 'Sessions to return, newest first; default 20.'],
+                'session_id' => ['type' => 'integer', 'minimum' => 1, 'description' => 'One session with all its entries.'],
+            ], 'required' => []],
+        ]];
     }
 
     private static function connectorTools(): array

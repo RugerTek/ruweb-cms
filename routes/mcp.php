@@ -8,6 +8,7 @@ use App\Http\Controllers\McpMediaController;
 use App\Http\Controllers\McpRedirectController;
 use App\Http\Controllers\McpServerController;
 use App\Http\Controllers\McpSubmissionController;
+use App\Http\Controllers\McpSupportActivityController;
 use App\Http\Controllers\McpTaxonomyController;
 use App\Http\Middleware\EnsureShopCatalog;
 use App\Http\Middleware\RequireRegisteredType;
@@ -82,6 +83,9 @@ Route::prefix('/connectors/{connector}')->where(['connector' => '[a-z0-9_]+'])->
     Route::patch('/', [McpConnectorController::class, 'update']);
     Route::post('/rotate-token', [McpConnectorController::class, 'rotateToken']);
 });
+
+// Admin > Actividad de soporte (support_activity_list): read-only, administrator only.
+Route::get('/support-activity', [McpSupportActivityController::class, 'index']);
 
 Route::get('/schema', [McpContentController::class, 'schema']);
 Route::get('/locales', [McpContentController::class, 'locales']);
